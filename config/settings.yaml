@@ -1,0 +1,9 @@
+default:
+  skip_cleanup: false
+  dynaconf_merge: true
+  openshift:
+    project: "authorino"
+  rhsso:
+    test_user:
+      username: "testUser"
+      password: "testPassword"

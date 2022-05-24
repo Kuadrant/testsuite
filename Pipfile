@@ -1,0 +1,30 @@
+[dev-packages]
+mypy = "*"
+pylint = "*"
+types-PyYAML = "*"
+# Have commented out python-language-server to make it available quickly
+# for the development
+#python-language-server = "*"
+#pyls-mypy = "*"
+#pyls-isort = "*"
+# Optional debugger dependencies
+#ipdb = "*"
+#web-pdb = "*"
+
+[packages]
+typing_extensions = "*"
+pytest-xdist = "*"
+pytest = "*"
+pytest-asyncio = "*"
+dynaconf = "*"
+python-keycloak = "*"
+backoff = "*"
+httpx = {version = "*", extras = ["http2"]}
+cfssl = "==0.0.3b243"
+openshift-client = ">=1.0.14"
+hyperfoil-client="*"
+weakget = {editable = true, git = "https://github.com/mangan/weakget.git"}
+flaky = "*"
+
+[requires]
+python_version = "3"

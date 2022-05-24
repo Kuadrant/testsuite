@@ -1,0 +1,49 @@
+apiVersion: template.openshift.io/v1
+kind: Template
+metadata:
+  name: servicemesh-httpbin
+objects:
+- apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    name: ${NAME}
+    labels:
+      app: ${LABEL}
+  spec:
+    replicas: 1
+    selector:
+      app: ${LABEL}
+    template:
+      metadata:
+        labels:
+          app: ${LABEL}
+      spec:
+        containers:
+          - image: quay.io/jsmadis/httpbin:latest
+            imagePullPolicy: IfNotPresent
+            name: httpbin
+            ports:
+              - containerPort: 8080
+    strategy:
+      type: Rolling
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: ${NAME}
+    labels:
+      deployment: ${NAME}
+      app: ${LABEL}
+  spec:
+    ports:
+      - name: http
+        port: 8080
+        targetPort: 8080
+    selector:
+      app: ${LABEL}
+parameters:
+- name: NAME
+  description: "Httpbin's name"
+  required: true
+- name: LABEL
+  description: "App label for all resources"
+  required: true
