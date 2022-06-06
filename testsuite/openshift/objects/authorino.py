@@ -1,7 +1,7 @@
 """Authorino CR object"""
 from typing import Any, Dict
 
-from openshift import APIObject
+from openshift import APIObject, selector
 
 from testsuite.openshift.client import OpenShiftClient
 
@@ -36,7 +36,16 @@ class Authorino(APIObject):
         if image:
             model["spec"]["image"] = image
 
-        return cls(model, context=openshift.context)
+        with openshift.context:
+            return cls(model)
+
+    def wait_for_ready(self):
+        """Waits until Authorino CR reports ready status"""
+        success, _, _ = self.self_selector().until_all(
+            success_func=lambda obj:
+            len(obj.model.status.conditions) > 0 and all(x.status == "True" for x in obj.model.status.conditions)
+        )
+        assert success, "Authorino did got get ready in time"
 
     def commit(self):
         """
@@ -45,6 +54,12 @@ class Authorino(APIObject):
         """
         self.create(["--save-config=true"])
         return self.refresh()
+
+    @property
+    def deployment(self):
+        """Returns Deployment object for this Authorino"""
+        with self.context:
+            return selector(f"deployment/{self.name()}").object()
 
     @property
     def authorization_url(self):

@@ -7,12 +7,13 @@ from testsuite.openshift.objects.authorino import Authorino
 
 
 @pytest.fixture(scope="session")
-def authorino(openshift, blame):
+def authorino(openshift, blame, request):
     """Authorino instance"""
     authorino = Authorino.create_instance(openshift, blame("authorino"))
+    request.addfinalizer(authorino.delete)
     authorino.commit()
-    yield authorino
-    authorino.delete(ignore_not_found=True)
+    authorino.wait_for_ready()
+    return authorino
 
 
 @pytest.fixture(scope="module")
