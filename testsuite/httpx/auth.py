@@ -1,3 +1,4 @@
+"""Auth Classes for HttpX"""
 from typing import Generator
 
 from httpx import Auth, Request, URL, Response
@@ -21,7 +22,7 @@ class HttpxOidcClientAuth(Auth):
         elif self.location == 'query':
             request.url = URL(request.url, params={'access_token': token})
         else:
-            raise ValueError("Unknown credentials location '%s'" % self.location)
+            raise ValueError(f"Unknown credentials location '{self.location}'")
 
     def auth_flow(self, request: Request) -> Generator[Request, Response, None]:
         self._add_credentials(request, self.token["access_token"])
