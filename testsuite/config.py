@@ -5,5 +5,5 @@ settings = Dynaconf(
     environments=True,
     lowercase_read=True,
     load_dotenv=True,
-    includes="config/*.yaml"
+    settings_files=["config/settings.yaml", "config/secrets.yaml"]
 )

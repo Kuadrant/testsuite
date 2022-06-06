@@ -27,7 +27,7 @@ def rhsso_service_info(request, testconfig, blame):
     :return: dict with all important details
     """
     cnf = testconfig["rhsso"]
-    assert cnf["password"] is not None, "SSO admin password neither discovered not set in config"
+    assert "password" in cnf, "SSO admin password neither discovered not set in config"
     rhsso = RHSSO(server_url=cnf["url"],
                   username=cnf["username"],
                   password=cnf["password"])
