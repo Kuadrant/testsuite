@@ -16,4 +16,4 @@ def test_no_auth(client):
 def test_wrong_auth(client):
     """Tests request with wrong token"""
     response = client.get("/get", headers={"Authorization": "Bearer xyz"})
-    assert response.status_code == 403
+    assert response.status_code == 401

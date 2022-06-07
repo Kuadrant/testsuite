@@ -14,4 +14,5 @@ def auth_config(auth_config, rhsso_service_info):
 @pytest.fixture(scope="module")
 def auth(rhsso_service_info):
     """Returns RHSSO authentication object for HTTPX"""
-    return HttpxOidcClientAuth(rhsso_service_info.client, "authorization")
+    return HttpxOidcClientAuth(rhsso_service_info.client, "authorization",
+                               rhsso_service_info.username, rhsso_service_info.password)

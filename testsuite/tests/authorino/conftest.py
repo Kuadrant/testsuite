@@ -10,7 +10,7 @@ from testsuite.openshift.objects.authorino import Authorino
 def authorino(openshift, blame, request):
     """Authorino instance"""
     authorino = Authorino.create_instance(openshift, blame("authorino"))
-    request.addfinalizer(authorino.delete)
+    request.addfinalizer(lambda: authorino.delete(ignore_not_found=True))
     authorino.commit()
     authorino.wait_for_ready()
     return authorino
