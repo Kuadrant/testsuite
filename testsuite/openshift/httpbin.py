@@ -45,9 +45,9 @@ class EnvoyHttpbin:
                 "AUTHORINO_URL": self.authorino.authorization_url,
                 "UPSTREAM_URL": self.name
             })
-
-        # TODO: better wait
-        time.sleep(20)
+        with self.openshift.context:
+            assert self.openshift.is_ready(self.httpbin_objects.narrow("dc")), "Httpbin wasn't ready in time"
+            assert self.openshift.is_ready(self.envoy_objects.narrow("deployment")), "Envoy wasn't ready in time"
 
     def destroy(self):
         """Destroy all objects this instance created"""

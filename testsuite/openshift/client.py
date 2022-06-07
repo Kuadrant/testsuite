@@ -6,7 +6,7 @@ from functools import cached_property
 from typing import Dict, Union, Sequence
 
 import openshift as oc
-from openshift import Context
+from openshift import Context, Selector
 
 
 class ServiceTypes(enum.Enum):
@@ -21,6 +21,7 @@ class ServiceTypes(enum.Enum):
 class OpenShiftClient:
     """OpenShiftClient is an interface to the official OpenShift python
     client."""
+
     # pylint: disable=too-many-public-methods
 
     def __init__(self, project: str, api_url: str = None, token: str = None):
@@ -85,3 +86,7 @@ class OpenShiftClient:
         with self.context:
             created = oc.create(objects)
         return created
+
+    def is_ready(self, selector: Selector):
+        success, _, _ = selector.until_all(success_func=lambda obj: "readyReplicas" in obj.model.status)
+        return success
