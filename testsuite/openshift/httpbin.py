@@ -1,5 +1,4 @@
 """Httpbin backend combined with Envoy proxy"""
-import time
 from functools import cached_property
 from importlib import resources
 

@@ -88,5 +88,9 @@ class OpenShiftClient:
         return created
 
     def is_ready(self, selector: Selector):
+        """
+        Returns true, if the selector pointing to Deployments or DeploymentConfigs are ready
+        Requires to be run inside context
+        """
         success, _, _ = selector.until_all(success_func=lambda obj: "readyReplicas" in obj.model.status)
         return success
