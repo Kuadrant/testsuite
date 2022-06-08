@@ -1,0 +1,53 @@
+name: Build and push image
+
+on:
+  push:
+    tags:
+      - v*
+
+env:
+  IMG_REGISTRY_HOST: quay.io
+  IMG_REGISTRY_ORG: kuadrant
+
+jobs:
+  build:
+    name: Build and push image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+      - name: Add tag name
+        id: tag-name
+        run: |
+          echo "IMG_TAGS=$(echo ${{ github.ref_name }} | sed -r 's/(v)(.*)/\2/')" >> $GITHUB_ENV
+      - name: Format version
+        id: format-version
+        run: |
+          echo "IMG_TAGS=${{ env.IMG_TAGS }} $(echo ${{ env.IMG_TAGS }} | sed -r 's/(.*)(\.[0-9]*)(.*)/\1/')" >> $GITHUB_ENV
+      - name: Add latest tag
+        if: ${{ !contains(github.ref_name, 'rc') }}
+        id: add-latest-tag
+        run: |
+          echo "IMG_TAGS=latest ${{ env.IMG_TAGS }}" >> $GITHUB_ENV
+      - name: Build Image
+        id: build-image
+        uses: redhat-actions/buildah-build@v2
+        with:
+          image: testsuite
+          tags: ${{ env.IMG_TAGS }}
+          layers: true
+          platforms: linux/amd64
+          containerfiles: |
+            ./Dockerfile
+      - name: Push Image
+        if: ${{ !env.ACT }}
+        id: push-to-quay
+        uses: redhat-actions/push-to-registry@v2
+        with:
+          image: ${{ steps.build-image.outputs.image }}
+          tags: ${{ steps.build-image.outputs.tags }}
+          registry: ${{ env.IMG_REGISTRY_HOST }}/${{ env.IMG_REGISTRY_ORG }}
+          username: ${{ secrets.IMG_REGISTRY_USERNAME }}
+          password: ${{ secrets.IMG_REGISTRY_TOKEN }}
+      - name: Print Image URL
+        run: echo "Image pushed to ${{ steps.push-to-quay.outputs.registry-paths }}"
