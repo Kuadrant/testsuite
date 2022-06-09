@@ -41,14 +41,12 @@ To run all tests you can then use ```make test```
 
 For just running tests, the container image is the easiest option, you can log in to OpenShift and then run it like this
 ```bash
-podman run
- -v $HOME/.kube/config:/opt/kubeconfig 
- -e KUADRANT_OPENSHIFT__project=authorino 
- -e KUADRANT_RHSSO__url="https://my-sso.net"
- -e KUADRANT_RHSSO__password="ADMIN_PASSWORD"
- -e KUADRANT_RHSSO__username="ADMIN_USERNAME"
-
-  quay.io/kuadrant/testsuite:latest
+podman run \
+	-v $HOME/.kube/config:/opt/kubeconfig:z \
+	-e KUADRANT_OPENSHIFT__project=authorino \
+	-e KUADRANT_RHSSO__url="https://my-sso.net" \
+	-e KUADRANT_RHSSO__password="ADMIN_PASSWORD" \
+	-e KUADRANT_RHSSO__username="ADMIN_USERNAME" \
+	quay.io/kuadrant/testsuite:latest
 ```
-
-
+The results and reports will be saved in `/test-run-results` in the container.
