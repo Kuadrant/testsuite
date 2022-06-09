@@ -46,6 +46,7 @@ class Authorino(APIObject):
             len(obj.model.status.conditions) > 0 and all(x.status == "True" for x in obj.model.status.conditions)
         )
         assert success, "Authorino did got get ready in time"
+        self.refresh()
 
     def commit(self):
         """
