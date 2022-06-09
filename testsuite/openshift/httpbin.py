@@ -2,7 +2,7 @@
 from functools import cached_property
 from importlib import resources
 
-from httpx import Client
+from testsuite.httpx import HttpxBackoffClient
 
 
 class EnvoyHttpbin:
@@ -30,7 +30,7 @@ class EnvoyHttpbin:
     @property
     def client(self):
         """Return Httpx client for the requests to this backend"""
-        return Client(base_url=f"http://{self.hostname}")
+        return HttpxBackoffClient(base_url=f"http://{self.hostname}")
 
     def create(self):
         """Deploy all required objects into OpenShift"""
