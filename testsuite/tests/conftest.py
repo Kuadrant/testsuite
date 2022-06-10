@@ -1,5 +1,6 @@
 """Root conftest"""
 import pytest
+from keycloak import KeycloakAuthenticationError
 from weakget import weakget
 
 from testsuite.config import settings
@@ -17,7 +18,10 @@ def testconfig():
 @pytest.fixture(scope="session")
 def openshift(testconfig):
     """Returns OpenShift client builder"""
-    return OpenShiftClient(weakget(testconfig)["openshift"]["project"] % None)
+    client = OpenShiftClient(weakget(testconfig)["openshift"]["project"] % None)
+    if not client.connected:
+        pytest.fail("You are not logged into Openshift or the namespace doesn't exist")
+    return client
 
 
 @pytest.fixture(scope="session")
@@ -27,10 +31,15 @@ def rhsso_service_info(request, testconfig, blame):
     :return: dict with all important details
     """
     cnf = testconfig["rhsso"]
-    assert "password" in cnf, "SSO admin password neither discovered not set in config"
-    rhsso = RHSSO(server_url=cnf["url"],
-                  username=cnf["username"],
-                  password=cnf["password"])
+    try:
+        rhsso = RHSSO(server_url=cnf["url"],
+                      username=cnf["username"],
+                      password=cnf["password"])
+    except KeycloakAuthenticationError:
+        return pytest.skip("Unable to login into SSO, please check the credentials provided")
+    except KeyError as exc:
+        return pytest.skip("SSO configuration items are missing", exc)
+
     realm: Realm = rhsso.create_realm(blame("realm"), accessTokenLifespan=24*60*60)
 
     if not testconfig["skip_cleanup"]:

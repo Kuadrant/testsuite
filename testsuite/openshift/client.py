@@ -3,10 +3,10 @@
 import enum
 import os
 from functools import cached_property
-from typing import Dict, Union, Sequence
+from typing import Dict
 
 import openshift as oc
-from openshift import Context, Selector
+from openshift import Context, Selector, OpenShiftPythonException
 
 
 class ServiceTypes(enum.Enum):
@@ -50,12 +50,20 @@ class OpenShiftClient:
         with self.context:
             return oc.get_project_name()
 
-    def do_action(self, verb: str, cmd_args: Sequence[Union[str, Sequence[str]]] = None,
+    @property
+    def connected(self):
+        """Returns True, if user is logged in and the project exists"""
+        try:
+            self.do_action("status")
+        except OpenShiftPythonException:
+            return False
+        return True
+
+    def do_action(self, verb: str, *args,
                   auto_raise: bool = True, parse_output: bool = False):
         """Run an oc command."""
-        cmd_args = cmd_args or []
         with self.context:
-            result = oc.invoke(verb, cmd_args, auto_raise=auto_raise)
+            result = oc.invoke(verb, args, auto_raise=auto_raise)
             if parse_output:
                 return oc.APIObject(string_to_model=result.out())
             return result
@@ -82,7 +90,7 @@ class OpenShiftClient:
 
         if os.path.isfile(source):
             source = f"--filename={source}"
-        objects = self.do_action("process", [source, opt_args]).out()
+        objects = self.do_action("process", source, opt_args).out()
         with self.context:
             created = oc.create(objects)
         return created
