@@ -5,6 +5,7 @@ from weakget import weakget
 
 from testsuite.config import settings
 from testsuite.openshift.client import OpenShiftClient
+from testsuite.openshift.httpbin import EnvoyHttpbin
 from testsuite.rhsso import RHSSO, Realm, RHSSOServiceConfiguration
 from testsuite.utils import randomize, _whoami
 
@@ -84,3 +85,12 @@ def blame(request):
 
         return randomize(f"{name[:8]}-{_whoami()[:8]}-{context[:9]}", tail=tail)
     return _blame
+
+
+@pytest.fixture(scope="module")
+def backend(request, authorino, openshift, blame):
+    """Envoy + Httpbin backend"""
+    httpbin = EnvoyHttpbin(openshift, authorino, blame("backend"), "backend")
+    request.addfinalizer(httpbin.destroy)
+    httpbin.create()
+    return httpbin
