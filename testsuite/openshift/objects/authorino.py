@@ -3,10 +3,11 @@ from typing import Any, Dict
 
 from openshift import APIObject, selector
 
+from testsuite.objects import Authorino
 from testsuite.openshift.client import OpenShiftClient
 
 
-class Authorino(APIObject):
+class AuthorinoCR(APIObject, Authorino):
     """Represents Authorino CR objects from Authorino-operator"""
 
     @classmethod

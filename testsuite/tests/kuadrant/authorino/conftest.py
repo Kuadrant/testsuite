@@ -2,16 +2,17 @@
 import pytest
 
 from testsuite.openshift.objects.auth_config import AuthConfig
-from testsuite.openshift.objects.authorino import Authorino
+from testsuite.objects import Authorino, Authorization
+from testsuite.openshift.objects.authorino import AuthorinoCR
 
 
 @pytest.fixture(scope="session")
-def authorino(authorino, openshift, blame, request):
+def authorino(authorino, openshift, blame, request) -> Authorino:
     """Authorino instance"""
     if authorino:
         return authorino
 
-    authorino = Authorino.create_instance(openshift, blame("authorino"))
+    authorino = AuthorinoCR.create_instance(openshift, blame("authorino"))
     request.addfinalizer(lambda: authorino.delete(ignore_not_found=True))
     authorino.commit()
     authorino.wait_for_ready()
@@ -20,7 +21,7 @@ def authorino(authorino, openshift, blame, request):
 
 # pylint: disable=unused-argument
 @pytest.fixture(scope="module")
-def authorization(authorization, authorino, backend, blame, openshift):
+def authorization(authorization, authorino, backend, blame, openshift) -> Authorization:
     """In case of Authorino, AuthConfig used for authorization"""
     if authorization:
         return authorization

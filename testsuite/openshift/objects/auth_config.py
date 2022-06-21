@@ -1,10 +1,11 @@
 """AuthConfig CR object"""
 from openshift import APIObject
 
+from testsuite.objects import Authorization
 from testsuite.openshift.client import OpenShiftClient
 
 
-class AuthConfig(APIObject):
+class AuthConfig(APIObject, Authorization):
     """Represents AuthConfig CR from Authorino"""
 
     @classmethod
