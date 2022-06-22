@@ -1,5 +1,6 @@
 """Conftest for Authorino tests"""
 import pytest
+from weakget import weakget
 
 from testsuite.openshift.objects.auth_config import AuthConfig
 from testsuite.objects import Authorino, Authorization, PreexistingAuthorino
@@ -15,7 +16,9 @@ def authorino(authorino, openshift, blame, request, testconfig) -> Authorino:
     if not testconfig["authorino"]["deploy"]:
         return PreexistingAuthorino(testconfig["authorino"]["url"])
 
-    authorino = AuthorinoCR.create_instance(openshift, blame("authorino"))
+    authorino = AuthorinoCR.create_instance(openshift,
+                                            blame("authorino"),
+                                            image=weakget(testconfig)["authorino"]["image"] % None)
     request.addfinalizer(lambda: authorino.delete(ignore_not_found=True))
     authorino.commit()
     authorino.wait_for_ready()

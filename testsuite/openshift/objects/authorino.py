@@ -1,6 +1,7 @@
 """Authorino CR object"""
 from typing import Any, Dict
 
+import openshift
 from openshift import APIObject, selector
 
 from testsuite.objects import Authorino
@@ -42,12 +43,13 @@ class AuthorinoCR(APIObject, Authorino):
 
     def wait_for_ready(self):
         """Waits until Authorino CR reports ready status"""
-        success, _, _ = self.self_selector().until_all(
-            success_func=lambda obj:
-            len(obj.model.status.conditions) > 0 and all(x.status == "True" for x in obj.model.status.conditions)
-        )
-        assert success, "Authorino did got get ready in time"
-        self.refresh()
+        with openshift.timeout(90):
+            success, _, _ = self.self_selector().until_all(
+                success_func=lambda obj:
+                len(obj.model.status.conditions) > 0 and all(x.status == "True" for x in obj.model.status.conditions)
+            )
+            assert success, "Authorino did got get ready in time"
+            self.refresh()
 
     def commit(self):
         """

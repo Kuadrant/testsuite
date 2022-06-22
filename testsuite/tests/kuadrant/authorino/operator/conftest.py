@@ -1,5 +1,6 @@
 """Conftest for all tests requiring custom deployment of Authorino"""
 import pytest
+from weakget import weakget
 
 from testsuite.openshift.objects.authorino import AuthorinoCR
 
@@ -10,6 +11,9 @@ def authorino(openshift, blame, request, testconfig) -> AuthorinoCR:
     if not testconfig["authorino"]["deploy"]:
         return pytest.skip("Operator tests don't work with already deployed Authorino")
 
+    authorino = AuthorinoCR.create_instance(openshift,
+                                            blame("authorino"),
+                                            image=weakget(testconfig)["authorino"]["image"] % None)
     authorino = AuthorinoCR.create_instance(openshift, blame("authorino"))
     request.addfinalizer(lambda: authorino.delete(ignore_not_found=True))
     authorino.commit()
