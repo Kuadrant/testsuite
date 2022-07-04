@@ -9,3 +9,7 @@
 #    test_user:
 #      username: "testUser"
 #      password: "testPassword"
+#  authorino:
+#    image: "quay.io/kuadrant/authorino:latest"  # If specified will override the authorino image
+#    deploy: false                               # If false, the testsuite will use already deployed authorino for testing
+#    url: ""                                     # URL for already deployed Authorino

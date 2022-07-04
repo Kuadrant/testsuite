@@ -2,15 +2,18 @@
 import pytest
 
 from testsuite.openshift.objects.auth_config import AuthConfig
-from testsuite.objects import Authorino, Authorization
+from testsuite.objects import Authorino, Authorization, PreexistingAuthorino
 from testsuite.openshift.objects.authorino import AuthorinoCR
 
 
 @pytest.fixture(scope="session")
-def authorino(authorino, openshift, blame, request) -> Authorino:
+def authorino(authorino, openshift, blame, request, testconfig) -> Authorino:
     """Authorino instance"""
     if authorino:
         return authorino
+
+    if not testconfig["authorino"]["deploy"]:
+        return PreexistingAuthorino(testconfig["authorino"]["url"])
 
     authorino = AuthorinoCR.create_instance(openshift, blame("authorino"))
     request.addfinalizer(lambda: authorino.delete(ignore_not_found=True))

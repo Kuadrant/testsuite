@@ -7,3 +7,5 @@ default:
     test_user:
       username: "testUser"
       password: "testPassword"
+  authorino:
+    deploy: true

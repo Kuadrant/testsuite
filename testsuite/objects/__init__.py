@@ -35,3 +35,24 @@ class Authorization(LifecycleObject):
     @abc.abstractmethod
     def add_oidc_identity(self, name, endpoint):
         """Adds OIDC identity provider"""
+
+
+class PreexistingAuthorino(Authorino):
+    """Authorino which is already deployed prior to the testrun"""
+
+    def __init__(self, authorization_url) -> None:
+        super().__init__()
+        self._authorization_url = authorization_url
+
+    def wait_for_ready(self):
+        return True
+
+    @property
+    def authorization_url(self):
+        return self._authorization_url
+
+    def commit(self):
+        return
+
+    def delete(self):
+        return
