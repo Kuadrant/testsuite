@@ -27,19 +27,19 @@ def authorino(authorino, openshift, blame, request, testconfig) -> Authorino:
 
 # pylint: disable=unused-argument
 @pytest.fixture(scope="module")
-def authorization(authorization, authorino, backend, blame, openshift) -> Authorization:
+def authorization(authorization, authorino, envoy, blame, openshift) -> Authorization:
     """In case of Authorino, AuthConfig used for authorization"""
     if authorization:
         return authorization
 
-    return AuthConfig.create_instance(openshift, blame("ac"), backend.hostname)
+    return AuthConfig.create_instance(openshift, blame("ac"), envoy.hostname)
 
 
 @pytest.fixture(scope="module")
-def client(authorization, backend):
+def client(authorization, envoy):
     """Returns httpx client to be used for requests, it also commit AuthConfig"""
     authorization.commit()
-    client = backend.client
+    client = envoy.client
     yield client
     client.close()
     authorization.delete()

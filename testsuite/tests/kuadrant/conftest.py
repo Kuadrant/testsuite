@@ -11,6 +11,6 @@ def authorino():
 
 # pylint: disable=unused-argument
 @pytest.fixture(scope="module")
-def authorization(authorino, backend, blame, openshift):
+def authorization(authorino, envoy, blame, openshift):
     """Authorization object (In case of Kuadrant AuthPolicy)"""
     return None

@@ -5,7 +5,7 @@ from weakget import weakget
 
 from testsuite.config import settings
 from testsuite.openshift.client import OpenShiftClient
-from testsuite.openshift.httpbin import EnvoyHttpbin
+from testsuite.openshift.httpbin import Httpbin, Envoy
 from testsuite.rhsso import RHSSO, Realm, RHSSOServiceConfiguration
 from testsuite.utils import randomize, _whoami
 
@@ -87,10 +87,25 @@ def blame(request):
     return _blame
 
 
-@pytest.fixture(scope="module")
-def backend(request, authorino, openshift, blame):
-    """Envoy + Httpbin backend"""
-    httpbin = EnvoyHttpbin(openshift, authorino, blame("backend"), "backend")
-    request.addfinalizer(httpbin.destroy)
-    httpbin.create()
+@pytest.fixture(scope="session")
+def label(blame):
+    """Session scope label for all resources"""
+    return blame("testrun")
+
+
+@pytest.fixture(scope="session")
+def backend(request, openshift, blame, label):
+    """Httpbin backend"""
+    httpbin = Httpbin(openshift, blame("httpbin"), label)
+    request.addfinalizer(httpbin.delete)
+    httpbin.commit()
     return httpbin
+
+
+@pytest.fixture(scope="module")
+def envoy(request, authorino, openshift, blame, backend, label):
+    """Envoy"""
+    envoy = Envoy(openshift, authorino, blame("envoy"), label, backend.url)
+    request.addfinalizer(envoy.delete)
+    envoy.commit()
+    return envoy
