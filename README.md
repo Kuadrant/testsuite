@@ -30,8 +30,9 @@ You can run and manage environment for testsuite with the included Makefile, but
 ### Local development setup
 
 Requirements:
-* Python 3.8+
+* Python 3.9+
 * [pipenv](https://pipenv.pypa.io/en/latest/)
+* [CFSSL](https://github.com/cloudflare/cfssl)
 * [OpenShift CLI tools](https://docs.openshift.com/container-platform/latest/cli_reference/openshift_cli/getting-started-cli.html) (oc)
 
 If you have all of those, you can run ```make pipenv-dev``` to install virtual environment and all dependencies
