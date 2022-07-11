@@ -2,6 +2,7 @@
 import os
 import secrets
 
+from testsuite.certificates import Certificate
 from testsuite.config import settings
 
 
@@ -26,3 +27,12 @@ def _whoami():
     # pylint: disable=broad-except
     except Exception:
         return str(os.getuid())
+
+
+def chain(certificate: Certificate, *authorities: Certificate) -> Certificate:
+    """Chains certificates together"""
+    entire_chain = [certificate]
+    entire_chain.extend(authorities)
+    cert_chain = Certificate(certificate="".join(cert.certificate for cert in entire_chain),
+                             key=certificate.key)
+    return cert_chain

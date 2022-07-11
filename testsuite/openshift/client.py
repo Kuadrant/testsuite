@@ -8,6 +8,8 @@ from typing import Dict
 import openshift as oc
 from openshift import Context, Selector, OpenShiftPythonException
 
+from testsuite.certificates import Certificate
+
 
 class ServiceTypes(enum.Enum):
     """Service types enum."""
@@ -102,3 +104,25 @@ class OpenShiftClient:
         """
         success, _, _ = selector.until_all(success_func=lambda obj: "readyReplicas" in obj.model.status)
         return success
+
+    def create_tls_secret(self, name: str, certificate: Certificate):
+        """Creates a TLS secret"""
+        model = {
+            'kind': 'Secret',
+            'apiVersion': 'v1',
+            'metadata': {
+                'name': name,
+            },
+            'stringData': {
+                "tls.crt": certificate.certificate,
+                "tls.key": certificate.key
+            },
+            "type": "kubernetes.io/tls"
+        }
+        with self.context:
+            return oc.create(model, ["--save-config=true"])
+
+    def delete_selector(self, selector, ignore_not_found=True):
+        """Deletes all resources from selectior"""
+        with self.context:
+            selector.delete(ignore_not_found=ignore_not_found)

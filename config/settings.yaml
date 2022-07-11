@@ -3,6 +3,7 @@ default:
   dynaconf_merge: true
   openshift:
     project: "authorino"
+  cfssl: "cfssl"
   rhsso:
     test_user:
       username: "testUser"
