@@ -10,7 +10,6 @@ class RHSSOServiceConfiguration:
     Wrapper for all information that tests need to know about RHSSO
     """
 
-    # pylint: disable=too-many-arguments
     def __init__(self, rhsso: RHSSO, realm: Realm, client: Client, user, username, password) -> None:
         self.rhsso = rhsso
         self.realm = realm
