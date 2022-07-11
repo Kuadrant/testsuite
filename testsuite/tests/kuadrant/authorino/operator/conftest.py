@@ -27,15 +27,15 @@ def authorino_parameters():
 
 
 @pytest.fixture(scope="module")
-def authorino(openshift, blame, request, testconfig, authorino_parameters) -> AuthorinoCR:
+def authorino(openshift, blame, request, testconfig, authorino_parameters, label) -> AuthorinoCR:
     """Custom deployed Authorino instance"""
     if not testconfig["authorino"]["deploy"]:
         return pytest.skip("Operator tests don't work with already deployed Authorino")
 
-    authorino = AuthorinoCR.create_instance(openshift,
-                                            blame("authorino"),
-                                            image=weakget(testconfig)["authorino"]["image"] % None,
-                                            **authorino_parameters)
+    parameters = {"label_selectors": [f"testRun={label}"],
+                  **authorino_parameters}
+    authorino = AuthorinoCR.create_instance(openshift, blame("authorino"),
+                                            image=weakget(testconfig)["authorino"]["image"] % None, **parameters)
     request.addfinalizer(lambda: authorino.delete(ignore_not_found=True))
     authorino.commit()
     authorino.wait_for_ready()
