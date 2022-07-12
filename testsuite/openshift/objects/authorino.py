@@ -1,5 +1,5 @@
 """Authorino CR object"""
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 import openshift
 from openshift import APIObject, selector
@@ -12,7 +12,8 @@ class AuthorinoCR(APIObject, Authorino):
     """Represents Authorino CR objects from Authorino-operator"""
 
     @classmethod
-    def create_instance(cls, openshift: OpenShiftClient, name, image=None, cluster_wide=False):
+    def create_instance(cls, openshift: OpenShiftClient, name, image=None,
+                        cluster_wide=False, label_selectors: List[str] = None):
         """Creates base instance"""
         model: Dict[str, Any] = {
             "apiVersion": "operator.authorino.kuadrant.io/v1beta1",
@@ -37,6 +38,9 @@ class AuthorinoCR(APIObject, Authorino):
         }
         if image:
             model["spec"]["image"] = image
+
+        if label_selectors:
+            model["spec"]["authConfigLabelSelectors"] = ",".join(label_selectors)
 
         with openshift.context:
             return cls(model)
