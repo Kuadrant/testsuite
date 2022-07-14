@@ -38,6 +38,15 @@ class AuthConfig(APIObject, Authorization):
         self.create(["--save-config=true"])
         return self.refresh()
 
+    def add_host(self, hostname):
+        self.model.spec.hosts.append(hostname)
+
+    def remove_host(self, hostname):
+        self.model.spec.hosts.remove(hostname)
+
+    def remove_all_hosts(self):
+        self.model.spec.hosts = []
+
     def add_oidc_identity(self, name, endpoint):
         """Adds OIDC identity"""
         identities = self.model.spec.setdefault("identity", [])
