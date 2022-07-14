@@ -45,7 +45,7 @@ class EnvoyHttpbin:
                 "UPSTREAM_URL": self.name
             })
         with self.openshift.context:
-            assert self.openshift.is_ready(self.httpbin_objects.narrow("dc")), "Httpbin wasn't ready in time"
+            assert self.openshift.is_ready(self.httpbin_objects.narrow("deployment")), "Httpbin wasn't ready in time"
             assert self.openshift.is_ready(self.envoy_objects.narrow("deployment")), "Envoy wasn't ready in time"
 
     def destroy(self):
