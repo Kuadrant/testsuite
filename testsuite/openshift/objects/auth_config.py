@@ -1,4 +1,6 @@
 """AuthConfig CR object"""
+from typing import Dict
+
 from openshift import APIObject
 
 from testsuite.objects import Authorization
@@ -9,9 +11,9 @@ class AuthConfig(APIObject, Authorization):
     """Represents AuthConfig CR from Authorino"""
 
     @classmethod
-    def create_instance(cls, openshift: OpenShiftClient, name, host):
+    def create_instance(cls, openshift: OpenShiftClient, name, host, labels: Dict[str, str] = None):
         """Creates base instance"""
-        model = {
+        model: Dict = {
             "apiVersion": "authorino.kuadrant.io/v1beta1",
             "kind": "AuthConfig",
             "metadata": {
@@ -22,6 +24,9 @@ class AuthConfig(APIObject, Authorization):
                 "hosts": [host]
             }
         }
+
+        if labels is not None:
+            model["metadata"]["labels"] = labels
 
         return cls(model, context=openshift.context)
 

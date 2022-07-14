@@ -8,7 +8,7 @@ from testsuite.openshift.objects.authorino import AuthorinoCR
 
 
 @pytest.fixture(scope="session")
-def authorino(authorino, openshift, blame, request, testconfig) -> Authorino:
+def authorino(authorino, openshift, blame, request, testconfig, label) -> Authorino:
     """Authorino instance"""
     if authorino:
         return authorino
@@ -18,7 +18,8 @@ def authorino(authorino, openshift, blame, request, testconfig) -> Authorino:
 
     authorino = AuthorinoCR.create_instance(openshift,
                                             blame("authorino"),
-                                            image=weakget(testconfig)["authorino"]["image"] % None)
+                                            image=weakget(testconfig)["authorino"]["image"] % None,
+                                            label_selectors=[f"testRun={label}"])
     request.addfinalizer(lambda: authorino.delete(ignore_not_found=True))
     authorino.commit()
     authorino.wait_for_ready()
@@ -27,12 +28,12 @@ def authorino(authorino, openshift, blame, request, testconfig) -> Authorino:
 
 # pylint: disable=unused-argument
 @pytest.fixture(scope="module")
-def authorization(authorization, authorino, envoy, blame, openshift) -> Authorization:
+def authorization(authorization, authorino, envoy, blame, openshift, label) -> Authorization:
     """In case of Authorino, AuthConfig used for authorization"""
     if authorization:
         return authorization
 
-    return AuthConfig.create_instance(openshift, blame("ac"), envoy.hostname)
+    return AuthConfig.create_instance(openshift, blame("ac"), envoy.hostname, labels={"testRun": label})
 
 
 @pytest.fixture(scope="module")
