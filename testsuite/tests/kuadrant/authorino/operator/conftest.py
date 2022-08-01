@@ -14,7 +14,6 @@ def authorino(openshift, blame, request, testconfig) -> AuthorinoCR:
     authorino = AuthorinoCR.create_instance(openshift,
                                             blame("authorino"),
                                             image=weakget(testconfig)["authorino"]["image"] % None)
-    authorino = AuthorinoCR.create_instance(openshift, blame("authorino"))
     request.addfinalizer(lambda: authorino.delete(ignore_not_found=True))
     authorino.commit()
     authorino.wait_for_ready()
