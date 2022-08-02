@@ -36,6 +36,18 @@ class Authorization(LifecycleObject):
     def add_oidc_identity(self, name, endpoint):
         """Adds OIDC identity provider"""
 
+    @abc.abstractmethod
+    def add_host(self, hostname):
+        """Adds host"""
+
+    @abc.abstractmethod
+    def remove_host(self, hostname):
+        """Remove host"""
+
+    @abc.abstractmethod
+    def remove_all_hosts(self):
+        """Remove host"""
+
 
 class PreexistingAuthorino(Authorino):
     """Authorino which is already deployed prior to the testrun"""
