@@ -47,3 +47,19 @@ class AuthConfig(APIObject, Authorization):
                 "endpoint": endpoint
             }
         })
+
+    def add_api_key_identity(self, name, label):
+        """Adds API Key identity"""
+        identities = self.model.spec.setdefault("identity", [])
+        identities.append({
+            "name": name,
+            "apiKey": {
+                "labelSelectors": {
+                    "group": label
+                }
+            },
+            "credentials": {
+                "in": "authorization_header",
+                "keySelector": "APIKEY"
+            }
+        })
