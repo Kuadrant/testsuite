@@ -24,6 +24,14 @@ class Envoy(LifecycleObject):
         with self.openshift.context:
             return self.envoy_objects.narrow("route").object()
 
+    def create_route(self, name):
+        """Creates another route pointing to this Envoy"""
+        service_name = f"envoy-{self.name}"
+        route = self.openshift.do_action("expose", "service", f"--name={name}", "-o", "json",
+                                         service_name, parse_output=True)
+        self.envoy_objects = self.envoy_objects.union(route.self_selector())
+        return route
+
     @cached_property
     def hostname(self):
         """Returns hostname of this envoy"""
