@@ -13,7 +13,7 @@ class AuthorinoCR(APIObject, Authorino):
 
     @classmethod
     def create_instance(cls, openshift: OpenShiftClient, name, image=None,
-                        cluster_wide=False, label_selectors: List[str] = None):
+                        cluster_wide=False, label_selectors: List[str] = None, listener_certificate_secret=None):
         """Creates base instance"""
         model: Dict[str, Any] = {
             "apiVersion": "operator.authorino.kuadrant.io/v1beta1",
@@ -41,6 +41,12 @@ class AuthorinoCR(APIObject, Authorino):
 
         if label_selectors:
             model["spec"]["authConfigLabelSelectors"] = ",".join(label_selectors)
+
+        if listener_certificate_secret:
+            model["spec"]["listener"]["tls"] = {
+                "enabled": True,
+                "certSecretRef": {"name": listener_certificate_secret}
+            }
 
         with openshift.context:
             return cls(model)
