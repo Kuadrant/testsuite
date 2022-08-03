@@ -95,7 +95,7 @@ def label(blame):
 
 @pytest.fixture(scope="session")
 def backend(request, openshift, blame, label):
-    """Httpbin backend"""
+    """Deploys Httpbin backend"""
     httpbin = Httpbin(openshift, blame("httpbin"), label)
     request.addfinalizer(httpbin.delete)
     httpbin.commit()
@@ -104,7 +104,7 @@ def backend(request, openshift, blame, label):
 
 @pytest.fixture(scope="module")
 def envoy(request, authorino, openshift, blame, backend, label):
-    """Envoy"""
+    """Deploys Envoy that wire up the Backend behind the reverse-proxy and Authorino instance"""
     envoy = Envoy(openshift, authorino, blame("envoy"), label, backend.url)
     request.addfinalizer(envoy.delete)
     envoy.commit()
