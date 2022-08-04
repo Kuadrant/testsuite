@@ -2,13 +2,14 @@
 from typing import Any, Dict, List
 
 import openshift
-from openshift import APIObject, selector
+from openshift import selector
 
 from testsuite.objects import Authorino
 from testsuite.openshift.client import OpenShiftClient
+from testsuite.openshift.objects import OpenShiftObject
 
 
-class AuthorinoCR(APIObject, Authorino):
+class AuthorinoCR(OpenShiftObject, Authorino):
     """Represents Authorino CR objects from Authorino-operator"""
 
     @classmethod
@@ -54,14 +55,6 @@ class AuthorinoCR(APIObject, Authorino):
             )
             assert success, "Authorino did got get ready in time"
             self.refresh()
-
-    def commit(self):
-        """
-        Creates object on the server and returns created entity.
-        It will be the same class but attributes might differ, due to server adding/rejecting some of them.
-        """
-        self.create(["--save-config=true"])
-        return self.refresh()
 
     @property
     def deployment(self):
