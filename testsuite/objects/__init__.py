@@ -37,6 +37,10 @@ class Authorization(LifecycleObject):
         """Adds OIDC identity provider"""
 
     @abc.abstractmethod
+    def add_api_key_identity(self, name, label):
+        """Adds API Key identity"""
+
+    @abc.abstractmethod
     def remove_all_identities(self):
         """Removes all identities from AuthConfig"""
 
