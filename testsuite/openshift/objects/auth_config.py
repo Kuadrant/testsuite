@@ -68,3 +68,9 @@ class AuthConfig(OpenShiftObject, Authorization):
                 "keySelector": "APIKEY"
             }
         })
+
+    @modify
+    def remove_all_identities(self):
+        """Removes all identities from AuthConfig"""
+        identities = self.model.spec.setdefault("identity", [])
+        identities.clear()

@@ -37,6 +37,10 @@ class Authorization(LifecycleObject):
         """Adds OIDC identity provider"""
 
     @abc.abstractmethod
+    def remove_all_identities(self):
+        """Removes all identities from AuthConfig"""
+
+    @abc.abstractmethod
     def add_host(self, hostname):
         """Adds host"""
 
