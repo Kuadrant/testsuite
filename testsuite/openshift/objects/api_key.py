@@ -1,11 +1,10 @@
 """API Key Secret CR object"""
 
-from openshift import APIObject
-
 from testsuite.openshift.client import OpenShiftClient
+from testsuite.openshift.objects import OpenShiftObject
 
 
-class APIKey(APIObject):
+class APIKey(OpenShiftObject):
     """Represents API Key Secret CR for Authorino"""
 
     @classmethod
@@ -29,11 +28,3 @@ class APIKey(APIObject):
         }
 
         return cls(model, context=openshift.context)
-
-    def commit(self):
-        """
-        Creates object on the server and returns created entity.
-        It will be the same class but attributes might differ, due to server adding/rejecting some of them.
-        """
-        self.create(["--save-config=true"])
-        return self.refresh()

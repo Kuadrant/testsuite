@@ -1,13 +1,12 @@
 """AuthConfig CR object"""
 from typing import Dict
 
-from openshift import APIObject
-
 from testsuite.objects import Authorization
 from testsuite.openshift.client import OpenShiftClient
+from testsuite.openshift.objects import OpenShiftObject, modify
 
 
-class AuthConfig(APIObject, Authorization):
+class AuthConfig(OpenShiftObject, Authorization):
     """Represents AuthConfig CR from Authorino"""
 
     @classmethod
@@ -30,23 +29,19 @@ class AuthConfig(APIObject, Authorization):
 
         return cls(model, context=openshift.context)
 
-    def commit(self):
-        """
-        Creates object on the server and returns created entity.
-        It will be the same class but attributes might differ, due to server adding/rejecting some of them.
-        """
-        self.create(["--save-config=true"])
-        return self.refresh()
-
+    @modify
     def add_host(self, hostname):
         self.model.spec.hosts.append(hostname)
 
+    @modify
     def remove_host(self, hostname):
         self.model.spec.hosts.remove(hostname)
 
+    @modify
     def remove_all_hosts(self):
         self.model.spec.hosts = []
 
+    @modify
     def add_oidc_identity(self, name, endpoint):
         """Adds OIDC identity"""
         identities = self.model.spec.setdefault("identity", [])
@@ -57,6 +52,7 @@ class AuthConfig(APIObject, Authorization):
             }
         })
 
+    @modify
     def add_api_key_identity(self, name, label):
         """Adds API Key identity"""
         identities = self.model.spec.setdefault("identity", [])
