@@ -20,7 +20,6 @@ dynaconf = "*"
 python-keycloak = "*"
 backoff = "*"
 httpx = {version = "*", extras = ["http2"]}
-cfssl = "==0.0.3b243"
 openshift-client = ">=1.0.14"
 hyperfoil-client="*"
 weakget = {editable = true, git = "https://github.com/mangan/weakget.git"}
