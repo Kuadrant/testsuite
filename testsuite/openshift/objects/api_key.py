@@ -8,7 +8,7 @@ class APIKey(OpenShiftObject):
     """Represents API Key Secret CR for Authorino"""
 
     @classmethod
-    def create_instance(cls, openshift: OpenShiftClient, name, label, api_key_string):
+    def create_instance(cls, openshift: OpenShiftClient, name, label, api_key):
         """Creates base instance"""
         model = {
             "apiVersion": "v1",
@@ -22,7 +22,7 @@ class APIKey(OpenShiftObject):
                 }
             },
             "stringData": {
-                "api_key": api_key_string
+                "api_key": api_key
             },
             "type": "Opaque"
         }
