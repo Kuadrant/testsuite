@@ -14,3 +14,11 @@ def authorino():
 def authorization(authorino, envoy, blame, openshift):
     """Authorization object (In case of Kuadrant AuthPolicy)"""
     return None
+
+
+@pytest.fixture(scope="module", autouse=True)
+def commit(authorization):
+    """Commits all important stuff before tests"""
+    authorization.commit()
+    yield
+    authorization.delete()

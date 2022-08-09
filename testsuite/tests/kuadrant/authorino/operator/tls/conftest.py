@@ -109,11 +109,3 @@ def authorino_parameters(authorino_parameters, authorino_cert, create_secret):
     authorino_secret_name = create_secret(authorino_cert, "authcert")
     authorino_parameters["listener_certificate_secret"] = authorino_secret_name
     yield authorino_parameters
-
-
-@pytest.fixture(scope="module")
-def auth(auth, authorization):
-    """Commit the authorization resource"""
-    authorization.commit()
-    yield auth
-    authorization.delete()

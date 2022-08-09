@@ -39,8 +39,6 @@ def authorization(authorization, authorino, envoy, blame, openshift, label) -> A
 @pytest.fixture(scope="module")
 def client(authorization, envoy):
     """Returns httpx client to be used for requests, it also commits AuthConfig"""
-    authorization.commit()
     client = envoy.client()
     yield client
     client.close()
-    authorization.delete()
