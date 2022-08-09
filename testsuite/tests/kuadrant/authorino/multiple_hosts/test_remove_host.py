@@ -10,6 +10,7 @@ def test_removing_host(client, client2, auth, authorization, second_hostname):
     assert response.status_code == 200
 
     authorization.remove_host(second_hostname)
+    authorization.wait_for_hosts()
 
     response = client.get("/get", auth=auth)
     assert response.status_code == 200

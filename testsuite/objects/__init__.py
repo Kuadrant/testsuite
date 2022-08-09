@@ -56,6 +56,10 @@ class Authorization(LifecycleObject):
     def remove_all_hosts(self):
         """Remove host"""
 
+    @abc.abstractmethod
+    def wait_for_hosts(self):
+        """Waits until all hosts are reconciled"""
+
 
 class PreexistingAuthorino(Authorino):
     """Authorino which is already deployed prior to the testrun"""

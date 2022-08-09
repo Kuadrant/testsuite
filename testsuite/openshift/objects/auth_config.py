@@ -1,6 +1,8 @@
 """AuthConfig CR object"""
 from typing import Dict
 
+import openshift
+
 from testsuite.objects import Authorization
 from testsuite.openshift.client import OpenShiftClient
 from testsuite.openshift.objects import OpenShiftObject, modify
@@ -74,3 +76,10 @@ class AuthConfig(OpenShiftObject, Authorization):
         """Removes all identities from AuthConfig"""
         identities = self.model.spec.setdefault("identity", [])
         identities.clear()
+
+    def wait_for_hosts(self):
+        with openshift.timeout(90):
+            success, _, _ = self.self_selector()\
+                .until_all(success_func=lambda obj:
+            set(obj.model.status.summary.hostsReady) == set(self.model.spec.hosts))
+        assert success, "AuthConfig has not reconcilled hosts in time"
