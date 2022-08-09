@@ -18,13 +18,13 @@ def cluster_wide():
 
 
 @pytest.fixture(scope="module")
-def authorino(openshift, blame, request, testconfig, cluster_wide, label) -> AuthorinoCR:
+def authorino(openshift, blame, request, testconfig, cluster_wide, label, authorino_parameters) -> AuthorinoCR:
     """Custom deployed Authorino instance"""
     if not testconfig["authorino"]["deploy"]:
         return pytest.skip("Operator tests don't work with already deployed Authorino")
 
     parameters = {"label_selectors": [f"testRun={label}"],
-                  **authorino_parameters}  # type: ignore
+                  **authorino_parameters}
     authorino = AuthorinoCR.create_instance(openshift,
                                             blame("authorino"),
                                             cluster_wide=cluster_wide,
