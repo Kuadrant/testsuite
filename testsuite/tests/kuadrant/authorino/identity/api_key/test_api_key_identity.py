@@ -4,23 +4,35 @@ import pytest
 
 
 @pytest.fixture(scope="module")
-def api_key_secret(create_api_key):
+def label_selector():
+    """Matching label for API key Secret and selector specified in spec.identity.apiKey.selector in the AuthConfig"""
+    return "api_label"
+
+
+@pytest.fixture(scope="module")
+def mismatched_label_selector():
+    """Label for API key secret that is different from the one specified in AuthConfig"""
+    return "mismatched_api_label"
+
+
+@pytest.fixture(scope="module")
+def api_key_secret(create_api_key, label_selector):
     """Creates API key Secret"""
     api_key = "api_key_value"
-    return create_api_key("api-key", "api_label", api_key), api_key
+    return create_api_key("api-key", label_selector, api_key), api_key
 
 
 @pytest.fixture(scope="module")
-def invalid_key_secret(create_api_key):
+def invalid_key_secret(create_api_key, mismatched_label_selector):
     """Creates API key Secret with label that does not match any of the labelSelectors defined by AuthConfig"""
     api_key = "invalid_secret_api_key_value"
-    return create_api_key("api-key", "different_api_label", api_key), api_key
+    return create_api_key("mismatched-api-key", mismatched_label_selector, api_key), api_key
 
 
 @pytest.fixture(scope="module")
-def authorization(authorization):
+def authorization(authorization, label_selector):
     """Creates AuthConfig with API key identity"""
-    authorization.add_api_key_identity("api_key", "api_label")
+    authorization.add_api_key_identity("api_key", label_selector)
     return authorization
 
 
@@ -44,7 +56,7 @@ def test_invalid_api_key(client):
 
 
 def test_invalid_api_key_secret(client, invalid_key_secret):
-    """Tests request that uses API key that is wrongly labeled"""
+    """Tests request that uses API key secret that is wrongly labeled"""
     _, api_key = invalid_key_secret
     response = client.get("/get", headers={"Authorization": f"APIKEY {api_key}"})
     assert response.status_code == 401
