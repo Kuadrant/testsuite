@@ -2,6 +2,7 @@
 #  skip_cleanup: false
 #  openshift:
 #    project: "authorino"
+#    second_project: "authorino2"
 #  rhsso:
 #    url: "SSO_URL"
 #    username: "SSO_ADMIN_USERNAME"

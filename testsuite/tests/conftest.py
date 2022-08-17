@@ -18,10 +18,26 @@ def testconfig():
 
 @pytest.fixture(scope="session")
 def openshift(testconfig):
-    """Returns OpenShift client builder"""
-    client = OpenShiftClient(weakget(testconfig)["openshift"]["project"] % None)
+    """OpenShift client for the primary namespace"""
+    section = weakget(testconfig)["openshift"]
+    client = OpenShiftClient(
+        section["project"] % None,
+        section["api_url"] % None,
+        section["token"] % None)
     if not client.connected:
         pytest.fail("You are not logged into Openshift or the namespace doesn't exist")
+    return client
+
+
+@pytest.fixture(scope="session")
+def openshift2(openshift, testconfig):
+    """OpenShift client for the secondary namespace located on the same cluster as primary Openshift"""
+    if "second_project" not in testconfig.get("openshift", {}):
+        pytest.skip("Openshift2 required but second_project was not set")
+    # pylint: disable=protected-access
+    client = OpenShiftClient(testconfig["openshift"]["second_project"], openshift._api_url, openshift.token)
+    if not client.connected:
+        pytest.fail("You are not logged into Openshift or the namespace for Openshift2 doesn't exist")
     return client
 
 
