@@ -37,7 +37,7 @@ class Authorization(LifecycleObject):
         """Adds OIDC identity provider"""
 
     @abc.abstractmethod
-    def add_api_key_identity(self, name, label):
+    def add_api_key_identity(self, name, match_label, match_expression):
         """Adds API Key identity"""
 
     @abc.abstractmethod
