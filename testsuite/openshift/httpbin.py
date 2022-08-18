@@ -29,7 +29,8 @@ class Envoy(LifecycleObject):
         service_name = f"envoy-{self.name}"
         route = self.openshift.do_action("expose", "service", f"--name={name}", "-o", "json",
                                          service_name, parse_output=True)
-        self.envoy_objects = self.envoy_objects.union(route.self_selector())
+        with self.openshift.context:
+            self.envoy_objects = self.envoy_objects.union(route.self_selector())
         return route
 
     @cached_property
