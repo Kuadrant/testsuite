@@ -60,6 +60,10 @@ class Authorization(LifecycleObject):
     def add_opa_policy(self, name, rego_policy):
         """Adds OPA inline Rego policy"""
 
+    @abc.abstractmethod
+    def add_response(self, response):
+        """Add response to AuthConfig"""
+
 
 class PreexistingAuthorino(Authorino):
     """Authorino which is already deployed prior to the testrun"""
