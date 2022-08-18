@@ -59,8 +59,10 @@ class AuthConfig(OpenShiftObject, Authorization):
         identities.append({
             "name": name,
             "apiKey": {
-                "labelSelectors": {
-                    "group": label
+                "selector": {
+                    "matchLabels": {
+                        "group": label
+                    }
                 }
             },
             "credentials": {
