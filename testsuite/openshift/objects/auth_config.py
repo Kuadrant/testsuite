@@ -1,9 +1,22 @@
 """AuthConfig CR object"""
-from typing import Dict
+from dataclasses import dataclass, asdict
+from typing import Dict, Literal, List
 
 from testsuite.objects import Authorization
 from testsuite.openshift.client import OpenShiftClient
 from testsuite.openshift.objects import OpenShiftObject, modify
+
+
+@dataclass
+class MatchExpression:
+    """
+    Data class intended for defining K8 Label Selector expressions.
+    Used by selector.matchExpressions API key identity.
+    """
+
+    operator: Literal["In", "NotIn", "Exists", "DoesNotExist"]
+    values: List[str]
+    key: str = "group"
 
 
 class AuthConfig(OpenShiftObject, Authorization):
@@ -53,17 +66,35 @@ class AuthConfig(OpenShiftObject, Authorization):
         })
 
     @modify
-    def add_api_key_identity(self, name, label):
-        """Adds API Key identity"""
+    def add_api_key_identity(self, name, match_label=None, match_expression: MatchExpression = None):
+        """
+        Adds API Key identity
+        Args:
+            :param name: the name of API key identity
+            :param match_label: labels that are accepted by AuthConfig
+            :param match_expression: instance of the MatchExpression
+        """
+        if not (match_label is None) ^ (match_expression is None):
+            raise AttributeError("`match_label` xor `match_expression` argument must be used")
+
+        matcher: Dict = {}
+        if match_label:
+            matcher.update({
+                "matchLabels": {
+                        "group": match_label
+                    }
+            })
+
+        if match_expression:
+            matcher.update({
+                "matchExpressions": [asdict(match_expression)]
+            })
+
         identities = self.model.spec.setdefault("identity", [])
         identities.append({
             "name": name,
             "apiKey": {
-                "selector": {
-                    "matchLabels": {
-                        "group": label
-                    }
-                }
+                "selector": matcher
             },
             "credentials": {
                 "in": "authorization_header",
