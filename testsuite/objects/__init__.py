@@ -56,6 +56,10 @@ class Authorization(LifecycleObject):
     def remove_all_hosts(self):
         """Remove host"""
 
+    @abc.abstractmethod
+    def add_opa_policy(self, name, rego_policy):
+        """Adds OPA inline Rego policy"""
+
 
 class PreexistingAuthorino(Authorino):
     """Authorino which is already deployed prior to the testrun"""
