@@ -47,8 +47,6 @@ def auth(rhsso_service_info):
 @pytest.fixture(scope="module")
 def client(authorization, envoy):
     """Returns httpx client to be used for requests, it also commits AuthConfig"""
-    authorization.commit()
     client = envoy.client()
     yield client
     client.close()
-    authorization.delete()
