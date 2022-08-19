@@ -17,9 +17,9 @@ def hostname2(envoy, blame):
 
 
 @pytest.fixture(scope="module")
-def authorization2(hostname2, blame, openshift2, label, rhsso_service_info):
+def authorization2(hostname2, blame, openshift2, module_label, rhsso_service_info):
     """Second valid hostname"""
-    auth = AuthConfig.create_instance(openshift2, blame("ac"), hostname2, labels={"testRun": label})
+    auth = AuthConfig.create_instance(openshift2, blame("ac"), hostname2, labels={"testRun": module_label})
     auth.add_oidc_identity("rhsso", rhsso_service_info.issuer_url())
     return auth
 

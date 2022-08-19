@@ -9,7 +9,7 @@ from testsuite.openshift.objects.authorino import AuthorinoCR
 
 
 @pytest.fixture(scope="module")
-def authorino(authorino, openshift, blame, request, testconfig, label) -> Authorino:
+def authorino(authorino, openshift, blame, request, testconfig, module_label) -> Authorino:
     """Authorino instance"""
     if authorino:
         return authorino
@@ -20,7 +20,7 @@ def authorino(authorino, openshift, blame, request, testconfig, label) -> Author
     authorino = AuthorinoCR.create_instance(openshift,
                                             blame("authorino"),
                                             image=weakget(testconfig)["authorino"]["image"] % None,
-                                            label_selectors=[f"testRun={label}"])
+                                            label_selectors=[f"testRun={module_label}"])
     request.addfinalizer(lambda: authorino.delete(ignore_not_found=True))
     authorino.commit()
     authorino.wait_for_ready()
@@ -29,10 +29,11 @@ def authorino(authorino, openshift, blame, request, testconfig, label) -> Author
 
 # pylint: disable=unused-argument
 @pytest.fixture(scope="module")
-def authorization(authorization, authorino, envoy, blame, openshift, label, rhsso_service_info) -> Authorization:
+def authorization(authorization, authorino, envoy, blame, openshift, module_label, rhsso_service_info) -> Authorization:
     """In case of Authorino, AuthConfig used for authorization"""
     if authorization is None:
-        authorization = AuthConfig.create_instance(openshift, blame("ac"), envoy.hostname, labels={"testRun": label})
+        authorization = AuthConfig.create_instance(openshift, blame("ac"),
+                                                   envoy.hostname, labels={"testRun": module_label})
     authorization.add_oidc_identity("rhsso", rhsso_service_info.issuer_url())
     return authorization
 
