@@ -1,4 +1,5 @@
 """Auth Classes for HttpX"""
+import typing
 from typing import Generator
 
 from httpx import Auth, Request, URL, Response
@@ -33,3 +34,16 @@ class HttpxOidcClientAuth(Auth):
             self.token = self.oidc_client.refresh_token(self.token["refresh_token"])
             self._add_credentials(request, self.token["access_token"])
             yield request
+
+
+class HeaderApiKeyAuth(Auth):
+    """Auth class for authentication with API key"""
+
+    def __init__(self, api_key: str, prefix: str = "APIKEY") -> None:
+        super().__init__()
+        self.api_key = api_key
+        self.prefix = prefix
+
+    def auth_flow(self, request: Request) -> typing.Generator[Request, Response, None]:
+        request.headers["Authorization"] = f"{self.prefix} {self.api_key}"
+        yield request
