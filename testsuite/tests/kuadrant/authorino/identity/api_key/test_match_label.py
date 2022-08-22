@@ -9,9 +9,9 @@ def authorization(authorization, module_label):
     return authorization
 
 
-def test_correct_auth(client, api_key):
+def test_correct_auth(client, auth):
     """Tests request with correct API key"""
-    response = client.get("/get", headers={"Authorization": f"APIKEY {api_key}"})
+    response = client.get("/get", auth=auth)
     assert response.status_code == 200
 
 
@@ -21,9 +21,9 @@ def test_no_auth(client):
     assert response.status_code == 401
 
 
-def test_invalid_api_key(client):
+def test_invalid_api_key(client, invalid_auth):
     """Tests request with wrong API key"""
-    response = client.get("/get", headers={"Authorization": "APIKEY invalid-key"})
+    response = client.get("/get", auth=invalid_auth)
     assert response.status_code == 401
 
 
