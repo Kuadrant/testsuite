@@ -9,7 +9,7 @@ from testsuite.openshift.client import OpenShiftClient
 
 class Envoy(LifecycleObject):
     """Envoy deployed from template"""
-    def __init__(self, openshift, authorino, name, label, httpbin_hostname) -> None:
+    def __init__(self, openshift: "OpenShiftClient", authorino, name, label, httpbin_hostname) -> None:
         self.openshift = openshift
         self.authorino = authorino
         self.name = name
@@ -27,8 +27,7 @@ class Envoy(LifecycleObject):
     def create_route(self, name):
         """Creates another route pointing to this Envoy"""
         service_name = f"envoy-{self.name}"
-        route = self.openshift.do_action("expose", "service", f"--name={name}", "-o", "json",
-                                         service_name, parse_output=True)
+        route = self.openshift.routes.expose(name, service_name)
         with self.openshift.context:
             self.envoy_objects = self.envoy_objects.union(route.self_selector())
         return route
