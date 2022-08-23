@@ -1,10 +1,9 @@
 default:
   skip_cleanup: false
   dynaconf_merge: true
-  openshift:
-    project: "authorino"
   cfssl: "cfssl"
   rhsso:
+    username: "admin"
     test_user:
       username: "testUser"
       password: "testPassword"
