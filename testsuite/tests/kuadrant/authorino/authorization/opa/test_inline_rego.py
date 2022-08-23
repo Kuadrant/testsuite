@@ -1,22 +1,13 @@
 """Tests for Open Policy Agent (OPA) Rego policies"""
 import pytest
 
-
-@pytest.fixture(scope="module")
-def header():
-    """Header used by OPA policy"""
-    return "opa", "opa-test"
+from testsuite.utils import rego_allow_header
 
 
 @pytest.fixture(scope="module")
 def authorization(authorization, header):
-    """
-    Creates AuthConfig with API key identity and configures it with OPA policy
-    that accepts only those requests that contain header correct header
-    """
-    key, value = header
-    rego_inline = f"allow {{ input.context.request.http.headers.{key} == \"{value}\" }}"
-    authorization.add_opa_policy("opa", rego_inline)
+    """Adds OPA policy that accepts all requests that contain `header`"""
+    authorization.add_opa_policy("opa", rego_allow_header(*header))
     return authorization
 
 
