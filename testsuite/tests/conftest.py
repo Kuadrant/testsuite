@@ -55,7 +55,7 @@ def rhsso_service_info(request, testconfig, blame):
     except KeycloakAuthenticationError:
         return pytest.skip("Unable to login into SSO, please check the credentials provided")
     except KeyError as exc:
-        return pytest.skip("SSO configuration items are missing", exc)
+        return pytest.skip(f"SSO configuration item is missing: {exc}")
 
     realm: Realm = rhsso.create_realm(blame("realm"), accessTokenLifespan=24*60*60)
 
