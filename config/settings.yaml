@@ -1,6 +1,8 @@
 default:
   skip_cleanup: false
   dynaconf_merge: true
+  tools:
+    project: "tools"
   cfssl: "cfssl"
   rhsso:
     username: "admin"

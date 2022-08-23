@@ -6,6 +6,8 @@
 #    token: "KUADRANT_RULEZ"                   # Optional: OpenShift Token, if None it will OpenShift that you are logged in
 #  openshift2:
 #    project: "kuadrant2"                      # Required: Secondary OpenShift project, for running tests across projects
+#  tools:
+#    project: "tools"                          # Optional: OpenShift project, where external tools are located
 #  rhsso:
 #    url: "SSO_URL"
 #    username: "SSO_ADMIN_USERNAME"

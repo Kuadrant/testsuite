@@ -4,12 +4,21 @@ This repository contains end-to-end tests for Kuadrant project. Currently, it on
 
 ## Requirements
 
-To run the testsuite you currently need an OpenShift 4 cluster with Authorino Operator deployed and namespace where the tests will be executed.
+To run the testsuite you currently need an OpenShift 4.x cluster with Authorino Operator deployed and namespace where the tests will be executed.
 
 ## Configuration
 
 Kuadrant testsuite uses [Dynaconf](https://www.dynaconf.com/) for configuration, which means you can specify the configuration through either settings files in `config` directory or through environmental variables. 
 All the required and possible configuration options can be found in `config/settings.local.yaml.tpl`
+
+### OpenShift auto-fetching
+
+Some configuration options can be fetched from OpenShift if there are correctly deployed [tools](https://github.com/3scale-qe/tools).
+Tools can be deployed by using `overlays/kuadrant` overlay and deploying RHSSO with the provided script like this:
+```bash
+oc apply -k overlays/kuadrant/ --namespace tools
+NAMESPACE=tools ./base/rhsso/deploy-rhsso.sh
+```
 
 ### Settings files
 
@@ -41,14 +50,29 @@ To run all tests you can then use ```make test```
 ### Running from container
 
 For just running tests, the container image is the easiest option, you can log in to OpenShift and then run it like this
+
+NOTE: For binding kubeconfig file, the "others" need to have permission to read, otherwise it will not work.
+The results and reports will be saved in `/test-run-results` in the container.
+
+#### With tools setup
+
 ```bash
 podman run \
 	-v $HOME/.kube/config:/run/kubeconfig:z \
 	-e KUADRANT_OPENSHIFT__project=authorino \
+	-e KUADRANT_OPENSHIFT2__project=authorino2 \
+	quay.io/kuadrant/testsuite:latest
+```
+
+#### Without tools
+
+```bash
+podman run \
+	-v $HOME/.kube/config:/run/kubeconfig:z \
+	-e KUADRANT_OPENSHIFT__project=authorino \
+	-e KUADRANT_OPENSHIFT2__project=authorino2 \
 	-e KUADRANT_RHSSO__url="https://my-sso.net" \
 	-e KUADRANT_RHSSO__password="ADMIN_PASSWORD" \
 	-e KUADRANT_RHSSO__username="ADMIN_USERNAME" \
 	quay.io/kuadrant/testsuite:latest
 ```
-NOTE: For binding kubeconfig file, the "others" need to have permission to read, otherwise it will not work.
-The results and reports will be saved in `/test-run-results` in the container.
