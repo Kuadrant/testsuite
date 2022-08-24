@@ -22,15 +22,15 @@ def authorization(authorization, valid_label_selectors):
     return authorization
 
 
-def test_correct_auth(client, api_key):
+def test_correct_auth(client, auth):
     """Test request with accepted API key"""
-    response = client.get("/get", headers={"Authorization": f"APIKEY {api_key}"})
+    response = client.get("/get", auth=auth)
     assert response.status_code == 200
 
 
-def test_invalid_api_key(client, invalid_api_key):
+def test_invalid_api_key(client, invalid_auth):
     """Test request with API key that is not included in selector.matchExpressions"""
-    response = client.get("/get", headers={"Authorization": f"APIKEY {invalid_api_key}"})
+    response = client.get("/get", auth=invalid_auth)
     assert response.status_code == 401
 
 
