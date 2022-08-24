@@ -5,7 +5,7 @@ import shutil
 import subprocess
 from functools import cached_property
 from importlib import resources
-from typing import Optional, List, Dict, Any, Tuple
+from typing import Optional, List, Dict, Any, Tuple, Collection, Union
 
 
 class CFSSLException(Exception):
@@ -13,10 +13,19 @@ class CFSSLException(Exception):
 
 
 @dataclasses.dataclass
+class CertInfo:
+    """Certificate configuration details"""
+    hosts: Optional[Union[Collection[str], str]] = None
+    ca: bool = False
+    children: Optional[Dict[str, Optional["CertInfo"]]] = None
+
+
+@dataclasses.dataclass
 class Certificate:
     """Object representing Signed certificate"""
     key: str
     certificate: str
+    chain: Optional[str] = None
 
 
 @dataclasses.dataclass
@@ -71,7 +80,7 @@ class CFSSLClient:
         return shutil.which(self.binary)
 
     def generate_key(self, common_name: str, names: Optional[List[Dict[str, str]]] = None,
-                     hosts: Optional[List[str]] = None) -> UnsignedKey:
+                     hosts: Optional[Collection[str]] = None) -> UnsignedKey:
         """Generates unsigned key"""
         data: Dict[str, Any] = {
             "CN": common_name
@@ -105,7 +114,7 @@ class CFSSLClient:
 
     def create_authority(self,
                          common_name: str,
-                         hosts: List[str],
+                         hosts: Collection[str],
                          names: Optional[List[Dict[str, str]]] = None,
                          certificate_authority: Optional[Certificate] = None) -> Certificate:
         """Generates self-signed root or intermediate CA certificate and private key
@@ -135,7 +144,7 @@ class CFSSLClient:
 
     def create(self,
                common_name: str,
-               hosts: List[str],
+               hosts: Collection[str],
                certificate_authority: Certificate,
                names: Optional[List[Dict[str, str]]] = None) -> Certificate:
         """Create a new certificate.

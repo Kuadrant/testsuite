@@ -1,7 +1,10 @@
 """Utility functions for testsuite"""
 import os
 import secrets
+from collections.abc import Collection
+from typing import Dict, Union
 
+from testsuite.certificates import Certificate, CFSSLClient, CertInfo
 from testsuite.config import settings
 
 
@@ -26,3 +29,37 @@ def _whoami():
     # pylint: disable=broad-except
     except Exception:
         return str(os.getuid())
+
+
+def cert_builder(cfssl: CFSSLClient, chain: dict, hosts: Union[str, Collection[str]] = None,
+                 parent: Certificate = None) -> Dict[str, Certificate]:
+    """
+    Recursively create certificates based on their given CertInfo.
+    If CertInfo has children or is marked as CA, it will be generated as a Certificate Authority,
+     otherwise it will be a Certificate.
+    Example input:
+        {"envoy_ca": CertInfo(children={
+            "envoy_cert": None,
+            "valid_cert": None
+            })
+        }
+    Will generate envoy_ca as a Certificate Authority with two certificate (envoy_cert, valid_cert) signed by it
+    """
+    result = {}
+    for name, info in chain.items():
+        if info is None:
+            info = CertInfo()
+
+        parsed_hosts: Collection[str] = info.hosts or hosts  # type: ignore
+        if isinstance(parsed_hosts, str):
+            parsed_hosts = [parsed_hosts]  # type: ignore
+
+        if info.ca or info.children:
+            cert = cfssl.create_authority(name, hosts=parsed_hosts, certificate_authority=parent)
+        else:
+            cert = cfssl.create(name, hosts=parsed_hosts, certificate_authority=parent)  # type: ignore
+        cert.chain = cert.certificate + parent.chain if parent else cert.certificate  # type: ignore
+        if info.children is not None:
+            result.update(cert_builder(cfssl, info.children, parsed_hosts, cert))
+        result[name] = cert
+    return result

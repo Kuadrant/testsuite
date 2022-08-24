@@ -10,3 +10,4 @@ disable=duplicate-code,  # reports false alarms AND can't be disabled locally; p
 good-names=i,j,k,
            pytestmark,
            logger,
+           ca

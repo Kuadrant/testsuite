@@ -3,8 +3,27 @@ from urllib.parse import urlparse
 
 import pytest
 
-from testsuite.certificates import CFSSLClient, Certificate
+from testsuite.certificates import CFSSLClient, Certificate, CertInfo
 from testsuite.openshift.httpbin import TLSEnvoy
+from testsuite.utils import cert_builder
+
+
+@pytest.fixture(scope="session")
+def certificates(cfssl, authorino_domain, wildcard_domain):
+    """Certificate hierarchy used for the tests"""
+    chain = {
+        "envoy_ca": CertInfo(children={
+            "envoy_cert": None,
+            "valid_cert": None
+        }),
+        "authorino_ca": CertInfo(children={
+            "authorino_cert": CertInfo(hosts=authorino_domain),
+        }),
+        "invalid_ca": CertInfo(children={
+            "invalid_cert": None
+        })
+    }
+    return cert_builder(cfssl, chain, wildcard_domain)
 
 
 @pytest.fixture(scope="session")
@@ -47,39 +66,39 @@ def authorino_domain(openshift):
 
 
 @pytest.fixture(scope="session")
-def envoy_authority(wildcard_domain, cfssl):
+def envoy_authority(certificates):
     """Authority for all certificates that envoy should accept"""
-    return cfssl.create_authority("backend-ca", hosts=[wildcard_domain])
+    return certificates["envoy_ca"]
 
 
 @pytest.fixture(scope="session")
-def invalid_authority(wildcard_domain, cfssl):
+def invalid_authority(certificates):
     """Completely unrelated CA for generating certificates which should not succeed"""
-    return cfssl.create_authority("server-ca", hosts=[wildcard_domain])
+    return certificates["invalid_ca"]
 
 
 @pytest.fixture(scope="session")
-def authorino_authority(authorino_domain, cfssl):
+def authorino_authority(certificates):
     """Authority for Authorino Certificate"""
-    return cfssl.create_authority("authorino-ca", hosts=[authorino_domain])
+    return certificates["authorino_ca"]
 
 
 @pytest.fixture(scope="session")
-def authorino_cert(authorino_domain, cfssl, authorino_authority):
+def authorino_cert(certificates):
     """Authorino certificate"""
-    return cfssl.create("authorino", hosts=[authorino_domain], certificate_authority=authorino_authority)
+    return certificates["authorino_cert"]
 
 
 @pytest.fixture(scope="session")
-def envoy_cert(wildcard_domain, cfssl, envoy_authority):
+def envoy_cert(certificates):
     """Certificate that is actively used by Envoy"""
-    return cfssl.create("envoy", hosts=[wildcard_domain], certificate_authority=envoy_authority)
+    return certificates["envoy_cert"]
 
 
 @pytest.fixture(scope="session")
-def valid_cert(wildcard_domain, cfssl, envoy_authority):
+def valid_cert(certificates):
     """Certificate accepted by Envoy"""
-    return cfssl.create("valid", hosts=[wildcard_domain], certificate_authority=envoy_authority)
+    return certificates["valid_cert"]
 
 
 @pytest.fixture(scope="session")
