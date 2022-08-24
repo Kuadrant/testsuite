@@ -24,8 +24,8 @@ RUN mkdir -m 0700 /test-run-results && chown testsuite /test-run-results && \
 USER 1001
 
 
-ENV KUBECONFIG=/opt/kubeconfig \
-    SECRETS_FOR_DYNACONF=/opt/secrets.yaml \
+ENV KUBECONFIG=/run/kubeconfig \
+    SECRETS_FOR_DYNACONF=/run/secrets.yaml \
     PIPENV_IGNORE_VIRTUALENVS=1 \
     PIPENV_VENV_IN_PROJECT=1 \
     WORKON_HOME=/opt/workdir/virtualenvs \
