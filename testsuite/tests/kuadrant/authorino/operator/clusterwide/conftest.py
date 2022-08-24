@@ -25,11 +25,18 @@ def authorization2(hostname2, blame, openshift2, module_label, rhsso_service_inf
 
 
 @pytest.fixture(scope="module")
-def client2(hostname2, authorization2, envoy):
+def client2(hostname2, envoy):
     """Client for second AuthConfig"""
     client = envoy.client()
     client.base_url = f"http://{hostname2}"
-    authorization2.commit()
     yield client
     client.close()
+
+
+# pylint: disable=unused-argument
+@pytest.fixture(scope="module", autouse=True)
+def commit(commit, authorization2):
+    """Commits all important stuff before tests"""
+    authorization2.commit()
+    yield
     authorization2.delete()
