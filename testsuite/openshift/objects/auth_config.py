@@ -118,3 +118,8 @@ class AuthConfig(OpenShiftObject, Authorization):
                 "inlineRego": rego_policy
             }
         })
+
+    @modify
+    def add_response(self, response):
+        """Add response to AuthConfig"""
+        self.model["spec"]["response"] = [response]

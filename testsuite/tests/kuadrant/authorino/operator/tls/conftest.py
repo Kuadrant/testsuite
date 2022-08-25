@@ -1,5 +1,4 @@
 """Conftest for all TLS-enabled tests"""
-from urllib.parse import urlparse
 
 import pytest
 
@@ -44,16 +43,6 @@ def cfssl(testconfig):
     if not client.exists:
         pytest.skip("Skipping CFSSL tests as CFSSL binary path is not properly configured")
     return client
-
-
-@pytest.fixture(scope="session")
-def wildcard_domain(openshift):
-    """
-    Hostname of the upstream certificate sent to be validated by APIcast
-    May be overwritten to configure different test cases
-    """
-    hostname = urlparse(openshift.api_url).hostname
-    return "*.apps." + hostname.split(".", 1)[1]
 
 
 @pytest.fixture(scope="session")

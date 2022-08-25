@@ -1,4 +1,6 @@
 """Conftest for all tests requiring custom deployment of Authorino"""
+from urllib.parse import urlparse
+
 import pytest
 from weakget import weakget
 
@@ -37,3 +39,12 @@ def authorino(openshift, blame, request, testconfig, cluster_wide, module_label,
     authorino.commit()
     authorino.wait_for_ready()
     return authorino
+
+
+@pytest.fixture(scope="session")
+def wildcard_domain(openshift):
+    """
+    Wildcard domain of openshift cluster
+    """
+    hostname = urlparse(openshift.api_url).hostname
+    return "*.apps." + hostname.split(".", 1)[1]
