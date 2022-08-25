@@ -107,3 +107,14 @@ class AuthConfig(OpenShiftObject, Authorization):
         """Removes all identities from AuthConfig"""
         identities = self.model.spec.setdefault("identity", [])
         identities.clear()
+
+    @modify
+    def add_opa_policy(self, name, rego_policy):
+        """Adds Opa (https://www.openpolicyagent.org/docs/latest/) policy to the AuthConfig"""
+        policy = self.model.spec.setdefault("authorization", [])
+        policy.append({
+            "name": name,
+            "opa": {
+                "inlineRego": rego_policy
+            }
+        })

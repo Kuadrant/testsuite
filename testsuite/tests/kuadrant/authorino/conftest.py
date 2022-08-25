@@ -3,6 +3,7 @@ import pytest
 from weakget import weakget
 
 from testsuite.httpx.auth import HttpxOidcClientAuth
+from testsuite.openshift.objects.api_key import APIKey
 from testsuite.openshift.objects.auth_config import AuthConfig
 from testsuite.objects import Authorino, Authorization, PreexistingAuthorino
 from testsuite.openshift.objects.authorino import AuthorinoCR
@@ -51,3 +52,15 @@ def client(authorization, envoy):
     client = envoy.client()
     yield client
     client.close()
+
+
+@pytest.fixture(scope="module")
+def create_api_key(blame, request, openshift):
+    """Creates API key Secret"""
+    def _create_secret(name, label_selector, api_key):
+        secret_name = blame(name)
+        secret = APIKey.create_instance(openshift, secret_name, label_selector, api_key)
+        request.addfinalizer(secret.delete)
+        secret.commit()
+        return secret_name
+    return _create_secret
