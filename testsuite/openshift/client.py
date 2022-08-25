@@ -9,6 +9,8 @@ import openshift as oc
 from openshift import Context, Selector, OpenShiftPythonException
 
 from testsuite.certificates import Certificate
+from testsuite.openshift.types.routes import Routes
+from testsuite.openshift.types.secrets import Secrets
 
 
 class ServiceTypes(enum.Enum):
@@ -60,6 +62,16 @@ class OpenShiftClient:
         except OpenShiftPythonException:
             return False
         return True
+
+    @cached_property
+    def routes(self):
+        """Return dict-like interface for Routes"""
+        return Routes(self)
+
+    @cached_property
+    def secrets(self):
+        """Return dict-like interface for Secrets"""
+        return Secrets(self)
 
     def do_action(self, verb: str, *args,
                   auto_raise: bool = True, parse_output: bool = False):
