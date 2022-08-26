@@ -5,12 +5,6 @@ from testsuite.httpx.auth import HeaderApiKeyAuth
 
 
 @pytest.fixture(scope="module")
-def invalid_label_selector():
-    """Label for API key secret that is different from the one specified in AuthConfig"""
-    return "invalid_api_label"
-
-
-@pytest.fixture(scope="module")
 def api_key(create_api_key, module_label):
     """Creates API key Secret"""
     api_key = "api_key_value"
@@ -22,6 +16,12 @@ def api_key(create_api_key, module_label):
 def auth(api_key):
     """Valid API Key Auth"""
     return HeaderApiKeyAuth(api_key)
+
+
+@pytest.fixture(scope="module")
+def invalid_label_selector():
+    """Label for API key secret that is different from the one specified in AuthConfig"""
+    return "invalid_api_label"
 
 
 @pytest.fixture(scope="module")
