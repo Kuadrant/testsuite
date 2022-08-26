@@ -21,13 +21,13 @@ def test_no_auth(client):
     assert response.status_code == 401
 
 
-def test_invalid_api_key(client, invalid_auth):
-    """Tests request with wrong API key"""
-    response = client.get("/get", auth=invalid_auth)
+def test_invalid_api_key(client):
+    """Tests request with wrong invalid API key"""
+    response = client.get("/get", headers={"Authorization": "APIKEY invalid_api_key_string"})
     assert response.status_code == 401
 
 
-def test_invalid_api_key_secret(client, invalid_api_key):
+def test_invalid_api_key_secret(client, invalid_auth):
     """Tests request that uses API key secret that is wrongly labeled"""
-    response = client.get("/get", headers={"Authorization": f"APIKEY {invalid_api_key}"})
+    response = client.get("/get", auth=invalid_auth)
     assert response.status_code == 401
