@@ -66,11 +66,13 @@ class AuthConfig(OpenShiftObject, Authorization):
         })
 
     @modify
-    def add_api_key_identity(self, name, match_label=None, match_expression: MatchExpression = None):
+    def add_api_key_identity(self, name, all_namespaces: bool = False,
+                             match_label=None, match_expression: MatchExpression = None):
         """
         Adds API Key identity
         Args:
             :param name: the name of API key identity
+            :param all_namespaces: a location of the API keys can be in another namespace (only works for cluster-wide)
             :param match_label: labels that are accepted by AuthConfig
             :param match_expression: instance of the MatchExpression
         """
@@ -94,7 +96,8 @@ class AuthConfig(OpenShiftObject, Authorization):
         identities.append({
             "name": name,
             "apiKey": {
-                "selector": matcher
+                "selector": matcher,
+                "allNamespaces": all_namespaces
             },
             "credentials": {
                 "in": "authorization_header",
