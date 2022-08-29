@@ -103,6 +103,35 @@ class AuthConfig(OpenShiftObject, Authorization):
         })
 
     @modify
+    def add_role_rule(self, name: str, role: str, path: str, metrics=False, priority=0):
+        """
+        Adds a rule, which allows access to 'path' only to users with 'role'
+        :param name: name of rule
+        :param role: name of role
+        :param path: path to apply this rule to
+        :param metrics: bool, allows metrics
+        :param priority: priority of rule
+        """
+        authorization = self.model.spec.setdefault("authorization", [])
+        authorization.append({
+            "name": name,
+            "metrics": metrics,
+            "priority": priority,
+            "json": {
+                "rules": [{
+                    "operator": "incl",
+                    "selector": "auth.identity.realm_access.roles",
+                    "value": role
+                }]
+            },
+            "when": [{
+                "operator": "matches",
+                "selector": "context.request.http.path",
+                "value": path
+            }]
+        })
+
+    @modify
     def remove_all_identities(self):
         """Removes all identities from AuthConfig"""
         identities = self.model.spec.setdefault("identity", [])

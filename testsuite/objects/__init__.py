@@ -64,6 +64,10 @@ class Authorization(LifecycleObject):
     def add_response(self, response):
         """Add response to AuthConfig"""
 
+    @abc.abstractmethod
+    def add_role_rule(self, name: str, role: str, path: str, metrics: bool, priority: int):
+        """Adds a rule, which allows access to 'path' only to users with 'role'"""
+
 
 class PreexistingAuthorino(Authorino):
     """Authorino which is already deployed prior to the testrun"""

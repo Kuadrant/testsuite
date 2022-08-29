@@ -40,6 +40,24 @@ class Realm:
         self.admin.update_user(user_id, {"emailVerified": True})
         return user_id
 
+    def create_realm_role(self, role_name: str):
+        """Creates realm role
+        :param role_name: name of role
+        :return: Dictionary with two keys "name", "id"
+        """
+        self.admin.create_realm_role(payload={"name": role_name})
+        role_id = self.admin.get_realm_role(role_name)["id"]
+        return {"name": role_name, "id": role_id}
+
+    def assign_realm_role(self, role, user_id: str):
+        """Assigns realm role to user
+        :param role: Dictionary with two keys "name" and "id" of role to assign
+        :param user_id: Id of user to assign role to
+        :returns: Keycloak server response
+        """
+        return self.admin.assign_realm_roles(user_id=user_id,
+                                             roles=role)
+
     def oidc_client(self, client_id, client_secret):
         """Create OIDC client for this realm"""
         return KeycloakOpenID(server_url=self.admin.server_url,
