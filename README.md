@@ -50,4 +50,5 @@ podman run \
 	-e KUADRANT_RHSSO__username="ADMIN_USERNAME" \
 	quay.io/kuadrant/testsuite:latest
 ```
+NOTE: For binding kubeconfig file, the "others" need to have permission to read, otherwise it will not work.
 The results and reports will be saved in `/test-run-results` in the container.
