@@ -26,7 +26,7 @@ class Envoy(LifecycleObject):
 
     def create_route(self, name):
         """Creates another route pointing to this Envoy"""
-        route = self.openshift.routes.expose(name, f"envoy-{self.name}")
+        route = self.openshift.routes.expose(name, self.name)
         with self.openshift.context:
             self.envoy_objects = self.envoy_objects.union(route.self_selector())
         return route
@@ -44,7 +44,7 @@ class Envoy(LifecycleObject):
         """Deploy all required objects into OpenShift"""
         with resources.path("testsuite.resources", "envoy.yaml") as path:
             self.envoy_objects = self.openshift.new_app(path, {
-                "NAME": f"envoy-{self.name}",
+                "NAME": self.name,
                 "LABEL": self.label,
                 "AUTHORINO_URL": self.authorino.authorization_url,
                 "UPSTREAM_URL": self.httpbin_hostname
@@ -76,7 +76,7 @@ class TLSEnvoy(Envoy):
     def commit(self):
         with resources.path("testsuite.resources.tls", "envoy.yaml") as path:
             self.envoy_objects = self.openshift.new_app(path, {
-                "NAME": f"envoy-{self.name}",
+                "NAME": self.name,
                 "LABEL": self.label,
                 "AUTHORINO_URL": self.authorino.authorization_url,
                 "UPSTREAM_URL": self.httpbin_hostname,
