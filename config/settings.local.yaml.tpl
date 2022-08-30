@@ -1,8 +1,11 @@
 #default:
 #  skip_cleanup: false
 #  openshift:
-#    project: "authorino"
-#    second_project: "authorino2"
+#    project: "kuadrant"                       # Optional: namespace for tests to run, if None uses current project
+#    api_url: "https://api.openshift.com"      # Optional: OpenShift API URL, if None it will OpenShift that you are logged in
+#    token: "KUADRANT_RULEZ"                   # Optional: OpenShift Token, if None it will OpenShift that you are logged in
+#  openshift2:
+#    project: "kuadrant2"                      # Required: Secondary OpenShift project, for running tests across projects
 #  rhsso:
 #    url: "SSO_URL"
 #    username: "SSO_ADMIN_USERNAME"

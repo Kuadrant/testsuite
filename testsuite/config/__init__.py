@@ -1,4 +1,4 @@
-"""Testsuite configuration"""
+"""Module which initializes Dynaconf"""
 from dynaconf import Dynaconf, Validator
 
 settings = Dynaconf(
@@ -9,6 +9,7 @@ settings = Dynaconf(
     envvar_prefix="KUADRANT",
     merge_enabled=True,
     validators=[
-        Validator("authorino.deploy", eq=True) | Validator("authorino.url", must_exist=True)
-    ]
+        Validator("authorino.deploy", eq=True) | Validator("authorino.url", must_exist=True),
+    ],
+    loaders=["testsuite.config.openshift_loader", "dynaconf.loaders.env_loader"]
 )

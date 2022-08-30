@@ -33,6 +33,10 @@ class OpenShiftClient:
         self._api_url = api_url
         self.token = token
 
+    def change_project(self, project):
+        """Return new OpenShiftClient with a different project"""
+        return OpenShiftClient(project, self._api_url, self.token)
+
     @cached_property
     def context(self):
         """Prepare context for command execution"""
