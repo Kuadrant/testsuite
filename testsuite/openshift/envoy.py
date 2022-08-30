@@ -22,7 +22,10 @@ class Envoy(LifecycleObject):
     def route(self):
         """Returns route for object"""
         with self.openshift.context:
-            return self.envoy_objects.narrow("route").object()
+            return self.envoy_objects\
+                .narrow("route")\
+                .narrow(lambda route: route.model.metadata.name == self.name)\
+                .object()
 
     def create_route(self, name):
         """Creates another route pointing to this Envoy"""
