@@ -3,7 +3,7 @@
 import pytest
 
 from testsuite.certificates import CFSSLClient, Certificate, CertInfo
-from testsuite.openshift.httpbin import TLSEnvoy
+from testsuite.openshift.envoy import TLSEnvoy
 from testsuite.utils import cert_builder
 
 
