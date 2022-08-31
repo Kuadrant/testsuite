@@ -1,7 +1,7 @@
 """Test for authorino sharding"""
 import pytest
 
-from testsuite.openshift.httpbin import Envoy
+from testsuite.openshift.envoy import Envoy
 from testsuite.openshift.objects.auth_config import AuthConfig
 
 

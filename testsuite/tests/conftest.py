@@ -3,7 +3,8 @@ import pytest
 from keycloak import KeycloakAuthenticationError
 
 from testsuite.config import settings
-from testsuite.openshift.httpbin import Httpbin, Envoy
+from testsuite.openshift.httpbin import Httpbin
+from testsuite.openshift.envoy import Envoy
 from testsuite.rhsso import RHSSO, Realm, RHSSOServiceConfiguration
 from testsuite.utils import randomize, _whoami
 
