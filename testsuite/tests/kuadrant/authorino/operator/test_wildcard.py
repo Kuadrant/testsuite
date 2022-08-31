@@ -8,15 +8,15 @@ from testsuite.openshift.objects.auth_config import AuthConfig
 
 # pylint: disable = unused-argument
 @pytest.fixture(scope="module")
-def authorization(authorino, blame, openshift, module_label):
+def authorization(authorino, blame, openshift, module_label, wildcard_domain):
     """In case of Authorino, AuthConfig used for authorization"""
-    return AuthConfig.create_instance(openshift, blame("ac"), "*.redhat.com", labels={"testRun": module_label})
+    return AuthConfig.create_instance(openshift, blame("ac"), wildcard_domain, labels={"testRun": module_label})
 
 
 def test_wildcard(client):
     """
     Preparation:
-        - Create AuthConfig with host set to `*.redhat.com`
+        - Create AuthConfig with host set to wildcard domain
     Test:
         - Send request to authorino
         - Assert that request was successful
