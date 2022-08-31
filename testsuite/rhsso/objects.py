@@ -1,7 +1,7 @@
 """Object wrappers of RHSSO resources"""
 from urllib.parse import urlparse
 
-from keycloak import KeycloakOpenID, KeycloakAdmin
+from keycloak import KeycloakOpenID, KeycloakAdmin, KeycloakPostError
 
 
 class Realm:
@@ -93,15 +93,24 @@ class RHSSO:
     """Helper class for RHSSO server"""
 
     def __init__(self, server_url, username, password) -> None:
-        # python-keycloak API requires url to be pointed at auth/ endpoint
-        # pylint: disable=protected-access
-        self.server_url = urlparse(server_url)._replace(path="auth/").geturl()
-        self.master = KeycloakAdmin(server_url=self.server_url,
-                                    username=username,
-                                    password=password,
-                                    realm_name="master",
-                                    verify=False,
-                                    auto_refresh_token=['get', 'put', 'post', 'delete'])
+        try:
+            self.master = KeycloakAdmin(server_url=server_url,
+                                        username=username,
+                                        password=password,
+                                        realm_name="master",
+                                        verify=False,
+                                        auto_refresh_token=['get', 'put', 'post', 'delete'])
+            self.server_url = server_url
+        except KeycloakPostError:
+            # Older Keycloaks versions (and RHSSO) needs requires url to be pointed at auth/ endpoint
+            # pylint: disable=protected-access
+            self.server_url = urlparse(server_url)._replace(path="auth/").geturl()
+            self.master = KeycloakAdmin(server_url=self.server_url,
+                                        username=username,
+                                        password=password,
+                                        realm_name="master",
+                                        verify=False,
+                                        auto_refresh_token=['get', 'put', 'post', 'delete'])
 
     def create_realm(self, name: str, **kwargs) -> Realm:
         """Creates new realm"""
