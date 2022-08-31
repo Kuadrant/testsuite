@@ -1,7 +1,7 @@
 """Object wrappers of RHSSO resources"""
-from urllib.parse import urlparse
+from functools import cached_property
 
-from keycloak import KeycloakOpenID, KeycloakAdmin, KeycloakPostError
+from keycloak import KeycloakOpenID, KeycloakAdmin
 
 
 class Realm:
@@ -80,51 +80,10 @@ class Client:
         role = self.admin.get_client_role(realm_management, role_name)
         self.admin.assign_client_role(user["id"], realm_management, role)
 
-    @property
+    @cached_property
     def oidc_client(self):
         """OIDC client"""
         # Note This is different clientId (clientId) than self.client_id (Id), because RHSSO
         client_id = self.admin.get_client(self.client_id)["clientId"]
         secret = self.admin.get_client_secrets(self.client_id)["value"]
         return self.realm.oidc_client(client_id, secret)
-
-
-class RHSSO:
-    """Helper class for RHSSO server"""
-
-    def __init__(self, server_url, username, password) -> None:
-        try:
-            self.master = KeycloakAdmin(server_url=server_url,
-                                        username=username,
-                                        password=password,
-                                        realm_name="master",
-                                        verify=False,
-                                        auto_refresh_token=['get', 'put', 'post', 'delete'])
-            self.server_url = server_url
-        except KeycloakPostError:
-            # Older Keycloaks versions (and RHSSO) needs requires url to be pointed at auth/ endpoint
-            # pylint: disable=protected-access
-            self.server_url = urlparse(server_url)._replace(path="auth/").geturl()
-            self.master = KeycloakAdmin(server_url=self.server_url,
-                                        username=username,
-                                        password=password,
-                                        realm_name="master",
-                                        verify=False,
-                                        auto_refresh_token=['get', 'put', 'post', 'delete'])
-
-    def create_realm(self, name: str, **kwargs) -> Realm:
-        """Creates new realm"""
-        self.master.create_realm(payload={
-            "realm": name,
-            "enabled": True,
-            "sslRequired": "None",
-            **kwargs
-        })
-        return Realm(self.master, name)
-
-    def create_oidc_client(self, realm, client_id, secret) -> KeycloakOpenID:
-        """Creates OIDC client"""
-        return KeycloakOpenID(server_url=self.master.server_url,
-                              client_id=client_id,
-                              realm_name=realm,
-                              client_secret_key=secret)
