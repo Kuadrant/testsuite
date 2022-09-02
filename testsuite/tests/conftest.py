@@ -6,6 +6,7 @@ from keycloak import KeycloakAuthenticationError
 
 from testsuite.oidc import OIDCProvider
 from testsuite.config import settings
+from testsuite.oidc.auth0 import Auth0Provider
 from testsuite.openshift.httpbin import Httpbin
 from testsuite.openshift.envoy import Envoy
 from testsuite.oidc.rhsso import RHSSO
@@ -55,6 +56,16 @@ def rhsso(request, testconfig, blame):
         return pytest.skip("Unable to login into SSO, please check the credentials provided")
     except KeyError as exc:
         return pytest.skip(f"SSO configuration item is missing: {exc}")
+
+
+@pytest.fixture(scope="session")
+def auth0(testconfig):
+    """Auth0 OIDC provider fixture"""
+    try:
+        section = testconfig["auth0"]
+        return Auth0Provider(section["url"], section["client_id"], section["client_secret"])
+    except KeyError as exc:
+        return pytest.skip(f"Auth0 configuration item is missing: {exc}")
 
 
 @pytest.fixture(scope="session")
