@@ -1,4 +1,6 @@
 """Root conftest"""
+from urllib.parse import urlparse
+
 import pytest
 from keycloak import KeycloakAuthenticationError
 
@@ -125,3 +127,12 @@ def envoy(request, authorino, openshift, blame, backend, module_label):
     request.addfinalizer(envoy.delete)
     envoy.commit()
     return envoy
+
+
+@pytest.fixture(scope="session")
+def wildcard_domain(openshift):
+    """
+    Wildcard domain of openshift cluster
+    """
+    hostname = urlparse(openshift.api_url).hostname
+    return "*.apps." + hostname.split(".", 1)[1]

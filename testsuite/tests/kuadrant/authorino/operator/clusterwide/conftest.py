@@ -5,9 +5,9 @@ from testsuite.openshift.objects.auth_config import AuthConfig
 
 
 @pytest.fixture(scope="module")
-def cluster_wide():
+def authorino_parameters():
     """Deploy Authorino in ClusterWide mode"""
-    return True
+    return {"cluster_wide": True}
 
 
 @pytest.fixture(scope="module")

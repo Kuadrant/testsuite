@@ -11,18 +11,29 @@ from testsuite.openshift.objects.authorino import AuthorinoCR
 
 
 @pytest.fixture(scope="module")
-def authorino(authorino, openshift, blame, request, testconfig, module_label) -> Authorino:
+def authorino_parameters():
+    """Optional parameters for Authorino creation, passed to the __init__"""
+    return {}
+
+
+@pytest.fixture(scope="module")
+def authorino(authorino, openshift, blame, request, testconfig, module_label, authorino_parameters) -> Authorino:
     """Authorino instance"""
     if authorino:
         return authorino
 
     if not testconfig["authorino"]["deploy"]:
+        if len(authorino_parameters) > 0:
+            return pytest.skip("Can't change parameters of already deployed Authorino")
         return PreexistingAuthorino(testconfig["authorino"]["url"])
+
+    labels = authorino_parameters.setdefault("label_selectors", [])
+    labels.append(f"testRun={module_label}")
 
     authorino = AuthorinoCR.create_instance(openshift,
                                             blame("authorino"),
                                             image=weakget(testconfig)["authorino"]["image"] % None,
-                                            label_selectors=[f"testRun={module_label}"])
+                                            **authorino_parameters)
     request.addfinalizer(lambda: authorino.delete(ignore_not_found=True))
     authorino.commit()
     authorino.wait_for_ready()
