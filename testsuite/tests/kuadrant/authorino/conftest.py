@@ -61,7 +61,7 @@ def create_api_key(blame, request, openshift):
     def _create_secret(name, label_selector, api_key, ocp: OpenShiftClient = openshift):
         secret_name = blame(name)
         secret = APIKey.create_instance(ocp, secret_name, label_selector, api_key)
-        request.addfinalizer(secret.delete)
+        request.addfinalizer(lambda: secret.delete(ignore_not_found=True))
         secret.commit()
-        return secret_name
+        return secret
     return _create_secret

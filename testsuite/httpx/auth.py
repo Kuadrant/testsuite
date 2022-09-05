@@ -4,6 +4,7 @@ from typing import Generator
 
 from httpx import Auth, Request, URL, Response
 
+from testsuite.openshift.objects.api_key import APIKey
 from testsuite.rhsso import Client
 
 
@@ -39,9 +40,9 @@ class HttpxOidcClientAuth(Auth):
 class HeaderApiKeyAuth(Auth):
     """Auth class for authentication with API key"""
 
-    def __init__(self, api_key: str, prefix: str = "APIKEY") -> None:
+    def __init__(self, api_key: APIKey, prefix: str = "APIKEY") -> None:
         super().__init__()
-        self.api_key = api_key
+        self.api_key = str(api_key)
         self.prefix = prefix
 
     def auth_flow(self, request: Request) -> typing.Generator[Request, Response, None]:
