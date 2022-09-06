@@ -13,6 +13,10 @@
 #    test_user:
 #      username: "testUser"
 #      password: "testPassword"
+#  auth0:
+#    client: "CLIENT_ID"
+#    client-secret: "CLIENT_SECRET"
+#    domain: "AUTH0_DOMAIN"
 #  cfssl: "cfssl"  # Path to the CFSSL library for TLS tests
 #  authorino:
 #    image: "quay.io/kuadrant/authorino:latest"  # If specified will override the authorino image

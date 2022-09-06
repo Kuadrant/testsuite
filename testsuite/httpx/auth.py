@@ -48,3 +48,15 @@ class HeaderApiKeyAuth(Auth):
     def auth_flow(self, request: Request) -> typing.Generator[Request, Response, None]:
         request.headers["Authorization"] = f"{self.prefix} {self.api_key}"
         yield request
+
+
+class Auth0Auth(Auth):
+    """Auth class for authentication with Auth0 token"""
+
+    def __init__(self, token: str) -> None:
+        super().__init__()
+        self.token = token
+
+    def auth_flow(self, request: Request) -> typing.Generator[Request, Response, None]:
+        request.headers["Authorization"] = f"Bearer {self.token}"
+        yield request
