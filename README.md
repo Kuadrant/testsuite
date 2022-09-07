@@ -51,6 +51,8 @@ To run all tests you can then use ```make test```
 
 For just running tests, the container image is the easiest option, you can log in to OpenShift and then run it like this
 
+If you omit any options, Testsuite will run only subset of tests that don't require that variable e.g. not providing Auth0 will result in skipping Auth0 tests.
+
 NOTE: For binding kubeconfig file, the "others" need to have permission to read, otherwise it will not work.
 The results and reports will be saved in `/test-run-results` in the container.
 
@@ -61,6 +63,9 @@ podman run \
 	-v $HOME/.kube/config:/run/kubeconfig:z \
 	-e KUADRANT_OPENSHIFT__project=authorino \
 	-e KUADRANT_OPENSHIFT2__project=authorino2 \
+	-e KUADRANT_AUTH0__url="AUTH0_URL" \
+	-e KUADRANT_AUTH0__client_id="AUTH0_CLIENT_ID" \
+	-e KUADRANT_AUTH0__client_secret="AUTH0_CLIENT_SECRET" \	
 	quay.io/kuadrant/testsuite:latest
 ```
 
@@ -74,5 +79,8 @@ podman run \
 	-e KUADRANT_RHSSO__url="https://my-sso.net" \
 	-e KUADRANT_RHSSO__password="ADMIN_PASSWORD" \
 	-e KUADRANT_RHSSO__username="ADMIN_USERNAME" \
+	-e KUADRANT_AUTH0__url="AUTH0_URL" \
+	-e KUADRANT_AUTH0__client_id="AUTH0_CLIENT_ID" \
+	-e KUADRANT_AUTH0__client_secret="AUTH0_CLIENT_SECRET" \
 	quay.io/kuadrant/testsuite:latest
 ```
