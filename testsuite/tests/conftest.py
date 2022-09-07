@@ -1,4 +1,6 @@
 """Root conftest"""
+import signal
+
 from urllib.parse import urlparse
 
 import pytest
@@ -9,6 +11,17 @@ from testsuite.openshift.httpbin import Httpbin
 from testsuite.openshift.envoy import Envoy
 from testsuite.rhsso import RHSSO, Realm, RHSSOServiceConfiguration
 from testsuite.utils import randomize, _whoami
+
+
+@pytest.fixture(scope='session', autouse=True)
+def term_handler():
+    """
+    This will handle ^C, cleanup won't be skipped
+    https://github.com/pytest-dev/pytest/issues/9142
+    """
+    orig = signal.signal(signal.SIGTERM, signal.getsignal(signal.SIGINT))
+    yield
+    signal.signal(signal.SIGTERM, orig)
 
 
 @pytest.fixture(scope="session")
