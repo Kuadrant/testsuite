@@ -15,6 +15,11 @@ def load(obj, env=None, silent=True, key=None, filename=None):
         section["token"] % None)
     obj["openshift"] = client
 
+    tools = None
+    if "tools" in obj and "project" in obj["tools"]:
+        tools = client.change_project(obj["tools"]["project"])
+    obj["tools"] = tools
+
     openshift2 = None
     if "openshift2" in obj and "project" in obj["openshift2"]:
         openshift2 = client.change_project(obj["openshift2"]["project"])
