@@ -2,7 +2,7 @@
 import base64
 
 from testsuite.openshift.client import OpenShiftClient
-from testsuite.openshift.objects import OpenShiftObject
+from testsuite.openshift.objects import OpenShiftObject, modify
 
 
 class APIKey(OpenShiftObject):
@@ -32,3 +32,8 @@ class APIKey(OpenShiftObject):
         }
 
         return cls(model, context=openshift.context)
+
+    @modify
+    def update_api_key(self, api_key):
+        """Updates API key Secret with new API key"""
+        self.model.data["api_key"] = base64.b64encode(api_key.encode("utf-8")).decode('ascii')
