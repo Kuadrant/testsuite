@@ -4,10 +4,12 @@ from urllib.parse import urlparse
 import pytest
 from keycloak import KeycloakAuthenticationError
 
+from testsuite.oidc import OIDCProvider
 from testsuite.config import settings
+from testsuite.oidc.auth0 import Auth0Provider
 from testsuite.openshift.httpbin import Httpbin
 from testsuite.openshift.envoy import Envoy
-from testsuite.rhsso import RHSSO, Realm, RHSSOServiceConfiguration
+from testsuite.oidc.rhsso import RHSSO
 from testsuite.utils import randomize, _whoami
 
 
@@ -38,38 +40,38 @@ def openshift2(testconfig):
 
 
 @pytest.fixture(scope="session")
-def rhsso_service_info(request, testconfig, blame):
-    """
-    Set up client for zync
-    :return: dict with all important details
-    """
+def rhsso(request, testconfig, blame):
+    """RHSSO OIDC Provider fixture"""
     cnf = testconfig["rhsso"]
     try:
-        rhsso = RHSSO(server_url=cnf["url"],
-                      username=cnf["username"],
-                      password=cnf["password"])
+        info = RHSSO(cnf["url"], cnf["username"], cnf["password"], blame("realm"), blame("client"),
+                     cnf["test_user"]["password"], cnf["test_user"]["username"])
+
+        if not testconfig["skip_cleanup"]:
+            request.addfinalizer(info.delete)
+
+        info.commit()
+        return info
     except KeycloakAuthenticationError:
         return pytest.skip("Unable to login into SSO, please check the credentials provided")
     except KeyError as exc:
         return pytest.skip(f"SSO configuration item is missing: {exc}")
 
-    realm: Realm = rhsso.create_realm(blame("realm"), accessTokenLifespan=24*60*60)
 
-    if not testconfig["skip_cleanup"]:
-        request.addfinalizer(realm.delete)
+@pytest.fixture(scope="session")
+def auth0(testconfig):
+    """Auth0 OIDC provider fixture"""
+    try:
+        section = testconfig["auth0"]
+        return Auth0Provider(section["url"], section["client_id"], section["client_secret"])
+    except KeyError as exc:
+        return pytest.skip(f"Auth0 configuration item is missing: {exc}")
 
-    client = realm.create_client(
-        name=blame("client"),
-        directAccessGrantsEnabled=True,
-        publicClient=False,
-        protocol="openid-connect",
-        standardFlowEnabled=False)
 
-    username = cnf["test_user"]["username"]
-    password = cnf["test_user"]["password"]
-    user = realm.create_user(username, password)
-
-    return RHSSOServiceConfiguration(rhsso, realm, client, user, username, password)
+@pytest.fixture(scope="session")
+def oidc_provider(rhsso) -> OIDCProvider:
+    """Fixture which enables switching out OIDC providers for individual modules"""
+    return rhsso
 
 
 @pytest.fixture(scope="session")

@@ -1,36 +1,54 @@
 """Tests basic authentication with RHSSO/Auth0 as identity provider"""
 import pytest
 
+from testsuite.httpx.auth import HttpxOidcClientAuth
+from testsuite.oidc import OIDCProvider
+from testsuite.oidc.rhsso import RHSSO
 
-@pytest.mark.parametrize(("client_fixture", "auth_fixture"), [
-    pytest.param("rhsso_client", "auth", id="RHSSO"),
-    pytest.param("auth0_client", "auth0_auth", id="Auth0"),
-])
-def test_correct_auth(client_fixture, auth_fixture, request):
+
+@pytest.fixture(scope="module")
+def authorization(authorization, oidc_provider):
+    """Add RHSSO identity to AuthConfig"""
+    authorization.add_oidc_identity("rhsso", oidc_provider.well_known["issuer"])
+    return authorization
+
+
+@pytest.fixture(scope="module", params=("rhsso", "auth0"))
+def oidc_provider(request) -> OIDCProvider:
+    """Fixture which enables switching out OIDC providers for individual modules"""
+    return request.getfixturevalue(request.param)
+
+
+@pytest.fixture(scope="module")
+def wrong_auth(oidc_provider, auth0, rhsso):
+    """Different (but valid) auth than was configured"""
+    token = rhsso.get_token
+    if isinstance(oidc_provider, RHSSO):
+        token = auth0.get_token
+    return HttpxOidcClientAuth(token)
+
+
+def test_correct_auth(client, auth):
     """Tests correct auth"""
-    client = request.getfixturevalue(client_fixture)
-    auth = request.getfixturevalue(auth_fixture)
     response = client.get("/get", auth=auth)
     assert response.status_code == 200
 
 
-@pytest.mark.parametrize("client_fixture", [
-    pytest.param("rhsso_client", id="RHSSO"),
-    pytest.param("auth0_client", id="Auth0"),
-])
-def test_no_auth(client_fixture, request):
+def test_wrong_auth(wrong_auth, client):
+    """Tests request with wrong token"""
+    response = client.get("/get", auth=wrong_auth)
+    assert response.status_code == 401
+
+
+# pylint: disable=unused-argument
+def test_no_auth(client):
     """Tests request without any auth"""
-    client = request.getfixturevalue(client_fixture)
     response = client.get("/get")
     assert response.status_code == 401
 
 
-@pytest.mark.parametrize("client_fixture", [
-    pytest.param("rhsso_client", id="RHSSO"),
-    pytest.param("auth0_client", id="Auth0"),
-])
-def test_wrong_auth(client_fixture, request):
-    """Tests request with wrong token"""
-    client = request.getfixturevalue(client_fixture)
+# pylint: disable=unused-argument
+def test_invalid_auth(client):
+    """Tests request with invalid token"""
     response = client.get("/get", headers={"Authorization": "Bearer xyz"})
     assert response.status_code == 401

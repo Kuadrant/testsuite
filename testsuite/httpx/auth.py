@@ -1,20 +1,26 @@
 """Auth Classes for HttpX"""
-import typing
-from typing import Generator
+from functools import cached_property
+from typing import Generator, Callable, Union
 
 from httpx import Auth, Request, URL, Response
 
 from testsuite.openshift.objects.api_key import APIKey
-from testsuite.rhsso import Client
+from testsuite.oidc import Token
 
 
 class HttpxOidcClientAuth(Auth):
     """Auth class for Httpx client for product secured by oidc"""
 
-    def __init__(self, client: Client, location, username=None, password=None) -> None:
+    def __init__(self, token: Union[Token, Callable[[], Token]], location="authorization") -> None:
         self.location = location
-        self.oidc_client = client.oidc_client
-        self.token = self.oidc_client.token(username, password)
+        self._token = token
+
+    @cached_property
+    def token(self):
+        """Lazily retrieves token from OIDC provider"""
+        if callable(self._token):
+            return self._token()
+        return self._token
 
     def _add_credentials(self, request: Request, token):
         if self.location == 'authorization':
@@ -27,13 +33,13 @@ class HttpxOidcClientAuth(Auth):
             raise ValueError(f"Unknown credentials location '{self.location}'")
 
     def auth_flow(self, request: Request) -> Generator[Request, Response, None]:
-        self._add_credentials(request, self.token["access_token"])
+        self._add_credentials(request, self.token.access_token)
         response = yield request
 
         if response.status_code == 403:
             # Renew access token and try again
-            self.token = self.oidc_client.refresh_token(self.token["refresh_token"])
-            self._add_credentials(request, self.token["access_token"])
+            self.token.refresh()
+            self._add_credentials(request, self.token.access_token)
             yield request
 
 
@@ -45,18 +51,6 @@ class HeaderApiKeyAuth(Auth):
         self.api_key = str(api_key)
         self.prefix = prefix
 
-    def auth_flow(self, request: Request) -> typing.Generator[Request, Response, None]:
+    def auth_flow(self, request: Request) -> Generator[Request, Response, None]:
         request.headers["Authorization"] = f"{self.prefix} {self.api_key}"
-        yield request
-
-
-class Auth0Auth(Auth):
-    """Auth class for authentication with Auth0 token"""
-
-    def __init__(self, token: str) -> None:
-        super().__init__()
-        self.token = token
-
-    def auth_flow(self, request: Request) -> typing.Generator[Request, Response, None]:
-        request.headers["Authorization"] = f"Bearer {self.token}"
         yield request
