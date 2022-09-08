@@ -153,5 +153,6 @@ class AuthConfig(OpenShiftObject, Authorization):
 
     @modify
     def add_response(self, response):
-        """Add response to AuthConfig"""
-        self.model["spec"]["response"] = [response]
+        """Adds response section to authconfig."""
+        responses = self.model.spec.setdefault("response", [])
+        responses.append(response)
