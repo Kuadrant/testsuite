@@ -17,8 +17,7 @@ def authorization(authorino, envoy, blame, openshift):
 
 
 @pytest.fixture(scope="module", autouse=True)
-def commit(authorization):
+def commit(request, authorization):
     """Commits all important stuff before tests"""
+    request.addfinalizer(authorization.delete)
     authorization.commit()
-    yield
-    authorization.delete()
