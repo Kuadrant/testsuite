@@ -7,7 +7,7 @@ from testsuite.httpx import HttpxBackoffClient
 
 # pylint: disable=unused-argument
 @pytest.fixture(scope="module")
-def authorization(authorization, wildcard_domain, openshift, rhsso_service_info, module_label) -> Authorization:
+def authorization(authorization, wildcard_domain, openshift, module_label) -> Authorization:
     """In case of Authorino, AuthConfig used for authorization"""
     authorization.remove_all_hosts()
     authorization.add_host(wildcard_domain)
