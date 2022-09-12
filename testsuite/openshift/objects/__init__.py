@@ -41,3 +41,7 @@ class OpenShiftObject(APIObject):
         self.create(["--save-config=true"])
         self.commited = True
         return self.refresh()
+
+    def delete(self, ignore_not_found=True, cmd_args=None):
+        """Deletes the resource, by default ignored not found"""
+        return super().delete(ignore_not_found, cmd_args)
