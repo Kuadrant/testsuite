@@ -55,7 +55,8 @@ objects:
                   typed_config:
                     "@type": type.googleapis.com/envoy.extensions.filters.http.ext_authz.v3.ExtAuthz
                     transport_api_version: V3
-                    failure_mode_allow: true
+                    failure_mode_allow: false
+                    status_on_error: {code: 500}
                     include_peer_certificate: true
                     grpc_service:
                       envoy_grpc:
