@@ -58,7 +58,7 @@ def rhsso(request, testconfig, blame):
     cnf = testconfig["rhsso"]
     try:
         info = RHSSO(cnf["url"], cnf["username"], cnf["password"], blame("realm"), blame("client"),
-                     cnf["test_user"]["password"], cnf["test_user"]["username"])
+                     cnf["test_user"]["username"], cnf["test_user"]["password"])
 
         if not testconfig["skip_cleanup"]:
             request.addfinalizer(info.delete)
