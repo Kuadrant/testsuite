@@ -12,4 +12,4 @@ default:
   authorino:
     deploy: true
   envoy:
-    image: "docker.io/envoyproxy/envoy:v1.19-latest"
+    image: "docker.io/envoyproxy/envoy:v1.23-latest"
