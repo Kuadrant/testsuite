@@ -227,5 +227,4 @@ parameters:
   description: "Secret containing CA for communication with Authorino, only public cert is required"
   required: true
 - name: ENVOY_IMAGE
-  required: false
-  value: envoyproxy/envoy:v1.19-latest
+  required: true

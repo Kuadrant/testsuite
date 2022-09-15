@@ -11,3 +11,5 @@ default:
       password: "testPassword"
   authorino:
     deploy: true
+  envoy:
+    image: "docker.io/envoyproxy/envoy:v1.19-latest"
