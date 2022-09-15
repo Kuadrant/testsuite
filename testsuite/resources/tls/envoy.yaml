@@ -63,14 +63,14 @@ objects:
                         cluster_name: external_auth
                       timeout: 1s
                 - name: envoy.filters.http.router
-                  typed_config: {}
+                  typed_config:
+                    "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
                 use_remote_address: true
         clusters:
         - name: external_auth
           connect_timeout: 0.25s
           type: strict_dns
           lb_policy: round_robin
-          http2_protocol_options: {}
           load_assignment:
             cluster_name: external_auth
             endpoints:
@@ -80,6 +80,13 @@ objects:
                     socket_address:
                       address: ${AUTHORINO_URL}
                       port_value: 50051
+          typed_extension_protocol_options:
+            envoy.extensions.upstreams.http.v3.HttpProtocolOptions:
+              "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions
+              upstream_http_protocol_options:
+                auto_sni: true
+              explicit_http_config:
+                http2_protocol_options: {}
           transport_socket:
             name: envoy.transport_sockets.tls
             typed_config:
@@ -102,7 +109,6 @@ objects:
                       address: ${UPSTREAM_URL}
                       port_value: 8080
       admin:
-        access_log_path: "/tmp/admin_access.log"
         address:
           socket_address:
             address: 0.0.0.0
