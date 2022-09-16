@@ -49,6 +49,7 @@ def setup(authorino, authorization, envoy, wildcard_domain):
     return custom_envoy, auth
 
 
+@pytest.mark.issue("https://github.com/Kuadrant/authorino/pull/349")
 def test_preexisting_auth(setup):
     """
     Test:
