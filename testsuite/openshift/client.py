@@ -108,6 +108,7 @@ class OpenShiftClient:
 
         if os.path.isfile(source):
             source = f"--filename={source}"
+            opt_args.append("--local=true")
         objects = self.do_action("process", source, opt_args).out()
         with self.context:
             created = oc.create(objects)
