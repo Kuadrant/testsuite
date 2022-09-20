@@ -68,6 +68,10 @@ class Authorization(LifecycleObject):
     def add_role_rule(self, name: str, role: str, path: str, metrics: bool, priority: int):
         """Adds a rule, which allows access to 'path' only to users with 'role'"""
 
+    @abc.abstractmethod
+    def set_deny_with(self, code, value):
+        """Set denyWith to authconfig"""
+
 
 class PreexistingAuthorino(Authorino):
     """Authorino which is already deployed prior to the testrun"""
