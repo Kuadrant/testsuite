@@ -2,9 +2,6 @@
 Conftest for performance tests
 """
 import pytest
-import os
-
-from pathlib import Path
 from hyperfoil import HyperfoilClient
 
 from testsuite.perf_utils import HyperfoilUtils
@@ -22,28 +19,10 @@ def hyperfoil_client(testconfig):
 def hyperfoil_utils(hyperfoil_client, template, request):
     """Init of hyperfoil utils"""
     utils = HyperfoilUtils(hyperfoil_client, template)
-    request.addfinalizer(utils.finalizer)
+    request.addfinalizer(utils.delete)
+    utils.commit()
     return utils
 
-
-@pytest.fixture(scope='module')
-def shared_template(testconfig):
-    """Shared template for hyperfoil test"""
-    shared_template = testconfig.get('hyperfoil', {}).get('shared_template', {})
-    return shared_template.to_dict()
-
-
-@pytest.fixture(scope='session')
-def root_path():
-    """Root path for performance tests"""
-    return Path(os.path.realpath(__file__)).parent
-
-
-@pytest.fixture(scope="module")
-def rhsso_authorization(authorization, rhsso):
-    """Add RHSSO identity to AuthConfig"""
-    authorization.add_oidc_identity("rhsso", rhsso.well_known["issuer"])
-    return authorization
 
 
 @pytest.fixture(scope="module")

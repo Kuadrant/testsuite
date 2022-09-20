@@ -3,34 +3,46 @@
     Fill necessary data to benchmark template.
     Run the test and assert results.
 """
-import os
 from urllib.parse import urlparse
+from importlib import resources
 
 import backoff
 import pytest
 
 from testsuite.perf_utils import HyperfoilUtils, prepare_url
 
+# Maximal runtime of test (need to cover all performance stages)
 MAX_RUN_TIME = 10 * 60
+# Number of Hyperfoil agents to be spawned
+AGENTS = 2
 
 
 @pytest.fixture(scope='module')
-def template(root_path):
+def number_of_agents():
+    """Number of spawned HyperFoil agents"""
+    return AGENTS
+
+
+@pytest.fixture(scope='module')
+def template():
     """Path to template"""
-    return os.path.join(root_path, 'templates/template_perf_basic_query_rhsso.hf.yaml')
+    return resources.files("testsuite.tests.kuadrant.authorino.performance.templates")\
+        .joinpath('template_perf_basic_query_rhsso.hf.yaml')
 
 
 @pytest.fixture(scope='module')
 def hyperfoil_utils(hyperfoil_client, template, request):
     """Init of hyperfoil utils"""
     utils = HyperfoilUtils(hyperfoil_client, template)
-    request.addfinalizer(utils.finalizer)
+    request.addfinalizer(utils.delete)
+    utils.commit()
     return utils
 
 
 @pytest.fixture(scope='module')
-def setup_benchmark_rhsso(hyperfoil_utils, shared_template, client, rhsso):
+def setup_benchmark_rhsso(hyperfoil_utils, client, rhsso, number_of_agents):
     """Setup of benchmark. It will add necessary host connections, csv data and files."""
+    # currently number of shared connections is set as a placeholder and later should be determined by test results
     url_pool = [{'url': rhsso.server_url, 'connections': 100}, {'url': str(client.base_url), 'connections': 20}]
     for url in url_pool:
         complete_url = prepare_url(urlparse(url['url']))
@@ -38,7 +50,7 @@ def setup_benchmark_rhsso(hyperfoil_utils, shared_template, client, rhsso):
 
     hyperfoil_utils.add_rhsso_auth_token(rhsso, prepare_url(urlparse(str(client.base_url))).netloc, 'rhsso_auth.csv')
     hyperfoil_utils.add_file(HyperfoilUtils.message_1kb)
-    hyperfoil_utils.add_shared_template(shared_template)
+    hyperfoil_utils.add_shared_template(number_of_agents)
     return hyperfoil_utils
 
 
