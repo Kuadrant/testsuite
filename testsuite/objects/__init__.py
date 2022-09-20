@@ -41,6 +41,10 @@ class Authorization(LifecycleObject):
         """Adds API Key identity"""
 
     @abc.abstractmethod
+    def add_anonymous_identity(self, name):
+        """Adds anonymous identity"""
+
+    @abc.abstractmethod
     def remove_all_identities(self):
         """Removes all identities from AuthConfig"""
 

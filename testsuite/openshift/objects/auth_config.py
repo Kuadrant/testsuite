@@ -106,6 +106,12 @@ class AuthConfig(OpenShiftObject, Authorization):
         })
 
     @modify
+    def add_anonymous_identity(self, name):
+        """Adds anonymous identity"""
+        identities = self.model.spec.setdefault("identity", [])
+        identities.append({"name": name, "anonymous": {}})
+
+    @modify
     def add_role_rule(self, name: str, role: str, path: str, metrics=False, priority=0):
         """
         Adds a rule, which allows access to 'path' only to users with 'role'
