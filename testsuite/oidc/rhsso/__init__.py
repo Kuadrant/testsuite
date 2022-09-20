@@ -85,3 +85,8 @@ class RHSSO(OIDCProvider, LifecycleObject):
     def get_token(self, username=None, password=None) -> Token:
         data = self.oidc_client.token(username or self.test_username, password or self.test_password)
         return Token(data["access_token"], self.refresh_token, data["refresh_token"])
+
+    def token_body_creation(self):
+        return f"grant_type=password&client_id={self.oidc_client.client_id}&" \
+               f"client_secret={self.oidc_client.client_secret_key}&username={self.test_username}&" \
+               f"password={self.test_password}"
