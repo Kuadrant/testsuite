@@ -12,7 +12,9 @@ def load(obj, env=None, silent=True, key=None, filename=None):
     client = OpenShiftClient(
         section["project"] % None,
         section["api_url"] % None,
-        section["token"] % None)
+        section["token"] % None,
+        section["kubeconfig_path"] % None
+    )
     obj["openshift"] = client
 
     tools = None
