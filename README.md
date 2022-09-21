@@ -84,3 +84,25 @@ podman run \
 	-e KUADRANT_AUTH0__client_secret="AUTH0_CLIENT_SECRET" \
 	quay.io/kuadrant/testsuite:latest
 ```
+
+## Developing tests
+
+For developing tests for Authorino you might need to know content of the authorization JSON, you can do that through this AuthConfig, which will return all the context in the response
+
+```yaml
+apiVersion: authorino.kuadrant.io/v1beta1
+kind: AuthConfig
+metadata:
+  name: example
+spec:
+  response:
+  - name: auth-json
+    json:
+      properties:
+      - name: context
+        valueFrom: { authJSON: context }
+      - name: auth
+        valueFrom: { authJSON: auth }
+```
+
+Another thing which might helpful is using playground for developing OPA policies https://play.openpolicyagent.org/.
