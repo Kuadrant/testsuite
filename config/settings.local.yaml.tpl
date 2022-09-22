@@ -24,3 +24,5 @@
 #    image: "quay.io/kuadrant/authorino:latest"  # If specified will override the authorino image
 #    deploy: false                               # If false, the testsuite will use already deployed authorino for testing
 #    url: ""                                     # URL for already deployed Authorino
+#  envoy:
+#    image: "docker.io/envoyproxy/envoy:v1.23-latest"  # Envoy image, the testsuite should use, only for Authorino tests now

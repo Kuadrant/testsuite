@@ -6,11 +6,11 @@ from testsuite.openshift.objects.auth_config import AuthConfig
 
 
 @pytest.fixture(scope="module")
-def envoy(request, authorino, openshift, blame, backend):
+def envoy(request, authorino, openshift, blame, backend, testconfig):
     """Envoy"""
 
     def _envoy(auth=authorino):
-        envoy = Envoy(openshift, auth, blame("envoy"), blame("label"), backend.url)
+        envoy = Envoy(openshift, auth, blame("envoy"), blame("label"), backend.url, testconfig["envoy"]["image"])
         request.addfinalizer(envoy.delete)
         envoy.commit()
         return envoy

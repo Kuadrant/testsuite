@@ -98,13 +98,13 @@ def invalid_cert(invalid_authority, cfssl, wildcard_domain):
 
 @pytest.fixture(scope="module")
 def envoy(request, authorino, openshift, create_secret, blame, label, backend,
-          authorino_authority, envoy_authority, envoy_cert):
+          authorino_authority, envoy_authority, envoy_cert, testconfig):
     """Envoy + Httpbin backend"""
     authorino_secret = create_secret(authorino_authority, "authca")
     envoy_ca_secret = create_secret(envoy_authority, "backendca")
     envoy_secret = create_secret(envoy_cert, "envoycert")
 
-    envoy = TLSEnvoy(openshift, authorino, blame("backend"), label, backend.url,
+    envoy = TLSEnvoy(openshift, authorino, blame("backend"), label, backend.url, testconfig["envoy"]["image"],
                      authorino_secret, envoy_ca_secret, envoy_secret)
     request.addfinalizer(envoy.delete)
     envoy.commit()
