@@ -172,3 +172,9 @@ class AuthConfig(OpenShiftObject, Authorization):
         """Adds response section to AuthConfig."""
         responses = self.model.spec.setdefault("response", [])
         responses.append(response)
+
+    @modify
+    def set_deny_with(self, code, value):
+        """Set denyWith to authconfig"""
+        self.model.spec["denyWith"] = {
+            "unauthenticated": {"code": code, "headers": [{"name": "Location", "valueFrom": {"authJSON": value}}]}}
