@@ -1,0 +1,47 @@
+"""
+Tests for Open Policy Agent (OPA) policy pulled from external registry.
+Registry is represented by Mockserver Expectation that returns Rego query.
+"""
+import time
+
+import pytest
+
+from testsuite.utils import rego_allow_header
+
+
+@pytest.fixture(scope="module")
+def updated_header():
+    """Header for updated OPA policy"""
+    return "updated", "updated-value"
+
+
+@pytest.fixture(scope="module", autouse=True)
+def update_external_opa(mockserver, module_label, updated_header):
+    """Updates Expectation with updated header"""
+    mockserver.create_expectation(module_label, "/opa", rego_allow_header(*updated_header))
+    # Sleeps for 1 second to compensate auto-refresh cycle `authorization.opa.externalRegistry.ttl = 1`
+    time.sleep(1)
+
+
+@pytest.fixture(scope="module")
+def authorization(authorization, mockserver):
+    """
+    Adds OPA policy. Rego query is located on external registry (Mockserver).
+    Policy accepts requests that contain `header`.
+    """
+    authorization.add_external_opa_policy("opa", mockserver.url + "/opa", 1)
+    return authorization
+
+
+def test_auto_refresh(client, auth, updated_header):
+    """Tests auto-refresh of OPA policy from external registry."""
+    key, value = updated_header
+    response = client.get("/get", auth=auth, headers={key: value})
+    assert response.status_code == 200
+
+
+def test_previous(client, auth, header):
+    """Tests invalidation of previous OPA policy"""
+    key, value = header
+    response = client.get("/get", auth=auth, headers={key: value})
+    assert response.status_code == 403

@@ -32,6 +32,7 @@ settings = Dynaconf(
         DefaultValueValidator("rhsso.url", must_exist=True, default=fetch_route("no-ssl-sso")),
         DefaultValueValidator("rhsso.password",
                               must_exist=True, default=fetch_secret("credential-sso", "ADMIN_PASSWORD")),
+        DefaultValueValidator("mockserver.url", must_exist=True, default=fetch_route("no-ssl-mockserver")),
     ],
     loaders=["testsuite.config.openshift_loader", "dynaconf.loaders.env_loader"]
 )

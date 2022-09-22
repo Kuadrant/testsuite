@@ -61,6 +61,10 @@ class Authorization(LifecycleObject):
         """Adds OPA inline Rego policy"""
 
     @abc.abstractmethod
+    def add_external_opa_policy(self, name, endpoint, ttl):
+        """Adds OPA policy from external registry"""
+
+    @abc.abstractmethod
     def add_response(self, response):
         """Add response to AuthConfig"""
 

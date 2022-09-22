@@ -63,3 +63,8 @@ def cert_builder(cfssl: CFSSLClient, chain: dict, hosts: Union[str, Collection[s
             result.update(cert_builder(cfssl, info.children, parsed_hosts, cert))
         result[name] = cert
     return result
+
+
+def rego_allow_header(key, value):
+    """Rego query that allows all requests that contain specific header with`key` and `value`"""
+    return f"allow {{ input.context.request.http.headers.{key} == \"{value}\" }}"

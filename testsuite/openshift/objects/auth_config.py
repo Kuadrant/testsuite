@@ -152,7 +152,23 @@ class AuthConfig(OpenShiftObject, Authorization):
         })
 
     @modify
+    def add_external_opa_policy(self, name, endpoint, ttl=0):
+        """
+        Adds OPA policy that is declared as an HTTP endpoint
+        """
+        policy = self.model.spec.setdefault("authorization", [])
+        policy.append({
+            "name": name,
+            "opa": {
+                "externalRegistry": {
+                    "endpoint": endpoint,
+                    "ttl": ttl
+                }
+            }
+        })
+
+    @modify
     def add_response(self, response):
-        """Adds response section to authconfig."""
+        """Adds response section to AuthConfig."""
         responses = self.model.spec.setdefault("response", [])
         responses.append(response)
