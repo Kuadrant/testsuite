@@ -1,20 +1,15 @@
 """
 Test for authorino redirect
 """
-# pylint: disable=unused-argument
 import pytest
-
-from testsuite.openshift.objects.auth_config import AuthConfig
 
 STATUS_CODE = 302
 REDIRECT_URL = 'http://anything.inavlid?redirect_to='
 
 
 @pytest.fixture(scope="module")
-def authorization(authorino, envoy, blame, openshift, module_label, oidc_provider):
+def authorization(authorization):
     """In case of Authorino, AuthConfig used for authorization"""
-    authorization = AuthConfig.create_instance(openshift, blame("ac"),
-                                               envoy.hostname, labels={"testRun": module_label})
     authorization.set_deny_with(STATUS_CODE, REDIRECT_URL + "{context.request.http.path}")
     return authorization
 
