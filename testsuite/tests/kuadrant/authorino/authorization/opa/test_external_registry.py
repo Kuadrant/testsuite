@@ -4,7 +4,7 @@ import pytest
 
 
 @pytest.fixture(scope="module")
-def authorization(authorization, mockserver):
+def authorization(mockserver, authorization):
     """
     Adds OPA policy. Rego query is located on external registry (Mockserver).
     Policy accepts requests that contain `header`.

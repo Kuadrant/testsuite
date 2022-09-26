@@ -55,8 +55,9 @@ def openshift2(testconfig):
 @pytest.fixture(scope="session")
 def rhsso(request, testconfig, blame):
     """RHSSO OIDC Provider fixture"""
-    cnf = testconfig["rhsso"]
     try:
+        testconfig.validators.validate(only="rhsso")
+        cnf = testconfig["rhsso"]
         info = RHSSO(cnf["url"], cnf["username"], cnf["password"], blame("realm"), blame("client"),
                      cnf["test_user"]["username"], cnf["test_user"]["password"])
 

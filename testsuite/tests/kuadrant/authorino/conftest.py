@@ -3,10 +3,10 @@ import pytest
 from weakget import weakget
 
 from testsuite.httpx.auth import HttpxOidcClientAuth
+from testsuite.objects import Authorino, Authorization, PreexistingAuthorino
 from testsuite.openshift.client import OpenShiftClient
 from testsuite.openshift.objects.api_key import APIKey
 from testsuite.openshift.objects.auth_config import AuthConfig
-from testsuite.objects import Authorino, Authorization, PreexistingAuthorino
 from testsuite.openshift.objects.authorino import AuthorinoCR
 
 
@@ -42,7 +42,7 @@ def authorino(authorino, openshift, blame, request, testconfig, module_label, au
 
 # pylint: disable=unused-argument
 @pytest.fixture(scope="module")
-def authorization(authorization, authorino, envoy, blame, openshift, module_label, oidc_provider) -> Authorization:
+def authorization(authorization, oidc_provider, authorino, envoy, blame, openshift, module_label) -> Authorization:
     """In case of Authorino, AuthConfig used for authorization"""
     if authorization is None:
         authorization = AuthConfig.create_instance(openshift, blame("ac"),
