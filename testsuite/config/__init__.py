@@ -28,7 +28,7 @@ settings = Dynaconf(
     envvar_prefix="KUADRANT",
     merge_enabled=True,
     validators=[
-        Validator("authorino.deploy", eq=True) | Validator("authorino.url", must_exist=True),
+        Validator("authorino.deploy", must_exist=True, eq=True) | Validator("authorino.url", must_exist=True),
         DefaultValueValidator("rhsso.url", must_exist=True, default=fetch_route("no-ssl-sso")),
         DefaultValueValidator("rhsso.password",
                               must_exist=True, default=fetch_secret("credential-sso", "ADMIN_PASSWORD")),
