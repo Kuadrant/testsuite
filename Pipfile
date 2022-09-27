@@ -22,7 +22,7 @@ backoff = "*"
 httpx = {version = "*", extras = ["http2"]}
 openshift-client = ">=1.0.14"
 hyperfoil-client="*"
-weakget = {editable = true, git = "https://github.com/mangan/weakget.git"}
+weakget = "*"
 flaky = "*"
 
 [requires]
