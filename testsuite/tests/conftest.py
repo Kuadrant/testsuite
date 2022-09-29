@@ -4,8 +4,10 @@ import signal
 from urllib.parse import urlparse
 
 import pytest
+from dynaconf import ValidationError
 from keycloak import KeycloakAuthenticationError
 
+from testsuite.mockserver import Mockserver
 from testsuite.oidc import OIDCProvider
 from testsuite.config import settings
 from testsuite.oidc.auth0 import Auth0Provider
@@ -80,6 +82,16 @@ def auth0(testconfig):
         return Auth0Provider(section["url"], section["client_id"], section["client_secret"])
     except KeyError as exc:
         return pytest.skip(f"Auth0 configuration item is missing: {exc}")
+
+
+@pytest.fixture(scope="module")
+def mockserver(testconfig):
+    """Returns mockserver"""
+    try:
+        testconfig.validators.validate(only=["mockserver"])
+        return Mockserver(testconfig["mockserver"]["url"])
+    except (KeyError, ValidationError) as exc:
+        return pytest.skip(f"Mockserver configuration item is missing: {exc}")
 
 
 @pytest.fixture(scope="session")
