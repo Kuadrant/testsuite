@@ -18,19 +18,9 @@ def updated_header():
 @pytest.fixture(scope="module", autouse=True)
 def update_external_opa(mockserver, module_label, updated_header):
     """Updates Expectation with updated header"""
-    mockserver.create_expectation(module_label, "/opa", rego_allow_header(*updated_header))
+    mockserver.create_expectation(module_label, f"/{module_label}/opa", rego_allow_header(*updated_header))
     # Sleeps for 1 second to compensate auto-refresh cycle `authorization.opa.externalRegistry.ttl = 1`
     time.sleep(1)
-
-
-@pytest.fixture(scope="module")
-def authorization(authorization, mockserver):
-    """
-    Adds OPA policy. Rego query is located on external registry (Mockserver).
-    Policy accepts requests that contain `header`.
-    """
-    authorization.add_external_opa_policy("opa", mockserver.url + "/opa", 1)
-    return authorization
 
 
 def test_auto_refresh(client, auth, updated_header):

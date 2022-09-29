@@ -27,7 +27,7 @@ class Mockserver:
                 }
             )
         response.raise_for_status()
-        return response
+        return self.url + path
 
     def clear_expectation(self, expectation_id):
         """Clears Expectation with specific ID"""
