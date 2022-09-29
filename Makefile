@@ -13,11 +13,15 @@ endif
 PIPENV_VERBOSITY ?= -1
 PIPENV_IGNORE_VIRTUALENVS ?= 1
 
+PYTEST = pipenv run python -m pytest --tb=$(TB)
+
 ifdef junit
-flags += --junitxml=$(resultsdir)/junit-$@.xml -o junit_suite_name=$@
+PYTEST += --junitxml=$(resultsdir)/junit-$(@F).xml -o junit_suite_name=$(@F)
 endif
 
-PYTEST = pipenv run python -m pytest --tb=$(TB)
+ifdef html
+PYTEST += --html=$(resultsdir)/report-$(@F).html
+endif
 
 commit-acceptance: pylint mypy all-is-package
 
