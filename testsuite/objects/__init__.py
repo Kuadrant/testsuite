@@ -80,6 +80,10 @@ class Authorization(LifecycleObject):
     def set_deny_with(self, code, value):
         """Set denyWith to authconfig"""
 
+    @abc.abstractmethod
+    def add_metadata_http(self,  name, endpoint, method):
+        """Set metadata http external auth feature"""
+
 
 class PreexistingAuthorino(Authorino):
     """Authorino which is already deployed prior to the testrun"""

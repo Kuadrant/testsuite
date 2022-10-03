@@ -20,7 +20,7 @@ class Mockserver:
                     },
                     "httpResponse": {
                         "headers": {
-                            "Content-Type": ["plain/text"]
+                            "Content-Type": ["application/json"]
                         },
                         "body": opa_policy
                     }
