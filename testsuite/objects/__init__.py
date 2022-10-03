@@ -81,7 +81,7 @@ class Authorization(LifecycleObject):
         """Set denyWith to authconfig"""
 
     @abc.abstractmethod
-    def add_metadata_http(self,  name, endpoint, method):
+    def add_http_metadata(self, name, endpoint, method):
         """Set metadata http external auth feature"""
 
 
