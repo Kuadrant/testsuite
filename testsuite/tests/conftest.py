@@ -28,6 +28,24 @@ def term_handler():
     signal.signal(signal.SIGTERM, orig)
 
 
+# pylint: disable=unused-argument
+def pytest_collection_modifyitems(session, config, items):
+    """
+    Add user properties to testcases for xml output
+
+    This adds issue and issue-id properties to junit output, utilizes
+    pytest.mark.issue marker.
+
+    This is copied from pytest examples to record custom properties in junit
+    https://docs.pytest.org/en/stable/usage.html
+    """
+
+    for item in items:
+        for marker in item.iter_markers(name="issue"):
+            issue = marker.args[0]
+            item.user_properties.append(("issue", issue))
+
+
 @pytest.fixture(scope="session")
 def testconfig():
     """Testsuite settings"""
