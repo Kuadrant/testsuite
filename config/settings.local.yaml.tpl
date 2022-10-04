@@ -4,8 +4,11 @@
 #    project: "kuadrant"                       # Optional: namespace for tests to run, if None uses current project
 #    api_url: "https://api.openshift.com"      # Optional: OpenShift API URL, if None it will OpenShift that you are logged in
 #    token: "KUADRANT_RULEZ"                   # Optional: OpenShift Token, if None it will OpenShift that you are logged in
+#    kubeconfig_path: "~/.kube/config"         # Optional: Kubeconfig to use, if None the default one is used
 #  openshift2:
 #    project: "kuadrant2"                      # Required: Secondary OpenShift project, for running tests across projects
+#  kcp:                                        # Required for glbc tests
+#    project: "glbc-test"                      # Optional: namespace for glbc tests to run, if None uses current namespace
 #  tools:
 #    project: "tools"                          # Optional: OpenShift project, where external tools are located
 #  rhsso:

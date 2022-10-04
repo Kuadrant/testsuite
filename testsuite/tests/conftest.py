@@ -73,6 +73,22 @@ def openshift2(testconfig):
 
 
 @pytest.fixture(scope="session")
+def kcp(testconfig):
+    """Modified OpenShift client acting as Kcp client"""
+    client = testconfig["kcp"]
+    if client is None:
+        pytest.skip("Kcp required but was not configured")
+
+    # does not work for kcp yet
+    # internally implemented using `oc status` command that seems internally touching project kind
+    # that is not available on kcp
+    # if not client.connected:
+    #     pytest.fail("You are not logged into Openshift or the namespace for Kcp doesn't exist")
+
+    return client
+
+
+@pytest.fixture(scope="session")
 def rhsso(request, testconfig, blame):
     """RHSSO OIDC Provider fixture"""
     try:
