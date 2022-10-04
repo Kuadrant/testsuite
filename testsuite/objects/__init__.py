@@ -33,11 +33,11 @@ class Authorization(LifecycleObject):
     """Object containing Authorization rules and configuration for either Authorino or Kuadrant"""
 
     @abc.abstractmethod
-    def add_oidc_identity(self, name, endpoint):
+    def add_oidc_identity(self, name, endpoint, credentials, selector):
         """Adds OIDC identity provider"""
 
     @abc.abstractmethod
-    def add_api_key_identity(self, name, all_namespaces, match_label, match_expression):
+    def add_api_key_identity(self, name, all_namespaces, match_label, match_expression,  credentials, selector):
         """Adds API Key identity"""
 
     @abc.abstractmethod

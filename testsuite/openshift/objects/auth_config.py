@@ -55,19 +55,24 @@ class AuthConfig(OpenShiftObject, Authorization):
         self.model.spec.hosts = []
 
     @modify
-    def add_oidc_identity(self, name, endpoint):
+    def add_oidc_identity(self, name, endpoint, credentials="authorization_header", selector="Bearer"):
         """Adds OIDC identity"""
         identities = self.model.spec.setdefault("identity", [])
         identities.append({
             "name": name,
             "oidc": {
                 "endpoint": endpoint
+            },
+            "credentials": {
+                "in": credentials,
+                "keySelector": selector
             }
         })
 
     @modify
     def add_api_key_identity(self, name, all_namespaces: bool = False,
-                             match_label=None, match_expression: MatchExpression = None):
+                             match_label=None, match_expression: MatchExpression = None,
+                             credentials="authorization_header", selector="APIKEY"):
         """
         Adds API Key identity
         Args:
@@ -75,6 +80,8 @@ class AuthConfig(OpenShiftObject, Authorization):
             :param all_namespaces: a location of the API keys can be in another namespace (only works for cluster-wide)
             :param match_label: labels that are accepted by AuthConfig
             :param match_expression: instance of the MatchExpression
+            :param credentials: locations where credentials are passed
+            :param selector: selector for credentials
         """
         if not (match_label is None) ^ (match_expression is None):
             raise AttributeError("`match_label` xor `match_expression` argument must be used")
@@ -83,8 +90,8 @@ class AuthConfig(OpenShiftObject, Authorization):
         if match_label:
             matcher.update({
                 "matchLabels": {
-                        "group": match_label
-                    }
+                    "group": match_label
+                }
             })
 
         if match_expression:
@@ -100,8 +107,8 @@ class AuthConfig(OpenShiftObject, Authorization):
                 "allNamespaces": all_namespaces
             },
             "credentials": {
-                "in": "authorization_header",
-                "keySelector": "APIKEY"
+                "in": credentials,
+                "keySelector": selector
             }
         })
 
