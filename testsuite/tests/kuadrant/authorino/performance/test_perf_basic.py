@@ -16,6 +16,8 @@ MAX_RUN_TIME = 10 * 60
 # Number of Hyperfoil agents to be spawned
 AGENTS = 2
 
+pytestmark = [pytest.mark.performance]
+
 
 @pytest.fixture(scope='module')
 def number_of_agents():
