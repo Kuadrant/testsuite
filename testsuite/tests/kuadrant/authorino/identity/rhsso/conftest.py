@@ -13,3 +13,9 @@ def authorization(authorization, rhsso):
     """Add RHSSO identity to AuthConfig"""
     authorization.add_oidc_identity("rhsso", rhsso.well_known["issuer"])
     return authorization
+
+
+@pytest.fixture(scope="module")
+def realm_role(rhsso, blame):
+    """Creates new realm role"""
+    return rhsso.realm.create_realm_role(blame("role"))

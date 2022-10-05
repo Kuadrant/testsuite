@@ -14,12 +14,6 @@ def user_with_role(rhsso, realm_role, blame):
 
 
 @pytest.fixture(scope="module")
-def realm_role(rhsso, blame):
-    """Creates new realm role"""
-    return rhsso.realm.create_realm_role(blame("role"))
-
-
-@pytest.fixture(scope="module")
 def authorization(authorization, realm_role, blame):
     """Adds rule, that requires user to be part of realm_role to be allowed access."""
     authorization.add_role_rule(blame("rule"), realm_role["name"], "^/get")
