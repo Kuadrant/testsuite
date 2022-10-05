@@ -24,8 +24,13 @@ def hyperfoil_utils(hyperfoil_client, template, request):
     return utils
 
 
-
 @pytest.fixture(scope="module")
 def rhsso_auth(rhsso):
     """Returns RHSSO authentication object for HTTPX"""
     return HttpxOidcClientAuth(rhsso.get_token)
+
+
+@pytest.fixture(scope='module')
+def number_of_agents():
+    """Number of spawned HyperFoil agents"""
+    return 1
