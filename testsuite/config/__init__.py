@@ -34,5 +34,5 @@ settings = Dynaconf(
         DefaultValueValidator("mockserver.url", default=fetch_route("no-ssl-mockserver")),
     ],
     validate_only=["authorino"],
-    loaders=["testsuite.config.openshift_loader", "dynaconf.loaders.env_loader"]
+    loaders=["dynaconf.loaders.env_loader", "testsuite.config.openshift_loader"]
 )
