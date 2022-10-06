@@ -63,6 +63,10 @@ class Authorization(LifecycleObject):
         """Adds anonymous identity"""
 
     @abc.abstractmethod
+    def add_mtls_identity(self, name: str, selector_key: str, selector_value: str):
+        """Adds mTLS identity"""
+
+    @abc.abstractmethod
     def remove_all_identities(self):
         """Removes all identities from AuthConfig"""
 
@@ -97,6 +101,10 @@ class Authorization(LifecycleObject):
     @abc.abstractmethod
     def add_role_rule(self, name: str, role: str, path: str, metrics: bool, priority: int):
         """Adds a rule, which allows access to 'path' only to users with 'role'"""
+
+    @abc.abstractmethod
+    def remove_all_rules(self):
+        """Removes all rules from AuthConfig"""
 
     @abc.abstractmethod
     def set_deny_with(self, code, value):

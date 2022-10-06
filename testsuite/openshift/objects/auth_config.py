@@ -119,6 +119,26 @@ class AuthConfig(OpenShiftObject, Authorization):
         identities.append({"name": name, "anonymous": {}})
 
     @modify
+    def add_mtls_identity(self, name: str, selector_key: str, selector_value: str):
+        """Adds mTLS identity
+        Args:
+            :param name: name of the identity
+            :param selector_key: selector key to match
+            :param selector_value: selector value to match
+        """
+        identities = self.model.spec.setdefault("identity", [])
+        identities.append({
+            "name": name,
+            "mtls": {
+                "selector": {
+                    "matchLabels": {
+                        selector_key: selector_value
+                    }
+                }
+            }
+        })
+
+    @modify
     def add_auth_rule(self, name, rule: Rule, when: Rule = None, metrics=False, priority=0):
         """Adds JSON pattern-matching authorization rule (authorization.json)"""
         authorization = self.model.spec.setdefault("authorization", [])
@@ -146,6 +166,12 @@ class AuthConfig(OpenShiftObject, Authorization):
         rule = Rule("auth.identity.realm_access.roles", "incl", role)
         when = Rule("context.request.http.path", "matches", path)
         self.add_auth_rule(name, rule, when, metrics, priority)
+
+    @modify
+    def remove_all_rules(self):
+        """Removes all rules from AuthConfig"""
+        authorization = self.model.spec.setdefault("authorization", [])
+        authorization.clear()
 
     @modify
     def remove_all_identities(self):
