@@ -1,4 +1,5 @@
 """Conftest for all TLS-enabled tests"""
+from typing import Dict
 
 import pytest
 
@@ -8,12 +9,22 @@ from testsuite.utils import cert_builder
 
 
 @pytest.fixture(scope="session")
-def certificates(cfssl, authorino_domain, wildcard_domain):
+def cert_attributes() -> Dict[str, str]:
+    """Certificate attributes"""
+    return dict(O="Red Hat Inc.",
+                OU="IT",
+                L="San Francisco",
+                ST="California",
+                C="US",)
+
+
+@pytest.fixture(scope="session")
+def certificates(cfssl, authorino_domain, wildcard_domain, cert_attributes):
     """Certificate hierarchy used for the tests"""
     chain = {
-        "envoy_ca": CertInfo(children={
+        "envoy_ca": CertInfo(names=[cert_attributes], children={
             "envoy_cert": None,
-            "valid_cert": None
+            "valid_cert": CertInfo(names=[cert_attributes])
         }),
         "authorino_ca": CertInfo(children={
             "authorino_cert": CertInfo(hosts=authorino_domain),
