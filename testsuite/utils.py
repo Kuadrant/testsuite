@@ -1,4 +1,5 @@
 """Utility functions for testsuite"""
+import enum
 import os
 import secrets
 from collections.abc import Collection
@@ -6,6 +7,15 @@ from typing import Dict, Union
 
 from testsuite.certificates import Certificate, CFSSLClient, CertInfo
 from testsuite.config import settings
+
+
+class ContentType(enum.Enum):
+    """Content-type options for expectation headers"""
+    PLAIN_TEXT = "plain/text"
+    APPLICATION_JSON = "application/json"
+
+    def __str__(self):
+        return str(self.value)
 
 
 def generate_tail(tail=5):

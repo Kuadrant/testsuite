@@ -191,3 +191,15 @@ class AuthConfig(OpenShiftObject, Authorization):
         """Set denyWith to authconfig"""
         self.model.spec["denyWith"] = {
             "unauthenticated": {"code": code, "headers": [{"name": "Location", "valueFrom": {"authJSON": value}}]}}
+
+    @modify
+    def add_http_metadata(self, name, endpoint, method: Literal["GET", "POST"]):
+        metadata = self.model.spec.setdefault("metadata", [])
+        metadata.append({
+            "name": name,
+            "http": {
+                "endpoint": endpoint,
+                "method": method,
+                "headers": [{"name": "Accept", "value": "application/json"}]
+            }
+        })
