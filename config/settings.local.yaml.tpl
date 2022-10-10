@@ -26,7 +26,7 @@
 #    url: "MOCKSERVER_URL"
 #  cfssl: "cfssl"  # Path to the CFSSL library for TLS tests
 #  hyperfoil:
-#    url: "hyperfoil url"
+#    url: "HYPERFOIL_URL"
 #  authorino:
 #    image: "quay.io/kuadrant/authorino:latest"  # If specified will override the authorino image
 #    deploy: false                               # If false, the testsuite will use already deployed authorino for testing

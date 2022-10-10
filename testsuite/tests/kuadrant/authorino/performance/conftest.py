@@ -3,6 +3,7 @@ Conftest for performance tests
 """
 import pytest
 from hyperfoil import HyperfoilClient
+from dynaconf import ValidationError
 
 from testsuite.perf_utils import HyperfoilUtils
 from testsuite.httpx.auth import HttpxOidcClientAuth
@@ -11,8 +12,10 @@ from testsuite.httpx.auth import HttpxOidcClientAuth
 @pytest.fixture(scope='session')
 def hyperfoil_client(testconfig):
     """Hyperfoil client"""
-    client = HyperfoilClient(testconfig['hyperfoil']['url'])
-    return client
+    try:
+        return HyperfoilClient(testconfig['hyperfoil']['url'])
+    except (KeyError, ValidationError) as exc:
+        return pytest.skip(f"Hyperfoil configuration item is missing: {exc}")
 
 
 @pytest.fixture(scope='module')

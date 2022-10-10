@@ -13,5 +13,3 @@ default:
     deploy: true
   envoy:
     image: "docker.io/envoyproxy/envoy:v1.23-latest"
-  hyperfoil:
-    url: "hyperfoil url"
