@@ -73,6 +73,10 @@ class Authorization(LifecycleObject):
         """Add response to AuthConfig"""
 
     @abc.abstractmethod
+    def add_auth_rule(self, name, rule, when, metrics, priority):
+        """Adds JSON pattern-matching authorization rule (authorization.json)"""
+
+    @abc.abstractmethod
     def add_role_rule(self, name: str, role: str, path: str, metrics: bool, priority: int):
         """Adds a rule, which allows access to 'path' only to users with 'role'"""
 
@@ -83,6 +87,10 @@ class Authorization(LifecycleObject):
     @abc.abstractmethod
     def add_http_metadata(self, name, endpoint, method):
         """Set metadata http external auth feature"""
+
+    @abc.abstractmethod
+    def add_user_info_metadata(self, name, identity_source):
+        """Set metadata OIDC user info"""
 
 
 class PreexistingAuthorino(Authorino):
