@@ -1,5 +1,23 @@
 """Module containing base classes for common objects"""
 import abc
+from dataclasses import dataclass
+from typing import Literal
+
+
+@dataclass
+class Rule:
+    """
+    Data class for authorization rules represented by simple pattern-matching expressions.
+    Args:
+        :param selector: that is fetched from the Authorization JSON
+        :param operator: `eq` (equals), `neq` (not equal), `incl` (includes) and `excl` (excludes), for arrays
+                         `matches`, for regular expressions
+        :param value: a fixed comparable value
+    """
+
+    selector: str
+    operator: Literal["eq", "neq", "incl", "excl", "matches"]
+    value: str
 
 
 class LifecycleObject(abc.ABC):
@@ -73,7 +91,7 @@ class Authorization(LifecycleObject):
         """Add response to AuthConfig"""
 
     @abc.abstractmethod
-    def add_auth_rule(self, name, rule, when, metrics, priority):
+    def add_auth_rule(self, name: str, rule: Rule, when: Rule, metrics: bool, priority: int):
         """Adds JSON pattern-matching authorization rule (authorization.json)"""
 
     @abc.abstractmethod

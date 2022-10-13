@@ -2,7 +2,7 @@
 from dataclasses import dataclass, asdict
 from typing import Dict, Literal, List
 
-from testsuite.objects import Authorization
+from testsuite.objects import Authorization, Rule
 from testsuite.openshift.client import OpenShiftClient
 from testsuite.openshift.objects import OpenShiftObject, modify
 
@@ -17,22 +17,6 @@ class MatchExpression:
     operator: Literal["In", "NotIn", "Exists", "DoesNotExist"]
     values: List[str]
     key: str = "group"
-
-
-@dataclass
-class Rule:
-    """
-    Data class for authorization rules represented by simple pattern-matching expressions.
-    Args:
-        :param selector: that is fetched from the Authorization JSON
-        :param operator: `eq` (equals), `neq` (not equal), `incl` (includes) and `excl` (excludes), for arrays
-                         `matches`, for regular expressions
-        :param value: a fixed comparable value
-    """
-
-    selector: str
-    operator: Literal["eq", "neq", "incl", "excl", "matches"]
-    value: str
 
 
 class AuthConfig(OpenShiftObject, Authorization):
@@ -144,10 +128,10 @@ class AuthConfig(OpenShiftObject, Authorization):
             "priority": priority,
             "json": {
                 "rules": [asdict(rule)]
-            },
+            }
         })
         if when:
-            authorization[0].update({"when": asdict(when)})
+            authorization[0].update({"when": [asdict(when)]})
 
     def add_role_rule(self, name: str, role: str, path: str, metrics=False, priority=0):
         """
@@ -161,7 +145,7 @@ class AuthConfig(OpenShiftObject, Authorization):
         """
         rule = Rule("auth.identity.realm_access.roles", "incl", role)
         when = Rule("context.request.http.path", "matches", path)
-        self.add_auth_rule(name, rule, when)
+        self.add_auth_rule(name, rule, when, metrics, priority)
 
     @modify
     def remove_all_identities(self):
