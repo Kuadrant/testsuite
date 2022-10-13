@@ -6,7 +6,7 @@ from keycloak import KeycloakOpenID, KeycloakAdmin, KeycloakPostError
 
 from testsuite.oidc import OIDCProvider, Token
 from testsuite.objects import LifecycleObject
-from .objects import Realm, Client
+from .objects import Realm, Client, User
 
 
 # pylint: disable=too-many-instance-attributes
