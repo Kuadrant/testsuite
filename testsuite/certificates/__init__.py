@@ -38,6 +38,16 @@ class UnsignedKey:
 
 class CFSSLClient:
     """Client for working with CFSSL library"""
+    DEFAULT_NAMES = [
+        {
+            "O": "Red Hat Inc.",
+            "OU": "IT",
+            "L": "San Francisco",
+            "ST": "California",
+            "C": "US",
+        }
+    ]
+
     def __init__(self, binary) -> None:
         super().__init__()
         self.binary = binary
@@ -115,16 +125,16 @@ class CFSSLClient:
             :param names: dict of all names
             :param certificate_authority: Optional Authority to sign this new authority, making it intermediate
         """
+        names = names or self.DEFAULT_NAMES
         data = {
             "CN": common_name,
+            "names": names,
             "hosts": hosts,
             "key": {
                 "algo": "rsa",
                 "size": 4096
             },
         }
-        if names:
-            data["names"] = names  # type: ignore
 
         result = self._execute_command("genkey", "-initca", "-", stdin=json.dumps(data))
         key = UnsignedKey(key=result["key"], csr=result["csr"])
@@ -145,6 +155,7 @@ class CFSSLClient:
             :param names: Names field in the csr
             :param certificate_authority: Certificate Authority to be used for signing
         """
+        names = names or self.DEFAULT_NAMES
         key = self.generate_key(common_name, names, hosts)
         certificate = self.sign(key, certificate_authority=certificate_authority)
         return certificate

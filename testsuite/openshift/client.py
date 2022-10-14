@@ -3,7 +3,7 @@
 import enum
 import os
 from functools import cached_property
-from typing import Dict
+from typing import Dict, Optional
 
 import openshift as oc
 from openshift import Context, Selector, OpenShiftPythonException
@@ -126,9 +126,9 @@ class OpenShiftClient:
         success, _, _ = selector.until_all(success_func=lambda obj: "readyReplicas" in obj.model.status)
         return success
 
-    def create_tls_secret(self, name: str, certificate: Certificate):
+    def create_tls_secret(self, name: str, certificate: Certificate, labels: Optional[Dict[str, str]] = None):
         """Creates a TLS secret"""
-        model = {
+        model: Dict = {
             'kind': 'Secret',
             'apiVersion': 'v1',
             'metadata': {
@@ -140,6 +140,9 @@ class OpenShiftClient:
             },
             "type": "kubernetes.io/tls"
         }
+        if labels is not None:
+            model["metadata"]["labels"] = labels
+
         with self.context:
             return oc.create(model, ["--save-config=true"])
 
