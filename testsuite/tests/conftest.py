@@ -17,6 +17,19 @@ from testsuite.oidc.rhsso import RHSSO
 from testsuite.utils import randomize, _whoami
 
 
+def pytest_addoption(parser):
+    """Add option to include performance tests in testrun"""
+    parser.addoption(
+        "--performance", action="store_true", default=False, help="Run also performance tests (default: False)")
+
+
+def pytest_runtest_setup(item):
+    """Exclude performance tests by default, require explicit option"""
+    marks = [i.name for i in item.iter_markers()]
+    if "performance" in marks and not item.config.getoption("--performance"):
+        pytest.skip("Excluding performance tests")
+
+
 @pytest.fixture(scope='session', autouse=True)
 def term_handler():
     """

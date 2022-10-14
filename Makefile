@@ -41,6 +41,10 @@ test: ## Run test
 test pytest tests: pipenv
 	$(PYTEST) -n4 -m 'not flaky' --dist loadfile $(flags) testsuite
 
+# Run performance tests
+performance: pipenv
+	$(PYTEST) --performance $(flags) testsuite/tests/kuadrant/authorino/performance
+
 Pipfile.lock: Pipfile
 	pipenv lock
 
