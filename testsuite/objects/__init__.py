@@ -1,7 +1,19 @@
 """Module containing base classes for common objects"""
 import abc
 from dataclasses import dataclass
-from typing import Literal
+from typing import Literal, List
+
+
+@dataclass
+class MatchExpression:
+    """
+    Data class intended for defining K8 Label Selector expressions.
+    Used by selector.matchExpressions API key identity.
+    """
+
+    operator: Literal["In", "NotIn", "Exists", "DoesNotExist"]
+    values: List[str]
+    key: str = "group"
 
 
 @dataclass

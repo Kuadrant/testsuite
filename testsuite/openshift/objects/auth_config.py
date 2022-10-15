@@ -1,22 +1,10 @@
 """AuthConfig CR object"""
-from dataclasses import dataclass, asdict
-from typing import Dict, Literal, List
+from dataclasses import asdict
+from typing import Dict, Literal
 
-from testsuite.objects import Authorization, Rule
+from testsuite.objects import Authorization, Rule, MatchExpression
 from testsuite.openshift.client import OpenShiftClient
 from testsuite.openshift.objects import OpenShiftObject, modify
-
-
-@dataclass
-class MatchExpression:
-    """
-    Data class intended for defining K8 Label Selector expressions.
-    Used by selector.matchExpressions API key identity.
-    """
-
-    operator: Literal["In", "NotIn", "Exists", "DoesNotExist"]
-    values: List[str]
-    key: str = "group"
 
 
 class AuthConfig(OpenShiftObject, Authorization):
