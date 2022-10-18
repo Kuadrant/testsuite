@@ -14,7 +14,8 @@ class AuthorinoCR(OpenShiftObject, Authorino):
 
     @classmethod
     def create_instance(cls, openshift: OpenShiftClient, name, image=None,
-                        cluster_wide=False, label_selectors: List[str] = None, listener_certificate_secret=None):
+                        cluster_wide=False, label_selectors: List[str] = None, listener_certificate_secret=None,
+                        log_level=None):
         """Creates base instance"""
         model: Dict[str, Any] = {
             "apiVersion": "operator.authorino.kuadrant.io/v1beta1",
@@ -25,6 +26,7 @@ class AuthorinoCR(OpenShiftObject, Authorino):
             },
             "spec": {
                 "clusterWide": cluster_wide,
+                "logLevel": log_level,
                 "listener": {
                     "tls": {
                         "enabled": False
