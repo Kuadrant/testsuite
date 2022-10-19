@@ -2,7 +2,7 @@
 from dataclasses import dataclass, asdict
 from typing import Dict, Literal, List
 
-from testsuite.objects import Authorization
+from testsuite.objects import Authorization, Rule
 from testsuite.openshift.client import OpenShiftClient
 from testsuite.openshift.objects import OpenShiftObject, modify
 
@@ -119,33 +119,33 @@ class AuthConfig(OpenShiftObject, Authorization):
         identities.append({"name": name, "anonymous": {}})
 
     @modify
-    def add_role_rule(self, name: str, role: str, path: str, metrics=False, priority=0):
-        """
-        Adds a rule, which allows access to 'path' only to users with 'role'
-        :param name: name of rule
-        :param role: name of role
-        :param path: path to apply this rule to
-        :param metrics: bool, allows metrics
-        :param priority: priority of rule
-        """
+    def add_auth_rule(self, name, rule: Rule, when: Rule = None, metrics=False, priority=0):
+        """Adds JSON pattern-matching authorization rule (authorization.json)"""
         authorization = self.model.spec.setdefault("authorization", [])
         authorization.append({
             "name": name,
             "metrics": metrics,
             "priority": priority,
             "json": {
-                "rules": [{
-                    "operator": "incl",
-                    "selector": "auth.identity.realm_access.roles",
-                    "value": role
-                }]
-            },
-            "when": [{
-                "operator": "matches",
-                "selector": "context.request.http.path",
-                "value": path
-            }]
+                "rules": [asdict(rule)]
+            }
         })
+        if when:
+            authorization[0].update({"when": [asdict(when)]})
+
+    def add_role_rule(self, name: str, role: str, path: str, metrics=False, priority=0):
+        """
+        Adds a rule, which allows access to 'path' only to users with 'role'
+        Args:
+            :param name: name of rule
+            :param role: name of role
+            :param path: path to apply this rule to
+            :param metrics: bool, allows metrics
+            :param priority: priority of rule
+        """
+        rule = Rule("auth.identity.realm_access.roles", "incl", role)
+        when = Rule("context.request.http.path", "matches", path)
+        self.add_auth_rule(name, rule, when, metrics, priority)
 
     @modify
     def remove_all_identities(self):
@@ -194,6 +194,7 @@ class AuthConfig(OpenShiftObject, Authorization):
 
     @modify
     def add_http_metadata(self, name, endpoint, method: Literal["GET", "POST"]):
+        """"Set metadata http external auth feature"""
         metadata = self.model.spec.setdefault("metadata", [])
         metadata.append({
             "name": name,
@@ -201,5 +202,16 @@ class AuthConfig(OpenShiftObject, Authorization):
                 "endpoint": endpoint,
                 "method": method,
                 "headers": [{"name": "Accept", "value": "application/json"}]
+            }
+        })
+
+    @modify
+    def add_user_info_metadata(self, name, identity_source):
+        """Set metadata OIDC user info"""
+        metadata = self.model.spec.setdefault("metadata", [])
+        metadata.append({
+            "name": name,
+            "userInfo": {
+                "identitySource": identity_source
             }
         })
