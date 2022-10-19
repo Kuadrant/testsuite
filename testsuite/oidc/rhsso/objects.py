@@ -38,7 +38,7 @@ class Realm:
         user_id = self.admin.get_user_id(username)
         self.admin.set_user_password(user_id, password, temporary=False)
         self.admin.update_user(user_id, {"emailVerified": True})
-        return user_id
+        return User(self, user_id, username, password)
 
     def create_realm_role(self, role_name: str):
         """Creates realm role
@@ -48,15 +48,6 @@ class Realm:
         self.admin.create_realm_role(payload={"name": role_name})
         role_id = self.admin.get_realm_role(role_name)["id"]
         return {"name": role_name, "id": role_id}
-
-    def assign_realm_role(self, role, user_id: str):
-        """Assigns realm role to user
-        :param role: Dictionary with two keys "name" and "id" of role to assign
-        :param user_id: Id of user to assign role to
-        :returns: Keycloak server response
-        """
-        return self.admin.assign_realm_roles(user_id=user_id,
-                                             roles=role)
 
     def oidc_client(self, client_id, client_secret):
         """Create OIDC client for this realm"""
@@ -87,3 +78,32 @@ class Client:
         client_id = self.admin.get_client(self.client_id)["clientId"]
         secret = self.admin.get_client_secrets(self.client_id)["value"]
         return self.realm.oidc_client(client_id, secret)
+
+
+class User:
+    """Wrapper object for User object in RHSSO"""
+
+    def __init__(self, realm: Realm, user_id, username, password) -> None:
+        super().__init__()
+        self.admin = realm.admin
+        self.realm = realm
+        self.user_id = user_id
+        self.username = username
+        self.password = password
+
+    def update_user(self, **properties):
+        """Updates user"""
+        self.admin.update_user(self.user_id, properties)
+
+    def assign_realm_role(self, role):
+        """Assigns realm role to user
+        :param role: Dictionary with two keys "name" and "id" of role to assign
+        :returns: Keycloak server response
+        """
+        return self.admin.assign_realm_roles(user_id=self.user_id,
+                                             roles=role)
+
+    @property
+    def properties(self):
+        """Returns User information in a dict"""
+        return self.admin.get_user(self.user_id)

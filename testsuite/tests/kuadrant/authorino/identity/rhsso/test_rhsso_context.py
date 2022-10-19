@@ -17,7 +17,7 @@ def authorization(authorization):
 @pytest.fixture(scope="module")
 def realm_role(rhsso, realm_role):
     """Add realm role to rhsso user"""
-    rhsso.realm.assign_realm_role(realm_role, rhsso.user)
+    rhsso.user.assign_realm_role(realm_role)
     return realm_role
 
 
@@ -38,4 +38,4 @@ def tests_rhsso_context(client, auth, rhsso, realm_role):
     assert float(identity["iat"]) <= now
     assert auth_json["context"] == f"Bearer {auth.token.access_token}"
     assert realm_role["name"] in identity["realm_access"]["roles"]
-    assert identity['email'] == rhsso.client.admin.get_user(rhsso.user)["email"]
+    assert identity['email'] == rhsso.user.properties["email"]
