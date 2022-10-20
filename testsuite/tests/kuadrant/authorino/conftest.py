@@ -30,8 +30,9 @@ def authorino(authorino, openshift, blame, request, testconfig, module_label, au
     labels = authorino_parameters.setdefault("label_selectors", [])
     labels.append(f"testRun={module_label}")
 
+    authorino_parameters.setdefault('name', blame("authorino"))
+
     authorino = AuthorinoCR.create_instance(openshift,
-                                            blame("authorino"),
                                             image=weakget(testconfig)["authorino"]["image"] % None,
                                             log_level=weakget(testconfig)["authorino"]["log_level"] % None,
                                             **authorino_parameters)

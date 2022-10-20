@@ -115,6 +115,11 @@ class IdentitySection(Section, Identities):
         self.add_item(name, {"anonymous": {}})
 
     @modify
+    def kubernetes(self, name, authjson):
+        """Adds kubernetes identity"""
+        self.add_item(name, {"plain": {"authJSON": authjson}})
+
+    @modify
     def remove_all(self):
         """Removes all identities from AuthConfig"""
         self.section.clear()
@@ -216,4 +221,22 @@ class AuthorizationsSection(Section, Authorizations):
                     "ttl": ttl
                 }
             }
+        })
+
+    @modify
+    def kubernetes(self, name: str, when: list, kube_attrs: dict, priority=0):
+        """Adds Kubernetes authorization
+
+        :param name: name of kubernetes authorization
+        :param when: list of conditions
+        :param kube_user: user in kubernetes authorization
+        :param kube_attrs: resource attributes in kubernetes authorization
+        :param priority: priority
+        """
+
+        kube_user = {'valueFrom': {'authJSON': 'auth.identity.username'}}
+        self.add_item(name, {
+            "priority": priority,
+            "kubernetes": {"user": kube_user, "resourceAttributes": kube_attrs},
+            "when": when
         })
