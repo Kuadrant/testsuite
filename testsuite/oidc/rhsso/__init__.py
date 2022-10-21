@@ -62,7 +62,9 @@ class RHSSO(OIDCProvider, LifecycleObject):
             directAccessGrantsEnabled=True,
             publicClient=False,
             protocol="openid-connect",
-            standardFlowEnabled=False)
+            standardFlowEnabled=False,
+            serviceAccountsEnabled=True,
+            authorizationServicesEnabled=True)
         self.user = self.realm.create_user(self.test_username, self.test_password)
 
     def delete(self):

@@ -62,6 +62,10 @@ class Metadata(abc.ABC):
     def user_info_metadata(self, name, identity_source):
         """Set metadata OIDC user info"""
 
+    @abc.abstractmethod
+    def uma_metadata(self, name, endpoint, credentials):
+        """Set metadata User-Managed Access (UMA) resource registry """
+
 
 class Responses(abc.ABC):
     """Responses configuration"""

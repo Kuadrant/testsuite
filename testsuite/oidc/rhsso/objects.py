@@ -1,5 +1,6 @@
 """Object wrappers of RHSSO resources"""
 from functools import cached_property
+from typing import List
 
 from keycloak import KeycloakOpenID, KeycloakAdmin
 
@@ -72,12 +73,30 @@ class Client:
         self.admin.assign_client_role(user["id"], realm_management, role)
 
     @cached_property
+    def auth_id(self):
+        """Note This is different clientId (clientId) than self.client_id (Id), because RHSSO"""
+        return self.admin.get_client(self.client_id)["clientId"]
+
+    @property
+    def secret(self):
+        """Client Secret"""
+        return self.admin.get_client_secrets(self.client_id)["value"]
+
+    @cached_property
     def oidc_client(self):
         """OIDC client"""
-        # Note This is different clientId (clientId) than self.client_id (Id), because RHSSO
-        client_id = self.admin.get_client(self.client_id)["clientId"]
-        secret = self.admin.get_client_secrets(self.client_id)["value"]
-        return self.realm.oidc_client(client_id, secret)
+        return self.realm.oidc_client(self.auth_id, self.secret)
+
+    def create_uma_resource(self, name, uris: List[str], owner=None):
+        """
+        Creates client resource. By default, this resource is not enforcing UMA policy.
+        When owner is specified, this policy is enforced and access to this resource is allowed only for the owner.
+        """
+        resource = {"name": name, "uris": uris}
+        if owner:
+            resource["owner"] = owner
+            resource["ownerManagedAccess"] = True
+        return self.admin.create_client_authz_resource(self.client_id, resource)
 
 
 class User:

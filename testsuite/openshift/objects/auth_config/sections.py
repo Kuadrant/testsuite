@@ -142,6 +142,18 @@ class MetadataSection(Section, Metadata):
             }
         })
 
+    @modify
+    def uma_metadata(self, name, endpoint, credentials):
+        """Set metadata feature for resource-level authorization with User-Managed Access (UMA) resource registry"""
+        self.add_item(name, {
+            "uma": {
+                "endpoint": endpoint,
+                "credentialsRef": {
+                    "name": credentials
+                }
+            }
+        })
+
 
 class ResponsesSection(Section, Responses):
     """Section which contains response configuration"""
