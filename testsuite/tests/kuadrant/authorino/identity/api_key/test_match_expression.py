@@ -5,7 +5,7 @@ https://pkg.go.dev/k8s.io/apimachinery@v0.23.0/pkg/apis/meta/v1#LabelSelector
 """
 import pytest
 
-from testsuite.openshift.objects.auth_config import MatchExpression
+from testsuite.objects import MatchExpression
 
 
 @pytest.fixture(scope="module")
@@ -18,7 +18,7 @@ def valid_label_selectors(module_label):
 def authorization(authorization, valid_label_selectors):
     """Creates AuthConfig with API key identity"""
     expression = MatchExpression("In", valid_label_selectors)
-    authorization.add_api_key_identity("api_key", match_expression=expression)
+    authorization.identity.api_key("api_key", match_expression=expression)
     return authorization
 
 

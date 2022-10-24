@@ -7,8 +7,8 @@ import pytest
 @pytest.fixture(scope="module")
 def authorization(authorization, module_label):
     """Setup AuthConfig for test"""
-    authorization.add_api_key_identity("api_key", match_label=module_label)
-    authorization.add_response({"name": "auth-json", "json": {
+    authorization.identity.api_key("api_key", match_label=module_label)
+    authorization.responses.add({"name": "auth-json", "json": {
         "properties": [{"name": "auth", "valueFrom": {"authJSON": "auth.identity"}}]}})
     return authorization
 

@@ -22,8 +22,8 @@ def rhsso_auth(rhsso):
 @pytest.fixture(scope="module")
 def authorization(authorization, auth0, rhsso):
     """Add both RHSSO and Auth0 identities"""
-    authorization.add_oidc_identity("rhsso", rhsso.well_known["issuer"])
-    authorization.add_oidc_identity("auth0", auth0.well_known["issuer"])
+    authorization.identity.oidc("rhsso", rhsso.well_known["issuer"])
+    authorization.identity.oidc("auth0", auth0.well_known["issuer"])
     return authorization
 
 

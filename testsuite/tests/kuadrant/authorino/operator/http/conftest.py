@@ -16,7 +16,7 @@ def authorization(authorization, wildcard_domain, openshift, module_label) -> Au
             'json': {'properties': [
                 {'name': 'propX', 'value': 'valueX'}
             ]}}
-    authorization.add_response(response=resp)
+    authorization.responses.add(response=resp)
     return authorization
 
 

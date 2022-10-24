@@ -5,7 +5,7 @@ from typing import Dict
 from testsuite.objects import Authorization, Responses, Metadata, Identities, Authorizations
 from testsuite.openshift.client import OpenShiftClient
 from testsuite.openshift.objects import OpenShiftObject, modify
-from testsuite.openshift.objects.auth_config.sections import AuthorizationsSection, IdentitySection, MetadataSection, \
+from .sections import AuthorizationsSection, IdentitySection, MetadataSection, \
     ResponsesSection
 
 
@@ -59,7 +59,6 @@ class AuthConfig(OpenShiftObject, Authorization):
     @modify
     def remove_all_hosts(self):
         self.model.spec.hosts = []
-
 
     @modify
     def set_deny_with(self, code, value):

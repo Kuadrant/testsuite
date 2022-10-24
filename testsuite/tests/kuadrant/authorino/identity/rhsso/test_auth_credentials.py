@@ -20,7 +20,7 @@ def authorization(rhsso, openshift, blame, envoy, module_label, credentials):
     """Add RHSSO identity to AuthConfig"""
     authorization = AuthConfig.create_instance(openshift, blame("ac"),
                                                envoy.hostname, labels={"testRun": module_label})
-    authorization.add_oidc_identity("rhsso", rhsso.well_known["issuer"], credentials, "Token")
+    authorization.identity.oidc("rhsso", rhsso.well_known["issuer"], credentials, "Token")
     return authorization
 
 

@@ -5,7 +5,7 @@ import pytest
 @pytest.fixture(scope="module")
 def authorization(authorization, rhsso):
     """Add RHSSO identity"""
-    authorization.add_oidc_identity("rhsso", rhsso.well_known["issuer"])
+    authorization.identity.oidc("rhsso", rhsso.well_known["issuer"])
     return authorization
 
 
@@ -28,7 +28,7 @@ def test_anonymous_identity(client, auth, authorization):
     response = client.get("/get")
     assert response.status_code == 401
 
-    authorization.add_anonymous_identity("anonymous")
+    authorization.identity.anonymous("anonymous")
 
     response = client.get("/get")
     assert response.status_code == 200

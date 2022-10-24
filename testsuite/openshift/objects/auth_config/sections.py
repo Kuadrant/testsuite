@@ -20,9 +20,9 @@ class Section:
         return self.obj.modify_and_apply(_new_modifier, retries, cmd_args)
 
     @property
-    def commited(self):
+    def committed(self):
         """Reimplementation of commit from OpenshiftObject"""
-        return self.obj.commited
+        return self.obj.committed
 
     @property
     def section(self):
