@@ -1,8 +1,8 @@
 """AuthConfig CR object"""
 from dataclasses import asdict
-from typing import Dict, Literal
+from typing import Dict, Literal, Iterable
 
-from testsuite.objects import Identities, Metadata, Responses, MatchExpression, Authorizations, Rule
+from testsuite.objects import Identities, Metadata, Responses, MatchExpression, Authorizations, Rule, Cache
 from testsuite.openshift.objects import OpenShiftObject, modify
 
 
@@ -29,16 +29,26 @@ class Section:
         """The actual dict section which will be edited"""
         return self.obj.model.spec.setdefault(self.section_name, [])
 
-    def add_item(self, name, value):
+    def add_item(self, name, value, priority: int = None, when: Iterable[Rule] = None,
+                 metrics: bool = None, cache: Cache = None):
         """Adds item to the section"""
-        self.section.append({"name": name, **value})
+        item = {"name": name, **value}
+        if when:
+            item["when"] = [asdict(x) for x in when]
+        if metrics:
+            item["metrics"] = metrics
+        if cache:
+            item["cache"] = cache.to_dict()
+        if priority:
+            item["priority"] = priority
+        self.section.append(item)
 
 
 class IdentitySection(Section, Identities):
     """Section which contains identity configuration"""
 
     @modify
-    def mtls(self, name: str, selector_key: str, selector_value: str):
+    def mtls(self, name: str, selector_key: str, selector_value: str, **common_features):
         """Adds mTLS identity
         Args:
             :param name: name of the identity
@@ -53,10 +63,10 @@ class IdentitySection(Section, Identities):
                     }
                 }
             }
-        })
+        }, **common_features)
 
     @modify
-    def oidc(self, name, endpoint, credentials="authorization_header", selector="Bearer"):
+    def oidc(self, name, endpoint, credentials="authorization_header", selector="Bearer", **common_features):
         """Adds OIDC identity"""
         self.add_item(name, {
             "oidc": {
@@ -66,12 +76,12 @@ class IdentitySection(Section, Identities):
                 "in": credentials,
                 "keySelector": selector
             }
-        })
+        }, **common_features)
 
     @modify
     def api_key(self, name, all_namespaces: bool = False,
                 match_label=None, match_expression: MatchExpression = None,
-                credentials="authorization_header", selector="APIKEY"):
+                credentials="authorization_header", selector="APIKEY", **common_features):
         """
         Adds API Key identity
         Args:
@@ -107,17 +117,17 @@ class IdentitySection(Section, Identities):
                 "in": credentials,
                 "keySelector": selector
             }
-        })
+        }, **common_features)
 
     @modify
-    def anonymous(self, name):
+    def anonymous(self, name, **common_features):
         """Adds anonymous identity"""
-        self.add_item(name, {"anonymous": {}})
+        self.add_item(name, {"anonymous": {}}, **common_features)
 
     @modify
-    def kubernetes(self, name, authjson):
+    def kubernetes(self, name, authjson, **common_features):
         """Adds kubernetes identity"""
-        self.add_item(name, {"plain": {"authJSON": authjson}})
+        self.add_item(name, {"plain": {"authJSON": authjson}, **common_features})
 
     @modify
     def remove_all(self):
@@ -128,7 +138,7 @@ class IdentitySection(Section, Identities):
 class MetadataSection(Section, Metadata):
     """Section which contains metadata configuration"""
     @modify
-    def http_metadata(self, name, endpoint, method: Literal["GET", "POST"]):
+    def http_metadata(self, name, endpoint, method: Literal["GET", "POST"], **common_features):
         """Set metadata http external auth feature"""
         self.add_item(name, {
             "http": {
@@ -136,19 +146,19 @@ class MetadataSection(Section, Metadata):
                 "method": method,
                 "headers": [{"name": "Accept", "value": "application/json"}]
             }
-        })
+        }, **common_features)
 
     @modify
-    def user_info_metadata(self, name, identity_source):
+    def user_info_metadata(self, name, identity_source, **common_features):
         """Set metadata OIDC user info"""
         self.add_item(name, {
             "userInfo": {
                 "identitySource": identity_source
             }
-        })
+        }, **common_features)
 
     @modify
-    def uma_metadata(self, name, endpoint, credentials):
+    def uma_metadata(self, name, endpoint, credentials, **common_features):
         """Set metadata feature for resource-level authorization with User-Managed Access (UMA) resource registry"""
         self.add_item(name, {
             "uma": {
@@ -157,23 +167,23 @@ class MetadataSection(Section, Metadata):
                     "name": credentials
                 }
             }
-        })
+        }, **common_features)
 
 
 class ResponsesSection(Section, Responses):
     """Section which contains response configuration"""
 
     @modify
-    def add(self, response):
+    def add(self, response, **common_features):
         """Adds response section to AuthConfig."""
-        self.add_item(response.pop("name"), response)
+        self.add_item(response.pop("name"), response, **common_features)
 
 
 class AuthorizationsSection(Section, Authorizations):
     """Section which contains authorization configuration"""
 
     @modify
-    def auth_rule(self, name, rule: Rule, when: Rule = None, metrics=False, priority=0):
+    def auth_rule(self, name, rule: Rule, when: Rule = None, metrics=False, priority=0, **common_features):
         """Adds JSON pattern-matching authorization rule (authorization.json)"""
         section = {
             "metrics": metrics,
@@ -184,9 +194,9 @@ class AuthorizationsSection(Section, Authorizations):
         }
         if when:
             section["when"] = [asdict(when)]
-        self.add_item(name, section)
+        self.add_item(name, section, **common_features)
 
-    def role_rule(self, name: str, role: str, path: str, metrics=False, priority=0):
+    def role_rule(self, name: str, role: str, path: str, metrics=False, priority=0, **common_features):
         """
         Adds a rule, which allows access to 'path' only to users with 'role'
         Args:
@@ -198,19 +208,19 @@ class AuthorizationsSection(Section, Authorizations):
         """
         rule = Rule("auth.identity.realm_access.roles", "incl", role)
         when = Rule("context.request.http.path", "matches", path)
-        self.auth_rule(name, rule, when, metrics, priority)
+        self.auth_rule(name, rule, when, metrics, priority, **common_features)
 
     @modify
-    def opa_policy(self, name, rego_policy):
+    def opa_policy(self, name, rego_policy, **common_features):
         """Adds Opa (https://www.openpolicyagent.org/docs/latest/) policy to the AuthConfig"""
         self.add_item(name, {
             "opa": {
                 "inlineRego": rego_policy
             }
-        })
+        }, **common_features)
 
     @modify
-    def external_opa_policy(self, name, endpoint, ttl=0):
+    def external_opa_policy(self, name, endpoint, ttl=0, **common_features):
         """
         Adds OPA policy that is declared as an HTTP endpoint
         """
@@ -221,10 +231,10 @@ class AuthorizationsSection(Section, Authorizations):
                     "ttl": ttl
                 }
             }
-        })
+        }, **common_features)
 
     @modify
-    def kubernetes(self, name: str, when: list, kube_attrs: dict, priority=0):
+    def kubernetes(self, name: str, when: list, kube_attrs: dict, priority=0, **common_features):
         """Adds Kubernetes authorization
 
         :param name: name of kubernetes authorization
@@ -239,4 +249,4 @@ class AuthorizationsSection(Section, Authorizations):
             "priority": priority,
             "kubernetes": {"user": kube_user, "resourceAttributes": kube_attrs},
             "when": when
-        })
+        }, **common_features)
