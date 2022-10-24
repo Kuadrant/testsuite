@@ -65,9 +65,11 @@ def cert_builder(cfssl: CFSSLClient, chain: dict, hosts: Union[str, Collection[s
             parsed_hosts = [parsed_hosts]  # type: ignore
 
         if info.ca or info.children:
-            cert = cfssl.create_authority(name, hosts=parsed_hosts, certificate_authority=parent)
+            cert = cfssl.create_authority(name, names=info.names,
+                                          hosts=parsed_hosts, certificate_authority=parent)
         else:
-            cert = cfssl.create(name, hosts=parsed_hosts, certificate_authority=parent)  # type: ignore
+            cert = cfssl.create(name, names=info.names,
+                                hosts=parsed_hosts, certificate_authority=parent)  # type: ignore
         cert.chain = cert.certificate + parent.chain if parent else cert.certificate  # type: ignore
         if info.children is not None:
             result.update(cert_builder(cfssl, info.children, parsed_hosts, cert))

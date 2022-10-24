@@ -18,6 +18,7 @@ class CertInfo:
     hosts: Optional[Union[Collection[str], str]] = None
     ca: bool = False
     children: Optional[Dict[str, Optional["CertInfo"]]] = None
+    names: Optional[List[Dict[str, str]]] = None
 
 
 @dataclasses.dataclass
