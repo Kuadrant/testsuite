@@ -72,3 +72,13 @@ class Ingress(OpenShiftObject, LifecycleObject):
     def rules(self):
         """Returns rules defined in the ingress"""
         return self.model.spec.rules
+
+    def wait_for_hosts(self, tolerate_failures: int = 5):
+        """Waits until all rules within the ingress have host fields filled"""
+        def _all_rules_have_host(obj):
+            return all("host" in r and len(r.get("host")) > 0 for r in obj.model.spec.rules)
+
+        success, _, _ = self.self_selector().until_all(success_func=_all_rules_have_host,
+                                                       tolerate_failures=tolerate_failures)
+
+        return success
