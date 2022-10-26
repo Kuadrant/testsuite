@@ -1,5 +1,5 @@
 .PHONY: commit-acceptance pylint mypy clean \
-	test pipenv pipenv-dev container-image \
+	test glbc pipenv pipenv-dev container-image \
 
 TB ?= short
 LOGLEVEL ?= INFO
@@ -44,6 +44,10 @@ test pytest tests: pipenv
 # Run performance tests
 performance: pipenv
 	$(PYTEST) --performance $(flags) testsuite/tests/kuadrant/authorino/performance
+
+glbc: ## Run glbc tests
+glbc: pipenv
+	$(PYTEST) --glbc $(flags) testsuite/tests/glbc
 
 Pipfile.lock: Pipfile
 	pipenv lock

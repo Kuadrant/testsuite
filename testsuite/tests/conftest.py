@@ -18,9 +18,11 @@ from testsuite.utils import randomize, _whoami
 
 
 def pytest_addoption(parser):
-    """Add option to include performance tests in testrun"""
+    """Add options to include various kinds of tests in testrun"""
     parser.addoption(
         "--performance", action="store_true", default=False, help="Run also performance tests (default: False)")
+    parser.addoption(
+        "--glbc", action="store_true", default=False, help="Run also glbc tests (default: False)")
 
 
 def pytest_runtest_setup(item):
@@ -28,6 +30,8 @@ def pytest_runtest_setup(item):
     marks = [i.name for i in item.iter_markers()]
     if "performance" in marks and not item.config.getoption("--performance"):
         pytest.skip("Excluding performance tests")
+    if "glbc" in marks and not item.config.getoption("--glbc"):
+        pytest.skip("Excluding glbc tests")
 
 
 @pytest.fixture(scope='session', autouse=True)
