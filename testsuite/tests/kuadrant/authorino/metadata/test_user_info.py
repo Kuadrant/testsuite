@@ -4,7 +4,14 @@ https://github.com/Kuadrant/authorino/blob/main/docs/features.md#oidc-userinfo-m
 """
 import pytest
 
+from testsuite.httpx.auth import HttpxOidcClientAuth
 from testsuite.openshift.objects.auth_config import Rule
+
+
+@pytest.fixture(scope="module")
+def user2(rhsso):
+    """Second User which has incorrect email"""
+    return rhsso.realm.create_user("user2", "password", email="test@test.com")
 
 
 @pytest.fixture(scope="module")
@@ -25,8 +32,8 @@ def test_correct_auth(client, auth):
     assert response.status_code == 200
 
 
-def test_incorrect_auth(client, auth, rhsso):
+def test_incorrect_auth(client, rhsso, user2):
     """Updates RHSSO user email address and tests incorrect auth"""
-    rhsso.user.update_user(email="updatedMail@anything.invalid")
+    auth = HttpxOidcClientAuth(rhsso.get_token(user2.username, user2.password), "authorization")
     response = client.get("get", auth=auth)
     assert response.status_code == 403
