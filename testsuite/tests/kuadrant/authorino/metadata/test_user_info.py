@@ -13,9 +13,9 @@ def authorization(authorization, rhsso):
     Adds auth metadata OIDC UserInfo which fetches OIDC UserInfo in request-time.
     Adds a simple rule that accepts only when fetched UserInfo contains the email address of the default RHSSO user.
     """
-    user = rhsso.client.admin.get_user(rhsso.user)
     authorization.add_user_info_metadata("user-info", "rhsso")
-    authorization.add_auth_rule("rule", Rule("auth.metadata.user-info.email", "eq", user["email"]))
+    authorization.add_auth_rule("rule",
+                                Rule("auth.metadata.user-info.email", "eq", rhsso.user.properties["email"]))
     return authorization
 
 
@@ -27,6 +27,6 @@ def test_correct_auth(client, auth):
 
 def test_incorrect_auth(client, auth, rhsso):
     """Updates RHSSO user email address and tests incorrect auth"""
-    rhsso.client.admin.update_user(rhsso.user, {"email": "updatedMail@anything.invalid"})
+    rhsso.user.update_user(email="updatedMail@anything.invalid")
     response = client.get("get", auth=auth)
     assert response.status_code == 403
