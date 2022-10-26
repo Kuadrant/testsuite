@@ -11,5 +11,6 @@ default:
       password: "testPassword"
   authorino:
     deploy: true
+    log_level: "debug"
   envoy:
     image: "docker.io/envoyproxy/envoy:v1.23-latest"

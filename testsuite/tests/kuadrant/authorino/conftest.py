@@ -33,6 +33,7 @@ def authorino(authorino, openshift, blame, request, testconfig, module_label, au
     authorino = AuthorinoCR.create_instance(openshift,
                                             blame("authorino"),
                                             image=weakget(testconfig)["authorino"]["image"] % None,
+                                            log_level=weakget(testconfig)["authorino"]["log_level"] % None,
                                             **authorino_parameters)
     request.addfinalizer(lambda: authorino.delete(ignore_not_found=True))
     authorino.commit()
