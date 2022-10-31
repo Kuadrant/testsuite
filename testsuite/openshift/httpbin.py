@@ -1,4 +1,5 @@
 """Module for Httpbin backend classes"""
+from functools import cached_property
 from importlib import resources
 
 from testsuite.objects import LifecycleObject
@@ -32,3 +33,14 @@ class Httpbin(LifecycleObject):
             if self.httpbin_objects:
                 self.httpbin_objects.delete()
         self.httpbin_objects = None
+
+    @cached_property
+    def service(self):
+        """Service associated with httpbin"""
+        with self.openshift.context:
+            return self.httpbin_objects.narrow("service").object()
+
+    @cached_property
+    def port(self):
+        """Service port that httpbin listens on"""
+        return self.service.model.spec.ports[0].get("port")
