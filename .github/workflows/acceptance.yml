@@ -7,10 +7,8 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - name: Setup Python
-        id: setup-python
-        uses: actions/setup-python@v2
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
         with:
           python-version: '3.9'
       - name: Install pipenv
@@ -18,9 +16,9 @@ jobs:
       - name: Week number
         id: weeknum
         run: |
-          echo "::set-output name=weeknum::$(/bin/date -u "+%g.%V")"
+          echo "weeknum=$(/bin/date -u "+%g.%V")" >> $GITHUB_OUTPUT"
         shell: bash
-      - uses: actions/cache@v2
+      - uses: actions/cache@v3
         with:
           path: |
             ~/.local/share/virtualenvs
