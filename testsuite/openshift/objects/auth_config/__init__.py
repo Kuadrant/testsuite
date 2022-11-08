@@ -14,18 +14,22 @@ class AuthConfig(OpenShiftObject, Authorization):
 
     @cached_property
     def authorization(self) -> Authorizations:
+        """Gives access to authorization settings"""
         return AuthorizationsSection(self, "authorization")
 
     @cached_property
     def identity(self) -> Identities:
+        """Gives access to identity settings"""
         return IdentitySection(self, "identity")
 
     @cached_property
     def metadata(self) -> Metadata:
+        """Gives access to metadata settings"""
         return MetadataSection(self, "metadata")
 
     @cached_property
     def responses(self) -> Responses:
+        """Gives access to response settings"""
         return ResponsesSection(self, "response")
 
     @classmethod
@@ -50,18 +54,21 @@ class AuthConfig(OpenShiftObject, Authorization):
 
     @modify
     def add_host(self, hostname):
+        """Adds host"""
         self.model.spec.hosts.append(hostname)
 
     @modify
     def remove_host(self, hostname):
+        """Remove host"""
         self.model.spec.hosts.remove(hostname)
 
     @modify
     def remove_all_hosts(self):
+        """Remove all hosts"""
         self.model.spec.hosts = []
 
     @modify
     def set_deny_with(self, code, value):
-        """Set denyWith to authconfig"""
+        """Set denyWith"""
         self.model.spec["denyWith"] = {
             "unauthenticated": {"code": code, "headers": [{"name": "Location", "valueFrom": {"authJSON": value}}]}}

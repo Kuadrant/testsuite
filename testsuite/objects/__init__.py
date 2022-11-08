@@ -95,11 +95,11 @@ class Authorization(LifecycleObject):
 
     @abc.abstractmethod
     def remove_all_hosts(self):
-        """Remove host"""
+        """Remove all hosts"""
 
     @abc.abstractmethod
     def set_deny_with(self, code, value):
-        """Set denyWith to authconfig"""
+        """Set denyWith"""
 
 
 class PreexistingAuthorino(Authorino):

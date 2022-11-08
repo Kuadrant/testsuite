@@ -124,6 +124,7 @@ class MetadataSection(Section, Metadata):
     """Section which contains metadata configuration"""
     @modify
     def http_metadata(self, name, endpoint, method: Literal["GET", "POST"]):
+        """Set metadata http external auth feature"""
         self.add_item(name, {
             "http": {
                 "endpoint": endpoint,
@@ -134,6 +135,7 @@ class MetadataSection(Section, Metadata):
 
     @modify
     def user_info_metadata(self, name, identity_source):
+        """Set metadata OIDC user info"""
         self.add_item(name, {
             "userInfo": {
                 "identitySource": identity_source
