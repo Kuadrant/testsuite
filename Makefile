@@ -1,5 +1,4 @@
-.PHONY: commit-acceptance pylint mypy clean \
-	test glbc pipenv pipenv-dev container-image \
+.PHONY: commit-acceptance pylint mypy black reformat test poetry poetry-no-dev glbc container-image
 
 TB ?= short
 LOGLEVEL ?= INFO
@@ -10,10 +9,7 @@ else
 resultsdir ?= .
 endif
 
-PIPENV_VERBOSITY ?= -1
-PIPENV_IGNORE_VIRTUALENVS ?= 1
-
-PYTEST = pipenv run python -m pytest --tb=$(TB)
+PYTEST = poetry run python -m pytest --tb=$(TB)
 
 ifdef junit
 PYTEST += --junitxml=$(resultsdir)/junit-$(@F).xml -o junit_suite_name=$(@F)
@@ -25,11 +21,11 @@ endif
 
 commit-acceptance: black pylint mypy all-is-package
 
-pylint mypy: pipenv-dev
-	pipenv run $@ $(flags) testsuite
+pylint mypy:
+	poetry run $@ $(flags) testsuite
 
-black: pipenv-dev
-	pipenv run black --line-length 120 --check testsuite --diff
+black:
+	poetry run black --line-length 120 --check testsuite --diff
 
 reformat:
 	pipenv run black --line-length 120 testsuite
@@ -40,50 +36,25 @@ all-is-package:
 	@! find testsuite/ -type d \! -name __pycache__ \! -path 'testsuite/resources/*' \! -exec test -e {}/__init__.py \; -print | grep '^..*$$'
 
 # pattern to run individual testfile or all testfiles in directory
-testsuite/%: FORCE pipenv
+testsuite/%: FORCE
 	$(PYTEST) --performance --glbc -v $(flags) $@
 
 test: ## Run test
-test pytest tests: pipenv
+test pytest tests:
 	$(PYTEST) -n4 -m 'not flaky' --dist loadfile $(flags) testsuite
 
 # Run performance tests
-performance: pipenv
+performance:
 	$(PYTEST) --performance $(flags) testsuite/tests/kuadrant/authorino/performance
 
 glbc: ## Run glbc tests
-glbc: pipenv
 	$(PYTEST) --glbc $(flags) testsuite/tests/glbc
 
-Pipfile.lock: Pipfile
-	pipenv lock
+poetry:
+	poetry install --sync --no-root
 
-.make-pipenv-sync: Pipfile.lock
-	pipenv sync
-	touch .make-pipenv-sync
-
-.make-pipenv-sync-dev: Pipfile.lock
-	pipenv sync --dev
-	touch .make-pipenv-sync-dev .make-pipenv-sync
-
-pipenv: .make-pipenv-sync
-
-pipenv-dev: .make-pipenv-sync-dev
-
-clean: ## clean pip deps
-clean: mostlyclean
-	rm -f Pipfile.lock
-
-mostlyclean:
-	rm -f .make-*
-	rm -rf .mypy_cache
-	-pipenv --rm
-
-fake-sync:
-	test -e Pipfile.lock \
-		&& touch Pipfile.lock \
-		&& touch .make-pipenv-sync .make-pipenv-sync-dev \
-		|| true
+poetry-no-dev:
+	poetry install --sync --no-root --without dev
 
 # Check http://marmelab.com/blog/2016/02/29/auto-documented-makefile.html
 help: ## Print this help

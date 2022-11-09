@@ -1,0 +1,82 @@
+[tool.poetry]
+name = "kuadrant-testsuite"
+version = "0.1.0"
+description = "Tests for GLBC and Kuadrant projects"
+authors = ["Kuadrant QE <you@example.com>"]
+readme = "README.md"
+#packages = [{include = "kuadrant_testsuite"}]
+
+[tool.poetry.group.main.dependencies]
+python = "^3.9"
+typing_extensions = "*"
+pytest-xdist = "*"
+pytest = "*"
+pytest-asyncio = "*"
+pytest-html = "*"
+dynaconf = "*"
+python-keycloak = ">=2.13"
+backoff = "*"
+httpx = { version = "*", extras = ["http2"] }
+openshift-client = ">=1.0.14"
+apyproxy = { git = "https://github.com/mangan/apyproxy" }
+weakget = "*"
+flaky = "*"
+
+
+[tool.poetry.group.dev.dependencies]
+mypy = "*"
+pylint = "*"
+types-PyYAML = "*"
+black = {version = "*", extras = ["d"]}
+
+
+# Black
+[tool.black]
+line-length = 120
+
+# Pytest:
+[tool.pytest.ini_options]
+markers = [
+    "issue: Reference to covered issue",
+    "performance: Performance tests have unique needs",
+    "glbc: GLBC tests have specific needs"
+]
+filterwarnings = [
+    "ignore: WARNING the new order is not taken into account:UserWarning",
+    "ignore::urllib3.exceptions.InsecureRequestWarning",
+    "ignore::cryptography.utils.CryptographyDeprecationWarning"
+]
+log_format = "%(asctime)s %(levelname)s:%(name)s:%(message)s"
+log_date_format = "%H:%M:%S %z"
+log_level = "INFO"
+junit_logging = "all"
+junit_family = "xunit2"
+asyncio_mode = "auto"
+
+# Pylint:
+[tool.pylint.FORMAT]
+max-line-length = 120
+disable = [
+    "duplicate-code", # reports false alarms AND can't be disabled locally; pylint issue #214
+    "fixme", # ignore TODOs
+    "redefined-outer-name",
+    "too-many-arguments",
+    "too-few-public-methods"]
+
+[tool.pylint.BASIC]
+good-names=["i","j","k",
+           "pytestmark",
+           "logger",
+           "ca"]
+
+# Mypy:
+[tool.mypy]
+implicit_optional = true
+
+[[tool.mypy.overrides]]
+module = ["dynaconf.*", "keycloak.*", "weakget.*", "openshift.*", "apyproxy.*", "click.*"]
+ignore_missing_imports = true
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
