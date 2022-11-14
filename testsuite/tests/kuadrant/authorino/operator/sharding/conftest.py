@@ -26,7 +26,7 @@ def authorization(request, authorino, blame, openshift, module_label):
     def _authorization(hostname=None, sharding_label=None):
         auth = AuthConfig.create_instance(openshift, blame("ac"), hostname,
                                           labels={"testRun": module_label, "sharding": sharding_label})
-        auth.add_response({"name": "header", "json": {"properties": [{"name": "anything", "value": sharding_label}]}})
+        auth.responses.add({"name": "header", "json": {"properties": [{"name": "anything", "value": sharding_label}]}})
         request.addfinalizer(auth.delete)
         auth.commit()
         return auth

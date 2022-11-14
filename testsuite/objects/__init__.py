@@ -1,7 +1,10 @@
 """Module containing base classes for common objects"""
 import abc
 from dataclasses import dataclass
+from functools import cached_property
 from typing import Literal, List
+
+from testsuite.objects.sections import Metadata, Identities, Authorizations, Responses
 
 
 @dataclass
@@ -62,25 +65,25 @@ class Authorino(LifecycleObject):
 class Authorization(LifecycleObject):
     """Object containing Authorization rules and configuration for either Authorino or Kuadrant"""
 
+    @cached_property
     @abc.abstractmethod
-    def add_oidc_identity(self, name, endpoint, credentials, selector):
-        """Adds OIDC identity provider"""
+    def authorization(self) -> Authorizations:
+        """Gives access to authorization settings"""
 
+    @cached_property
     @abc.abstractmethod
-    def add_api_key_identity(self, name, all_namespaces, match_label, match_expression,  credentials, selector):
-        """Adds API Key identity"""
+    def identity(self) -> Identities:
+        """Gives access to identity settings"""
 
+    @cached_property
     @abc.abstractmethod
-    def add_anonymous_identity(self, name):
-        """Adds anonymous identity"""
+    def metadata(self) -> Metadata:
+        """Gives access to metadata settings"""
 
+    @cached_property
     @abc.abstractmethod
-    def add_mtls_identity(self, name: str, selector_key: str, selector_value: str):
-        """Adds mTLS identity"""
-
-    @abc.abstractmethod
-    def remove_all_identities(self):
-        """Removes all identities from AuthConfig"""
+    def responses(self) -> Responses:
+        """Gives access to response settings"""
 
     @abc.abstractmethod
     def add_host(self, hostname):
@@ -92,43 +95,11 @@ class Authorization(LifecycleObject):
 
     @abc.abstractmethod
     def remove_all_hosts(self):
-        """Remove host"""
-
-    @abc.abstractmethod
-    def add_opa_policy(self, name, rego_policy):
-        """Adds OPA inline Rego policy"""
-
-    @abc.abstractmethod
-    def add_external_opa_policy(self, name, endpoint, ttl):
-        """Adds OPA policy from external registry"""
-
-    @abc.abstractmethod
-    def add_response(self, response):
-        """Add response to AuthConfig"""
-
-    @abc.abstractmethod
-    def add_auth_rule(self, name: str, rule: Rule, when: Rule, metrics: bool, priority: int):
-        """Adds JSON pattern-matching authorization rule (authorization.json)"""
-
-    @abc.abstractmethod
-    def add_role_rule(self, name: str, role: str, path: str, metrics: bool, priority: int):
-        """Adds a rule, which allows access to 'path' only to users with 'role'"""
-
-    @abc.abstractmethod
-    def remove_all_rules(self):
-        """Removes all rules from AuthConfig"""
+        """Remove all hosts"""
 
     @abc.abstractmethod
     def set_deny_with(self, code, value):
-        """Set denyWith to authconfig"""
-
-    @abc.abstractmethod
-    def add_http_metadata(self, name, endpoint, method):
-        """Set metadata http external auth feature"""
-
-    @abc.abstractmethod
-    def add_user_info_metadata(self, name, identity_source):
-        """Set metadata OIDC user info"""
+        """Set denyWith"""
 
 
 class PreexistingAuthorino(Authorino):

@@ -7,8 +7,8 @@ import pytest
 @pytest.fixture(scope="module")
 def authorization(authorization):
     """Setup AuthConfig for test"""
-    authorization.add_anonymous_identity("anonymous")
-    authorization.add_response({"name": "auth-json", "json": {
+    authorization.identity.anonymous("anonymous")
+    authorization.responses.add({"name": "auth-json", "json": {
         "properties": [{"name": "auth", "valueFrom": {"authJSON": "auth.identity.anonymous"}}]}})
     return authorization
 

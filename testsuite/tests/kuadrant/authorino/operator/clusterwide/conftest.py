@@ -20,7 +20,7 @@ def hostname2(envoy, blame):
 def authorization2(hostname2, blame, openshift2, module_label, oidc_provider):
     """Second valid hostname"""
     auth = AuthConfig.create_instance(openshift2, blame("ac"), hostname2, labels={"testRun": module_label})
-    auth.add_oidc_identity("rhsso", oidc_provider.well_known["issuer"])
+    auth.identity.oidc("rhsso", oidc_provider.well_known["issuer"])
     return auth
 
 

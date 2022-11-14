@@ -8,11 +8,11 @@ from testsuite.objects import Rule
 @pytest.fixture(scope="module", autouse=True)
 def authorization(authorization, blame, selector_params, cert_attributes):
     """Create AuthConfig with mtls identity and pattern matching rule"""
-    authorization.remove_all_identities()
+    authorization.identity.remove_all()
 
-    authorization.add_mtls_identity(blame("mtls"), *selector_params)
+    authorization.identity.mtls(blame("mtls"), *selector_params)
     rule = Rule("auth.identity.Organization", "incl", cert_attributes["O"])
-    authorization.add_auth_rule(blame("redhat"), rule)
+    authorization.authorization.auth_rule(blame("redhat"), rule)
     return authorization
 
 

@@ -5,7 +5,7 @@ import pytest
 @pytest.fixture(scope="module")
 def authorization(authorization, module_label):
     """Creates AuthConfig with API key identity"""
-    authorization.add_api_key_identity("api_key", match_label=module_label)
+    authorization.identity.api_key("api_key", match_label=module_label)
     return authorization
 
 

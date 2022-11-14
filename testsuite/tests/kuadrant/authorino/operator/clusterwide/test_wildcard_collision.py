@@ -12,7 +12,7 @@ from testsuite.openshift.objects.auth_config import AuthConfig
 def authorization(authorino, blame, openshift, module_label, envoy, wildcard_domain):
     """In case of Authorino, AuthConfig used for authorization"""
     auth = AuthConfig.create_instance(openshift, blame("ac"), wildcard_domain, labels={"testRun": module_label})
-    auth.add_response({"name": "header", "json": {"properties": [{"name": "anything", "value": "one"}]}})
+    auth.responses.add({"name": "header", "json": {"properties": [{"name": "anything", "value": "one"}]}})
     return auth
 
 
@@ -21,7 +21,7 @@ def authorization(authorino, blame, openshift, module_label, envoy, wildcard_dom
 def authorization2(authorino, blame, openshift2, module_label, envoy, wildcard_domain):
     """In case of Authorino, AuthConfig used for authorization"""
     auth = AuthConfig.create_instance(openshift2, blame("ac"), wildcard_domain, labels={"testRun": module_label})
-    auth.add_response({"name": "header", "json": {"properties": [{"name": "anything", "value": "two"}]}})
+    auth.responses.add({"name": "header", "json": {"properties": [{"name": "anything", "value": "two"}]}})
     return auth
 
 

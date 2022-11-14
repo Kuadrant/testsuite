@@ -48,7 +48,7 @@ def authorization(authorization, oidc_provider, authorino, envoy, blame, openshi
     if authorization is None:
         authorization = AuthConfig.create_instance(openshift, blame("ac"),
                                                    envoy.hostname, labels={"testRun": module_label})
-    authorization.add_oidc_identity("rhsso", oidc_provider.well_known["issuer"])
+    authorization.identity.oidc("rhsso", oidc_provider.well_known["issuer"])
     return authorization
 
 
