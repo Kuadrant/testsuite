@@ -1,6 +1,8 @@
 """Kubernetes Ingress object"""
 from typing import Any, Dict, List, Optional, TYPE_CHECKING
 
+import openshift as oc
+
 from testsuite.objects import LifecycleObject
 from testsuite.openshift.objects import OpenShiftObject
 
@@ -73,12 +75,25 @@ class Ingress(OpenShiftObject, LifecycleObject):
         """Returns rules defined in the ingress"""
         return self.model.spec.rules
 
-    def wait_for_hosts(self, tolerate_failures: int = 5):
-        """Waits until all rules within the ingress have host fields filled"""
-        def _all_rules_have_host(obj):
-            return all("host" in r and len(r.get("host")) > 0 for r in obj.model.spec.rules)
+    @property
+    def host(self):
+        """Returns host of the ingress"""
+        return self.model.metadata.annotations["kuadrant.dev/host.generated"]
 
-        success, _, _ = self.self_selector().until_all(success_func=_all_rules_have_host,
-                                                       tolerate_failures=tolerate_failures)
+    def wait(self, timeout=360):
+        """
+        Waits until the Ingress is ready,
+        temporarily it just checks for certificate as that is almost certainly created afterwards
+        """
+        return self.wait_for_certificate(timeout=timeout)
+
+    def wait_for_certificate(self, tolerate_failures: int = 5, timeout=360):
+        """Waits until all rules within the ingress have host fields filled"""
+        def _certificate_ready(obj):
+            return obj.model.metadata.annotations["kuadrant.dev/certificate-status"] == "ready"
+
+        with oc.timeout(timeout):
+            success, _, _ = self.self_selector().until_all(success_func=_certificate_ready,
+                                                           tolerate_failures=tolerate_failures)
 
         return success
