@@ -43,7 +43,7 @@ def auth2(rhsso):
 
 
 @pytest.fixture(scope="module")
-def authorization(authorization, rhsso):
+def authorization(authorization, rhsso, client):
     """
     Adds UMA resource-level authorization metadata feature and OPA policy that authorize user access to the resource.
     Creates two client resources on RHSSO client:
@@ -52,6 +52,9 @@ def authorization(authorization, rhsso):
     """
     rhsso.client.create_uma_resource("get1", ["/anything"])
     rhsso.client.create_uma_resource("get2", ["/anything/1"], rhsso.test_username)
+    # Sometimes RHSSO does not instantly propagate new resources.
+    # To prevent the flakiness of these tests, we are adding a new retry code: 404
+    client.add_retry_code(404)
 
     authorization.metadata.uma_metadata("resource-data", rhsso.well_known["issuer"], "uma-client-secret")
     authorization.authorization.opa_policy("opa", VALIDATE_RESOURCE_OWNER)
