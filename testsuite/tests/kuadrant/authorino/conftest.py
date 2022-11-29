@@ -46,8 +46,10 @@ def authorino(authorino, openshift, blame, request, testconfig, module_label, au
 def authorization(authorization, oidc_provider, authorino, envoy, blame, openshift, module_label) -> Authorization:
     """In case of Authorino, AuthConfig used for authorization"""
     if authorization is None:
-        authorization = AuthConfig.create_instance(openshift, blame("ac"),
-                                                   envoy.hostname, labels={"testRun": module_label})
+        authorization = AuthConfig.create_instance(openshift,
+                                                   blame("ac"),
+                                                   envoy.hostname,
+                                                   labels={"testRun": module_label})
     authorization.identity.oidc("rhsso", oidc_provider.well_known["issuer"])
     return authorization
 
@@ -69,10 +71,12 @@ def client(authorization, envoy):
 @pytest.fixture(scope="module")
 def create_api_key(blame, request, openshift):
     """Creates API key Secret"""
+
     def _create_secret(name, label_selector, api_key, ocp: OpenShiftClient = openshift):
         secret_name = blame(name)
         secret = APIKey.create_instance(ocp, secret_name, label_selector, api_key)
         request.addfinalizer(lambda: secret.delete(ignore_not_found=True))
         secret.commit()
         return secret
+
     return _create_secret

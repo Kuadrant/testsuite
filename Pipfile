@@ -25,6 +25,7 @@ openshift-client = ">=1.0.14"
 hyperfoil-client="*"
 weakget = "*"
 flaky = "*"
+yapf = "*"
 
 [requires]
 python_version = "3"

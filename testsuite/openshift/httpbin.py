@@ -8,6 +8,7 @@ from testsuite.openshift.client import OpenShiftClient
 
 class Httpbin(LifecycleObject):
     """Httpbin deployed in OpenShift through template"""
+
     def __init__(self, openshift: OpenShiftClient, name, label) -> None:
         super().__init__()
         self.openshift = openshift

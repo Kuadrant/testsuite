@@ -8,6 +8,7 @@ def modify(func):
     """Wraps method of a subclass of OpenShiftObject to use modify_and_apply when the object
      is already committed to the server, or run it normally if it isn't.
      All methods modifying the target object in any way should be decorated by this"""
+
     def _custom_partial(func, *args, **kwargs):
         """Custom partial function which makes sure that self is always assigned correctly"""
 
@@ -29,6 +30,7 @@ def modify(func):
 
 class OpenShiftObject(APIObject):
     """Custom APIObjects which tracks if the object was already committed to the server or not"""
+
     def __init__(self, dict_to_model=None, string_to_model=None, context=None):
         super().__init__(dict_to_model, string_to_model, context)
         self.committed = False

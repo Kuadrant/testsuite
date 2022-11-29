@@ -7,12 +7,7 @@ import pytest
 @pytest.fixture(scope="module")
 def responses():
     """Returns response to be added to the AuthConfig"""
-    return [{"name": "header",
-            "json": {
-                "properties": [
-                    {"name": "anything", "value": "one"}
-                ]
-            }}]
+    return [{"name": "header", "json": {"properties": [{"name": "anything", "value": "one"}]}}]
 
 
 def test_simple_response_with(auth, client):

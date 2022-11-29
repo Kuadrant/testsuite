@@ -6,6 +6,7 @@ from keycloak import KeycloakOpenID, KeycloakAdmin
 
 class Realm:
     """Helper class for RHSSO realm manipulation"""
+
     def __init__(self, master: KeycloakAdmin, name) -> None:
         self.admin = KeycloakAdmin(server_url=master.server_url,
                                    username=master.username,
@@ -22,10 +23,7 @@ class Realm:
 
     def create_client(self, name, **kwargs):
         """Creates new client"""
-        self.admin.create_client(payload={
-            **kwargs,
-            "clientId": name}
-        )
+        self.admin.create_client(payload={**kwargs, "clientId": name})
         client_id = self.admin.get_client_id(name)
         return Client(self, client_id)
 
@@ -59,6 +57,7 @@ class Realm:
 
 class Client:
     """Helper class for RHSSO client manipulation"""
+
     def __init__(self, realm: Realm, client_id) -> None:
         self.admin = realm.admin
         self.realm = realm
@@ -100,8 +99,7 @@ class User:
         :param role: Dictionary with two keys "name" and "id" of role to assign
         :returns: Keycloak server response
         """
-        return self.admin.assign_realm_roles(user_id=self.user_id,
-                                             roles=role)
+        return self.admin.assign_realm_roles(user_id=self.user_id, roles=role)
 
     @property
     def properties(self):

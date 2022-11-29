@@ -105,6 +105,7 @@ class HyperfoilUtils(LifecycleObject):
         """
         rows = []
         token_url_obj = prepare_url(urlparse(rhsso.well_known['token_endpoint']))
-        rows.append([client_url, f"{token_url_obj.hostname}:{token_url_obj.port}", token_url_obj.path,
-                     rhsso.token_params()])
+        rows.append(
+            [client_url, f"{token_url_obj.hostname}:{token_url_obj.port}", token_url_obj.path,
+             rhsso.token_params()])
         self.factory.csv_data(filename, rows)

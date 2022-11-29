@@ -17,5 +17,11 @@ class Routes(RemoteMapping):
             extra_args.append(f"--hostname={hostname}")
         if port is not None:
             extra_args.append(f"--port={port}")
-        return self._client.do_action("expose", "service", f"--name={name}", "-o", "json",
-                                      service, *extra_args, parse_output=True)
+        return self._client.do_action("expose",
+                                      "service",
+                                      f"--name={name}",
+                                      "-o",
+                                      "json",
+                                      service,
+                                      *extra_args,
+                                      parse_output=True)

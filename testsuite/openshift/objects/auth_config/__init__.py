@@ -71,4 +71,13 @@ class AuthConfig(OpenShiftObject, Authorization):
     def set_deny_with(self, code, value):
         """Set denyWith"""
         self.model.spec["denyWith"] = {
-            "unauthenticated": {"code": code, "headers": [{"name": "Location", "valueFrom": {"authJSON": value}}]}}
+            "unauthenticated": {
+                "code": code,
+                "headers": [{
+                    "name": "Location",
+                    "valueFrom": {
+                        "authJSON": value
+                    }
+                }]
+            }
+        }

@@ -8,9 +8,22 @@ import pytest
 @pytest.fixture(scope="module")
 def authorization(authorization):
     """Setup AuthConfig for test"""
-    authorization.responses.add({"name": "auth-json", "json": {
-        "properties": [{"name": "auth", "valueFrom": {"authJSON": "auth.identity"}},
-                       {"name": "context", "valueFrom": {"authJSON": "context.request.http.headers.authorization"}}]}})
+    authorization.responses.add({
+        "name": "auth-json",
+        "json": {
+            "properties": [{
+                "name": "auth",
+                "valueFrom": {
+                    "authJSON": "auth.identity"
+                }
+            }, {
+                "name": "context",
+                "valueFrom": {
+                    "authJSON": "context.request.http.headers.authorization"
+                }
+            }]
+        }
+    })
     return authorization
 
 

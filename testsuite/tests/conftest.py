@@ -19,10 +19,11 @@ from testsuite.utils import randomize, _whoami
 
 def pytest_addoption(parser):
     """Add options to include various kinds of tests in testrun"""
-    parser.addoption(
-        "--performance", action="store_true", default=False, help="Run also performance tests (default: False)")
-    parser.addoption(
-        "--glbc", action="store_true", default=False, help="Run also glbc tests (default: False)")
+    parser.addoption("--performance",
+                     action="store_true",
+                     default=False,
+                     help="Run also performance tests (default: False)")
+    parser.addoption("--glbc", action="store_true", default=False, help="Run also glbc tests (default: False)")
 
 
 def pytest_runtest_setup(item):
@@ -154,6 +155,7 @@ def oidc_provider(rhsso) -> OIDCProvider:
 @pytest.fixture(scope="session")
 def blame(request):
     """Returns function that will add random identifier to the name"""
+
     def _blame(name: str, tail: int = 3) -> str:
         """Create 'scoped' name within given test
 
@@ -175,6 +177,7 @@ def blame(request):
             context = context.split(".")[0]
 
         return randomize(f"{name[:8]}-{_whoami()[:8]}-{context[:9]}", tail=tail)
+
     return _blame
 
 

@@ -11,11 +11,7 @@ from testsuite.utils import cert_builder
 @pytest.fixture(scope="session")
 def cert_attributes() -> Dict[str, str]:
     """Certificate attributes"""
-    return dict(O="Organization Test",
-                OU="Unit Test",
-                L="Location Test",
-                ST="State Test",
-                C="Country Test")
+    return dict(O="Organization Test", OU="Unit Test", L="Location Test", ST="State Test", C="Country Test")
 
 
 @pytest.fixture(scope="session")
@@ -28,17 +24,19 @@ def cert_attributes_other(cert_attributes) -> Dict[str, str]:
 def certificates(cfssl, authorino_domain, wildcard_domain, cert_attributes, cert_attributes_other):
     """Certificate hierarchy used for the tests"""
     chain = {
-        "envoy_ca": CertInfo(children={
-            "envoy_cert": None,
-            "valid_cert": CertInfo(names=[cert_attributes]),
-            "custom_cert": CertInfo(names=[cert_attributes_other])
-        }),
-        "authorino_ca": CertInfo(children={
+        "envoy_ca":
+        CertInfo(
+            children={
+                "envoy_cert": None,
+                "valid_cert": CertInfo(names=[cert_attributes]),
+                "custom_cert": CertInfo(names=[cert_attributes_other])
+            }),
+        "authorino_ca":
+        CertInfo(children={
             "authorino_cert": CertInfo(hosts=authorino_domain),
         }),
-        "invalid_ca": CertInfo(children={
-            "invalid_cert": None
-        })
+        "invalid_ca":
+        CertInfo(children={"invalid_cert": None})
     }
     return cert_builder(cfssl, chain, wildcard_domain)
 
@@ -46,11 +44,13 @@ def certificates(cfssl, authorino_domain, wildcard_domain, cert_attributes, cert
 @pytest.fixture(scope="session")
 def create_secret(blame, request, openshift):
     """Creates TLS secret from Certificate"""
+
     def _create_secret(certificate: Certificate, name: str, labels: Optional[Dict[str, str]] = None):
         secret_name = blame(name)
         secret = openshift.create_tls_secret(secret_name, certificate, labels=labels)
         request.addfinalizer(lambda: openshift.delete_selector(secret))
         return secret_name
+
     return _create_secret
 
 
@@ -129,17 +129,14 @@ def selector_params(module_label):
 @pytest.fixture(scope="module")
 def authorino_labels(selector_params) -> Dict[str, str]:
     """Labels for the proper Authorino discovery"""
-    labels = {
-        "authorino.kuadrant.io/managed-by": "authorino",
-        selector_params[0]: selector_params[1]
-    }
+    labels = {"authorino.kuadrant.io/managed-by": "authorino", selector_params[0]: selector_params[1]}
     return labels
 
 
 # pylint: disable-msg=too-many-locals
 @pytest.fixture(scope="module")
-def envoy(request, authorino, openshift, create_secret, blame, label, backend,
-          authorino_authority, envoy_authority, envoy_cert, testconfig, authorino_labels):
+def envoy(request, authorino, openshift, create_secret, blame, label, backend, authorino_authority, envoy_authority,
+          envoy_cert, testconfig, authorino_labels):
     """Envoy + Httpbin backend"""
     authorino_secret = create_secret(authorino_authority, "authca")
     envoy_ca_secret = create_secret(envoy_authority, "backendca", labels=authorino_labels)

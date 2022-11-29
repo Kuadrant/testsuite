@@ -8,8 +8,17 @@ import pytest
 def authorization(authorization, module_label):
     """Setup AuthConfig for test"""
     authorization.identity.api_key("api_key", match_label=module_label)
-    authorization.responses.add({"name": "auth-json", "json": {
-        "properties": [{"name": "auth", "valueFrom": {"authJSON": "auth.identity"}}]}})
+    authorization.responses.add({
+        "name": "auth-json",
+        "json": {
+            "properties": [{
+                "name": "auth",
+                "valueFrom": {
+                    "authJSON": "auth.identity"
+                }
+            }]
+        }
+    })
     return authorization
 
 

@@ -15,8 +15,14 @@ class RHSSO(OIDCProvider, LifecycleObject):
     OIDCProvider implementation for RHSSO. It creates Realm, client and user.
     """
 
-    def __init__(self, server_url, username, password, realm_name, client_name,
-                 test_username="testUser", test_password="testPassword") -> None:
+    def __init__(self,
+                 server_url,
+                 username,
+                 password,
+                 realm_name,
+                 client_name,
+                 test_username="testUser",
+                 test_password="testPassword") -> None:
         self.test_username = test_username
         self.test_password = test_password
         self.realm_name = realm_name
@@ -46,23 +52,17 @@ class RHSSO(OIDCProvider, LifecycleObject):
 
     def create_realm(self, name: str, **kwargs) -> Realm:
         """Creates new realm"""
-        self.master.create_realm(payload={
-            "realm": name,
-            "enabled": True,
-            "sslRequired": "None",
-            **kwargs
-        })
+        self.master.create_realm(payload={"realm": name, "enabled": True, "sslRequired": "None", **kwargs})
         return Realm(self.master, name)
 
     def commit(self):
         self.realm: Realm = self.create_realm(self.realm_name, accessTokenLifespan=24 * 60 * 60)
 
-        self.client = self.realm.create_client(
-            name=self.client_name,
-            directAccessGrantsEnabled=True,
-            publicClient=False,
-            protocol="openid-connect",
-            standardFlowEnabled=False)
+        self.client = self.realm.create_client(name=self.client_name,
+                                               directAccessGrantsEnabled=True,
+                                               publicClient=False,
+                                               protocol="openid-connect",
+                                               standardFlowEnabled=False)
         self.user = self.realm.create_user(self.test_username, self.test_password)
 
     def delete(self):

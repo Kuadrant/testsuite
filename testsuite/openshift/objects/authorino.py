@@ -13,8 +13,13 @@ class AuthorinoCR(OpenShiftObject, Authorino):
     """Represents Authorino CR objects from Authorino-operator"""
 
     @classmethod
-    def create_instance(cls, openshift: OpenShiftClient, name, image=None,
-                        cluster_wide=False, label_selectors: List[str] = None, listener_certificate_secret=None,
+    def create_instance(cls,
+                        openshift: OpenShiftClient,
+                        name,
+                        image=None,
+                        cluster_wide=False,
+                        label_selectors: List[str] = None,
+                        listener_certificate_secret=None,
                         log_level=None):
         """Creates base instance"""
         model: Dict[str, Any] = {
@@ -48,7 +53,9 @@ class AuthorinoCR(OpenShiftObject, Authorino):
         if listener_certificate_secret:
             model["spec"]["listener"]["tls"] = {
                 "enabled": True,
-                "certSecretRef": {"name": listener_certificate_secret}
+                "certSecretRef": {
+                    "name": listener_certificate_secret
+                }
             }
 
         with openshift.context:
@@ -57,10 +64,8 @@ class AuthorinoCR(OpenShiftObject, Authorino):
     def wait_for_ready(self):
         """Waits until Authorino CR reports ready status"""
         with openshift.timeout(90):
-            success, _, _ = self.self_selector().until_all(
-                success_func=lambda obj:
-                len(obj.model.status.conditions) > 0 and all(x.status == "True" for x in obj.model.status.conditions)
-            )
+            success, _, _ = self.self_selector().until_all(success_func=lambda obj: len(
+                obj.model.status.conditions) > 0 and all(x.status == "True" for x in obj.model.status.conditions))
             assert success, "Authorino did got get ready in time"
             self.refresh()
 

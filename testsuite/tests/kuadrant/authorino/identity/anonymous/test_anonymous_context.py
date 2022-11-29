@@ -8,8 +8,17 @@ import pytest
 def authorization(authorization):
     """Setup AuthConfig for test"""
     authorization.identity.anonymous("anonymous")
-    authorization.responses.add({"name": "auth-json", "json": {
-        "properties": [{"name": "auth", "valueFrom": {"authJSON": "auth.identity.anonymous"}}]}})
+    authorization.responses.add({
+        "name": "auth-json",
+        "json": {
+            "properties": [{
+                "name": "auth",
+                "valueFrom": {
+                    "authJSON": "auth.identity.anonymous"
+                }
+            }]
+        }
+    })
     return authorization
 
 

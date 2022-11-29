@@ -4,12 +4,7 @@ import pytest
 from testsuite.openshift.objects.auth_config import AuthConfig
 
 
-@pytest.fixture(scope="module", params=[
-    "authorization_header",
-    "custom_header",
-    "query",
-    "cookie"
-])
+@pytest.fixture(scope="module", params=["authorization_header", "custom_header", "query", "cookie"])
 def credentials(request):
     """Location where are auth credentials passed"""
     return request.param
@@ -18,8 +13,10 @@ def credentials(request):
 @pytest.fixture(scope="module")
 def authorization(rhsso, openshift, blame, envoy, module_label, credentials):
     """Add RHSSO identity to AuthConfig"""
-    authorization = AuthConfig.create_instance(openshift, blame("ac"),
-                                               envoy.hostname, labels={"testRun": module_label})
+    authorization = AuthConfig.create_instance(openshift,
+                                               blame("ac"),
+                                               envoy.hostname,
+                                               labels={"testRun": module_label})
     authorization.identity.oidc("rhsso", rhsso.well_known["issuer"], credentials, "Token")
     return authorization
 

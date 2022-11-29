@@ -38,15 +38,13 @@ class UnsignedKey:
 
 class CFSSLClient:
     """Client for working with CFSSL library"""
-    DEFAULT_NAMES = [
-        {
-            "O": "Red Hat Inc.",
-            "OU": "IT",
-            "L": "San Francisco",
-            "ST": "California",
-            "C": "US",
-        }
-    ]
+    DEFAULT_NAMES = [{
+        "O": "Red Hat Inc.",
+        "OU": "IT",
+        "L": "San Francisco",
+        "ST": "California",
+        "C": "US",
+    }]
 
     def __init__(self, binary) -> None:
         super().__init__()
@@ -80,12 +78,12 @@ class CFSSLClient:
         """Returns true if the binary exists and is correctly set up"""
         return shutil.which(self.binary)
 
-    def generate_key(self, common_name: str, names: Optional[List[Dict[str, str]]] = None,
+    def generate_key(self,
+                     common_name: str,
+                     names: Optional[List[Dict[str, str]]] = None,
                      hosts: Optional[Collection[str]] = None) -> UnsignedKey:
         """Generates unsigned key"""
-        data: Dict[str, Any] = {
-            "CN": common_name
-        }
+        data: Dict[str, Any] = {"CN": common_name}
         if names:
             data["names"] = names
         if hosts:
@@ -97,20 +95,30 @@ class CFSSLClient:
     def sign_intermediate_authority(self, key: UnsignedKey, certificate_authority: Certificate) -> Certificate:
         """Signs intermediate ca"""
         args = [
-            "-ca=env:CA",
-            "-ca-key=env:KEY",
+            "-ca=env:CA", "-ca-key=env:KEY",
             f"-config={resources.files('testsuite.resources.tls').joinpath('intermediate_config.json')}"
         ]
-        result = self._execute_command("sign", *args, "-", stdin=key.csr, env={
-            "CA": certificate_authority.certificate,
-            "KEY": certificate_authority.key})
+        result = self._execute_command("sign",
+                                       *args,
+                                       "-",
+                                       stdin=key.csr,
+                                       env={
+                                           "CA": certificate_authority.certificate,
+                                           "KEY": certificate_authority.key
+                                       })
         return Certificate(key=key.key, certificate=result["cert"])
 
     def sign(self, key: UnsignedKey, certificate_authority: Certificate) -> Certificate:
         """Signs unsigned key"""
-        result = self._execute_command("sign", "-ca=env:CA", "-ca-key=env:KEY", "-", stdin=key.csr, env={
-            "CA": certificate_authority.certificate,
-            "KEY": certificate_authority.key})
+        result = self._execute_command("sign",
+                                       "-ca=env:CA",
+                                       "-ca-key=env:KEY",
+                                       "-",
+                                       stdin=key.csr,
+                                       env={
+                                           "CA": certificate_authority.certificate,
+                                           "KEY": certificate_authority.key
+                                       })
         return Certificate(key=key.key, certificate=result["cert"])
 
     def create_authority(self,

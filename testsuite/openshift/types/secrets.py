@@ -15,6 +15,7 @@ class Secrets(RemoteMapping):
 
         # pylint: disable=too-few-public-methods
         class _DecodedSecrets:
+
             def __init__(self, data):
                 self._data = data
 
