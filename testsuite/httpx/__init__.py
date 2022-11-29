@@ -27,10 +27,10 @@ class UnexpectedResponse(Exception):
 
 class HttpxBackoffClient(Client):
     """Httpx client which retries unstable requests"""
-    RETRY_CODES = {503}
 
     def __init__(self, *, verify: Union[Certificate, bool] = True, cert: Certificate = None, **kwargs):
         self.files = []
+        self.retry_codes = {503}
         _verify = None
         if isinstance(verify, Certificate):
             verify_file = create_tmp_file(verify.certificate)
@@ -53,6 +53,10 @@ class HttpxBackoffClient(Client):
             file.close()
         self.files = []
 
+    def add_retry_code(self, code):
+        """Add a new retry code to"""
+        self.retry_codes.add(code)
+
     @backoff.on_exception(backoff.fibo, UnexpectedResponse, max_tries=8, jitter=None)
     def request(self, method: str, url, *, content=None, data=None, files=None,
                 json=None, params=None, headers=None, cookies=None, auth=None, follow_redirects=None,
@@ -60,6 +64,6 @@ class HttpxBackoffClient(Client):
         response = super().request(method, url, content=content, data=data, files=files, json=json, params=params,
                                    headers=headers, cookies=cookies, auth=auth, follow_redirects=follow_redirects,
                                    timeout=timeout, extensions=extensions)
-        if response.status_code in self.RETRY_CODES:
+        if response.status_code in self.retry_codes:
             raise UnexpectedResponse(f"Didn't expect '{response.status_code}' status code", response)
         return response
