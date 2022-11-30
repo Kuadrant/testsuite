@@ -157,4 +157,4 @@ def authorino_parameters(authorino_parameters, authorino_cert, create_secret):
     """Setup TLS for authorino"""
     authorino_secret_name = create_secret(authorino_cert, "authcert")
     authorino_parameters["listener_certificate_secret"] = authorino_secret_name
-    yield authorino_parameters
+    return authorino_parameters

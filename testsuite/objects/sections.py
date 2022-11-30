@@ -26,6 +26,10 @@ class Authorizations(abc.ABC):
     def auth_rule(self, name: str, rule: "Rule", when: "Rule", metrics: bool, priority: int):
         """Adds JSON pattern-matching authorization rule (authorization.json)"""
 
+    @abc.abstractmethod
+    def kubernetes(self, name: str, when: list, kube_attrs: dict, priority: int):
+        """Adds kubernetes authorization rule."""
+
 
 class Identities(abc.ABC):
     """Identities configuration"""
@@ -45,6 +49,10 @@ class Identities(abc.ABC):
     @abc.abstractmethod
     def anonymous(self, name):
         """Adds anonymous identity"""
+
+    @abc.abstractmethod
+    def kubernetes(self, name, authjson):
+        """Adds kubernetes identity"""
 
     @abc.abstractmethod
     def remove_all(self):
