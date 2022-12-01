@@ -22,7 +22,7 @@ class MatchExpression:
 @dataclass
 class Rule:
     """
-    Data class for authorization rules represented by simple pattern-matching expressions.
+    Data class for rules represented by simple pattern-matching expressions.
     Args:
         :param selector: that is fetched from the Authorization JSON
         :param operator: `eq` (equals), `neq` (not equal), `incl` (includes) and `excl` (excludes), for arrays
@@ -33,6 +33,41 @@ class Rule:
     selector: str
     operator: Literal["eq", "neq", "incl", "excl", "matches"]
     value: str
+
+
+class Value:
+    """Dataclass for specifying a Value in Authorization, can be either constant or value from AuthJson (jsonPath)"""
+
+    # pylint: disable=invalid-name
+    def __init__(self, value=None, jsonPath=None) -> None:
+        super().__init__()
+        if not (value is None) ^ (jsonPath is None):
+            raise AttributeError("Exactly one of the `value` and `jsonPath` argument must be specified")
+        self.value = value
+        self.jsonPath = jsonPath
+
+    def to_dict(self):
+        """Returns dict representation of itself (shallow copy only)"""
+        return {"value": self.value} if self.value else {"valueFrom": {"authJson": self.jsonPath}}
+
+
+@dataclass
+class Cache:
+    """Dataclass for specifying Cache in Authorization"""
+    ttl: int
+    # pylint: disable=invalid-name
+    value: Value
+
+    def to_dict(self):
+        """Returns dict representation of itself (shallow copy only)"""
+        return {"ttl": self.ttl, "value": self.value.to_dict()}
+
+
+@dataclass
+class PatternRef:
+    """Dataclass for specifying Pattern reference in Authorization"""
+    # pylint: disable=invalid-name
+    patternRef: str
 
 
 class LifecycleObject(abc.ABC):
