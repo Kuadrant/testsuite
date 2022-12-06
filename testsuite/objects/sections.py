@@ -4,7 +4,7 @@ import abc
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from testsuite.objects import Rule
+    from testsuite.objects import Rule, Value
 
 
 class Authorizations(abc.ABC):
@@ -19,15 +19,15 @@ class Authorizations(abc.ABC):
         """Adds OPA policy from external registry"""
 
     @abc.abstractmethod
-    def role_rule(self, name: str, role: str, path: str, metrics: bool, priority: int, **common_features):
+    def role_rule(self, name: str, role: str, path: str, **common_features):
         """Adds a rule, which allows access to 'path' only to users with 'role'"""
 
     @abc.abstractmethod
-    def auth_rule(self, name: str, rule: "Rule", when: "Rule", metrics: bool, priority: int, **common_features):
+    def auth_rule(self, name: str, rule: "Rule", **common_features):
         """Adds JSON pattern-matching authorization rule (authorization.json)"""
 
     @abc.abstractmethod
-    def kubernetes(self, name: str, when: list, kube_attrs: dict, priority: int, **common_features):
+    def kubernetes(self, name: str, user: "Value", kube_attrs: dict, **common_features):
         """Adds kubernetes authorization rule."""
 
 
@@ -51,7 +51,7 @@ class Identities(abc.ABC):
         """Adds anonymous identity"""
 
     @abc.abstractmethod
-    def kubernetes(self, name, authjson, **common_features):
+    def kubernetes(self, name, auth_json, **common_features):
         """Adds kubernetes identity"""
 
     @abc.abstractmethod

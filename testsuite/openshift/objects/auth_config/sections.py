@@ -2,7 +2,7 @@
 from dataclasses import asdict
 from typing import Dict, Literal, Iterable
 
-from testsuite.objects import Identities, Metadata, Responses, MatchExpression, Authorizations, Rule, Cache
+from testsuite.objects import Identities, Metadata, Responses, MatchExpression, Authorizations, Rule, Cache, Value
 from testsuite.openshift.objects import OpenShiftObject, modify
 
 
@@ -125,9 +125,9 @@ class IdentitySection(Section, Identities):
         self.add_item(name, {"anonymous": {}}, **common_features)
 
     @modify
-    def kubernetes(self, name, authjson, **common_features):
+    def kubernetes(self, name, auth_json, **common_features):
         """Adds kubernetes identity"""
-        self.add_item(name, {"plain": {"authJSON": authjson}, **common_features})
+        self.add_item(name, {"plain": {"authJSON": auth_json}, **common_features})
 
     @modify
     def remove_all(self):
@@ -183,32 +183,28 @@ class AuthorizationsSection(Section, Authorizations):
     """Section which contains authorization configuration"""
 
     @modify
-    def auth_rule(self, name, rule: Rule, when: Rule = None, metrics=False, priority=0, **common_features):
+    def auth_rule(self, name, rule: Rule, **common_features):
         """Adds JSON pattern-matching authorization rule (authorization.json)"""
         section = {
-            "metrics": metrics,
-            "priority": priority,
             "json": {
                 "rules": [asdict(rule)]
             }
         }
-        if when:
-            section["when"] = [asdict(when)]
         self.add_item(name, section, **common_features)
 
-    def role_rule(self, name: str, role: str, path: str, metrics=False, priority=0, **common_features):
+    def role_rule(self, name: str, role: str, path: str, **common_features):
         """
         Adds a rule, which allows access to 'path' only to users with 'role'
         Args:
             :param name: name of rule
             :param role: name of role
             :param path: path to apply this rule to
-            :param metrics: bool, allows metrics
-            :param priority: priority of rule
         """
         rule = Rule("auth.identity.realm_access.roles", "incl", role)
         when = Rule("context.request.http.path", "matches", path)
-        self.auth_rule(name, rule, when, metrics, priority, **common_features)
+        common_features.setdefault("when", [])
+        common_features["when"].append(when)
+        self.auth_rule(name, rule, **common_features)
 
     @modify
     def opa_policy(self, name, rego_policy, **common_features):
@@ -234,19 +230,14 @@ class AuthorizationsSection(Section, Authorizations):
         }, **common_features)
 
     @modify
-    def kubernetes(self, name: str, when: list, kube_attrs: dict, priority=0, **common_features):
+    def kubernetes(self, name: str, user: Value, kube_attrs: dict, **common_features):
         """Adds Kubernetes authorization
 
         :param name: name of kubernetes authorization
-        :param when: list of conditions
-        :param kube_user: user in kubernetes authorization
+        :param user: user in kubernetes authorization
         :param kube_attrs: resource attributes in kubernetes authorization
-        :param priority: priority
         """
 
-        kube_user = {'valueFrom': {'authJSON': 'auth.identity.username'}}
         self.add_item(name, {
-            "priority": priority,
-            "kubernetes": {"user": kube_user, "resourceAttributes": kube_attrs},
-            "when": when
+            "kubernetes": {"user": user.to_dict(), "resourceAttributes": kube_attrs},
         }, **common_features)
