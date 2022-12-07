@@ -36,6 +36,27 @@ class UnsignedKey:
     csr: str
 
 
+def build_cert_request_json(common_name: str,
+                            names: Optional[List[Dict[str, str]]] = None,
+                            hosts: Optional[Collection[str]] = None) -> dict:
+    """
+    Build certificate request for the CFSSL client
+    :param common_name: certificate identifier
+    :param names: certificate attributes
+    :param hosts: certificate hosts
+    :return: certificate request dictionary
+    """
+    return {
+        "CN": common_name,
+        "names": names,
+        "hosts": hosts,
+        "key": {
+            "algo": "rsa",
+            "size": 4096
+        },
+    }
+
+
 class CFSSLClient:
     """Client for working with CFSSL library"""
     DEFAULT_NAMES = [
@@ -83,13 +104,7 @@ class CFSSLClient:
     def generate_key(self, common_name: str, names: Optional[List[Dict[str, str]]] = None,
                      hosts: Optional[Collection[str]] = None) -> UnsignedKey:
         """Generates unsigned key"""
-        data: Dict[str, Any] = {
-            "CN": common_name
-        }
-        if names:
-            data["names"] = names
-        if hosts:
-            data["hosts"] = hosts
+        data = build_cert_request_json(common_name, names, hosts)
 
         result = self._execute_command("genkey", "-", stdin=json.dumps(data))
         return UnsignedKey(key=result["key"], csr=result["csr"])
@@ -127,15 +142,7 @@ class CFSSLClient:
             :param certificate_authority: Optional Authority to sign this new authority, making it intermediate
         """
         names = names or self.DEFAULT_NAMES
-        data = {
-            "CN": common_name,
-            "names": names,
-            "hosts": hosts,
-            "key": {
-                "algo": "rsa",
-                "size": 4096
-            },
-        }
+        data = build_cert_request_json(common_name, names, hosts)
 
         result = self._execute_command("genkey", "-initca", "-", stdin=json.dumps(data))
         key = UnsignedKey(key=result["key"], csr=result["csr"])
