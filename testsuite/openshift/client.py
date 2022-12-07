@@ -142,7 +142,7 @@ class OpenShiftClient:
                 'name': name,
             },
             'stringData': {
-                "tls.crt": certificate.chain or certificate.certificate,
+                "tls.crt": certificate.chain,
                 "tls.key": certificate.key
             },
             "type": "kubernetes.io/tls"

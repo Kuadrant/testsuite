@@ -33,12 +33,12 @@ class HttpxBackoffClient(Client):
         self.retry_codes = {503}
         _verify = None
         if isinstance(verify, Certificate):
-            verify_file = create_tmp_file(verify.certificate)
+            verify_file = create_tmp_file(verify.chain)
             self.files.append(verify_file)
             _verify = verify_file.name
         _cert = None
         if cert:
-            cert_file = create_tmp_file(cert.certificate)
+            cert_file = create_tmp_file(cert.chain)
             self.files.append(cert_file)
             key_file = create_tmp_file(cert.key)
             self.files.append(key_file)

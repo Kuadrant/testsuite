@@ -26,7 +26,7 @@ class Certificate:
     """Object representing Signed certificate"""
     key: str
     certificate: str
-    chain: Optional[str] = None
+    chain: str
 
 
 @dataclasses.dataclass
@@ -104,14 +104,15 @@ class CFSSLClient:
         result = self._execute_command("sign", *args, "-", stdin=key.csr, env={
             "CA": certificate_authority.certificate,
             "KEY": certificate_authority.key})
-        return Certificate(key=key.key, certificate=result["cert"])
+        return Certificate(key=key.key, certificate=result["cert"], chain=result["cert"])
 
     def sign(self, key: UnsignedKey, certificate_authority: Certificate) -> Certificate:
         """Signs unsigned key"""
         result = self._execute_command("sign", "-ca=env:CA", "-ca-key=env:KEY", "-", stdin=key.csr, env={
             "CA": certificate_authority.certificate,
             "KEY": certificate_authority.key})
-        return Certificate(key=key.key, certificate=result["cert"])
+        chain = result["cert"] + certificate_authority.chain
+        return Certificate(key=key.key, certificate=result["cert"], chain=chain)
 
     def create_authority(self,
                          common_name: str,
@@ -138,7 +139,7 @@ class CFSSLClient:
 
         result = self._execute_command("genkey", "-initca", "-", stdin=json.dumps(data))
         key = UnsignedKey(key=result["key"], csr=result["csr"])
-        certificate = Certificate(key=result["key"], certificate=result["cert"])
+        certificate = Certificate(key=result["key"], certificate=result["cert"], chain=result["cert"])
         if certificate_authority:
             certificate = self.sign_intermediate_authority(key, certificate_authority)
         return certificate
