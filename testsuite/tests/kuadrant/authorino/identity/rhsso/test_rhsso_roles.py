@@ -22,8 +22,7 @@ def authorization(authorization, realm_role, blame):
 
 def test_user_with_role(client, user_with_role, rhsso):
     """Test request when user does have required role using new user with assigned role"""
-    auth = HttpxOidcClientAuth(rhsso.get_token(user_with_role.username, user_with_role.password),
-                               "authorization")
+    auth = HttpxOidcClientAuth.from_user(rhsso.get_token, user_with_role, "authorization")
     response = client.get("/get", auth=auth)
     assert response.status_code == 200
 

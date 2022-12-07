@@ -36,10 +36,8 @@ def client_secret(create_client_secret, rhsso):
 @pytest.fixture(scope="module")
 def auth2(rhsso):
     """Creates new RHSSO User and returns his authentication object for HTTPX"""
-    new_username = "newTestUser"
-    new_password = "p"
-    rhsso.realm.create_user(new_username, new_password)
-    return HttpxOidcClientAuth(rhsso.get_token(new_username, new_password))
+    user = rhsso.realm.create_user("newTestUser", "p")
+    return HttpxOidcClientAuth.from_user(rhsso.get_token, user=user)
 
 
 @pytest.fixture(scope="module")
