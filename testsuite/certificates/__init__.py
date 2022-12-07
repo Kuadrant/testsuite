@@ -129,6 +129,15 @@ class CFSSLClient:
         chain = result["cert"] + certificate_authority.chain
         return Certificate(key=key.key, certificate=result["cert"], chain=chain)
 
+    def self_sign(self, common_name: str,
+                  names: Optional[List[Dict[str, str]]] = None,
+                  hosts: Optional[Collection[str]] = None) -> Certificate:
+        """Creates self-signed certificate"""
+        data = build_cert_request_json(common_name, names, hosts)
+
+        result = self._execute_command("selfsign", common_name, "-", stdin=json.dumps(data))
+        return Certificate(key=result["key"], certificate=result["cert"], chain=result["cert"])
+
     def create_authority(self,
                          common_name: str,
                          hosts: Collection[str],
@@ -154,7 +163,7 @@ class CFSSLClient:
     def create(self,
                common_name: str,
                hosts: Collection[str],
-               certificate_authority: Certificate,
+               certificate_authority: Optional[Certificate] = None,
                names: Optional[List[Dict[str, str]]] = None) -> Certificate:
         """Create a new certificate.
         Args:
@@ -164,6 +173,9 @@ class CFSSLClient:
             :param certificate_authority: Certificate Authority to be used for signing
         """
         names = names or self.DEFAULT_NAMES
-        key = self.generate_key(common_name, names, hosts)
-        certificate = self.sign(key, certificate_authority=certificate_authority)
+        if certificate_authority is None:
+            certificate = self.self_sign(common_name, names, hosts)
+        else:
+            key = self.generate_key(common_name, names, hosts)
+            certificate = self.sign(key, certificate_authority=certificate_authority)
         return certificate
