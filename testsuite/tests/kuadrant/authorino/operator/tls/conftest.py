@@ -26,7 +26,10 @@ def cert_attributes_other(cert_attributes) -> Dict[str, str]:
 
 @pytest.fixture(scope="session")
 def certificates(cfssl, authorino_domain, wildcard_domain, cert_attributes, cert_attributes_other):
-    """Certificate hierarchy used for the tests"""
+    """
+    Certificate hierarchy used for the tests
+    May be overwritten to configure different test cases
+    """
     chain = {
         "envoy_ca": CertInfo(children={
             "envoy_cert": None,
@@ -43,7 +46,7 @@ def certificates(cfssl, authorino_domain, wildcard_domain, cert_attributes, cert
     return cert_builder(cfssl, chain, wildcard_domain)
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def create_secret(blame, request, openshift):
     """Creates TLS secret from Certificate"""
     def _create_secret(certificate: Certificate, name: str, labels: Optional[Dict[str, str]] = None):
@@ -72,49 +75,49 @@ def authorino_domain(openshift):
     return f"*.{openshift.project}.svc.cluster.local"
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def envoy_authority(certificates):
     """Authority for all certificates that envoy should accept"""
     return certificates["envoy_ca"]
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def invalid_authority(certificates):
     """Completely unrelated CA for generating certificates which should not succeed"""
     return certificates["invalid_ca"]
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def authorino_authority(certificates):
     """Authority for Authorino Certificate"""
     return certificates["authorino_ca"]
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def authorino_cert(certificates):
     """Authorino certificate"""
     return certificates["authorino_cert"]
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def envoy_cert(certificates):
     """Certificate that is actively used by Envoy"""
     return certificates["envoy_cert"]
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def valid_cert(certificates):
     """Certificate accepted by Envoy"""
     return certificates["valid_cert"]
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def custom_cert(certificates):
     """Envoy certificate that have different attributes"""
     return certificates["custom_cert"]
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def invalid_cert(certificates):
     """Certificate rejected by Envoy"""
     return certificates["invalid_cert"]
