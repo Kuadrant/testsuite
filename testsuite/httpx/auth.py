@@ -4,22 +4,33 @@ from typing import Generator, Callable, Union
 
 from httpx import Auth, Request, URL, Response
 
+from testsuite.oidc.rhsso import User
 from testsuite.openshift.objects.api_key import APIKey
 from testsuite.oidc import Token
+
+TokenType = Union[Token, Callable[[], Token]]
 
 
 class HttpxOidcClientAuth(Auth):
     """Auth class for Httpx client for product secured by oidc"""
 
-    def __init__(self, token: Union[Token, Callable[[], Token]], location="authorization") -> None:
+    def __init__(self, token: TokenType, location="authorization",
+                 username: str = None, password: str = None) -> None:
         self.location = location
         self._token = token
+        self.username = username
+        self.password = password
+
+    @classmethod
+    def from_user(cls, token: TokenType, user: User, location="authorization"):
+        """Creates Auth from RHSSO User object"""
+        return cls(token, location, user.username, user.password)
 
     @cached_property
     def token(self):
         """Lazily retrieves token from OIDC provider"""
         if callable(self._token):
-            return self._token()
+            return self._token(self.username, self.password)
         return self._token
 
     def _add_credentials(self, request: Request, token):

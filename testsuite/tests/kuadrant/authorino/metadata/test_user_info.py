@@ -34,6 +34,6 @@ def test_correct_auth(client, auth):
 
 def test_incorrect_auth(client, rhsso, user2):
     """Updates RHSSO user email address and tests incorrect auth"""
-    auth = HttpxOidcClientAuth(rhsso.get_token(user2.username, user2.password), "authorization")
+    auth = HttpxOidcClientAuth.from_user(rhsso.get_token, user2, "authorization")
     response = client.get("get", auth=auth)
     assert response.status_code == 403
