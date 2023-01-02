@@ -19,6 +19,8 @@ class RHSSO(OIDCProvider, LifecycleObject):
                  test_username="testUser", test_password="testPassword") -> None:
         self.test_username = test_username
         self.test_password = test_password
+        self.username = username
+        self.password = password
         self.realm_name = realm_name
         self.client_name = client_name
         self.realm = None
