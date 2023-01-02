@@ -4,13 +4,13 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def fetch_route(name):
+def fetch_route(name, force_http=False):
     """Fetches the URL of a route with specific name"""
     def _fetcher(settings, _):
         try:
             openshift = settings["tools"]
             route = openshift.routes[name]
-            if "tls" in route.model.spec:
+            if not force_http and "tls" in route.model.spec:
                 return "https://" + route.model.spec.host
             return "http://" + route.model.spec.host
         # pylint: disable=broad-except
