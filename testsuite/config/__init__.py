@@ -31,7 +31,7 @@ settings = Dynaconf(
         Validator("authorino.deploy", must_exist=True, eq=True) | Validator("authorino.url", must_exist=True),
         DefaultValueValidator("rhsso.url", default=fetch_route("no-ssl-sso")),
         DefaultValueValidator("rhsso.password", default=fetch_secret("credential-sso", "ADMIN_PASSWORD")),
-        DefaultValueValidator("mockserver.url", default=fetch_route("no-ssl-mockserver")),
+        DefaultValueValidator("mockserver.url", default=fetch_route("mockserver", force_http=True)),
     ],
     validate_only=["authorino"],
     loaders=["dynaconf.loaders.env_loader", "testsuite.config.openshift_loader"]
