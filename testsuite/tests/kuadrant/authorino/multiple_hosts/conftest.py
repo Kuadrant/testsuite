@@ -13,7 +13,8 @@ def hostname(envoy):
 @pytest.fixture(scope="module")
 def second_hostname(envoy, blame):
     """Second valid hostname"""
-    return envoy.create_route(blame('second')).model.spec.host
+    _, hostname = envoy.add_hostname(blame('second'))
+    return hostname
 
 
 @pytest.fixture(scope="module")

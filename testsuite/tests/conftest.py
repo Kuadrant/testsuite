@@ -202,7 +202,7 @@ def backend(request, openshift, blame, label):
 @pytest.fixture(scope="module")
 def envoy(request, authorino, openshift, blame, backend, module_label, testconfig):
     """Deploys Envoy that wire up the Backend behind the reverse-proxy and Authorino instance"""
-    envoy = Envoy(openshift, authorino, blame("envoy"), module_label, backend.url, testconfig["envoy"]["image"])
+    envoy = Envoy(openshift, authorino, blame("envoy"), module_label, backend, testconfig["envoy"]["image"])
     request.addfinalizer(envoy.delete)
     envoy.commit()
     return envoy

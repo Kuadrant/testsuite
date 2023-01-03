@@ -2,12 +2,15 @@
 from functools import cached_property
 from importlib import resources
 
+from openshift import Selector
+
 from testsuite.httpx import HttpxBackoffClient
-from testsuite.objects import LifecycleObject
 from testsuite.openshift.client import OpenShiftClient
+from testsuite.openshift.objects.proxy import Proxy
+from testsuite.openshift.objects.route import OpenshiftRoute, Route
 
 
-class Envoy(LifecycleObject):
+class Envoy(Proxy):
     """Envoy deployed from template"""
     def __init__(self, openshift: OpenShiftClient, authorino, name, label, httpbin_hostname, image) -> None:
         self.openshift = openshift
@@ -17,28 +20,28 @@ class Envoy(LifecycleObject):
         self.httpbin_hostname = httpbin_hostname
         self.image = image
 
-        self.envoy_objects = None
+        self.envoy_objects: Selector = None  # type: ignore
 
     @cached_property
-    def route(self):
+    def route(self) -> Route:
         """Returns route for object"""
         with self.openshift.context:
             return self.envoy_objects\
                 .narrow("route")\
                 .narrow(lambda route: route.model.metadata.name == self.name)\
-                .object()
+                .object(cls=OpenshiftRoute)
 
-    def create_route(self, name):
-        """Creates another route pointing to this Envoy"""
-        route = self.openshift.routes.expose(name, self.name)
+    def add_hostname(self, name) -> tuple[Route, str]:
+        """Add another hostname that points to this Envoy"""
+        route = OpenshiftRoute(dict_to_model=self.openshift.routes.expose(name, self.name).as_dict())
         with self.openshift.context:
             self.envoy_objects = self.envoy_objects.union(route.self_selector())
-        return route
+        return route, route.hostname
 
     @cached_property
     def hostname(self):
         """Returns hostname of this envoy"""
-        return self.route.model.spec.host
+        return self.route.hostname
 
     def client(self, **kwargs):
         """Return Httpx client for the requests to this backend"""

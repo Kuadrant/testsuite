@@ -17,6 +17,13 @@ class Httpbin(LifecycleObject):
         self.httpbin_objects = None
 
     @property
+    def reference(self):
+        return {
+            "name": self.name,
+            "namespace": self.openshift.project
+        }
+
+    @property
     def url(self):
         """URL for the httpbin service"""
         return f"{self.name}.{self.openshift.project}.svc.cluster.local"

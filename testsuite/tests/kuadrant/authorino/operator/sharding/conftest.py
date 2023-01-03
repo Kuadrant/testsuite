@@ -10,7 +10,7 @@ def envoy(request, authorino, openshift, blame, backend, testconfig):
     """Envoy"""
 
     def _envoy(auth=authorino):
-        envoy = Envoy(openshift, auth, blame("envoy"), blame("label"), backend.url, testconfig["envoy"]["image"])
+        envoy = Envoy(openshift, auth, blame("envoy"), blame("label"), backend, testconfig["envoy"]["image"])
         request.addfinalizer(envoy.delete)
         envoy.commit()
         return envoy

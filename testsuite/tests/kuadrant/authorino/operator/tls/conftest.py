@@ -145,7 +145,7 @@ def envoy(request, authorino, openshift, create_secret, blame, label, backend,
     envoy_ca_secret = create_secret(envoy_authority, "backendca", labels=authorino_labels)
     envoy_secret = create_secret(envoy_cert, "envoycert")
 
-    envoy = TLSEnvoy(openshift, authorino, blame("backend"), label, backend.url, testconfig["envoy"]["image"],
+    envoy = TLSEnvoy(openshift, authorino, blame("backend"), label, backend, testconfig["envoy"]["image"],
                      authorino_secret, envoy_ca_secret, envoy_secret)
     request.addfinalizer(envoy.delete)
     envoy.commit()

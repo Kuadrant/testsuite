@@ -13,7 +13,8 @@ def authorino_parameters():
 @pytest.fixture(scope="module")
 def hostname2(envoy, blame):
     """Second route for the envoy"""
-    return envoy.create_route(blame("route")).model.spec.host
+    _, hostname = envoy.add_hostname(blame("route"))
+    return hostname
 
 
 @pytest.fixture(scope="module")
