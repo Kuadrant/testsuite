@@ -6,18 +6,19 @@ from openshift import Selector
 
 from testsuite.httpx import HttpxBackoffClient
 from testsuite.openshift.client import OpenShiftClient
+from testsuite.openshift.httpbin import Httpbin
 from testsuite.openshift.objects.proxy import Proxy
 from testsuite.openshift.objects.route import OpenshiftRoute, Route
 
 
 class Envoy(Proxy):
     """Envoy deployed from template"""
-    def __init__(self, openshift: OpenShiftClient, authorino, name, label, httpbin_hostname, image) -> None:
+    def __init__(self, openshift: OpenShiftClient, authorino, name, label, httpbin: Httpbin, image) -> None:
         self.openshift = openshift
         self.authorino = authorino
         self.name = name
         self.label = label
-        self.httpbin_hostname = httpbin_hostname
+        self.httpbin_hostname = httpbin.url
         self.image = image
 
         self.envoy_objects: Selector = None  # type: ignore
@@ -36,12 +37,12 @@ class Envoy(Proxy):
         route = OpenshiftRoute(dict_to_model=self.openshift.routes.expose(name, self.name).as_dict())
         with self.openshift.context:
             self.envoy_objects = self.envoy_objects.union(route.self_selector())
-        return route, route.hostname
+        return route, route.hostnames[0]
 
     @cached_property
     def hostname(self):
         """Returns hostname of this envoy"""
-        return self.route.hostname
+        return self.route.hostnames[0]
 
     def client(self, **kwargs):
         """Return Httpx client for the requests to this backend"""

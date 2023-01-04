@@ -10,12 +10,12 @@ class Route(ABC):
 
     @cached_property
     @abstractmethod
-    def hostname(self):
-        """Returns Route hostname"""
+    def hostnames(self) -> list[str]:
+        """Returns all Route hostnames"""
 
 
 class OpenshiftRoute(OpenShiftObject, Route):
     """Openshift Route object"""
     @cached_property
-    def hostname(self):
-        return self.model.spec.host
+    def hostnames(self):
+        return [self.model.spec.host]

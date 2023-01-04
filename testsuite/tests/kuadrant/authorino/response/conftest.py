@@ -14,7 +14,7 @@ def responses():
 def authorization(openshift, blame, envoy, oidc_provider, responses, module_label):
     """Add response to Authorization"""
     authorization = AuthConfig.create_instance(openshift, blame("ac"),
-                                               envoy.hostname, labels={"testRun": module_label})
+                                               envoy.route, labels={"testRun": module_label})
     authorization.identity.oidc("rhsso", oidc_provider.well_known["issuer"])
     for response in responses:
         authorization.responses.add(response)
