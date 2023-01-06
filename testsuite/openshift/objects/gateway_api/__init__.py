@@ -74,7 +74,18 @@ class HTTPRoute(OpenShiftObject, Referencable, Route):
     @modify
     def add_hostname(self, hostname):
         """Adds hostname to the Route"""
-        self.model.spec.hostnames.append(hostname)
+        if hostname not in self.model.spec.hostnames:
+            self.model.spec.hostnames.append(hostname)
+
+    @modify
+    def remove_hostname(self, hostname):
+        """Adds hostname to the Route"""
+        self.model.spec.hostnames.remove(hostname)
+
+    @modify
+    def remove_all_hostnames(self):
+        """Adds hostname to the Route"""
+        self.model.spec.hostnames = []
 
 
 # pylint: disable=too-many-instance-attributes
