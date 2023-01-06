@@ -32,12 +32,12 @@ class Envoy(Proxy):
                 .narrow(lambda route: route.model.metadata.name == self.name)\
                 .object(cls=OpenshiftRoute)
 
-    def add_hostname(self, name) -> tuple[Route, str]:
+    def add_hostname(self, name) -> str:
         """Add another hostname that points to this Envoy"""
         route = OpenshiftRoute(dict_to_model=self.openshift.routes.expose(name, self.name).as_dict())
         with self.openshift.context:
             self.envoy_objects = self.envoy_objects.union(route.self_selector())
-        return route, route.hostnames[0]
+        return route.hostnames[0]
 
     @cached_property
     def hostname(self):

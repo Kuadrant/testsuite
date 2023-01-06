@@ -20,5 +20,5 @@ def test_anonymous_context(client):
         - Assert that response has the right information in context
     """
     response = client.get("/get")
-    assert json.loads(response.json()["headers"]["Auth-Json"])["auth"]
     assert response.status_code == 200
+    assert json.loads(response.json()["headers"]["Auth-Json"])["auth"]

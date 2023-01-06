@@ -1,11 +1,10 @@
 """Root conftest"""
 import signal
 
-from urllib.parse import urlparse
-
 import pytest
 from dynaconf import ValidationError
 from keycloak import KeycloakAuthenticationError
+from weakget import weakget
 
 from testsuite.mockserver import Mockserver
 from testsuite.oidc import OIDCProvider
@@ -14,6 +13,8 @@ from testsuite.oidc.auth0 import Auth0Provider
 from testsuite.openshift.httpbin import Httpbin
 from testsuite.openshift.envoy import Envoy
 from testsuite.oidc.rhsso import RHSSO
+from testsuite.openshift.objects.gateway_api import Gateway
+from testsuite.openshift.objects.proxy import Proxy
 from testsuite.utils import randomize, _whoami
 
 
@@ -191,6 +192,31 @@ def module_label(label):
 
 
 @pytest.fixture(scope="session")
+def kuadrant(testconfig, openshift):
+    """Returns Kuadrant instance if exists, or None"""
+    settings = weakget(testconfig)
+    try:
+        if not settings["kuadrant"]["enabled"] % True:
+            return None
+
+        # Try if Kuadrant is deployed
+        kuadrant_openshift = openshift.change_project(settings["kuadrant"]["project"] % None)
+        kuadrants = kuadrant_openshift.do_action("get", "kuadrant", "-o", "json", parse_output=True)
+        assert len(kuadrants.model["items"]) > 0
+
+        # Try if the configured Gateway is deployed
+        gateway_openshift = openshift.change_project(settings["kuadrant"]["gateway"]["project"] % None)
+        name = testconfig["kuadrant"]["gateway"]["name"]
+        gateway_openshift.do_action("get", f"Gateway/{name}")
+
+        # TODO: Return actual Kuadrant object
+        return True
+    # pylint: disable=broad-except
+    except Exception:
+        return None
+
+
+@pytest.fixture(scope="session")
 def backend(request, openshift, blame, label):
     """Deploys Httpbin backend"""
     httpbin = Httpbin(openshift, blame("httpbin"), label)
@@ -200,9 +226,12 @@ def backend(request, openshift, blame, label):
 
 
 @pytest.fixture(scope="module")
-def envoy(request, authorino, openshift, blame, backend, module_label, testconfig):
+def envoy(request, kuadrant, authorino, openshift, blame, backend, module_label, testconfig) -> Proxy:
     """Deploys Envoy that wire up the Backend behind the reverse-proxy and Authorino instance"""
-    envoy = Envoy(openshift, authorino, blame("envoy"), module_label, backend, testconfig["envoy"]["image"])
+    if kuadrant:
+        envoy: Proxy = Gateway(openshift, "istio-ingressgateway", "istio-system", module_label, backend)
+    else:
+        envoy = Envoy(openshift, authorino, blame("envoy"), module_label, backend, testconfig["envoy"]["image"])
     request.addfinalizer(envoy.delete)
     envoy.commit()
     return envoy
@@ -213,5 +242,4 @@ def wildcard_domain(openshift):
     """
     Wildcard domain of openshift cluster
     """
-    hostname = urlparse(openshift.api_url).hostname
-    return "*.apps." + hostname.split(".", 1)[1]
+    return f"*.{openshift.apps_url}"

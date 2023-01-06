@@ -17,7 +17,7 @@ class Proxy(LifecycleObject):
         """Returns default route for the proxy"""
 
     @abstractmethod
-    def add_hostname(self, name) -> tuple[Route, str]:
+    def add_hostname(self, name) -> str:
         """Add another hostname that points to this Proxy"""
 
     @abstractmethod

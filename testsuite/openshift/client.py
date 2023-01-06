@@ -4,6 +4,7 @@ import enum
 import os
 from functools import cached_property
 from typing import Dict, Optional
+from urllib.parse import urlparse
 
 import openshift as oc
 from openshift import Context, Selector, OpenShiftPythonException
@@ -34,7 +35,7 @@ class OpenShiftClient:
         self.token = token
         self._kubeconfig_path = kubeconfig_path
 
-    def change_project(self, project):
+    def change_project(self, project) -> "OpenShiftClient":
         """Return new OpenShiftClient with a different project"""
         return OpenShiftClient(project, self._api_url, self.token, self._kubeconfig_path)
 
@@ -55,6 +56,12 @@ class OpenShiftClient:
         """Returns real API url"""
         with self.context:
             return oc.whoami("--show-server=true")
+
+    @cached_property
+    def apps_url(self):
+        """Return URL under which all routes are routed"""
+        hostname = urlparse(self.api_url).hostname
+        return "apps." + hostname.split(".", 1)[1]
 
     @property
     def project(self):

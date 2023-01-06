@@ -1,14 +1,17 @@
 """AuthConfig CR object"""
 from dataclasses import asdict
-from typing import Dict, Literal, Iterable
+from typing import Dict, Literal, Iterable, TYPE_CHECKING
 
 from testsuite.objects import Identities, Metadata, Responses, MatchExpression, Authorizations, Rule, Cache, Value
-from testsuite.openshift.objects import OpenShiftObject, modify
+from testsuite.openshift.objects import modify
+
+if TYPE_CHECKING:
+    from testsuite.openshift.objects.auth_config import AuthConfig
 
 
 class Section:
     """Common class for all Sections"""
-    def __init__(self, obj: OpenShiftObject, section_name) -> None:
+    def __init__(self, obj: "AuthConfig", section_name) -> None:
         super().__init__()
         self.obj = obj
         self.section_name = section_name
@@ -27,7 +30,7 @@ class Section:
     @property
     def section(self):
         """The actual dict section which will be edited"""
-        return self.obj.model.spec.setdefault(self.section_name, [])
+        return self.obj.auth_section.setdefault(self.section_name, [])
 
     def add_item(self, name, value, priority: int = None, when: Iterable[Rule] = None,
                  metrics: bool = None, cache: Cache = None):

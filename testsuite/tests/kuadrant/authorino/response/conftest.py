@@ -5,6 +5,12 @@ from testsuite.openshift.objects.auth_config import AuthConfig
 
 
 @pytest.fixture(scope="module")
+def run_on_kuadrant():
+    """Tests needs to be rewritten to not create special AuthConfig"""
+    return False
+
+
+@pytest.fixture(scope="module")
 def responses():
     """Returns responses to be added to the AuthConfig"""
     return []
