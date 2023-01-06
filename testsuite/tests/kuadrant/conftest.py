@@ -28,14 +28,18 @@ def authorino(kuadrant, skip_no_kuadrant):
     return None
 
 
-# pylint: disable=unused-argument
 @pytest.fixture(scope="module")
-def authorization(authorino, kuadrant, oidc_provider, envoy, blame, openshift, module_label):
+def authorization_name(blame):
+    """Name of the Authorization resource, can be overriden to include more dependencies"""
+    return blame("authz")
+
+
+@pytest.fixture(scope="module")
+def authorization(authorino, kuadrant, envoy, authorization_name, openshift, module_label):
     """Authorization object (In case of Kuadrant AuthPolicy)"""
     if kuadrant:
-        policy = AuthPolicy.create_instance(openshift,
-                                            blame("policy"), envoy.route, labels={"testRun": module_label})
-        policy.identity.oidc("rhsso", oidc_provider.well_known["issuer"])
+        policy = AuthPolicy.create_instance(openshift, authorization_name,
+                                            envoy.route, labels={"testRun": module_label})
         return policy
     return None
 

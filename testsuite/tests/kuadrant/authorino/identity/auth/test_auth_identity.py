@@ -19,6 +19,13 @@ def oidc_provider(request) -> OIDCProvider:
     return request.getfixturevalue(request.param)
 
 
+# pylint: disable=unused-argument
+@pytest.fixture(scope="module")
+def authorization_name(blame, oidc_provider):
+    """Ensure for every oidc_provider we have a unique authorization"""
+    return blame("authz")
+
+
 @pytest.fixture(scope="module")
 def wrong_auth(oidc_provider, auth0, rhsso):
     """Different (but valid) auth than was configured"""
