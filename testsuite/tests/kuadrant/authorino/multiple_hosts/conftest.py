@@ -5,6 +5,12 @@ from testsuite.httpx import HttpxBackoffClient
 
 
 @pytest.fixture(scope="module")
+def run_on_kuadrant():
+    """Handling of hosts needs to be rewritten"""
+    return False
+
+
+@pytest.fixture(scope="module")
 def hostname(envoy):
     """Original hostname"""
     return envoy.hostname
@@ -13,7 +19,7 @@ def hostname(envoy):
 @pytest.fixture(scope="module")
 def second_hostname(envoy, blame):
     """Second valid hostname"""
-    return envoy.create_route(blame('second')).model.spec.host
+    return envoy.add_hostname(blame('second'))
 
 
 @pytest.fixture(scope="module")

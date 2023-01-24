@@ -14,3 +14,9 @@ default:
     log_level: "debug"
   envoy:
     image: "docker.io/envoyproxy/envoy:v1.23-latest"
+  kuadrant:
+    enabled: true
+    project: "kuadrant"
+    gateway:
+       project: "istio-system"
+       name: "istio-ingressgateway"

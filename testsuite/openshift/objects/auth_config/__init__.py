@@ -7,10 +7,16 @@ from testsuite.openshift.client import OpenShiftClient
 from testsuite.openshift.objects import OpenShiftObject, modify
 from .sections import AuthorizationsSection, IdentitySection, MetadataSection, \
     ResponsesSection
+from ..route import Route
 
 
 class AuthConfig(OpenShiftObject, Authorization):
     """Represents AuthConfig CR from Authorino"""
+
+    @property
+    def auth_section(self):
+        """Returns objects where all auth related things should be added"""
+        return self.model.spec
 
     @cached_property
     def authorization(self) -> Authorizations:
@@ -33,7 +39,8 @@ class AuthConfig(OpenShiftObject, Authorization):
         return ResponsesSection(self, "response")
 
     @classmethod
-    def create_instance(cls, openshift: OpenShiftClient, name, host, labels: Dict[str, str] = None):
+    def create_instance(cls, openshift: OpenShiftClient, name, route: Route,
+                        labels: Dict[str, str] = None, hostnames=None):
         """Creates base instance"""
         model: Dict = {
             "apiVersion": "authorino.kuadrant.io/v1beta1",
@@ -43,7 +50,7 @@ class AuthConfig(OpenShiftObject, Authorization):
                 "namespace": openshift.project
             },
             "spec": {
-                "hosts": [host]
+                "hosts": hostnames or route.hostnames
             }
         }
 
@@ -70,5 +77,5 @@ class AuthConfig(OpenShiftObject, Authorization):
     @modify
     def set_deny_with(self, code, value):
         """Set denyWith"""
-        self.model.spec["denyWith"] = {
+        self.auth_section["denyWith"] = {
             "unauthenticated": {"code": code, "headers": [{"name": "Location", "valueFrom": {"authJSON": value}}]}}

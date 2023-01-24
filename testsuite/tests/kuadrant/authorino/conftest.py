@@ -48,8 +48,8 @@ def authorization(authorization, oidc_provider, authorino, envoy, blame, openshi
     """In case of Authorino, AuthConfig used for authorization"""
     if authorization is None:
         authorization = AuthConfig.create_instance(openshift, blame("ac"),
-                                                   envoy.hostname, labels={"testRun": module_label})
-    authorization.identity.oidc("rhsso", oidc_provider.well_known["issuer"])
+                                                   envoy.route, labels={"testRun": module_label})
+        authorization.identity.oidc("rhsso", oidc_provider.well_known["issuer"])
     return authorization
 
 

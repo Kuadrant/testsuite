@@ -4,9 +4,10 @@ from importlib import resources
 
 from testsuite.objects import LifecycleObject
 from testsuite.openshift.client import OpenShiftClient
+from testsuite.openshift.objects.gateway_api import Referencable
 
 
-class Httpbin(LifecycleObject):
+class Httpbin(LifecycleObject, Referencable):
     """Httpbin deployed in OpenShift through template"""
     def __init__(self, openshift: OpenShiftClient, name, label) -> None:
         super().__init__()
@@ -15,6 +16,16 @@ class Httpbin(LifecycleObject):
         self.label = label
 
         self.httpbin_objects = None
+
+    @property
+    def reference(self):
+        return {
+            "group": "",
+            "kind": "Service",
+            "port": 8080,
+            "name": self.name,
+            "namespace": self.openshift.project
+        }
 
     @property
     def url(self):

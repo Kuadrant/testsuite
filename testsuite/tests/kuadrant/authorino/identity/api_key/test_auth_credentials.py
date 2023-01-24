@@ -19,7 +19,7 @@ def credentials(request):
 def authorization(openshift, blame, envoy, module_label, credentials):
     """Add API key identity to AuthConfig"""
     authorization = AuthConfig.create_instance(openshift, blame("ac"),
-                                               envoy.hostname, labels={"testRun": module_label})
+                                               envoy.route, labels={"testRun": module_label})
     authorization.identity.api_key("api_key", match_label=module_label, credentials=credentials,
                                    selector="API_KEY")
     return authorization

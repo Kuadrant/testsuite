@@ -33,3 +33,9 @@
 #    url: ""                                     # URL for already deployed Authorino
 #  envoy:
 #    image: "docker.io/envoyproxy/envoy:v1.23-latest"  # Envoy image, the testsuite should use, only for Authorino tests now
+#  kuadrant:
+#    enabled: true                               # True, if Testsuite should test Kuadrant instead of individual operators
+#    namespace: "kuadrant"                       # Namespaces where Kuadrant resides
+#    gateway:                                    # Reference to Gateway that should be used
+#       namespace: "istio-system"
+#       name: "istio-ingressgateway"

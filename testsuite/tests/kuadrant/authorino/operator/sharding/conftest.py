@@ -10,7 +10,7 @@ def envoy(request, authorino, openshift, blame, backend, testconfig):
     """Envoy"""
 
     def _envoy(auth=authorino):
-        envoy = Envoy(openshift, auth, blame("envoy"), blame("label"), backend.url, testconfig["envoy"]["image"])
+        envoy = Envoy(openshift, auth, blame("envoy"), blame("label"), backend, testconfig["envoy"]["image"])
         request.addfinalizer(envoy.delete)
         envoy.commit()
         return envoy
@@ -24,7 +24,7 @@ def authorization(request, authorino, blame, openshift, module_label):
     """In case of Authorino, AuthConfig used for authorization"""
 
     def _authorization(hostname=None, sharding_label=None):
-        auth = AuthConfig.create_instance(openshift, blame("ac"), hostname,
+        auth = AuthConfig.create_instance(openshift, blame("ac"), None, hostnames=[hostname],
                                           labels={"testRun": module_label, "sharding": sharding_label})
         auth.responses.add({"name": "header", "json": {"properties": [{"name": "anything", "value": sharding_label}]}})
         request.addfinalizer(auth.delete)

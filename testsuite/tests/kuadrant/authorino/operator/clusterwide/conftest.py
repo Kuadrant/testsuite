@@ -13,13 +13,14 @@ def authorino_parameters():
 @pytest.fixture(scope="module")
 def hostname2(envoy, blame):
     """Second route for the envoy"""
-    return envoy.create_route(blame("route")).model.spec.host
+    return envoy.add_hostname(blame("route"))
 
 
 @pytest.fixture(scope="module")
 def authorization2(hostname2, blame, openshift2, module_label, oidc_provider):
     """Second valid hostname"""
-    auth = AuthConfig.create_instance(openshift2, blame("ac"), hostname2, labels={"testRun": module_label})
+    route, _ = hostname2
+    auth = AuthConfig.create_instance(openshift2, blame("ac"), route, labels={"testRun": module_label})
     auth.identity.oidc("rhsso", oidc_provider.well_known["issuer"])
     return auth
 
@@ -27,8 +28,9 @@ def authorization2(hostname2, blame, openshift2, module_label, oidc_provider):
 @pytest.fixture(scope="module")
 def client2(hostname2, envoy):
     """Client for second AuthConfig"""
+    _, hostname = hostname2
     client = envoy.client()
-    client.base_url = f"http://{hostname2}"
+    client.base_url = f"http://{hostname}"
     yield client
     client.close()
 

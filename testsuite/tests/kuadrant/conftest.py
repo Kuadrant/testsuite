@@ -2,17 +2,41 @@
  all methods are placeholders for now since we do not work with Kuadrant"""
 import pytest
 
+from testsuite.openshift.objects.auth_config.auth_policy import AuthPolicy
+
 
 @pytest.fixture(scope="session")
-def authorino():
+def run_on_kuadrant():
+    """True, if the tests should pass when running on Kuadrant"""
+    return True
+
+
+@pytest.fixture(scope="module", autouse=True)
+def skip_no_kuadrant(kuadrant, run_on_kuadrant):
+    """Skips all tests that are not working with Kuadrant"""
+    if kuadrant and not run_on_kuadrant:
+        pytest.skip("This test doesn't work with Kuadrant")
+
+
+# pylint: disable=unused-argument
+@pytest.fixture(scope="module")
+def authorino(kuadrant, skip_no_kuadrant):
     """Authorino instance when configured through Kuadrant"""
+    if kuadrant:
+        # No available modification
+        return True
     return None
 
 
 # pylint: disable=unused-argument
 @pytest.fixture(scope="module")
-def authorization(authorino, envoy, blame, openshift):
+def authorization(authorino, kuadrant, oidc_provider, envoy, blame, openshift, module_label):
     """Authorization object (In case of Kuadrant AuthPolicy)"""
+    if kuadrant:
+        policy = AuthPolicy.create_instance(openshift,
+                                            blame("policy"), envoy.route, labels={"testRun": module_label})
+        policy.identity.oidc("rhsso", oidc_provider.well_known["issuer"])
+        return policy
     return None
 
 

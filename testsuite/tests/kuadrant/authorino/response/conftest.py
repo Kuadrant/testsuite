@@ -5,6 +5,12 @@ from testsuite.openshift.objects.auth_config import AuthConfig
 
 
 @pytest.fixture(scope="module")
+def run_on_kuadrant():
+    """Tests needs to be rewritten to not create special AuthConfig"""
+    return False
+
+
+@pytest.fixture(scope="module")
 def responses():
     """Returns responses to be added to the AuthConfig"""
     return []
@@ -14,7 +20,7 @@ def responses():
 def authorization(openshift, blame, envoy, oidc_provider, responses, module_label):
     """Add response to Authorization"""
     authorization = AuthConfig.create_instance(openshift, blame("ac"),
-                                               envoy.hostname, labels={"testRun": module_label})
+                                               envoy.route, labels={"testRun": module_label})
     authorization.identity.oidc("rhsso", oidc_provider.well_known["issuer"])
     for response in responses:
         authorization.responses.add(response)
