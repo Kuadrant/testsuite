@@ -122,6 +122,10 @@ class User:
         return self.admin.assign_realm_roles(user_id=self.user_id,
                                              roles=role)
 
+    def assign_attribute(self, attribute):
+        """Assigns attribute to user"""
+        self.update_user(attributes=attribute)
+
     @property
     def properties(self):
         """Returns User information in a dict"""

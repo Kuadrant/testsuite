@@ -13,9 +13,9 @@ class Mockserver:
     def __init__(self, url):
         self.url = url
 
-    def create_expectation(self, expectation_id, path, opa_policy,
+    def create_expectation(self, expectation_id, path, body,
                            content_type: Union[ContentType, str] = ContentType.PLAIN_TEXT):
-        """Creates an Expectation - response with body that contains OPA policy (Rego query)"""
+        """Creates an Expectation - response with given body"""
         response = httpx.put(
             urljoin(self.url, "/mockserver/expectation"), verify=False, timeout=5, json={
                     "id": expectation_id,
@@ -26,7 +26,7 @@ class Mockserver:
                         "headers": {
                             "Content-Type": [str(content_type)]
                         },
-                        "body": opa_policy
+                        "body": body
                     }
                 }
             )
