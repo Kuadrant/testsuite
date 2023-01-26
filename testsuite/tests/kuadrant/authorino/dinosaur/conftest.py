@@ -34,8 +34,11 @@ def terms_and_conditions(request, mockserver, module_label):
     """Creates Mockserver Expectation that returns whether terms are required and returns its endpoint"""
 
     def _terms_and_conditions(value):
-        return mockserver.create_expectation(f"{module_label}-terms", f"/{module_label}/terms-and-conditions",
-                                             {"terms_required": value}, ContentType.APPLICATION_JSON)
+        return mockserver.create_expectation(
+            f"{module_label}-terms",
+            {"terms_required": value},
+            ContentType.APPLICATION_JSON,
+        )
 
     request.addfinalizer(lambda: mockserver.clear_expectation(f"{module_label}-terms"))
     return _terms_and_conditions
@@ -46,8 +49,11 @@ def cluster_info(request, mockserver, module_label):
     """Creates Mockserver Expectation that returns client ID and returns its endpoint"""
 
     def _cluster_info(value):
-        return mockserver.create_expectation(f"{module_label}-cluster", f"/{module_label}/cluster-info",
-                                             {"client_id": value}, ContentType.APPLICATION_JSON)
+        return mockserver.create_expectation(
+            f"{module_label}-cluster",
+            {"client_id": value},
+            ContentType.APPLICATION_JSON
+        )
 
     request.addfinalizer(lambda: mockserver.clear_expectation(f"{module_label}-cluster"))
     return _cluster_info
@@ -58,9 +64,11 @@ def resource_info(request, mockserver, module_label):
     """Creates Mockserver Expectation that returns info about resource and returns its endpoint"""
 
     def _resource_info(org_id, owner):
-        return mockserver.create_expectation(f"{module_label}-resource", f"/{module_label}/resource-info",
-                                             {"org_id": org_id, "owner": owner},
-                                             ContentType.APPLICATION_JSON)
+        return mockserver.create_expectation(
+            f"{module_label}-resource",
+            {"org_id": org_id, "owner": owner},
+            ContentType.APPLICATION_JSON,
+        )
 
     request.addfinalizer(lambda: mockserver.clear_expectation(f"{module_label}-resource"))
     return _resource_info

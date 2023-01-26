@@ -18,7 +18,7 @@ def updated_header():
 @pytest.fixture(scope="module", autouse=True)
 def update_external_opa(mockserver, module_label, updated_header):
     """Updates Expectation with updated header"""
-    mockserver.create_expectation(module_label, f"/{module_label}/opa", rego_allow_header(*updated_header))
+    mockserver.create_expectation(module_label, rego_allow_header(*updated_header))
     # Sleeps for 1 second to compensate auto-refresh cycle `authorization.opa.externalRegistry.ttl = 1`
     time.sleep(1)
 
