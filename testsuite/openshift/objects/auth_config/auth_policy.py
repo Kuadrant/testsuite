@@ -1,5 +1,5 @@
 """Module containing classes related to Auth Policy"""
-from typing import Dict
+from typing import Dict, List
 
 from testsuite.openshift.client import OpenShiftClient
 from testsuite.openshift.objects.auth_config import AuthConfig
@@ -21,7 +21,7 @@ class AuthPolicy(AuthConfig):
         name,
         route: Referencable,
         labels: Dict[str, str] = None,
-        hostnames=None,
+        hostnames: List[str] = None,
     ):
         """Creates base instance"""
         model: Dict = {
