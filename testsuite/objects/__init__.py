@@ -55,12 +55,11 @@ class Value:
 class Cache:
     """Dataclass for specifying Cache in Authorization"""
     ttl: int
-    # pylint: disable=invalid-name
-    value: Value
+    key: Value
 
     def to_dict(self):
         """Returns dict representation of itself (shallow copy only)"""
-        return {"ttl": self.ttl, "value": self.value.to_dict()}
+        return {"ttl": self.ttl, "key": self.key.to_dict()}
 
 
 @dataclass
