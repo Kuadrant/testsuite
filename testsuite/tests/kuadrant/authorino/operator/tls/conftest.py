@@ -20,8 +20,12 @@ def cert_attributes() -> Dict[str, str]:
 
 @pytest.fixture(scope="session")
 def cert_attributes_other(cert_attributes) -> Dict[str, str]:
-    """Certificate attributes that are different from the default ones"""
-    return {k: f"{v}-other" for k, v in cert_attributes.items()}
+    """Certificate attributes that are partially different from the default ones"""
+    return dict(O="Other Organization",
+                OU="Other Unit",
+                L=cert_attributes["L"],
+                ST=cert_attributes["ST"],
+                C=cert_attributes["C"])
 
 
 @pytest.fixture(scope="session")

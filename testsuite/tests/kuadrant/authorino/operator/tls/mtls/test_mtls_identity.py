@@ -2,19 +2,6 @@
 import pytest
 from httpx import ReadError, ConnectError
 
-from testsuite.objects import Rule
-
-
-@pytest.fixture(scope="module", autouse=True)
-def authorization(authorization, blame, selector_params, cert_attributes):
-    """Create AuthConfig with mtls identity and pattern matching rule"""
-    authorization.identity.remove_all()
-
-    authorization.identity.mtls(blame("mtls"), *selector_params)
-    rule = Rule("auth.identity.Organization", "incl", cert_attributes["O"])
-    authorization.authorization.auth_rule(blame("redhat"), rule)
-    return authorization
-
 
 def test_mtls_success(envoy_authority, valid_cert, envoy):
     """Test successful mtls authentication"""
@@ -24,13 +11,15 @@ def test_mtls_success(envoy_authority, valid_cert, envoy):
 
 
 @pytest.mark.parametrize("cert_authority, certificate, err, err_match", [
+    pytest.param("envoy_authority", "self_signed_cert", ReadError, "unknown ca", id="Self-Signed Certificate"),
     pytest.param("envoy_authority", "invalid_cert", ReadError, "unknown ca", id="Invalid certificate"),
+    pytest.param("envoy_authority", None, ReadError, "certificate required", id="Without certificate"),
     pytest.param("invalid_authority", "valid_cert", ConnectError, "certificate verify failed", id="Unknown authority"),
 ])
 def test_mtls_fail(request, cert_authority, certificate, err, err_match: str, envoy):
-    """Test mtls verification with invalid certificate or unknown signed authority"""
+    """Test failed mtls verification"""
     ca = request.getfixturevalue(cert_authority)
-    cert = request.getfixturevalue(certificate)
+    cert = request.getfixturevalue(certificate) if certificate else None
 
     with pytest.raises(err, match=err_match):
         with envoy.client(verify=ca, cert=cert) as client:
