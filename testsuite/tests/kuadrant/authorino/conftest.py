@@ -44,12 +44,13 @@ def authorino(authorino, openshift, blame, request, testconfig, module_label, au
 
 # pylint: disable=unused-argument
 @pytest.fixture(scope="module")
-def authorization(authorization, oidc_provider, authorino, envoy, blame, openshift, module_label) -> Authorization:
+def authorization(authorization, oidc_provider, authorino, envoy,
+                  authorization_name, openshift, module_label) -> Authorization:
     """In case of Authorino, AuthConfig used for authorization"""
     if authorization is None:
-        authorization = AuthConfig.create_instance(openshift, blame("ac"),
+        authorization = AuthConfig.create_instance(openshift, authorization_name,
                                                    envoy.route, labels={"testRun": module_label})
-        authorization.identity.oidc("rhsso", oidc_provider.well_known["issuer"])
+    authorization.identity.oidc("rhsso", oidc_provider.well_known["issuer"])
     return authorization
 
 

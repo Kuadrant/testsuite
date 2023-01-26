@@ -1,14 +1,6 @@
 """Conftest for custom Response tests"""
 import pytest
 
-from testsuite.openshift.objects.auth_config import AuthConfig
-
-
-@pytest.fixture(scope="module")
-def run_on_kuadrant():
-    """Tests needs to be rewritten to not create special AuthConfig"""
-    return False
-
 
 @pytest.fixture(scope="module")
 def responses():
@@ -16,12 +8,16 @@ def responses():
     return []
 
 
+# pylint: disable=unused-argument
 @pytest.fixture(scope="module")
-def authorization(openshift, blame, envoy, oidc_provider, responses, module_label):
+def authorization_name(blame, responses):
+    """Ensure for every response we have a unique authorization"""
+    return blame("authz")
+
+
+@pytest.fixture(scope="module")
+def authorization(authorization, responses):
     """Add response to Authorization"""
-    authorization = AuthConfig.create_instance(openshift, blame("ac"),
-                                               envoy.route, labels={"testRun": module_label})
-    authorization.identity.oidc("rhsso", oidc_provider.well_known["issuer"])
     for response in responses:
         authorization.responses.add(response)
     return authorization
