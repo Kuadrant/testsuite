@@ -10,6 +10,12 @@ from testsuite.oidc.rhsso import RHSSO
 from testsuite.utils import ContentType
 
 
+@pytest.fixture(scope="module")
+def run_on_kuadrant():
+    """We did not implement all the features of this AuthConfig in AuthPolicy"""
+    return False
+
+
 @pytest.fixture(scope="session")
 def admin_rhsso(request, testconfig, blame, rhsso):
     """RHSSO OIDC Provider fixture"""
