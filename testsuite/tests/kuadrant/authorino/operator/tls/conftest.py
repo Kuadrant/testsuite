@@ -11,11 +11,13 @@ from testsuite.utils import cert_builder
 @pytest.fixture(scope="session")
 def cert_attributes() -> Dict[str, str]:
     """Certificate attributes"""
-    return dict(O="Organization Test",
-                OU="Unit Test",
-                L="Location Test",
-                ST="State Test",
-                C="Country Test")
+    return {
+        "O": "Organization Test",
+        "OU": "Unit Test",
+        "L": "Location Test",
+        "ST": "State Test",
+        "C": "Country Test",
+    }
 
 
 @pytest.fixture(scope="session")
