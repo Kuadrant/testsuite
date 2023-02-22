@@ -11,11 +11,11 @@ def authorization(authorization, wildcard_domain, openshift, module_label) -> Au
     """In case of Authorino, AuthConfig used for authorization"""
     authorization.remove_all_hosts()
     authorization.add_host(wildcard_domain)
-    resp = {'name': 'another-json-returned-in-a-header',
-            'wrapperKey': 'x-ext-auth-other-json',
-            'json': {'properties': [
-                {'name': 'propX', 'value': 'valueX'}
-            ]}}
+    resp = {
+        "name": "another-json-returned-in-a-header",
+        "wrapperKey": "x-ext-auth-other-json",
+        "json": {"properties": [{"name": "propX", "value": "valueX"}]},
+    }
     authorization.responses.add(response=resp)
     return authorization
 
@@ -31,7 +31,6 @@ def client(authorization, authorino_route):
 @pytest.fixture(scope="module")
 def authorino_route(authorino, blame, openshift):
     """Add route for authorino http port to be able to access it."""
-    route = openshift.routes.expose(blame('route'), f"{authorino.name()}-authorino-authorization",
-                                    port='http')
+    route = openshift.routes.expose(blame("route"), f"{authorino.name()}-authorino-authorization", port="http")
     yield route
     route.delete()

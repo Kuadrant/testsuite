@@ -25,20 +25,21 @@ def authority(url: str):
 
 
 def prepare_url(url: ParseResult) -> ParseResult:
-    """ Adds port number to url if it is not set"""
+    """Adds port number to url if it is not set"""
     if not url.hostname:
         raise ValueError("Missing hostname part of url")
     if not url.port:
-        url_port = 80 if url.scheme == 'http' else 443
+        url_port = 80 if url.scheme == "http" else 443
         url = url._replace(netloc=url.hostname + f":{url_port}")
     return url
 
 
 class HyperfoilUtils(LifecycleObject):
     """
-        Setup class for hyperfoil test and wrapper of Hyperfoil-python-client.
+    Setup class for hyperfoil test and wrapper of Hyperfoil-python-client.
     """
-    message_1kb = resources.files('testsuite.resources.performance.files').joinpath('message_1kb.txt')
+
+    message_1kb = resources.files("testsuite.resources.performance.files").joinpath("message_1kb.txt")
 
     def __init__(self, hyperfoil_client, template_filename):
         self.hyperfoil_client = hyperfoil_client
@@ -61,10 +62,10 @@ class HyperfoilUtils(LifecycleObject):
 
     def add_shared_template(self, agents_number: int):
         """Updates benchmark with shared template for hyperfoil agents setup"""
-        agents: dict = {'agents': {}}
+        agents: dict = {"agents": {}}
         for i in range(1, agents_number + 1):
-            agent = {'host': 'localhost', 'port': 22, 'stop': True}
-            agents['agents'][f'agent-{i}'] = agent
+            agent = {"host": "localhost", "port": 22, "stop": True}
+            agents["agents"][f"agent-{i}"] = agent
         self.benchmark.update(agents)
 
     def delete(self):
@@ -79,7 +80,7 @@ class HyperfoilUtils(LifecycleObject):
     def add_file(self, path):
         """Adds file to the benchmark"""
         filename = os.path.basename(path)
-        self.factory.file(filename, open(path, 'r', encoding="utf8"))
+        self.factory.file(filename, open(path, "r", encoding="utf8"))
 
     def generate_random_file(self, filename: str, size: int):
         """Generates and adds file with such filename and size to the benchmark"""
@@ -104,7 +105,8 @@ class HyperfoilUtils(LifecycleObject):
         :param filename: name of csv file
         """
         rows = []
-        token_url_obj = prepare_url(urlparse(rhsso.well_known['token_endpoint']))
-        rows.append([client_url, f"{token_url_obj.hostname}:{token_url_obj.port}", token_url_obj.path,
-                     rhsso.token_params()])
+        token_url_obj = prepare_url(urlparse(rhsso.well_known["token_endpoint"]))
+        rows.append(
+            [client_url, f"{token_url_obj.hostname}:{token_url_obj.port}", token_url_obj.path, rhsso.token_params()]
+        )
         self.factory.csv_data(filename, rows)

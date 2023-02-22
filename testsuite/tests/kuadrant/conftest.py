@@ -38,8 +38,9 @@ def authorization_name(blame):
 def authorization(authorino, kuadrant, envoy, authorization_name, openshift, module_label):
     """Authorization object (In case of Kuadrant AuthPolicy)"""
     if kuadrant:
-        policy = AuthPolicy.create_instance(openshift, authorization_name,
-                                            envoy.route, labels={"testRun": module_label})
+        policy = AuthPolicy.create_instance(
+            openshift, authorization_name, envoy.route, labels={"testRun": module_label}
+        )
         return policy
     return None
 

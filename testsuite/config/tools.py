@@ -6,6 +6,7 @@ logger = logging.getLogger(__name__)
 
 def fetch_route(name, force_http=False):
     """Fetches the URL of a route with specific name"""
+
     def _fetcher(settings, _):
         try:
             openshift = settings["tools"]
@@ -17,11 +18,13 @@ def fetch_route(name, force_http=False):
         except Exception:
             logger.warning("Unable to fetch route %s from tools", name)
             return None
+
     return _fetcher
 
 
 def fetch_secret(name, key):
     """Fetches the key out of a secret with specific name"""
+
     def _fetcher(settings, _):
         try:
             openshift = settings["tools"]
@@ -30,4 +33,5 @@ def fetch_secret(name, key):
         except Exception:
             logger.warning("Unable to fetch secret %s[%s] from tools", name, key)
             return None
+
     return _fetcher

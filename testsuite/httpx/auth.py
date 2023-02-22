@@ -14,8 +14,7 @@ TokenType = Union[Token, Callable[[], Token]]
 class HttpxOidcClientAuth(Auth):
     """Auth class for Httpx client for product secured by oidc"""
 
-    def __init__(self, token: TokenType, location="authorization",
-                 username: str = None, password: str = None) -> None:
+    def __init__(self, token: TokenType, location="authorization", username: str = None, password: str = None) -> None:
         self.location = location
         self._token = token
         self.username = username
@@ -34,12 +33,12 @@ class HttpxOidcClientAuth(Auth):
         return self._token
 
     def _add_credentials(self, request: Request, token):
-        if self.location == 'authorization':
-            request.headers['Authorization'] = f"Bearer {token}"
-        elif self.location == 'headers':
-            request.headers['access_token'] = token
-        elif self.location == 'query':
-            request.url = URL(request.url, params={'access_token': token})
+        if self.location == "authorization":
+            request.headers["Authorization"] = f"Bearer {token}"
+        elif self.location == "headers":
+            request.headers["access_token"] = token
+        elif self.location == "query":
+            request.url = URL(request.url, params={"access_token": token})
         else:
             raise ValueError(f"Unknown credentials location '{self.location}'")
 

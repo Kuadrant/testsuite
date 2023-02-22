@@ -7,14 +7,17 @@ from keycloak import KeycloakOpenID, KeycloakAdmin
 
 class Realm:
     """Helper class for RHSSO realm manipulation"""
+
     def __init__(self, master: KeycloakAdmin, name) -> None:
-        self.admin = KeycloakAdmin(server_url=master.server_url,
-                                   username=master.username,
-                                   password=master.password,
-                                   realm_name=name,
-                                   user_realm_name="master",
-                                   verify=False,
-                                   auto_refresh_token=['get', 'put', 'post', 'delete'])
+        self.admin = KeycloakAdmin(
+            server_url=master.server_url,
+            username=master.username,
+            password=master.password,
+            realm_name=name,
+            user_realm_name="master",
+            verify=False,
+            auto_refresh_token=["get", "put", "post", "delete"],
+        )
         self.name = name
 
     def delete(self):
@@ -23,10 +26,7 @@ class Realm:
 
     def create_client(self, name, **kwargs):
         """Creates new client"""
-        self.admin.create_client(payload={
-            **kwargs,
-            "clientId": name}
-        )
+        self.admin.create_client(payload={**kwargs, "clientId": name})
         client_id = self.admin.get_client_id(name)
         return Client(self, client_id)
 
@@ -52,14 +52,14 @@ class Realm:
 
     def oidc_client(self, client_id, client_secret):
         """Create OIDC client for this realm"""
-        return KeycloakOpenID(server_url=self.admin.server_url,
-                              client_id=client_id,
-                              realm_name=self.name,
-                              client_secret_key=client_secret)
+        return KeycloakOpenID(
+            server_url=self.admin.server_url, client_id=client_id, realm_name=self.name, client_secret_key=client_secret
+        )
 
 
 class Client:
     """Helper class for RHSSO client manipulation"""
+
     def __init__(self, realm: Realm, client_id) -> None:
         self.admin = realm.admin
         self.realm = realm
@@ -119,8 +119,7 @@ class User:
         :param role: Dictionary with two keys "name" and "id" of role to assign
         :returns: Keycloak server response
         """
-        return self.admin.assign_realm_roles(user_id=self.user_id,
-                                             roles=role)
+        return self.admin.assign_realm_roles(user_id=self.user_id, roles=role)
 
     def assign_attribute(self, attribute):
         """Assigns attribute to user"""

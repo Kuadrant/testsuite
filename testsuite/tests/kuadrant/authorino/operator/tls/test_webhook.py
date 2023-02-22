@@ -27,7 +27,7 @@ OPA_POLICY = """
 @pytest.fixture(scope="session")
 def specific_authorino_name(blame):
     """Define specific name for authorino which matches with name in authorino certificate"""
-    return blame('authorino')
+    return blame("authorino")
 
 
 @pytest.fixture(scope="session")
@@ -45,16 +45,13 @@ def certificates(cfssl, authorino_domain, wildcard_domain):
     Authorino certificate has *hosts* set to *authorino_domain* value.
     """
     chain = {
-        "envoy_ca": CertInfo(children={
-            "envoy_cert": None,
-            "valid_cert": None
-        }),
-        "authorino_ca": CertInfo(children={
-            "authorino_cert": CertInfo(hosts=authorino_domain),
-        }),
-        "invalid_ca": CertInfo(children={
-            "invalid_cert": None
-        })
+        "envoy_ca": CertInfo(children={"envoy_cert": None, "valid_cert": None}),
+        "authorino_ca": CertInfo(
+            children={
+                "authorino_cert": CertInfo(hosts=authorino_domain),
+            }
+        ),
+        "invalid_ca": CertInfo(children={"invalid_cert": None}),
     }
     return cert_builder(cfssl, chain, wildcard_domain)
 
@@ -62,7 +59,7 @@ def certificates(cfssl, authorino_domain, wildcard_domain):
 @pytest.fixture(scope="module")
 def authorino_parameters(authorino_parameters, specific_authorino_name):
     """Setup TLS with specific name for authorino."""
-    authorino_parameters['name'] = specific_authorino_name
+    authorino_parameters["name"] = specific_authorino_name
     return authorino_parameters
 
 
@@ -77,78 +74,75 @@ def authorization(authorization, openshift, module_label, authorino_domain) -> A
 
     # get user info from admission webhook
     authorization.identity.remove_all()
-    authorization.identity.kubernetes('k8s-userinfo',
-                                      'context.request.http.body.@fromstr|request.userInfo')
+    authorization.identity.kubernetes("k8s-userinfo", "context.request.http.body.@fromstr|request.userInfo")
 
     # add OPA policy to process admission webhook request
-    authorization.authorization.opa_policy('features', OPA_POLICY)
+    authorization.authorization.opa_policy("features", OPA_POLICY)
     user_value = Value(jsonPath="auth.identity.username")
 
-    when = [Rule("auth.authorization.features.allow", "eq", "true"),
-            Rule("auth.authorization.features.verb", "eq", "CREATE")]
+    when = [
+        Rule("auth.authorization.features.allow", "eq", "true"),
+        Rule("auth.authorization.features.verb", "eq", "CREATE"),
+    ]
     kube_attrs = {
-                    'namespace': {'value': openshift.project},
-                    'group': {'value': 'networking.k8s.io'},
-                    'resources': {'value': 'Ingress'},
-                    'verb': {'value': 'create'}
-                 }
+        "namespace": {"value": openshift.project},
+        "group": {"value": "networking.k8s.io"},
+        "resources": {"value": "Ingress"},
+        "verb": {"value": "create"},
+    }
     # add response for admission webhook for creating Ingress
-    authorization.authorization.kubernetes('ingress-authn-k8s-binding-create',
-                                           user_value, kube_attrs, when=when, priority=1)
+    authorization.authorization.kubernetes(
+        "ingress-authn-k8s-binding-create", user_value, kube_attrs, when=when, priority=1
+    )
 
-    when = [Rule("auth.authorization.features.allow", "eq", "true"),
-            Rule("auth.authorization.features.verb", "eq", "DELETE")]
+    when = [
+        Rule("auth.authorization.features.allow", "eq", "true"),
+        Rule("auth.authorization.features.verb", "eq", "DELETE"),
+    ]
     kube_attrs = {
-                    'namespace': {'value': openshift.project},
-                    'group': {'value': 'networking.k8s.io'},
-                    'resources': {'value': 'Ingress'},
-                    'verb': {'value': 'delete'}
-                 }
+        "namespace": {"value": openshift.project},
+        "group": {"value": "networking.k8s.io"},
+        "resources": {"value": "Ingress"},
+        "verb": {"value": "delete"},
+    }
     # add response for admission webhook for deleting Ingress
-    authorization.authorization.kubernetes('ingress-authn-k8s-binding-delete',
-                                           user_value, kube_attrs, when=when, priority=1)
+    authorization.authorization.kubernetes(
+        "ingress-authn-k8s-binding-delete", user_value, kube_attrs, when=when, priority=1
+    )
     return authorization
 
 
 @pytest.fixture(scope="module")
 def validating_webhook(openshift, authorino_domain, certificates, blame):
     """Create validating webhook."""
-    name = blame('check-ingress') + '.authorino.kuadrant.io'
-    service_name = authorino_domain.split('.')[0]
+    name = blame("check-ingress") + ".authorino.kuadrant.io"
+    service_name = authorino_domain.split(".")[0]
 
-    cert_string = base64.b64encode(certificates['authorino_ca'].certificate.encode('ascii')).decode('ascii')
+    cert_string = base64.b64encode(certificates["authorino_ca"].certificate.encode("ascii")).decode("ascii")
     model: Dict[str, Any] = {
-        'apiVersion': 'admissionregistration.k8s.io/v1',
-        'kind': 'ValidatingWebhookConfiguration',
-        'metadata': {
-            'name': name,
-            'namespace': openshift.project
-        },
-        'webhooks': [
+        "apiVersion": "admissionregistration.k8s.io/v1",
+        "kind": "ValidatingWebhookConfiguration",
+        "metadata": {"name": name, "namespace": openshift.project},
+        "webhooks": [
             {
-                'name': name,
-                'clientConfig': {
-                    'service': {
-                        'namespace': openshift.project,
-                        'name': service_name,
-                        'port': 5001,
-                        'path': '/check'
-                    },
-                    'caBundle': cert_string,
+                "name": name,
+                "clientConfig": {
+                    "service": {"namespace": openshift.project, "name": service_name, "port": 5001, "path": "/check"},
+                    "caBundle": cert_string,
                 },
-                'rules': [
+                "rules": [
                     {
-                        'apiGroups': ['networking.k8s.io'],
-                        'apiVersions': ['v1'],
-                        'resources': ['ingresses'],
-                        'operations': ['CREATE', 'UPDATE', 'DELETE'],
-                        'scope': '*',
+                        "apiGroups": ["networking.k8s.io"],
+                        "apiVersions": ["v1"],
+                        "resources": ["ingresses"],
+                        "operations": ["CREATE", "UPDATE", "DELETE"],
+                        "scope": "*",
                     }
                 ],
-                'sideEffects': 'None',
-                'admissionReviewVersions': ['v1']
+                "sideEffects": "None",
+                "admissionReviewVersions": ["v1"],
             }
-        ]
+        ],
     }
 
     webhook = None
@@ -159,19 +153,17 @@ def validating_webhook(openshift, authorino_domain, certificates, blame):
 
 
 # pylint: disable=unused-argument
-def test_authorized_via_http(authorization, openshift, authorino, authorino_domain,
-                             validating_webhook, blame):
+def test_authorized_via_http(authorization, openshift, authorino, authorino_domain, validating_webhook, blame):
     """Test raw http authorization via webhooks."""
-    ingress = Ingress.create_instance(openshift, blame('minimal-ingress'), rules=[{}])
+    ingress = Ingress.create_instance(openshift, blame("minimal-ingress"), rules=[{}])
     ingress.commit()
     assert ingress.model.metadata.creationTimestamp
     ingress.delete()
 
 
 # pylint: disable=unused-argument
-def test_unauthorized_via_http(authorization, openshift, authorino, authorino_domain,
-                               validating_webhook, blame):
+def test_unauthorized_via_http(authorization, openshift, authorino, authorino_domain, validating_webhook, blame):
     """Test raw http authorization via webhooks but for unauthorized object."""
-    ingress = Ingress.create_instance(openshift, blame('minimal-ingress'), rules=[{}, {}])
+    ingress = Ingress.create_instance(openshift, blame("minimal-ingress"), rules=[{}, {}])
     with pytest.raises(OpenShiftPythonException, match="Unauthorized"):
         ingress.commit()

@@ -54,6 +54,7 @@ class Value:
 @dataclass
 class Cache:
     """Dataclass for specifying Cache in Authorization"""
+
     ttl: int
     key: Value
 
@@ -65,6 +66,7 @@ class Cache:
 @dataclass
 class PatternRef:
     """Dataclass for specifying Pattern reference in Authorization"""
+
     # pylint: disable=invalid-name
     patternRef: str
 

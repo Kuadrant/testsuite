@@ -29,10 +29,13 @@ def authorization2(authorino, blame, openshift2, module_label, envoy, wildcard_d
     return auth
 
 
-@pytest.mark.parametrize(("client_fixture", "auth_fixture", "hosts"), [
-    pytest.param("client", "authorization", "wildcard_domain", id="First namespace"),
-    pytest.param("client2", "authorization2", [], id="Second namespace"),
-])
+@pytest.mark.parametrize(
+    ("client_fixture", "auth_fixture", "hosts"),
+    [
+        pytest.param("client", "authorization", "wildcard_domain", id="First namespace"),
+        pytest.param("client2", "authorization2", [], id="Second namespace"),
+    ],
+)
 def test_wildcard_collision(client_fixture, auth_fixture, hosts, request):
     """
     Preparation:

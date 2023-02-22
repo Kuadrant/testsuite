@@ -13,7 +13,7 @@ def hostname(envoy):
 @pytest.fixture(scope="module")
 def second_hostname(envoy, blame):
     """Second valid hostname"""
-    return envoy.add_hostname(blame('second'))
+    return envoy.add_hostname(blame("second"))
 
 
 @pytest.fixture(scope="module")

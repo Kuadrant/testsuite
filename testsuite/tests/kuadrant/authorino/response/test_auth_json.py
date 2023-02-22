@@ -17,10 +17,7 @@ def non_existing():
     return None
 
 
-@pytest.fixture(scope="module", params=[
-    ("auth.identity.iss", "issuer"),
-    ("auth.non_existing.value", "non_existing")
-])
+@pytest.fixture(scope="module", params=[("auth.identity.iss", "issuer"), ("auth.non_existing.value", "non_existing")])
 def path_and_value(request):
     """Returns authJSON path and expected value"""
     return request.param[0], request.getfixturevalue(request.param[1])
@@ -30,17 +27,7 @@ def path_and_value(request):
 def responses(path_and_value):
     """Returns response to be added to the AuthConfig"""
     path, _ = path_and_value
-    return [{"name": "header",
-            "json": {
-                "properties": [
-                    {
-                        "name": "anything",
-                        "valueFrom": {
-                            "authJSON": path
-                        }
-                    }
-                ]
-            }}]
+    return [{"name": "header", "json": {"properties": [{"name": "anything", "valueFrom": {"authJSON": path}}]}}]
 
 
 def test_auth_json_path(auth, client, path_and_value):

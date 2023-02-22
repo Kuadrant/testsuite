@@ -13,6 +13,7 @@ from testsuite.openshift.objects.route import OpenshiftRoute, Route
 
 class Envoy(Proxy):
     """Envoy deployed from template"""
+
     def __init__(self, openshift: OpenShiftClient, authorino, name, label, httpbin: Httpbin, image) -> None:
         self.openshift = openshift
         self.authorino = authorino
@@ -27,10 +28,11 @@ class Envoy(Proxy):
     def route(self) -> Route:
         """Returns route for object"""
         with self.openshift.context:
-            return self.envoy_objects\
-                .narrow("route")\
-                .narrow(lambda route: route.model.metadata.name == self.name)\
+            return (
+                self.envoy_objects.narrow("route")
+                .narrow(lambda route: route.model.metadata.name == self.name)
                 .object(cls=OpenshiftRoute)
+            )
 
     def add_hostname(self, name) -> str:
         """Add another hostname that points to this Envoy"""
@@ -51,13 +53,16 @@ class Envoy(Proxy):
     def commit(self):
         """Deploy all required objects into OpenShift"""
         with resources.path("testsuite.resources", "envoy.yaml") as path:
-            self.envoy_objects = self.openshift.new_app(path, {
-                "NAME": self.name,
-                "LABEL": self.label,
-                "AUTHORINO_URL": self.authorino.authorization_url,
-                "UPSTREAM_URL": self.httpbin_hostname,
-                "ENVOY_IMAGE": self.image
-            })
+            self.envoy_objects = self.openshift.new_app(
+                path,
+                {
+                    "NAME": self.name,
+                    "LABEL": self.label,
+                    "AUTHORINO_URL": self.authorino.authorization_url,
+                    "UPSTREAM_URL": self.httpbin_hostname,
+                    "ENVOY_IMAGE": self.image,
+                },
+            )
         with self.openshift.context:
             assert self.openshift.is_ready(self.envoy_objects.narrow("deployment")), "Envoy wasn't ready in time"
 
@@ -71,8 +76,19 @@ class Envoy(Proxy):
 
 class TLSEnvoy(Envoy):
     """Envoy with TLS enabled and all required certificates set up, requires using a client certificate"""
-    def __init__(self, openshift, authorino, name, label, httpbin_hostname, image,
-                 authorino_ca_secret, envoy_ca_secret, envoy_cert_secret) -> None:
+
+    def __init__(
+        self,
+        openshift,
+        authorino,
+        name,
+        label,
+        httpbin_hostname,
+        image,
+        authorino_ca_secret,
+        envoy_ca_secret,
+        envoy_cert_secret,
+    ) -> None:
         super().__init__(openshift, authorino, name, label, httpbin_hostname, image)
         self.authorino_ca_secret = authorino_ca_secret
         self.backend_ca_secret = envoy_ca_secret
@@ -84,16 +100,19 @@ class TLSEnvoy(Envoy):
 
     def commit(self):
         with resources.path("testsuite.resources.tls", "envoy.yaml") as path:
-            self.envoy_objects = self.openshift.new_app(path, {
-                "NAME": self.name,
-                "LABEL": self.label,
-                "AUTHORINO_URL": self.authorino.authorization_url,
-                "UPSTREAM_URL": self.httpbin_hostname,
-                "AUTHORINO_CA_SECRET": self.authorino_ca_secret,
-                "ENVOY_CA_SECRET": self.backend_ca_secret,
-                "ENVOY_CERT_SECRET": self.envoy_cert_secret,
-                "ENVOY_IMAGE": self.image
-            })
+            self.envoy_objects = self.openshift.new_app(
+                path,
+                {
+                    "NAME": self.name,
+                    "LABEL": self.label,
+                    "AUTHORINO_URL": self.authorino.authorization_url,
+                    "UPSTREAM_URL": self.httpbin_hostname,
+                    "AUTHORINO_CA_SECRET": self.authorino_ca_secret,
+                    "ENVOY_CA_SECRET": self.backend_ca_secret,
+                    "ENVOY_CERT_SECRET": self.envoy_cert_secret,
+                    "ENVOY_IMAGE": self.image,
+                },
+            )
 
         with self.openshift.context:
             assert self.openshift.is_ready(self.envoy_objects.narrow("deployment")), "Envoy wasn't ready in time"

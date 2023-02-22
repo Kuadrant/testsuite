@@ -15,8 +15,16 @@ class RHSSO(OIDCProvider, LifecycleObject):
     OIDCProvider implementation for RHSSO. It creates Realm, client and user.
     """
 
-    def __init__(self, server_url, username, password, realm_name, client_name,
-                 test_username="testUser", test_password="testPassword") -> None:
+    def __init__(
+        self,
+        server_url,
+        username,
+        password,
+        realm_name,
+        client_name,
+        test_username="testUser",
+        test_password="testPassword",
+    ) -> None:
         self.test_username = test_username
         self.test_password = test_password
         self.username = username
@@ -28,32 +36,31 @@ class RHSSO(OIDCProvider, LifecycleObject):
         self.client = None
 
         try:
-            self.master = KeycloakAdmin(server_url=server_url,
-                                        username=username,
-                                        password=password,
-                                        realm_name="master",
-                                        verify=False,
-                                        auto_refresh_token=['get', 'put', 'post', 'delete'])
+            self.master = KeycloakAdmin(
+                server_url=server_url,
+                username=username,
+                password=password,
+                realm_name="master",
+                verify=False,
+                auto_refresh_token=["get", "put", "post", "delete"],
+            )
             self.server_url = server_url
         except KeycloakPostError:
             # Older Keycloaks versions (and RHSSO) needs requires url to be pointed at auth/ endpoint
             # pylint: disable=protected-access
             self.server_url = urlparse(server_url)._replace(path="auth/").geturl()
-            self.master = KeycloakAdmin(server_url=self.server_url,
-                                        username=username,
-                                        password=password,
-                                        realm_name="master",
-                                        verify=False,
-                                        auto_refresh_token=['get', 'put', 'post', 'delete'])
+            self.master = KeycloakAdmin(
+                server_url=self.server_url,
+                username=username,
+                password=password,
+                realm_name="master",
+                verify=False,
+                auto_refresh_token=["get", "put", "post", "delete"],
+            )
 
     def create_realm(self, name: str, **kwargs) -> Realm:
         """Creates new realm"""
-        self.master.create_realm(payload={
-            "realm": name,
-            "enabled": True,
-            "sslRequired": "None",
-            **kwargs
-        })
+        self.master.create_realm(payload={"realm": name, "enabled": True, "sslRequired": "None", **kwargs})
         return Realm(self.master, name)
 
     def commit(self):
@@ -66,7 +73,8 @@ class RHSSO(OIDCProvider, LifecycleObject):
             protocol="openid-connect",
             standardFlowEnabled=False,
             serviceAccountsEnabled=True,
-            authorizationServicesEnabled=True)
+            authorizationServicesEnabled=True,
+        )
         self.user = self.realm.create_user(self.test_username, self.test_password)
 
     def delete(self):
@@ -94,6 +102,8 @@ class RHSSO(OIDCProvider, LifecycleObject):
         """
         Returns token parameters that can be added to request url
         """
-        return f"grant_type=password&client_id={self.oidc_client.client_id}&" \
-               f"client_secret={self.oidc_client.client_secret_key}&username={self.test_username}&" \
-               f"password={self.test_password}"
+        return (
+            f"grant_type=password&client_id={self.oidc_client.client_id}&"
+            f"client_secret={self.oidc_client.client_secret_key}&username={self.test_username}&"
+            f"password={self.test_password}"
+        )

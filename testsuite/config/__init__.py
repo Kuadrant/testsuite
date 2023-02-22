@@ -10,14 +10,19 @@ class DefaultValueValidator(Validator):
     """Validator which will run default function only when the original value is missing"""
 
     def __init__(self, name, default, **kwargs) -> None:
-        super().__init__(name, ne=None,
-                         messages={
-                             "operations": ("{name} must {operation} {op_value} but it is {value} in env {env}. "
-                                            "You might be missing tools on the cluster.")
-                         },
-                         default=default,
-                         when=Validator(name, must_exist=False),
-                         **kwargs)
+        super().__init__(
+            name,
+            ne=None,
+            messages={
+                "operations": (
+                    "{name} must {operation} {op_value} but it is {value} in env {env}. "
+                    "You might be missing tools on the cluster."
+                )
+            },
+            default=default,
+            when=Validator(name, must_exist=False),
+            **kwargs
+        )
 
 
 settings = Dynaconf(
@@ -35,5 +40,5 @@ settings = Dynaconf(
         Validator("kuadrant.enable", must_exist=False, eq=False) | Validator("kuadrant.gateway.name", must_exist=True),
     ],
     validate_only=["authorino", "kuadrant"],
-    loaders=["dynaconf.loaders.env_loader", "testsuite.config.openshift_loader"]
+    loaders=["dynaconf.loaders.env_loader", "testsuite.config.openshift_loader"],
 )

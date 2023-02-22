@@ -7,6 +7,7 @@ from typing import Callable, Tuple
 @dataclass
 class Token:
     """Token class"""
+
     access_token: str
     refresh_function: Callable[[str], "Token"]
     refresh_token: str

@@ -72,7 +72,7 @@ class Metadata(abc.ABC):
 
     @abc.abstractmethod
     def uma_metadata(self, name, endpoint, credentials, **common_features):
-        """Set metadata User-Managed Access (UMA) resource registry """
+        """Set metadata User-Managed Access (UMA) resource registry"""
 
 
 class Responses(abc.ABC):

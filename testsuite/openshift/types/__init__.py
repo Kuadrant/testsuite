@@ -9,7 +9,7 @@ if TYPE_CHECKING:
 class RemoteMapping:
     """Dict-like interface to different types of OpenShift Objects"""
 
-    def __init__(self, client: 'OpenShiftClient', resource_name: str):
+    def __init__(self, client: "OpenShiftClient", resource_name: str):
         self._client = client
         self._resource_name = resource_name
 

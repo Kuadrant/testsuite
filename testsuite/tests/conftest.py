@@ -21,9 +21,9 @@ from testsuite.utils import randomize, _whoami
 def pytest_addoption(parser):
     """Add options to include various kinds of tests in testrun"""
     parser.addoption(
-        "--performance", action="store_true", default=False, help="Run also performance tests (default: False)")
-    parser.addoption(
-        "--glbc", action="store_true", default=False, help="Run also glbc tests (default: False)")
+        "--performance", action="store_true", default=False, help="Run also performance tests (default: False)"
+    )
+    parser.addoption("--glbc", action="store_true", default=False, help="Run also glbc tests (default: False)")
 
 
 def pytest_runtest_setup(item):
@@ -35,7 +35,7 @@ def pytest_runtest_setup(item):
         pytest.skip("Excluding glbc tests")
 
 
-@pytest.fixture(scope='session', autouse=True)
+@pytest.fixture(scope="session", autouse=True)
 def term_handler():
     """
     This will handle ^C, cleanup won't be skipped
@@ -112,8 +112,15 @@ def rhsso(request, testconfig, blame):
     try:
         testconfig.validators.validate(only="rhsso")
         cnf = testconfig["rhsso"]
-        info = RHSSO(cnf["url"], cnf["username"], cnf["password"], blame("realm"), blame("client"),
-                     cnf["test_user"]["username"], cnf["test_user"]["password"])
+        info = RHSSO(
+            cnf["url"],
+            cnf["username"],
+            cnf["password"],
+            blame("realm"),
+            blame("client"),
+            cnf["test_user"]["username"],
+            cnf["test_user"]["password"],
+        )
 
         if not testconfig["skip_cleanup"]:
             request.addfinalizer(info.delete)
@@ -155,6 +162,7 @@ def oidc_provider(rhsso) -> OIDCProvider:
 @pytest.fixture(scope="session")
 def blame(request):
     """Returns function that will add random identifier to the name"""
+
     def _blame(name: str, tail: int = 3) -> str:
         """Create 'scoped' name within given test
 
@@ -176,6 +184,7 @@ def blame(request):
             context = context.split(".")[0]
 
         return randomize(f"{name[:8]}-{_whoami()[:8]}-{context[:9]}", tail=tail)
+
     return _blame
 
 

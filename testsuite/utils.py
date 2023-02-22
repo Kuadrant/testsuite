@@ -11,6 +11,7 @@ from testsuite.config import settings
 
 class ContentType(enum.Enum):
     """Content-type options for expectation headers"""
+
     PLAIN_TEXT = "plain/text"
     APPLICATION_JSON = "application/json"
 
@@ -30,8 +31,8 @@ def randomize(name, tail=5):
 
 def _whoami():
     """Returns username"""
-    if 'tester' in settings:
-        return settings['tester']
+    if "tester" in settings:
+        return settings["tester"]
 
     try:
         return os.getlogin()
@@ -41,8 +42,9 @@ def _whoami():
         return str(os.getuid())
 
 
-def cert_builder(cfssl: CFSSLClient, chain: dict, hosts: Union[str, Collection[str]] = None,
-                 parent: Certificate = None) -> Dict[str, Certificate]:
+def cert_builder(
+    cfssl: CFSSLClient, chain: dict, hosts: Union[str, Collection[str]] = None, parent: Certificate = None
+) -> Dict[str, Certificate]:
     """
     Recursively create certificates based on their given CertInfo.
     If CertInfo has children or is marked as CA, it will be generated as a Certificate Authority,
@@ -65,11 +67,9 @@ def cert_builder(cfssl: CFSSLClient, chain: dict, hosts: Union[str, Collection[s
             parsed_hosts = [parsed_hosts]  # type: ignore
 
         if info.ca or info.children:
-            cert = cfssl.create_authority(name, names=info.names,
-                                          hosts=parsed_hosts, certificate_authority=parent)
+            cert = cfssl.create_authority(name, names=info.names, hosts=parsed_hosts, certificate_authority=parent)
         else:
-            cert = cfssl.create(name, names=info.names,
-                                hosts=parsed_hosts, certificate_authority=parent)
+            cert = cfssl.create(name, names=info.names, hosts=parsed_hosts, certificate_authority=parent)
 
         if info.children is not None:
             result.update(cert_builder(cfssl, info.children, parsed_hosts, cert))
@@ -79,4 +79,4 @@ def cert_builder(cfssl: CFSSLClient, chain: dict, hosts: Union[str, Collection[s
 
 def rego_allow_header(key, value):
     """Rego query that allows all requests that contain specific header with`key` and `value`"""
-    return f"allow {{ input.context.request.http.headers.{key} == \"{value}\" }}"
+    return f'allow {{ input.context.request.http.headers.{key} == "{value}" }}'

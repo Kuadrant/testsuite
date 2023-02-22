@@ -11,6 +11,7 @@ if TYPE_CHECKING:
 
 class Section:
     """Common class for all Sections"""
+
     def __init__(self, obj: "AuthConfig", section_name) -> None:
         super().__init__()
         self.obj = obj
@@ -18,8 +19,10 @@ class Section:
 
     def modify_and_apply(self, modifier_func, retries=2, cmd_args=None):
         """Reimplementation of modify_and_apply from OpenshiftObject"""
+
         def _new_modifier(obj):
             modifier_func(self.__class__(obj, self.section_name))
+
         return self.obj.modify_and_apply(_new_modifier, retries, cmd_args)
 
     @property
@@ -32,8 +35,9 @@ class Section:
         """The actual dict section which will be edited"""
         return self.obj.auth_section.setdefault(self.section_name, [])
 
-    def add_item(self, name, value, priority: int = None, when: Iterable[Rule] = None,
-                 metrics: bool = None, cache: Cache = None):
+    def add_item(
+        self, name, value, priority: int = None, when: Iterable[Rule] = None, metrics: bool = None, cache: Cache = None
+    ):
         """Adds item to the section"""
         item = {"name": name, **value}
         if when:
@@ -58,33 +62,28 @@ class IdentitySection(Section, Identities):
             :param selector_key: selector key to match
             :param selector_value: selector value to match
         """
-        self.add_item(name, {
-            "mtls": {
-                "selector": {
-                    "matchLabels": {
-                        selector_key: selector_value
-                    }
-                }
-            }
-        }, **common_features)
+        self.add_item(name, {"mtls": {"selector": {"matchLabels": {selector_key: selector_value}}}}, **common_features)
 
     @modify
     def oidc(self, name, endpoint, credentials="authorization_header", selector="Bearer", **common_features):
         """Adds OIDC identity"""
-        self.add_item(name, {
-            "oidc": {
-                "endpoint": endpoint
-            },
-            "credentials": {
-                "in": credentials,
-                "keySelector": selector
-            }
-        }, **common_features)
+        self.add_item(
+            name,
+            {"oidc": {"endpoint": endpoint}, "credentials": {"in": credentials, "keySelector": selector}},
+            **common_features
+        )
 
     @modify
-    def api_key(self, name, all_namespaces: bool = False,
-                match_label=None, match_expression: MatchExpression = None,
-                credentials="authorization_header", selector="APIKEY", **common_features):
+    def api_key(
+        self,
+        name,
+        all_namespaces: bool = False,
+        match_label=None,
+        match_expression: MatchExpression = None,
+        credentials="authorization_header",
+        selector="APIKEY",
+        **common_features
+    ):
         """
         Adds API Key identity
         Args:
@@ -100,27 +99,19 @@ class IdentitySection(Section, Identities):
 
         matcher: Dict = {}
         if match_label:
-            matcher.update({
-                "matchLabels": {
-                    "group": match_label
-                }
-            })
+            matcher.update({"matchLabels": {"group": match_label}})
 
         if match_expression:
-            matcher.update({
-                "matchExpressions": [asdict(match_expression)]
-            })
+            matcher.update({"matchExpressions": [asdict(match_expression)]})
 
-        self.add_item(name, {
-            "apiKey": {
-                "selector": matcher,
-                "allNamespaces": all_namespaces
+        self.add_item(
+            name,
+            {
+                "apiKey": {"selector": matcher, "allNamespaces": all_namespaces},
+                "credentials": {"in": credentials, "keySelector": selector},
             },
-            "credentials": {
-                "in": credentials,
-                "keySelector": selector
-            }
-        }, **common_features)
+            **common_features
+        )
 
     @modify
     def anonymous(self, name, **common_features):
@@ -140,37 +131,31 @@ class IdentitySection(Section, Identities):
 
 class MetadataSection(Section, Metadata):
     """Section which contains metadata configuration"""
+
     @modify
     def http_metadata(self, name, endpoint, method: Literal["GET", "POST"], **common_features):
         """Set metadata http external auth feature"""
-        self.add_item(name, {
-            "http": {
-                "endpoint": endpoint,
-                "method": method,
-                "headers": [{"name": "Accept", "value": "application/json"}]
-            }
-        }, **common_features)
+        self.add_item(
+            name,
+            {
+                "http": {
+                    "endpoint": endpoint,
+                    "method": method,
+                    "headers": [{"name": "Accept", "value": "application/json"}],
+                }
+            },
+            **common_features
+        )
 
     @modify
     def user_info_metadata(self, name, identity_source, **common_features):
         """Set metadata OIDC user info"""
-        self.add_item(name, {
-            "userInfo": {
-                "identitySource": identity_source
-            }
-        }, **common_features)
+        self.add_item(name, {"userInfo": {"identitySource": identity_source}}, **common_features)
 
     @modify
     def uma_metadata(self, name, endpoint, credentials, **common_features):
         """Set metadata feature for resource-level authorization with User-Managed Access (UMA) resource registry"""
-        self.add_item(name, {
-            "uma": {
-                "endpoint": endpoint,
-                "credentialsRef": {
-                    "name": credentials
-                }
-            }
-        }, **common_features)
+        self.add_item(name, {"uma": {"endpoint": endpoint, "credentialsRef": {"name": credentials}}}, **common_features)
 
 
 class ResponsesSection(Section, Responses):
@@ -188,11 +173,7 @@ class AuthorizationsSection(Section, Authorizations):
     @modify
     def auth_rule(self, name, rule: Rule, **common_features):
         """Adds JSON pattern-matching authorization rule (authorization.json)"""
-        section = {
-            "json": {
-                "rules": [asdict(rule)]
-            }
-        }
+        section = {"json": {"rules": [asdict(rule)]}}
         self.add_item(name, section, **common_features)
 
     def role_rule(self, name: str, role: str, path: str, **common_features):
@@ -212,25 +193,14 @@ class AuthorizationsSection(Section, Authorizations):
     @modify
     def opa_policy(self, name, rego_policy, **common_features):
         """Adds Opa (https://www.openpolicyagent.org/docs/latest/) policy to the AuthConfig"""
-        self.add_item(name, {
-            "opa": {
-                "inlineRego": rego_policy
-            }
-        }, **common_features)
+        self.add_item(name, {"opa": {"inlineRego": rego_policy}}, **common_features)
 
     @modify
     def external_opa_policy(self, name, endpoint, ttl=0, **common_features):
         """
         Adds OPA policy that is declared as an HTTP endpoint
         """
-        self.add_item(name, {
-            "opa": {
-                "externalRegistry": {
-                    "endpoint": endpoint,
-                    "ttl": ttl
-                }
-            }
-        }, **common_features)
+        self.add_item(name, {"opa": {"externalRegistry": {"endpoint": endpoint, "ttl": ttl}}}, **common_features)
 
     @modify
     def kubernetes(self, name: str, user: Value, kube_attrs: dict, **common_features):
@@ -241,6 +211,10 @@ class AuthorizationsSection(Section, Authorizations):
         :param kube_attrs: resource attributes in kubernetes authorization
         """
 
-        self.add_item(name, {
-            "kubernetes": {"user": user.to_dict(), "resourceAttributes": kube_attrs},
-        }, **common_features)
+        self.add_item(
+            name,
+            {
+                "kubernetes": {"user": user.to_dict(), "resourceAttributes": kube_attrs},
+            },
+            **common_features
+        )
