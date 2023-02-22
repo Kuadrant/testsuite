@@ -5,12 +5,6 @@ from testsuite.httpx.auth import HeaderApiKeyAuth
 
 
 @pytest.fixture(scope="module")
-def run_on_kuadrant():
-    """Secrets are not correctly reconciled https://github.com/Kuadrant/kuadrant-operator/issues/127"""
-    return False
-
-
-@pytest.fixture(scope="module")
 def api_key(create_api_key, module_label):
     """Creates API key Secret"""
     api_key = "api_key_value"

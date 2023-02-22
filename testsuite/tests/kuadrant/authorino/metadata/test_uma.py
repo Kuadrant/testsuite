@@ -27,12 +27,6 @@ allow {
 """
 
 
-@pytest.fixture(scope="module")
-def run_on_kuadrant():
-    """Secrets are not correctly reconciled https://github.com/Kuadrant/kuadrant-operator/issues/127"""
-    return False
-
-
 @pytest.fixture(scope="module", autouse=True)
 def client_secret(create_client_secret, rhsso):
     """Creates a required secret, used by Authorino to start the authentication with the UMA registry."""
