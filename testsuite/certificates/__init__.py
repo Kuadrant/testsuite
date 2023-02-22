@@ -26,7 +26,7 @@ class Certificate:
     """Object representing Signed certificate"""
     key: str
     certificate: str
-    chain: Optional[str] = None
+    chain: str
 
 
 @dataclasses.dataclass
@@ -34,6 +34,27 @@ class UnsignedKey:
     """Object representing generated key waiting to be signed"""
     key: str
     csr: str
+
+
+def build_cert_request_json(common_name: str,
+                            names: Optional[List[Dict[str, str]]] = None,
+                            hosts: Optional[Collection[str]] = None) -> dict:
+    """
+    Build certificate request for the CFSSL client
+    :param common_name: certificate identifier
+    :param names: certificate attributes
+    :param hosts: certificate hosts
+    :return: certificate request dictionary
+    """
+    return {
+        "CN": common_name,
+        "names": names,
+        "hosts": hosts,
+        "key": {
+            "algo": "rsa",
+            "size": 4096
+        },
+    }
 
 
 class CFSSLClient:
@@ -83,13 +104,7 @@ class CFSSLClient:
     def generate_key(self, common_name: str, names: Optional[List[Dict[str, str]]] = None,
                      hosts: Optional[Collection[str]] = None) -> UnsignedKey:
         """Generates unsigned key"""
-        data: Dict[str, Any] = {
-            "CN": common_name
-        }
-        if names:
-            data["names"] = names
-        if hosts:
-            data["hosts"] = hosts
+        data = build_cert_request_json(common_name, names, hosts)
 
         result = self._execute_command("genkey", "-", stdin=json.dumps(data))
         return UnsignedKey(key=result["key"], csr=result["csr"])
@@ -104,14 +119,24 @@ class CFSSLClient:
         result = self._execute_command("sign", *args, "-", stdin=key.csr, env={
             "CA": certificate_authority.certificate,
             "KEY": certificate_authority.key})
-        return Certificate(key=key.key, certificate=result["cert"])
+        return Certificate(key=key.key, certificate=result["cert"], chain=result["cert"])
 
     def sign(self, key: UnsignedKey, certificate_authority: Certificate) -> Certificate:
         """Signs unsigned key"""
         result = self._execute_command("sign", "-ca=env:CA", "-ca-key=env:KEY", "-", stdin=key.csr, env={
             "CA": certificate_authority.certificate,
             "KEY": certificate_authority.key})
-        return Certificate(key=key.key, certificate=result["cert"])
+        chain = result["cert"] + certificate_authority.chain
+        return Certificate(key=key.key, certificate=result["cert"], chain=chain)
+
+    def self_sign(self, common_name: str,
+                  names: Optional[List[Dict[str, str]]] = None,
+                  hosts: Optional[Collection[str]] = None) -> Certificate:
+        """Creates self-signed certificate"""
+        data = build_cert_request_json(common_name, names, hosts)
+
+        result = self._execute_command("selfsign", common_name, "-", stdin=json.dumps(data))
+        return Certificate(key=result["key"], certificate=result["cert"], chain=result["cert"])
 
     def create_authority(self,
                          common_name: str,
@@ -126,19 +151,11 @@ class CFSSLClient:
             :param certificate_authority: Optional Authority to sign this new authority, making it intermediate
         """
         names = names or self.DEFAULT_NAMES
-        data = {
-            "CN": common_name,
-            "names": names,
-            "hosts": hosts,
-            "key": {
-                "algo": "rsa",
-                "size": 4096
-            },
-        }
+        data = build_cert_request_json(common_name, names, hosts)
 
         result = self._execute_command("genkey", "-initca", "-", stdin=json.dumps(data))
         key = UnsignedKey(key=result["key"], csr=result["csr"])
-        certificate = Certificate(key=result["key"], certificate=result["cert"])
+        certificate = Certificate(key=result["key"], certificate=result["cert"], chain=result["cert"])
         if certificate_authority:
             certificate = self.sign_intermediate_authority(key, certificate_authority)
         return certificate
@@ -146,7 +163,7 @@ class CFSSLClient:
     def create(self,
                common_name: str,
                hosts: Collection[str],
-               certificate_authority: Certificate,
+               certificate_authority: Optional[Certificate] = None,
                names: Optional[List[Dict[str, str]]] = None) -> Certificate:
         """Create a new certificate.
         Args:
@@ -156,6 +173,9 @@ class CFSSLClient:
             :param certificate_authority: Certificate Authority to be used for signing
         """
         names = names or self.DEFAULT_NAMES
-        key = self.generate_key(common_name, names, hosts)
-        certificate = self.sign(key, certificate_authority=certificate_authority)
+        if certificate_authority is None:
+            certificate = self.self_sign(common_name, names, hosts)
+        else:
+            key = self.generate_key(common_name, names, hosts)
+            certificate = self.sign(key, certificate_authority=certificate_authority)
         return certificate
