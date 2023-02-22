@@ -2,6 +2,7 @@
 mypy = "*"
 pylint = "*"
 types-PyYAML = "*"
+black = {version = "*", extras = ["d"]}
 # Have commented out python-language-server to make it available quickly
 # for the development
 #python-language-server = "*"

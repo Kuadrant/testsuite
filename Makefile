@@ -23,10 +23,13 @@ ifdef html
 PYTEST += --html=$(resultsdir)/report-$(@F).html
 endif
 
-commit-acceptance: pylint mypy all-is-package
+commit-acceptance: black pylint mypy all-is-package
 
 pylint mypy: pipenv-dev
 	pipenv run $@ $(flags) testsuite
+
+black: pipenv-dev
+	pipenv run black --line-length 120 --check testsuite --diff
 
 all-is-package:
 	@echo
