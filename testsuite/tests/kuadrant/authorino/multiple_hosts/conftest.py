@@ -5,12 +5,6 @@ from testsuite.httpx import HttpxBackoffClient
 
 
 @pytest.fixture(scope="module")
-def run_on_kuadrant():
-    """Handling of hosts needs to be rewritten"""
-    return False
-
-
-@pytest.fixture(scope="module")
 def hostname(envoy):
     """Original hostname"""
     return envoy.hostname

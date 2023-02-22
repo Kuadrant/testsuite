@@ -3,11 +3,23 @@ from typing import Dict, List
 
 from testsuite.openshift.client import OpenShiftClient
 from testsuite.openshift.objects.auth_config import AuthConfig
-from testsuite.openshift.objects.gateway_api import Referencable
+from testsuite.openshift.objects.gateway_api import HTTPRoute
 
 
 class AuthPolicy(AuthConfig):
     """AuthPolicy object, it serves as Kuadrants AuthConfig"""
+
+    def __init__(self, dict_to_model=None, string_to_model=None, context=None, route: HTTPRoute = None):
+        super().__init__(dict_to_model, string_to_model, context)
+        self._route = route
+
+    @property
+    def route(self) -> HTTPRoute:
+        """Returns route to which the Policy is bound, won't work with objects fetched from Openshift"""
+        if not self._route:
+            # TODO: Fetch route from Openshift directly
+            raise ValueError("This instance doesnt have a Route specified!!")
+        return self._route
 
     @property
     def auth_section(self):
@@ -19,7 +31,7 @@ class AuthPolicy(AuthConfig):
         cls,
         openshift: OpenShiftClient,
         name,
-        route: Referencable,
+        route: HTTPRoute,
         labels: Dict[str, str] = None,
         hostnames: List[str] = None,
     ):
@@ -39,4 +51,13 @@ class AuthPolicy(AuthConfig):
         if labels is not None:
             model["metadata"]["labels"] = labels
 
-        return cls(model, context=openshift.context)
+        return cls(model, context=openshift.context, route=route)
+
+    def add_host(self, hostname):
+        return self.route.add_hostname(hostname)
+
+    def remove_host(self, hostname):
+        return self.route.remove_hostname(hostname)
+
+    def remove_all_hosts(self):
+        return self.route.remove_all_hostnames()
