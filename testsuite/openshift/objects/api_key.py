@@ -20,15 +20,10 @@ class APIKey(OpenShiftObject):
             "metadata": {
                 "name": name,
                 "namespace": openshift.project,
-                "labels": {
-                    "authorino.kuadrant.io/managed-by": "authorino",
-                    "group": label
-                }
+                "labels": {"authorino.kuadrant.io/managed-by": "authorino", "group": label},
             },
-            "stringData": {
-                "api_key": api_key
-            },
-            "type": "Opaque"
+            "stringData": {"api_key": api_key},
+            "type": "Opaque",
         }
 
         return cls(model, context=openshift.context)
@@ -36,4 +31,4 @@ class APIKey(OpenShiftObject):
     @modify
     def update_api_key(self, api_key):
         """Updates API key Secret with new API key"""
-        self.model.data["api_key"] = base64.b64encode(api_key.encode("utf-8")).decode('ascii')
+        self.model.data["api_key"] = base64.b64encode(api_key.encode("utf-8")).decode("ascii")

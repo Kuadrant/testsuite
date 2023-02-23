@@ -20,8 +20,15 @@ def run_on_kuadrant():
 def admin_rhsso(request, testconfig, blame, rhsso):
     """RHSSO OIDC Provider fixture"""
 
-    info = RHSSO(rhsso.server_url, rhsso.username, rhsso.password, blame("realm"), blame("client"),
-                 rhsso.test_username, rhsso.test_password)
+    info = RHSSO(
+        rhsso.server_url,
+        rhsso.username,
+        rhsso.password,
+        blame("realm"),
+        blame("client"),
+        rhsso.test_username,
+        rhsso.test_password,
+    )
 
     if not testconfig["skip_cleanup"]:
         request.addfinalizer(info.delete)
@@ -56,9 +63,7 @@ def cluster_info(request, mockserver, module_label):
 
     def _cluster_info(value):
         return mockserver.create_expectation(
-            f"{module_label}-cluster",
-            {"client_id": value},
-            ContentType.APPLICATION_JSON
+            f"{module_label}-cluster", {"client_id": value}, ContentType.APPLICATION_JSON
         )
 
     request.addfinalizer(lambda: mockserver.clear_expectation(f"{module_label}-cluster"))
@@ -86,21 +91,34 @@ def commit():
 
 
 @pytest.fixture(scope="module")
-def authorization(openshift, blame, envoy, module_label, rhsso, terms_and_conditions, cluster_info, admin_rhsso,
-                  resource_info, request):
+def authorization(
+    openshift,
+    blame,
+    envoy,
+    module_label,
+    rhsso,
+    terms_and_conditions,
+    cluster_info,
+    admin_rhsso,
+    resource_info,
+    request,
+):
     """Creates AuthConfig object from template"""
     with resources.path("testsuite.resources", "dinosaur_config.yaml") as path:
-        auth = openshift.new_app(path, {
-            "NAME": blame("ac"),
-            "NAMESPACE": openshift.project,
-            "LABEL": module_label,
-            "HOST": envoy.hostname,
-            "RHSSO_ISSUER": rhsso.well_known['issuer'],
-            "ADMIN_ISSUER": admin_rhsso.well_known["issuer"],
-            "TERMS_AND_CONDITIONS": terms_and_conditions("false"),
-            "CLUSTER_INFO": cluster_info(rhsso.client_name),
-            "RESOURCE_INFO": resource_info("123", rhsso.client_name)
-        })
+        auth = openshift.new_app(
+            path,
+            {
+                "NAME": blame("ac"),
+                "NAMESPACE": openshift.project,
+                "LABEL": module_label,
+                "HOST": envoy.hostname,
+                "RHSSO_ISSUER": rhsso.well_known["issuer"],
+                "ADMIN_ISSUER": admin_rhsso.well_known["issuer"],
+                "TERMS_AND_CONDITIONS": terms_and_conditions("false"),
+                "CLUSTER_INFO": cluster_info(rhsso.client_name),
+                "RESOURCE_INFO": resource_info("123", rhsso.client_name),
+            },
+        )
 
         def _delete():
             auth.delete()

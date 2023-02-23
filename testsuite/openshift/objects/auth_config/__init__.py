@@ -5,8 +5,7 @@ from typing import Dict, List
 from testsuite.objects import Authorization, Responses, Metadata, Identities, Authorizations
 from testsuite.openshift.client import OpenShiftClient
 from testsuite.openshift.objects import OpenShiftObject, modify
-from .sections import AuthorizationsSection, IdentitySection, MetadataSection, \
-    ResponsesSection
+from .sections import AuthorizationsSection, IdentitySection, MetadataSection, ResponsesSection
 from ..route import Route
 
 
@@ -39,19 +38,15 @@ class AuthConfig(OpenShiftObject, Authorization):
         return ResponsesSection(self, "response")
 
     @classmethod
-    def create_instance(cls, openshift: OpenShiftClient, name, route: Route,
-                        labels: Dict[str, str] = None, hostnames: List[str] = None):
+    def create_instance(
+        cls, openshift: OpenShiftClient, name, route: Route, labels: Dict[str, str] = None, hostnames: List[str] = None
+    ):
         """Creates base instance"""
         model: Dict = {
             "apiVersion": "authorino.kuadrant.io/v1beta1",
             "kind": "AuthConfig",
-            "metadata": {
-                "name": name,
-                "namespace": openshift.project
-            },
-            "spec": {
-                "hosts": hostnames or route.hostnames
-            }
+            "metadata": {"name": name, "namespace": openshift.project},
+            "spec": {"hosts": hostnames or route.hostnames},
         }
 
         if labels is not None:
@@ -78,4 +73,5 @@ class AuthConfig(OpenShiftObject, Authorization):
     def set_deny_with(self, code, value):
         """Set denyWith"""
         self.auth_section["denyWith"] = {
-            "unauthenticated": {"code": code, "headers": [{"name": "Location", "valueFrom": {"authJSON": value}}]}}
+            "unauthenticated": {"code": code, "headers": [{"name": "Location", "valueFrom": {"authJSON": value}}]}
+        }

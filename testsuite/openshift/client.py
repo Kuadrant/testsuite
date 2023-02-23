@@ -88,8 +88,7 @@ class OpenShiftClient:
         """Return dict-like interface for Secrets"""
         return Secrets(self)
 
-    def do_action(self, verb: str, *args,
-                  auto_raise: bool = True, parse_output: bool = False):
+    def do_action(self, verb: str, *args, auto_raise: bool = True, parse_output: bool = False):
         """Run an oc command."""
         with self.context:
             result = oc.invoke(verb, args, auto_raise=auto_raise)
@@ -136,16 +135,13 @@ class OpenShiftClient:
     def create_tls_secret(self, name: str, certificate: Certificate, labels: Optional[Dict[str, str]] = None):
         """Creates a TLS secret"""
         model: Dict = {
-            'kind': 'Secret',
-            'apiVersion': 'v1',
-            'metadata': {
-                'name': name,
+            "kind": "Secret",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": name,
             },
-            'stringData': {
-                "tls.crt": certificate.chain,
-                "tls.key": certificate.key
-            },
-            "type": "kubernetes.io/tls"
+            "stringData": {"tls.crt": certificate.chain, "tls.key": certificate.key},
+            "type": "kubernetes.io/tls",
         }
         if labels is not None:
             model["metadata"]["labels"] = labels

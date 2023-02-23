@@ -10,12 +10,17 @@ def test_mtls_success(envoy_authority, valid_cert, envoy):
         assert response.status_code == 200
 
 
-@pytest.mark.parametrize("cert_authority, certificate, err, err_match", [
-    pytest.param("envoy_authority", "self_signed_cert", ReadError, "unknown ca", id="Self-Signed Certificate"),
-    pytest.param("envoy_authority", "invalid_cert", ReadError, "unknown ca", id="Invalid certificate"),
-    pytest.param("envoy_authority", None, ReadError, "certificate required", id="Without certificate"),
-    pytest.param("invalid_authority", "valid_cert", ConnectError, "certificate verify failed", id="Unknown authority"),
-])
+@pytest.mark.parametrize(
+    "cert_authority, certificate, err, err_match",
+    [
+        pytest.param("envoy_authority", "self_signed_cert", ReadError, "unknown ca", id="Self-Signed Certificate"),
+        pytest.param("envoy_authority", "invalid_cert", ReadError, "unknown ca", id="Invalid certificate"),
+        pytest.param("envoy_authority", None, ReadError, "certificate required", id="Without certificate"),
+        pytest.param(
+            "invalid_authority", "valid_cert", ConnectError, "certificate verify failed", id="Unknown authority"
+        ),
+    ],
+)
 def test_mtls_fail(request, cert_authority, certificate, err, err_match: str, envoy):
     """Test failed mtls verification"""
     ca = request.getfixturevalue(cert_authority)

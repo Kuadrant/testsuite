@@ -30,12 +30,14 @@ def authorino(authorino, openshift, blame, request, testconfig, module_label, au
     labels = authorino_parameters.setdefault("label_selectors", [])
     labels.append(f"testRun={module_label}")
 
-    authorino_parameters.setdefault('name', blame("authorino"))
+    authorino_parameters.setdefault("name", blame("authorino"))
 
-    authorino = AuthorinoCR.create_instance(openshift,
-                                            image=weakget(testconfig)["authorino"]["image"] % None,
-                                            log_level=weakget(testconfig)["authorino"]["log_level"] % None,
-                                            **authorino_parameters)
+    authorino = AuthorinoCR.create_instance(
+        openshift,
+        image=weakget(testconfig)["authorino"]["image"] % None,
+        log_level=weakget(testconfig)["authorino"]["log_level"] % None,
+        **authorino_parameters,
+    )
     request.addfinalizer(lambda: authorino.delete(ignore_not_found=True))
     authorino.commit()
     authorino.wait_for_ready()
@@ -44,12 +46,14 @@ def authorino(authorino, openshift, blame, request, testconfig, module_label, au
 
 # pylint: disable=unused-argument
 @pytest.fixture(scope="module")
-def authorization(authorization, oidc_provider, authorino, envoy,
-                  authorization_name, openshift, module_label) -> Authorization:
+def authorization(
+    authorization, oidc_provider, authorino, envoy, authorization_name, openshift, module_label
+) -> Authorization:
     """In case of Authorino, AuthConfig used for authorization"""
     if authorization is None:
-        authorization = AuthConfig.create_instance(openshift, authorization_name,
-                                                   envoy.route, labels={"testRun": module_label})
+        authorization = AuthConfig.create_instance(
+            openshift, authorization_name, envoy.route, labels={"testRun": module_label}
+        )
     authorization.identity.oidc("rhsso", oidc_provider.well_known["issuer"])
     return authorization
 
@@ -71,10 +75,12 @@ def client(authorization, envoy):
 @pytest.fixture(scope="module")
 def create_api_key(blame, request, openshift):
     """Creates API key Secret"""
+
     def _create_secret(name, label_selector, api_key, ocp: OpenShiftClient = openshift):
         secret_name = blame(name)
         secret = APIKey.create_instance(ocp, secret_name, label_selector, api_key)
         request.addfinalizer(lambda: secret.delete(ignore_not_found=True))
         secret.commit()
         return secret
+
     return _create_secret

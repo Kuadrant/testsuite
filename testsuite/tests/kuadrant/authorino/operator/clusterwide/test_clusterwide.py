@@ -2,10 +2,13 @@
 import pytest
 
 
-@pytest.mark.parametrize("client_fixture", [
-    pytest.param("client", id="First namespace"),
-    pytest.param("client2", id="Second namespace"),
-])
+@pytest.mark.parametrize(
+    "client_fixture",
+    [
+        pytest.param("client", id="First namespace"),
+        pytest.param("client2", id="Second namespace"),
+    ],
+)
 def test_auth(request, client_fixture, auth):
     """Tests that both AuthConfigs were reconciled in both namespaces"""
     client = request.getfixturevalue(client_fixture)

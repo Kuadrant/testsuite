@@ -4,7 +4,7 @@ Test for authorino redirect
 import pytest
 
 STATUS_CODE = 302
-REDIRECT_URL = 'http://anything.inavlid?redirect_to='
+REDIRECT_URL = "http://anything.inavlid?redirect_to="
 
 
 @pytest.fixture(scope="module")

@@ -24,8 +24,13 @@ def authorization(request, authorino, blame, openshift, module_label):
     """In case of Authorino, AuthConfig used for authorization"""
 
     def _authorization(hostname=None, sharding_label=None):
-        auth = AuthConfig.create_instance(openshift, blame("ac"), None, hostnames=[hostname],
-                                          labels={"testRun": module_label, "sharding": sharding_label})
+        auth = AuthConfig.create_instance(
+            openshift,
+            blame("ac"),
+            None,
+            hostnames=[hostname],
+            labels={"testRun": module_label, "sharding": sharding_label},
+        )
         auth.responses.add({"name": "header", "json": {"properties": [{"name": "anything", "value": sharding_label}]}})
         request.addfinalizer(auth.delete)
         auth.commit()

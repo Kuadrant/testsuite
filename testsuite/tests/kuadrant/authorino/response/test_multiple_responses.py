@@ -7,19 +7,10 @@ import pytest
 @pytest.fixture(scope="module")
 def responses():
     """Returns response to be added to the AuthConfig"""
-    return [{"name": "Header",
-            "json": {
-                "properties": [
-                    {"name": "anything", "value": "one"}
-                ]
-            }},
-            {"name": "X-Test",
-             "json": {
-                 "properties": [
-                     {"name": "anything", "value": "two"}
-                 ]
-             }},
-            ]
+    return [
+        {"name": "Header", "json": {"properties": [{"name": "anything", "value": "one"}]}},
+        {"name": "X-Test", "json": {"properties": [{"name": "anything", "value": "two"}]}},
+    ]
 
 
 def test_multiple_responses(auth, client):

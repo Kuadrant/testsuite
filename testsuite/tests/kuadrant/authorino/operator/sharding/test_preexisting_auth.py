@@ -12,10 +12,12 @@ def authorino(openshift, blame, testconfig, module_label, request):
 
     def _authorino(sharding_label):
         authorino_parameters = {"label_selectors": [f"sharding={sharding_label}", f"testRun={module_label}"]}
-        authorino = AuthorinoCR.create_instance(openshift,
-                                                blame("authorino"),
-                                                image=weakget(testconfig)["authorino"]["image"] % None,
-                                                **authorino_parameters)
+        authorino = AuthorinoCR.create_instance(
+            openshift,
+            blame("authorino"),
+            image=weakget(testconfig)["authorino"]["image"] % None,
+            **authorino_parameters,
+        )
         request.addfinalizer(lambda: authorino.delete(ignore_not_found=True))
         authorino.commit()
         authorino.wait_for_ready()

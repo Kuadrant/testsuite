@@ -8,9 +8,17 @@ import pytest
 @pytest.fixture(scope="module")
 def authorization(authorization):
     """Setup AuthConfig for test"""
-    authorization.responses.add({"name": "auth-json", "json": {
-        "properties": [{"name": "auth", "valueFrom": {"authJSON": "auth.identity"}},
-                       {"name": "context", "valueFrom": {"authJSON": "context.request.http.headers.authorization"}}]}})
+    authorization.responses.add(
+        {
+            "name": "auth-json",
+            "json": {
+                "properties": [
+                    {"name": "auth", "valueFrom": {"authJSON": "auth.identity"}},
+                    {"name": "context", "valueFrom": {"authJSON": "context.request.http.headers.authorization"}},
+                ]
+            },
+        }
+    )
     return authorization
 
 
@@ -38,4 +46,4 @@ def tests_rhsso_context(client, auth, rhsso, realm_role):
     assert float(identity["iat"]) <= now
     assert auth_json["context"] == f"Bearer {auth.token.access_token}"
     assert realm_role["name"] in identity["realm_access"]["roles"]
-    assert identity['email'] == rhsso.user.properties["email"]
+    assert identity["email"] == rhsso.user.properties["email"]

@@ -16,6 +16,7 @@ class Route(ABC):
 
 class OpenshiftRoute(OpenShiftObject, Route):
     """Openshift Route object"""
+
     @cached_property
     def hostnames(self):
         return [self.model.spec.host]

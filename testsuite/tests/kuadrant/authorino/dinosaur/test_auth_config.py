@@ -4,9 +4,13 @@ Test for complex AuthConfig
 
 import pytest
 
-ERROR_MESSAGE = {'kind': 'Error', 'id': '403', 'href': '/api/dinosaurs_mgmt/v1/errors/403',
-                 'code': 'DINOSAURS-MGMT-403',
-                 'reason': 'Forbidden'}
+ERROR_MESSAGE = {
+    "kind": "Error",
+    "id": "403",
+    "href": "/api/dinosaurs_mgmt/v1/errors/403",
+    "code": "DINOSAURS-MGMT-403",
+    "reason": "Forbidden",
+}
 
 
 def test_deny_email(client, user_with_invalid_email):
@@ -41,8 +45,7 @@ def test_deny_invalid_org_id(client, user_with_invalid_org_id):
     assert response.json() == ERROR_MESSAGE
 
 
-@pytest.mark.parametrize("user", ["user_with_full_role", "user_with_read_role",
-                                  "user_with_write_role"])
+@pytest.mark.parametrize("user", ["user_with_full_role", "user_with_read_role", "user_with_write_role"])
 def test_admin_sso_get(client, user_with_valid_org_id, user, request):
     """
     Test:

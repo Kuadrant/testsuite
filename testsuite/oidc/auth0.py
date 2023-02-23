@@ -31,12 +31,15 @@ class Auth0Provider(OIDCProvider):
         return self.get_token()
 
     def get_token(self, username=None, password=None) -> Token:
-        response = httpx.post(self.token_endpoint, json={
-            "client_id": self.client_id,
-            "client_secret": self.client_secret,
-            "grant_type": "client_credentials",
-            "audience": self.domain + "/api/v2/"
-        })
+        response = httpx.post(
+            self.token_endpoint,
+            json={
+                "client_id": self.client_id,
+                "client_secret": self.client_secret,
+                "grant_type": "client_credentials",
+                "audience": self.domain + "/api/v2/",
+            },
+        )
         data = response.json()
         assert response.status_code == 200, f"Unable to acquire token from Auth0, reason: {data}"
         return Token(data["access_token"], self.refresh_token, "None")
