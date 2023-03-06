@@ -23,7 +23,7 @@ python-keycloak = "*"
 backoff = "*"
 httpx = {version = "*", extras = ["http2"]}
 openshift-client = ">=1.0.14"
-hyperfoil-client="*"
+apyproxy = {editable = true, git = "git+https://github.com/mangan/apyproxy"}
 weakget = "*"
 flaky = "*"
 

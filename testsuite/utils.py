@@ -1,12 +1,18 @@
 """Utility functions for testsuite"""
+import csv
 import enum
 import os
 import secrets
 from collections.abc import Collection
+from importlib import resources
+from io import StringIO
 from typing import Dict, Union
+from urllib.parse import urlparse, ParseResult
 
 from testsuite.certificates import Certificate, CFSSLClient, CertInfo
 from testsuite.config import settings
+
+MESSAGE_1KB = resources.files("testsuite.resources.performance.files").joinpath("message_1kb.txt")
 
 
 class ContentType(enum.Enum):
@@ -80,3 +86,22 @@ def cert_builder(
 def rego_allow_header(key, value):
     """Rego query that allows all requests that contain specific header with`key` and `value`"""
     return f'allow {{ input.context.request.http.headers.{key} == "{value}" }}'
+
+
+def add_port(url_str: str, return_netloc=True) -> Union[ParseResult, str]:
+    """Adds port number to url if it is not set"""
+    url = urlparse(url_str)
+    if not url.hostname:
+        raise ValueError("Missing hostname part of url")
+    if not url.port:
+        url_port = 80 if url.scheme == "http" else 443
+        url = url._replace(netloc=url.hostname + f":{url_port}")
+    return url.netloc if return_netloc else url
+
+
+def create_csv_file(rows: list) -> StringIO:
+    """Creates in-memory CSV file with specified rows"""
+    file = StringIO()
+    csv.writer(file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL).writerows(rows)
+    file.seek(0)
+    return file
