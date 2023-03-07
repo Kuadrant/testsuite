@@ -10,7 +10,7 @@ objects:
     labels:
       app: ${LABEL}
   spec:
-    replicas: 1
+    replicas: ${{REPLICAS}}
     selector:
       matchLabels:
         app: ${LABEL}
@@ -47,3 +47,7 @@ parameters:
 - name: LABEL
   description: "App label for all resources"
   required: true
+- name: REPLICAS
+  description: "Number of httpbin replicas"
+  required: true
+  value: "1"

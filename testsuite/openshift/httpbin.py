@@ -10,11 +10,12 @@ from testsuite.openshift.objects.gateway_api import Referencable
 class Httpbin(LifecycleObject, Referencable):
     """Httpbin deployed in OpenShift through template"""
 
-    def __init__(self, openshift: OpenShiftClient, name, label) -> None:
+    def __init__(self, openshift: OpenShiftClient, name, label, replicas=1) -> None:
         super().__init__()
         self.openshift = openshift
         self.name = name
         self.label = label
+        self.replicas = replicas
 
         self.httpbin_objects = None
 
@@ -29,7 +30,9 @@ class Httpbin(LifecycleObject, Referencable):
 
     def commit(self):
         with resources.path("testsuite.resources", "httpbin.yaml") as path:
-            self.httpbin_objects = self.openshift.new_app(path, {"NAME": self.name, "LABEL": self.label})
+            self.httpbin_objects = self.openshift.new_app(
+                path, {"NAME": self.name, "LABEL": self.label, "REPLICAS": self.replicas}
+            )
 
         with self.openshift.context:
             assert self.openshift.is_ready(self.httpbin_objects.narrow("deployment")), "Httpbin wasn't ready in time"
