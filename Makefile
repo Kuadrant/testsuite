@@ -31,6 +31,9 @@ pylint mypy: pipenv-dev
 black: pipenv-dev
 	pipenv run black --line-length 120 --check testsuite --diff
 
+reformat:
+	pipenv run black --line-length 120 testsuite
+
 all-is-package:
 	@echo
 	@echo "Searching for dirs missing __init__.py"
