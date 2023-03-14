@@ -20,3 +20,6 @@ default:
     gateway:
        project: "istio-system"
        name: "istio-ingressgateway"
+  hyperfoil:
+    generate_reports: True
+    reports_dir: "reports"

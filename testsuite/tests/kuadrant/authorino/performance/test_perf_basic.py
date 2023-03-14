@@ -3,85 +3,77 @@
     Fill necessary data to benchmark template.
     Run the test and assert results.
 """
-from urllib.parse import urlparse
 from importlib import resources
 
-import backoff
 import pytest
+import yaml
 
-from testsuite.perf_utils import HyperfoilUtils, prepare_url
+from testsuite.utils import add_port, create_csv_file, MESSAGE_1KB
 
 # Maximal runtime of test (need to cover all performance stages)
 MAX_RUN_TIME = 10 * 60
-# Number of Hyperfoil agents to be spawned
-AGENTS = 2
 
 pytestmark = [pytest.mark.performance]
 
 
 @pytest.fixture(scope="module")
-def number_of_agents():
-    """Number of spawned HyperFoil agents"""
-    return AGENTS
+def name():
+    """Name of the benchmark"""
+    return "test_perf_basic"
 
 
 @pytest.fixture(scope="module")
 def template():
-    """Path to template"""
-    return resources.files("testsuite.tests.kuadrant.authorino.performance.templates").joinpath(
+    """Template path"""
+    path = resources.files("testsuite.tests.kuadrant.authorino.performance.templates").joinpath(
         "template_perf_basic_query_rhsso.hf.yaml"
     )
+    with path.open("r") as stream:
+        return yaml.safe_load(stream)
 
 
 @pytest.fixture(scope="module")
-def hyperfoil_utils(hyperfoil_client, template, request):
-    """Init of hyperfoil utils"""
-    utils = HyperfoilUtils(hyperfoil_client, template)
-    request.addfinalizer(utils.delete)
-    utils.commit()
-    return utils
+def http(rhsso, client):
+    """Configures host for the gateway and RHSSO"""
+    return {
+        "http": [
+            {"host": add_port(rhsso.server_url), "sharedConnections": 100},
+            {"host": add_port(str(client.base_url)), "sharedConnections": 20},
+        ]
+    }
 
 
 @pytest.fixture(scope="module")
-def setup_benchmark_rhsso(hyperfoil_utils, client, rhsso, number_of_agents):
-    """Setup of benchmark. It will add necessary host connections, csv data and files."""
-    # currently number of shared connections is set as a placeholder and later should be determined by test results
-    url_pool = [{"url": rhsso.server_url, "connections": 100}, {"url": str(client.base_url), "connections": 20}]
-    for url in url_pool:
-        complete_url = prepare_url(urlparse(url["url"]))
-        hyperfoil_utils.add_host(complete_url._replace(path="").geturl(), shared_connections=url["connections"])
-
-    hyperfoil_utils.add_rhsso_auth_token(rhsso, prepare_url(urlparse(str(client.base_url))).netloc, "rhsso_auth.csv")
-    hyperfoil_utils.add_file(HyperfoilUtils.message_1kb)
-    hyperfoil_utils.add_shared_template(number_of_agents)
-    return hyperfoil_utils
-
-
-@backoff.on_predicate(backoff.constant, lambda x: not x.is_finished(), interval=5, max_time=MAX_RUN_TIME)
-def wait_run(run):
-    """Waits for the run to end"""
-    return run.reload()
+def files(rhsso, client):
+    """Adds Message and RHSSO CSV to the files"""
+    token_url_obj = add_port(rhsso.well_known["token_endpoint"], return_netloc=False)
+    client_url = add_port(str(client.base_url))
+    with MESSAGE_1KB.open("r") as file:
+        yield {
+            "message_1kb.txt": file,
+            "rhsso_auth.csv": create_csv_file(
+                [[client_url, token_url_obj.netloc, token_url_obj.path, rhsso.token_params()]]
+            ),
+        }
 
 
-def test_basic_perf_rhsso(client, rhsso_auth, setup_benchmark_rhsso):
+def test_basic_perf_rhsso(generate_report, client, benchmark, rhsso_auth, blame):
     """
     Test checks that authorino is set up correctly.
     Runs the created benchmark.
     Asserts it was successful.
     """
-    get_response = client.get("/get", auth=rhsso_auth)
-    post_response = client.post("/post", auth=rhsso_auth)
-    assert get_response.status_code == 200
-    assert post_response.status_code == 200
+    assert client.get("/get", auth=rhsso_auth).status_code == 200
+    run = benchmark.start(blame("run"))
 
-    benchmark = setup_benchmark_rhsso.create_benchmark()
-    run = benchmark.start()
+    obj = run.wait(MAX_RUN_TIME)
+    assert obj["completed"], "Ran out of time"
 
-    run = wait_run(run)
-
-    stats = run.all_stats()
+    generate_report(run)
+    stats = run.stats()
 
     assert stats
-    assert stats.get("info", {}).get("errors") == []
+    info = stats.get("info", {})
+    assert len(info.get("errors")) == 0, f"Errors occured: {info.get('errors')}"
     assert stats.get("failures") == []
     assert stats.get("stats", []) != []

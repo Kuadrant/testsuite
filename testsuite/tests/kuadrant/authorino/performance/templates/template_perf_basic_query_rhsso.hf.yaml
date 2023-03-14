@@ -1,5 +1,4 @@
-name: test_perf_basic
-# http endpoints will be added via test
+# name, http and agents sections will be added via test
 phases:
   - rampUp:
       increasingRate:
