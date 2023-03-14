@@ -14,13 +14,14 @@ from testsuite.openshift.objects.route import OpenshiftRoute, Route
 class Envoy(Proxy):
     """Envoy deployed from template"""
 
-    def __init__(self, openshift: OpenShiftClient, authorino, name, label, httpbin: Httpbin, image) -> None:
+    def __init__(self, openshift: OpenShiftClient, authorino, name, label, httpbin: Httpbin, image, replicas=1) -> None:
         self.openshift = openshift
         self.authorino = authorino
         self.name = name
         self.label = label
         self.httpbin_hostname = httpbin.url
         self.image = image
+        self.replicas = replicas
 
         self.envoy_objects: Selector = None  # type: ignore
 
@@ -61,6 +62,7 @@ class Envoy(Proxy):
                     "AUTHORINO_URL": self.authorino.authorization_url,
                     "UPSTREAM_URL": self.httpbin_hostname,
                     "ENVOY_IMAGE": self.image,
+                    "REPLICAS": self.replicas,
                 },
             )
         with self.openshift.context:
@@ -88,8 +90,9 @@ class TLSEnvoy(Envoy):
         authorino_ca_secret,
         envoy_ca_secret,
         envoy_cert_secret,
+        replicas=1,
     ) -> None:
-        super().__init__(openshift, authorino, name, label, httpbin_hostname, image)
+        super().__init__(openshift, authorino, name, label, httpbin_hostname, image, replicas)
         self.authorino_ca_secret = authorino_ca_secret
         self.backend_ca_secret = envoy_ca_secret
         self.envoy_cert_secret = envoy_cert_secret
@@ -111,6 +114,7 @@ class TLSEnvoy(Envoy):
                     "ENVOY_CA_SECRET": self.backend_ca_secret,
                     "ENVOY_CERT_SECRET": self.envoy_cert_secret,
                     "ENVOY_IMAGE": self.image,
+                    "REPLICAS": self.replicas,
                 },
             )
 

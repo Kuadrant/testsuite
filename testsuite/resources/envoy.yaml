@@ -101,7 +101,7 @@ objects:
       svc: envoy
     name: ${NAME}
   spec:
-    replicas: 1
+    replicas: ${{REPLICAS}}
     selector:
       matchLabels:
         app: ${LABEL}
@@ -180,3 +180,7 @@ parameters:
   required: true
 - name: ENVOY_IMAGE
   required: false
+- name: REPLICAS
+  description: "Number of envoy replicas"
+  required: true
+  value: "1"
