@@ -65,14 +65,6 @@ def auth(oidc_provider):
 
 
 @pytest.fixture(scope="module")
-def client(authorization, envoy):
-    """Returns httpx client to be used for requests, it also commits AuthConfig"""
-    client = envoy.client()
-    yield client
-    client.close()
-
-
-@pytest.fixture(scope="module")
 def create_api_key(blame, request, openshift):
     """Creates API key Secret"""
 

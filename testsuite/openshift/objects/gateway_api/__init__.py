@@ -87,6 +87,16 @@ class HTTPRoute(OpenShiftObject, Referencable, Route):
         """Adds hostname to the Route"""
         self.model.spec.hostnames = []
 
+    @modify
+    def set_match(self, path_prefix: str = None, headers: dict[str, str] = None):
+        """Limits HTTPRoute to a certain path"""
+        match = {}
+        if path_prefix:
+            match["path"] = {"value": path_prefix, "type": "PathPrefix"}
+        if headers:
+            match["headers"] = headers
+        self.model.spec.rules[0]["matches"] = [match]
+
 
 # pylint: disable=too-many-instance-attributes
 class Gateway(Referencable, Proxy):

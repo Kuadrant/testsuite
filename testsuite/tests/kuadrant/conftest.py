@@ -45,6 +45,14 @@ def authorization(authorino, kuadrant, envoy, authorization_name, openshift, mod
     return None
 
 
+@pytest.fixture(scope="module")
+def client(envoy):
+    """Returns httpx client to be used for requests"""
+    client = envoy.client()
+    yield client
+    client.close()
+
+
 @pytest.fixture(scope="module", autouse=True)
 def commit(request, authorization):
     """Commits all important stuff before tests"""
