@@ -25,7 +25,7 @@ def authorino(authorino, openshift, blame, request, testconfig, module_label, au
     if not testconfig["authorino"]["deploy"]:
         if len(authorino_parameters) > 0:
             return pytest.skip("Can't change parameters of already deployed Authorino")
-        return PreexistingAuthorino(testconfig["authorino"]["url"])
+        return PreexistingAuthorino(testconfig["authorino"]["auth_url"], testconfig["authorino"]["oidc_url"])
 
     labels = authorino_parameters.setdefault("label_selectors", [])
     labels.append(f"testRun={module_label}")
