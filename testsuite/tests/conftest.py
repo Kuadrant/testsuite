@@ -9,6 +9,7 @@ from weakget import weakget
 from testsuite.mockserver import Mockserver
 from testsuite.oidc import OIDCProvider
 from testsuite.config import settings
+from testsuite.certificates import CFSSLClient
 from testsuite.oidc.auth0 import Auth0Provider
 from testsuite.openshift.httpbin import Httpbin
 from testsuite.openshift.envoy import Envoy
@@ -141,6 +142,15 @@ def auth0(testconfig):
         return Auth0Provider(section["url"], section["client_id"], section["client_secret"])
     except KeyError as exc:
         return pytest.skip(f"Auth0 configuration item is missing: {exc}")
+
+
+@pytest.fixture(scope="session")
+def cfssl(testconfig):
+    """CFSSL client library"""
+    client = CFSSLClient(binary=testconfig["cfssl"])
+    if not client.exists:
+        pytest.skip("Skipping CFSSL tests as CFSSL binary path is not properly configured")
+    return client
 
 
 @pytest.fixture(scope="module")
