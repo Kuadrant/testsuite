@@ -3,7 +3,7 @@
 import enum
 import os
 from functools import cached_property
-from typing import Dict, Optional
+from typing import Dict, Optional, Literal
 from urllib.parse import urlparse
 
 import openshift as oc
@@ -132,14 +132,28 @@ class OpenShiftClient:
         success, _, _ = selector.until_all(success_func=lambda obj: "readyReplicas" in obj.model.status)
         return success
 
-    def create_tls_secret(self, name: str, certificate: Certificate, labels: Optional[Dict[str, str]] = None):
-        """Creates a TLS secret"""
+    def create_tls_secret(
+        self,
+        name: str,
+        certificate: Certificate,
+        cert_name: str = "tls.crt",
+        key_name: str = "tls.key",
+        type_: Literal["kubernetes.io/tls", "Opaque"] = "kubernetes.io/tls",
+        labels: Optional[Dict[str, str]] = None,
+    ):
+        """Creates a TLS or signing Opaque secret"""
         model: Dict = {
             "kind": "Secret",
             "apiVersion": "v1",
-            "metadata": {"name": name, "labels": labels},
-            "stringData": {"tls.crt": certificate.chain, "tls.key": certificate.key},
-            "type": "kubernetes.io/tls",
+            "metadata": {
+                "name": name,
+                "labels": labels,
+            },
+            "stringData": {
+                cert_name: certificate.chain,
+                key_name: certificate.key,
+            },
+            "type": type_,
         }
 
         with self.context:
