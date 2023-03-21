@@ -3,13 +3,12 @@ import backoff
 import pytest
 
 
-@pytest.fixture(scope="module", autouse=True)
-def commit(request, authorization, kuadrant):
-    """Commits all important stuff before tests"""
+@pytest.fixture(scope="module")
+def kuadrant(kuadrant):
+    """Skip if not running on Kuadrant"""
     if not kuadrant:
-        pytest.skip("Reconciliation test can only run on Kuadrant for now")
-    request.addfinalizer(authorization.delete)
-    authorization.commit()
+        pytest.skip("Reconciliation test can only be run on Kuadrant")
+    return kuadrant
 
 
 @pytest.fixture(scope="module")
