@@ -31,6 +31,9 @@ pylint mypy: pipenv-dev
 black: pipenv-dev
 	pipenv run black --line-length 120 --check testsuite --diff
 
+reformat:
+	pipenv run black --line-length 120 testsuite
+
 all-is-package:
 	@echo
 	@echo "Searching for dirs missing __init__.py"
@@ -38,7 +41,7 @@ all-is-package:
 
 # pattern to run individual testfile or all testfiles in directory
 testsuite/%: FORCE pipenv
-	$(PYTEST) -v $(flags) $@
+	$(PYTEST) --performance --glbc -v $(flags) $@
 
 test: ## Run test
 test pytest tests: pipenv
