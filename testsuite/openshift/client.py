@@ -137,14 +137,10 @@ class OpenShiftClient:
         model: Dict = {
             "kind": "Secret",
             "apiVersion": "v1",
-            "metadata": {
-                "name": name,
-            },
+            "metadata": {"name": name, "labels": labels},
             "stringData": {"tls.crt": certificate.chain, "tls.key": certificate.key},
             "type": "kubernetes.io/tls",
         }
-        if labels is not None:
-            model["metadata"]["labels"] = labels
 
         with self.context:
             return oc.create(model, ["--save-config=true"])
