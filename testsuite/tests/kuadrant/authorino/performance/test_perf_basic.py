@@ -28,7 +28,7 @@ def template():
     path = resources.files("testsuite.tests.kuadrant.authorino.performance.templates").joinpath(
         "template_perf_basic_query_rhsso.hf.yaml"
     )
-    with path.open("r") as stream:
+    with path.open("r", encoding="UTF-8") as stream:
         return yaml.safe_load(stream)
 
 
@@ -48,7 +48,7 @@ def files(rhsso, client):
     """Adds Message and RHSSO CSV to the files"""
     token_url_obj = add_port(rhsso.well_known["token_endpoint"], return_netloc=False)
     client_url = add_port(str(client.base_url))
-    with MESSAGE_1KB.open("r") as file:
+    with MESSAGE_1KB.open("r", encoding="UTF-8") as file:
         yield {
             "message_1kb.txt": file,
             "rhsso_auth.csv": create_csv_file(
