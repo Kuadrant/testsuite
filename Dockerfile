@@ -15,13 +15,13 @@ RUN curl https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable/opensh
 RUN curl -L https://github.com/cloudflare/cfssl/releases/download/v1.6.3/cfssl_1.6.3_linux_amd64 >/usr/bin/cfssl && \
     chmod +x /usr/bin/cfssl
 
-RUN python3 -m pip --no-cache-dir install pipenv
+RUN python3 -m pip --no-cache-dir install poetry
 
 WORKDIR /opt/workdir/kuadrant-testsuite
 
 COPY . .
 
-RUN mkdir -m 0700 /test-run-results && chown testsuite /test-run-results && \
+RUN mkdir -m 0700 /test-run-results && mkdir -m 0700 /opt/workdir/virtualenvs &&  chown testsuite /test-run-results && \
     chown testsuite -R /opt/workdir/*
 
 USER testsuite
@@ -29,13 +29,11 @@ USER testsuite
 
 ENV KUBECONFIG=/run/kubeconfig \
     SECRETS_FOR_DYNACONF=/run/secrets.yaml \
-    PIPENV_IGNORE_VIRTUALENVS=1 \
-    PIPENV_VENV_IN_PROJECT=1 \
-    WORKON_HOME=/opt/workdir/virtualenvs \
+    POETRY_VIRTUALENVS_PATH=/opt/workdir/virtualenvs/ \
     junit=yes \
     resultsdir=/test-run-results
 
-RUN make mostlyclean pipenv && \
+RUN make poetry-no-dev && \
 	rm -Rf $HOME/.cache/*
 
 ENTRYPOINT [ "make" ]
