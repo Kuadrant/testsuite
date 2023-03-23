@@ -39,17 +39,11 @@ class AuthPolicy(AuthConfig):
         model: Dict = {
             "apiVersion": "kuadrant.io/v1beta1",
             "kind": "AuthPolicy",
-            "metadata": {
-                "name": name,
-                "namespace": openshift.project,
-            },
+            "metadata": {"name": name, "namespace": openshift.project, "labels": labels},
             "spec": {
                 "targetRef": route.reference,
             },
         }
-
-        if labels is not None:
-            model["metadata"]["labels"] = labels
 
         return cls(model, context=openshift.context, route=route)
 

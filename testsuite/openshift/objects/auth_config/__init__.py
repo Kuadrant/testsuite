@@ -45,12 +45,9 @@ class AuthConfig(OpenShiftObject, Authorization):
         model: Dict = {
             "apiVersion": "authorino.kuadrant.io/v1beta1",
             "kind": "AuthConfig",
-            "metadata": {"name": name, "namespace": openshift.project},
+            "metadata": {"name": name, "namespace": openshift.project, "labels": labels},
             "spec": {"hosts": hostnames or route.hostnames},
         }
-
-        if labels is not None:
-            model["metadata"]["labels"] = labels
 
         return cls(model, context=openshift.context)
 

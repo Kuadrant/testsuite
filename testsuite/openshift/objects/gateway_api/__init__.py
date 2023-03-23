@@ -49,16 +49,13 @@ class HTTPRoute(OpenShiftObject, Referencable, Route):
         model = {
             "apiVersion": "gateway.networking.k8s.io/v1alpha2",
             "kind": "HTTPRoute",
-            "metadata": {"name": name, "namespace": openshift.project},
+            "metadata": {"name": name, "namespace": openshift.project, "labels": labels},
             "spec": {
                 "parentRefs": [parent.reference],
                 "hostnames": [hostname],
                 "rules": [{"backendRefs": [backend.reference]}],
             },
         }
-
-        if labels is not None:
-            model["metadata"]["labels"] = labels  # type: ignore
 
         return cls(model, context=openshift.context)
 
