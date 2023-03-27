@@ -3,6 +3,7 @@
 import pytest
 
 from testsuite.openshift.objects.auth_config.auth_policy import AuthPolicy
+from testsuite.openshift.objects.rate_limit import RateLimitPolicy
 
 
 @pytest.fixture(scope="session")
@@ -35,26 +36,45 @@ def authorization_name(blame):
 
 
 @pytest.fixture(scope="module")
-def authorization(authorino, kuadrant, envoy, authorization_name, openshift, module_label):
+def authorization(authorino, kuadrant, oidc_provider, envoy, authorization_name, openshift, module_label):
     """Authorization object (In case of Kuadrant AuthPolicy)"""
     if kuadrant:
         policy = AuthPolicy.create_instance(
             openshift, authorization_name, envoy.route, labels={"testRun": module_label}
         )
+        policy.identity.oidc("rhsso", oidc_provider.well_known["issuer"])
         return policy
     return None
 
 
 @pytest.fixture(scope="module")
-def client(envoy):
-    """Returns httpx client to be used for requests"""
-    client = envoy.client()
-    yield client
-    client.close()
+def rate_limit_name(blame):
+    """Name of the rate limit"""
+    return blame("limit")
+
+
+@pytest.fixture(scope="module")
+def rate_limit(kuadrant, openshift, rate_limit_name, envoy, module_label):
+    """Rate limit"""
+    if kuadrant:
+        return RateLimitPolicy.create_instance(
+            openshift, rate_limit_name, envoy.route, labels={"testRun": module_label}
+        )
+    return None
 
 
 @pytest.fixture(scope="module", autouse=True)
-def commit(request, authorization):
+def commit(request, authorization, rate_limit):
     """Commits all important stuff before tests"""
-    request.addfinalizer(authorization.delete)
-    authorization.commit()
+    for component in [authorization, rate_limit]:
+        if component is not None:
+            request.addfinalizer(component.delete)
+            component.commit()
+
+
+@pytest.fixture(scope="module")
+def client(envoy):
+    """Returns httpx client to be used for requests, it also commits AuthConfig"""
+    client = envoy.client()
+    yield client
+    client.close()

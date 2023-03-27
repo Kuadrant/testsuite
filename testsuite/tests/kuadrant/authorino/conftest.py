@@ -76,3 +76,10 @@ def create_api_key(blame, request, openshift):
         return secret
 
     return _create_secret
+
+
+@pytest.fixture(scope="module", autouse=True)
+def commit(request, authorization):
+    """Commits all important stuff before tests"""
+    request.addfinalizer(authorization.delete)
+    authorization.commit()

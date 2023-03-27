@@ -16,7 +16,6 @@ class Realm:
             realm_name=name,
             user_realm_name="master",
             verify=False,
-            auto_refresh_token=["get", "put", "post", "delete"],
         )
         self.name = name
 
