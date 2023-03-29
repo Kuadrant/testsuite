@@ -3,7 +3,7 @@ from typing import Optional, Dict
 
 import pytest
 
-from testsuite.certificates import CFSSLClient, Certificate, CertInfo
+from testsuite.certificates import Certificate, CertInfo
 from testsuite.openshift.envoy import TLSEnvoy
 from testsuite.utils import cert_builder
 
@@ -67,15 +67,6 @@ def create_secret(blame, request, openshift):
         return secret_name
 
     return _create_secret
-
-
-@pytest.fixture(scope="session")
-def cfssl(testconfig):
-    """CFSSL client library"""
-    client = CFSSLClient(binary=testconfig["cfssl"])
-    if not client.exists:
-        pytest.skip("Skipping CFSSL tests as CFSSL binary path is not properly configured")
-    return client
 
 
 @pytest.fixture(scope="session")

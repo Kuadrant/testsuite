@@ -98,6 +98,10 @@ class RHSSO(OIDCProvider, LifecycleObject):
         data = self.oidc_client.token(username or self.test_username, password or self.test_password)
         return Token(data["access_token"], self.refresh_token, data["refresh_token"])
 
+    def get_public_key(self):
+        """Return formatted public key"""
+        return "-----BEGIN PUBLIC KEY-----\n" + self.oidc_client.public_key() + "\n-----END PUBLIC KEY-----"
+
     def token_params(self) -> str:
         """
         Returns token parameters that can be added to request url

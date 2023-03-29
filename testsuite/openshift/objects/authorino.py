@@ -67,3 +67,8 @@ class AuthorinoCR(OpenShiftObject, Authorino):
     def authorization_url(self):
         """Return service endpoint for authorization"""
         return f"{self.name()}-authorino-authorization.{self.namespace()}.svc.cluster.local"
+
+    @property
+    def oidc_url(self):
+        """Return authorino oidc endpoint"""
+        return f"{self.name()}-authorino-oidc.{self.namespace()}.svc.cluster.local"

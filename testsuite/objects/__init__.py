@@ -97,6 +97,11 @@ class Authorino(LifecycleObject):
     def authorization_url(self):
         """Authorization URL that can be plugged into envoy"""
 
+    @property
+    @abc.abstractmethod
+    def oidc_url(self):
+        """Authorino oidc url"""
+
 
 class Authorization(LifecycleObject):
     """Object containing Authorization rules and configuration for either Authorino or Kuadrant"""
@@ -141,9 +146,10 @@ class Authorization(LifecycleObject):
 class PreexistingAuthorino(Authorino):
     """Authorino which is already deployed prior to the testrun"""
 
-    def __init__(self, authorization_url) -> None:
+    def __init__(self, authorization_url, oidc_url) -> None:
         super().__init__()
         self._authorization_url = authorization_url
+        self._oidc_url = oidc_url
 
     def wait_for_ready(self):
         return True
@@ -151,6 +157,10 @@ class PreexistingAuthorino(Authorino):
     @property
     def authorization_url(self):
         return self._authorization_url
+
+    @property
+    def oidc_url(self):
+        return self._oidc_url
 
     def commit(self):
         return

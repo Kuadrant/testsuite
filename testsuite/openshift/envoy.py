@@ -11,16 +11,20 @@ from testsuite.openshift.objects.proxy import Proxy
 from testsuite.openshift.objects.route import OpenshiftRoute, Route
 
 
+# pylint: disable=too-many-instance-attributes
 class Envoy(Proxy):
     """Envoy deployed from template"""
 
-    def __init__(self, openshift: OpenShiftClient, authorino, name, label, httpbin: Httpbin, image) -> None:
+    def __init__(
+        self, openshift: OpenShiftClient, authorino, name, label, httpbin: Httpbin, image, template=None
+    ) -> None:
         self.openshift = openshift
         self.authorino = authorino
         self.name = name
         self.label = label
         self.httpbin_hostname = httpbin.url
         self.image = image
+        self.template = template or resources.files("testsuite.resources").joinpath("envoy.yaml")
 
         self.envoy_objects: Selector = None  # type: ignore
 
@@ -52,17 +56,16 @@ class Envoy(Proxy):
 
     def commit(self):
         """Deploy all required objects into OpenShift"""
-        with resources.path("testsuite.resources", "envoy.yaml") as path:
-            self.envoy_objects = self.openshift.new_app(
-                path,
-                {
-                    "NAME": self.name,
-                    "LABEL": self.label,
-                    "AUTHORINO_URL": self.authorino.authorization_url,
-                    "UPSTREAM_URL": self.httpbin_hostname,
-                    "ENVOY_IMAGE": self.image,
-                },
-            )
+        self.envoy_objects = self.openshift.new_app(
+            self.template,
+            {
+                "NAME": self.name,
+                "LABEL": self.label,
+                "AUTHORINO_URL": self.authorino.authorization_url,
+                "UPSTREAM_URL": self.httpbin_hostname,
+                "ENVOY_IMAGE": self.image,
+            },
+        )
         with self.openshift.context:
             assert self.openshift.is_ready(self.envoy_objects.narrow("deployment")), "Envoy wasn't ready in time"
 

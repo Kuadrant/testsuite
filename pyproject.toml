@@ -15,6 +15,7 @@ pytest-asyncio = "*"
 pytest-html = "*"
 dynaconf = "*"
 python-keycloak = ">=2.13"
+python-jose = "*"
 backoff = "*"
 httpx = { version = "*", extras = ["http2"] }
 openshift-client = ">=1.0.14"
@@ -27,6 +28,7 @@ flaky = "*"
 mypy = "*"
 pylint = "*"
 types-PyYAML = "*"
+types-python-jose = "*"
 black = {version = "*", extras = ["d"]}
 
 
