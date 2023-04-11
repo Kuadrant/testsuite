@@ -42,7 +42,6 @@ class RHSSO(OIDCProvider, LifecycleObject):
                 password=password,
                 realm_name="master",
                 verify=False,
-                auto_refresh_token=["get", "put", "post", "delete"],
             )
             self.server_url = server_url
         except KeycloakPostError:
@@ -55,7 +54,6 @@ class RHSSO(OIDCProvider, LifecycleObject):
                 password=password,
                 realm_name="master",
                 verify=False,
-                auto_refresh_token=["get", "put", "post", "delete"],
             )
 
     def create_realm(self, name: str, **kwargs) -> Realm:
