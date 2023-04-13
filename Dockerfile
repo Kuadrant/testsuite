@@ -21,7 +21,7 @@ WORKDIR /opt/workdir/kuadrant-testsuite
 
 COPY . .
 
-RUN mkdir -m 0700 /test-run-results && mkdir -m 0700 /opt/workdir/virtualenvs &&  chown testsuite /test-run-results && \
+RUN mkdir -m 0700 /test-run-results && mkdir -m 0700 /opt/workdir/virtualenvs && chown testsuite /test-run-results && \
     chown testsuite -R /opt/workdir/*
 
 USER testsuite
