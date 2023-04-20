@@ -47,12 +47,10 @@ class Benchmark:
         self.client = client
         self.name = name
 
-    def start(self, desc: str = "", validate=True, **params) -> StartedRun:
+    def start(self, desc: str = "", **params) -> StartedRun:
         """Starts the Benchmark and returns a specific Run that was started"""
         run_id = (
-            self.client.benchmark._(self.name)
-            .start.get(params={"templateParam": params, "validate": validate, "desc": desc})
-            .json()["id"]
+            self.client.benchmark._(self.name).start.get(params={"templateParam": params, "desc": desc}).json()["id"]
         )
         return StartedRun(self.client, run_id)
 
