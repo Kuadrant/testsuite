@@ -4,7 +4,7 @@ import json
 import pytest
 
 
-@pytest.fixture(scope="module", params=["123456789", "standardCharacters", "specialcharacters/+*-."])
+@pytest.fixture(scope="module", params=["123456789", "standardCharacters", "specialcharacters+*-."])
 def header_name(request):
     """Name of the headers"""
     return request.param
