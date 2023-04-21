@@ -249,7 +249,8 @@ def backend(request, openshift, blame, label):
 def envoy(request, kuadrant, authorino, openshift, blame, backend, module_label, testconfig) -> Proxy:
     """Deploys Envoy that wire up the Backend behind the reverse-proxy and Authorino instance"""
     if kuadrant:
-        envoy: Proxy = Gateway(openshift, "istio-ingressgateway", "istio-system", module_label, backend)
+        config = testconfig["kuadrant"]["gateway"]
+        envoy: Proxy = Gateway(openshift, config["name"], config["project"], module_label, backend)
     else:
         envoy = Envoy(openshift, authorino, blame("envoy"), module_label, backend, testconfig["envoy"]["image"])
     request.addfinalizer(envoy.delete)
