@@ -46,7 +46,7 @@ class RateLimitPolicy(OpenShiftObject):
         def _policy_is_ready(obj):
             return "conditions" in obj.model.status and obj.model.status.conditions[0].status == "True"
 
-        with oc.timeout(60):
+        with oc.timeout(90):
             success, _, _ = self.self_selector().until_all(success_func=_policy_is_ready, tolerate_failures=5)
             assert success
 
