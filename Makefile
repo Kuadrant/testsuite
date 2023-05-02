@@ -55,11 +55,11 @@ poetry.lock: pyproject.toml
 	poetry lock
 
 .make-poetry-sync: poetry.lock
-	@if ! poetry env list | grep ^; then poetry install --sync --no-root; fi
+	@if [ -z "$(poetry env list)" -o -n "${force}" ]; then poetry install --sync --no-root; fi
 	@ touch .make-poetry-sync .make-poetry-sync-no-dev
 
 .make-poetry-sync-no-dev: poetry.lock
-	@if ! poetry env list | grep ^; then poetry install --sync --no-root --without dev; fi
+	@if [ -z "$(poetry env list)" -o -n "${force}" ]; then poetry install --sync --no-root --without dev; fi
 	@ touch .make-poetry-sync-no-dev
 
 
