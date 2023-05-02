@@ -21,14 +21,14 @@ endif
 
 commit-acceptance: black pylint mypy all-is-package
 
-pylint mypy:
+pylint mypy: poetry
 	poetry run $@ $(flags) testsuite
 
-black:
-	poetry run black --line-length 120 --check testsuite --diff
+black: poetry
+	poetry run black --check testsuite --diff
 
-reformat:
-	pipenv run black --line-length 120 testsuite
+reformat: poetry
+	pipenv run black testsuite
 
 all-is-package:
 	@echo
@@ -36,25 +36,36 @@ all-is-package:
 	@! find testsuite/ -type d \! -name __pycache__ \! -path 'testsuite/resources/*' \! -exec test -e {}/__init__.py \; -print | grep '^..*$$'
 
 # pattern to run individual testfile or all testfiles in directory
-testsuite/%: FORCE
+testsuite/%: FORCE poetry-no-dev
 	$(PYTEST) --performance --glbc -v $(flags) $@
 
 test: ## Run test
-test pytest tests:
+test pytest tests: poetry-no-dev
 	$(PYTEST) -n4 -m 'not flaky' --dist loadfile $(flags) testsuite
 
-# Run performance tests
-performance:
+performance: ## Run performance tests
+performance: poetry-no-dev
 	$(PYTEST) --performance $(flags) testsuite/tests/kuadrant/authorino/performance
 
 glbc: ## Run glbc tests
+glbc: poetry-no-dev
 	$(PYTEST) --glbc $(flags) testsuite/tests/glbc
 
-poetry:
-	poetry install --sync --no-root
+poetry.lock: pyproject.toml
+	poetry lock
 
-poetry-no-dev:
-	poetry install --sync --no-root --without dev
+.make-poetry-sync: poetry.lock
+	@if ! poetry env list | grep ^; then poetry install --sync --no-root; fi
+	@ touch .make-poetry-sync .make-poetry-sync-no-dev
+
+.make-poetry-sync-no-dev: poetry.lock
+	@if ! poetry env list | grep ^; then poetry install --sync --no-root --without dev; fi
+	@ touch .make-poetry-sync-no-dev
+
+
+poetry: .make-poetry-sync
+
+poetry-no-dev: .make-poetry-sync-no-dev
 
 # Check http://marmelab.com/blog/2016/02/29/auto-documented-makefile.html
 help: ## Print this help
