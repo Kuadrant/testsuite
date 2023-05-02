@@ -19,13 +19,7 @@ class RateLimitPolicy(OpenShiftObject):
             "metadata": {"name": name, "namespace": openshift.project, "labels": labels},
             "spec": {
                 "targetRef": route.reference,
-                "rateLimits": [
-                    {
-                        "configurations": [
-                            {"actions": [{"generic_key": {"descriptor_key": "limited", "descriptor_value": "1"}}]}
-                        ]
-                    }
-                ],
+                "rateLimits": [{"limits": []}],
             },
         }
 
@@ -34,9 +28,10 @@ class RateLimitPolicy(OpenShiftObject):
     @modify
     def add_limit(self, max_value, seconds, conditions: list[str] = None):
         """Add another limit"""
-        conditions = conditions or []
         limits = self.model.spec.rateLimits[0].setdefault("limits", [])
-        limit = {"maxValue": max_value, "seconds": seconds, "conditions": conditions, "variables": []}
+        limit = {"maxValue": max_value, "seconds": seconds}
+        if conditions:
+            limit["conditions"] = conditions
         limits.append(limit)
 
     def commit(self):
