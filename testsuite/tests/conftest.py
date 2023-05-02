@@ -4,6 +4,7 @@ import signal
 import pytest
 from dynaconf import ValidationError
 from keycloak import KeycloakAuthenticationError
+from openshift import OpenShiftPythonException
 from weakget import weakget
 
 from testsuite.mockserver import Mockserver
@@ -214,25 +215,25 @@ def module_label(label):
 def kuadrant(testconfig, openshift):
     """Returns Kuadrant instance if exists, or None"""
     settings = weakget(testconfig)
-    try:
-        if not settings["kuadrant"]["enabled"] % True:
-            return None
-
-        # Try if Kuadrant is deployed
-        kuadrant_openshift = openshift.change_project(settings["kuadrant"]["project"] % None)
-        kuadrants = kuadrant_openshift.do_action("get", "kuadrant", "-o", "json", parse_output=True)
-        assert len(kuadrants.model["items"]) > 0
-
-        # Try if the configured Gateway is deployed
-        gateway_openshift = openshift.change_project(settings["kuadrant"]["gateway"]["project"] % None)
-        name = testconfig["kuadrant"]["gateway"]["name"]
-        gateway_openshift.do_action("get", f"Gateway/{name}")
-
-        # TODO: Return actual Kuadrant object
-        return True
-    # pylint: disable=broad-except
-    except Exception:
+    if not settings["kuadrant"]["enabled"] % True:
         return None
+
+    # Try if Kuadrant is deployed
+    kuadrant_openshift = openshift.change_project(settings["kuadrant"]["project"] % None)
+    kuadrants = kuadrant_openshift.do_action("get", "kuadrant", "-o", "json", parse_output=True)
+    if len(kuadrants.model["items"]) == 0:
+        pytest.fail("Running Kuadrant tests, but Kuadrant resource was not found")
+
+    # Try if the configured Gateway is deployed
+    gateway_openshift = openshift.change_project(settings["kuadrant"]["gateway"]["project"] % None)
+    name = testconfig["kuadrant"]["gateway"]["name"]
+    try:
+        gateway_openshift.do_action("get", f"Gateway/{name}")
+    except OpenShiftPythonException:
+        pytest.fail(f"Running Kuadrant tests, but Gateway/{name} was not found")
+
+    # TODO: Return actual Kuadrant object
+    return True
 
 
 @pytest.fixture(scope="session")
@@ -248,7 +249,8 @@ def backend(request, openshift, blame, label):
 def envoy(request, kuadrant, authorino, openshift, blame, backend, module_label, testconfig) -> Proxy:
     """Deploys Envoy that wire up the Backend behind the reverse-proxy and Authorino instance"""
     if kuadrant:
-        envoy: Proxy = Gateway(openshift, "istio-ingressgateway", "istio-system", module_label, backend)
+        config = testconfig["kuadrant"]["gateway"]
+        envoy: Proxy = Gateway(openshift, config["name"], config["project"], module_label, backend)
     else:
         envoy = Envoy(openshift, authorino, blame("envoy"), module_label, backend, testconfig["envoy"]["image"])
     request.addfinalizer(envoy.delete)
