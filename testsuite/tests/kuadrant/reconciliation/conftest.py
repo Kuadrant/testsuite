@@ -4,6 +4,20 @@ import pytest
 
 
 @pytest.fixture(scope="module")
+def authorization(authorization):
+    """Add anonymous identity"""
+    authorization.identity.anonymous("anonymous")
+    return authorization
+
+
+@pytest.fixture(scope="module", autouse=True)
+def commit(request, authorization):
+    """Only commit authorization"""
+    request.addfinalizer(authorization.delete)
+    authorization.commit()
+
+
+@pytest.fixture(scope="module")
 def kuadrant(kuadrant):
     """Skip if not running on Kuadrant"""
     if not kuadrant:
