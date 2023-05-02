@@ -1,8 +1,8 @@
 """Module for Mockserver integration"""
 from typing import Union
-from urllib.parse import urljoin
 
 import httpx
+from apyproxy import ApyProxy
 
 from testsuite.utils import ContentType
 
@@ -10,25 +10,22 @@ from testsuite.utils import ContentType
 class Mockserver:
     """
     Mockserver deployed in Openshift (located in Tools or self-managed)
-    All existing expectations are stored in `self.expectations: dict[expectation_id, expectation_path]`
     """
 
     def __init__(self, url):
-        self.url = url
-        self.expectations = {}
+        self.client = ApyProxy(url, session=httpx.Client(verify=False, timeout=5))
 
     def _expectation(self, expectation_id, response_data):
         """
         Creates an Expectation with given response_data.
-        Expectation is accessible on the `mockserver.url/expectation_id` url.
+        Returns the absolute URL of the expectation
         """
         json_data = {"id": expectation_id, "httpRequest": {"path": f"/{expectation_id}"}}
         json_data.update(response_data)
 
-        response = httpx.put(urljoin(self.url, "/mockserver/expectation"), verify=False, timeout=5, json=json_data)
-        response.raise_for_status()
-        self.expectations[expectation_id] = f"{self.url}/{expectation_id}"
-        return self.expectations[expectation_id]
+        self.client.mockserver.expectation.put(json=json_data)
+        # pylint: disable=protected-access
+        return f"{self.client._url}/{expectation_id}"
 
     def create_expectation(
         self,
@@ -50,21 +47,11 @@ class Mockserver:
 
     def clear_expectation(self, expectation_id):
         """Clears Expectation with specific ID"""
-        httpx.put(
-            urljoin(self.url, "/mockserver/clear"), verify=False, timeout=5, json={"id": expectation_id}
-        ).raise_for_status()
-        del self.expectations[expectation_id]
+        return self.client.mockserver.clear.put(json={"id": expectation_id})
 
-    def verify_expectation(self, path):
-        """Verify a request has been received a specific number of times for specific expectation"""
-        return httpx.put(
-            urljoin(self.url, "/mockserver/retrieve"),
-            params="type=REQUESTS&format=JSON",
-            verify=False,
-            timeout=5,
+    def retrieve_requests(self, path):
+        """Verify a request has been received a specific number of times"""
+        return self.client.mockserver.retrieve.put(
+            params={"type": "REQUESTS", "format": "JSON"},
             json={"path": path},
-        )
-
-    def get_expectation_endpoint(self, expectation_id):
-        """Returns endpoint for expectation"""
-        return f"{self.url}/{expectation_id}"
+        ).json()
