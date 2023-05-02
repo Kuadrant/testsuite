@@ -1,6 +1,7 @@
 """Utility functions for testsuite"""
 import csv
 import enum
+import json
 import os
 import secrets
 from collections.abc import Collection
@@ -136,3 +137,17 @@ def fire_requests(client, max_requests, period, grace_requests=0, iterations=1, 
         assert httpx.get(url).status_code == 429, f"Iteration {iteration + 1} failed to start limiting"
         sleep(period)
         assert httpx.get(url).status_code == 200, f"Iteration {iteration + 1} failed to reset limits"
+
+
+def extract_from_response(response, *path, section="auth"):
+    """
+    Gets required value from the response
+    :param response: Client response
+    :param path: Key sequence associated with required value
+    :param section: Default section for extraction
+    :return: Extracted value
+    """
+    result = json.loads(response.json()["headers"]["Auth-Json"])[section]
+    for item in path:
+        result = result[item]
+    return result

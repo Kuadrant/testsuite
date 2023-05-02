@@ -49,9 +49,9 @@ class Mockserver:
         """Clears Expectation with specific ID"""
         return self.client.mockserver.clear.put(json={"id": expectation_id})
 
-    def retrieve_requests(self, path):
+    def retrieve_requests(self, expectation_id):
         """Verify a request has been received a specific number of times"""
         return self.client.mockserver.retrieve.put(
             params={"type": "REQUESTS", "format": "JSON"},
-            json={"path": path},
+            json={"path": "/" + expectation_id},
         ).json()
