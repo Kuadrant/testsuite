@@ -119,8 +119,8 @@ class IdentitySection(Section, Identities):
         self.add_item(name, {"anonymous": {}}, **common_features)
 
     @modify
-    def kubernetes(self, name, auth_json, **common_features):
-        """Adds kubernetes identity"""
+    def plain(self, name, auth_json, **common_features):
+        """Adds plain identity"""
         self.add_item(name, {"plain": {"authJSON": auth_json}, **common_features})
 
     @modify
