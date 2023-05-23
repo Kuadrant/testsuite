@@ -2,10 +2,7 @@
 import abc
 from dataclasses import dataclass, is_dataclass, fields
 from copy import deepcopy
-from functools import cached_property
 from typing import Literal, Union
-
-from testsuite.objects.sections import Metadata, Identities, Authorizations, Responses
 
 JSONValues = Union[None, str, int, bool, list["JSONValues"], dict[str, "JSONValues"]]
 
@@ -145,50 +142,6 @@ class Authorino(LifecycleObject):
     @abc.abstractmethod
     def oidc_url(self):
         """Authorino oidc url"""
-
-
-class Authorization(LifecycleObject):
-    """Object containing Authorization rules and configuration for either Authorino or Kuadrant"""
-
-    @cached_property
-    @abc.abstractmethod
-    def authorization(self) -> Authorizations:
-        """Gives access to authorization settings"""
-
-    @cached_property
-    @abc.abstractmethod
-    def identity(self) -> Identities:
-        """Gives access to identity settings"""
-
-    @cached_property
-    @abc.abstractmethod
-    def metadata(self) -> Metadata:
-        """Gives access to metadata settings"""
-
-    @cached_property
-    @abc.abstractmethod
-    def responses(self) -> Responses:
-        """Gives access to response settings"""
-
-    @abc.abstractmethod
-    def add_host(self, hostname):
-        """Adds host"""
-
-    @abc.abstractmethod
-    def remove_host(self, hostname):
-        """Remove host"""
-
-    @abc.abstractmethod
-    def remove_all_hosts(self):
-        """Remove all hosts"""
-
-    @abc.abstractmethod
-    def set_deny_with(self, code, value):
-        """Set denyWith"""
-
-    @abc.abstractmethod
-    def add_rule(self, when: list[Rule]):
-        """Add rule for the skip of entire AuthConfig"""
 
 
 class PreexistingAuthorino(Authorino):
