@@ -24,9 +24,7 @@ def expectation_path(mockserver, module_label):
 @pytest.fixture(scope="module")
 def authorization(authorization):
     """Adds `aut.metadata` to the AuthJson"""
-    authorization.responses.add(
-        {"name": "auth-json", "json": {"properties": [{"name": "auth", "valueFrom": {"authJSON": "auth.metadata"}}]}}
-    )
+    authorization.responses.add_simple("auth.metadata")
     return authorization
 
 

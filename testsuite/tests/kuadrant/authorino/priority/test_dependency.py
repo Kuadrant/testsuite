@@ -1,7 +1,7 @@
 """Test for evaluators dependencies resolving according to their priorities"""
 import pytest
 
-from testsuite.utils import extract_from_response
+from testsuite.utils import extract_response
 
 
 @pytest.fixture(scope="module")
@@ -29,7 +29,9 @@ def test_dependency(client, auth):
     """Test metadata dependency resolving according to it's priority"""
     response = client.get("/get", auth=auth)
     assert response.status_code == 200
-    metadata = extract_from_response(response)["metadata"]
+    metadata = extract_response(response)["metadata"] % {}
+
+    assert len(metadata) > 0
 
     first_uuid = metadata["first"]["uuid"]
     second_uuid = metadata["second"]["uuid"]

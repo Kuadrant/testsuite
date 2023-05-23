@@ -12,6 +12,7 @@ from typing import Dict, Union
 from urllib.parse import urlparse, ParseResult
 
 import httpx
+from weakget import weakget
 
 from testsuite.certificates import Certificate, CFSSLClient, CertInfo
 from testsuite.config import settings
@@ -139,15 +140,12 @@ def fire_requests(client, max_requests, period, grace_requests=0, iterations=1, 
         assert httpx.get(url).status_code == 200, f"Iteration {iteration + 1} failed to reset limits"
 
 
-def extract_from_response(response, *path, section="auth"):
+def extract_response(response, header="Simple", key="data"):
     """
-    Gets required value from the response
-    :param response: Client response
-    :param path: Key sequence associated with required value
-    :param section: Default section for extraction
+    Extracts response added by Authorino from header
+    :param key: Response key section
+    :param header: Name of the header
+    :param response: http response
     :return: Extracted value
     """
-    result = json.loads(response.json()["headers"]["Auth-Json"])[section]
-    for item in path:
-        result = result[item]
-    return result
+    return weakget(json.loads(response.json()["headers"][header]))[key]

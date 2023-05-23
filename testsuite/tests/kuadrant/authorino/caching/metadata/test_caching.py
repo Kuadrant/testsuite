@@ -4,7 +4,7 @@ from time import sleep
 import pytest
 
 from testsuite.objects import Cache, Value
-from testsuite.utils import extract_from_response
+from testsuite.utils import extract_response
 
 
 @pytest.fixture(scope="module")
@@ -28,10 +28,12 @@ def test_cached(client, auth, module_label, mockserver):
         - only single external value evaluation occurs. The second response contains cached (in-memory) value
     """
     response = client.get("/get", auth=auth)
-    data = extract_from_response(response, module_label, "uuid")
+    data = extract_response(response)[module_label]["uuid"] % None
     response = client.get("/get", auth=auth)
-    cached_data = extract_from_response(response, module_label, "uuid")
+    cached_data = extract_response(response)[module_label]["uuid"] % None
 
+    assert cached_data is not None
+    assert data is not None
     assert data == cached_data
     assert len(mockserver.retrieve_requests(module_label)) == 1
 
@@ -39,10 +41,12 @@ def test_cached(client, auth, module_label, mockserver):
 def test_cached_ttl(client, auth, module_label, cache_ttl, mockserver):
     """Tests that cached value expires after ttl"""
     response = client.get("/get", auth=auth)
-    data = extract_from_response(response, module_label, "uuid")
+    data = extract_response(response)[module_label]["uuid"] % None
     sleep(cache_ttl)
     response = client.get("/get", auth=auth)
-    cached_data = extract_from_response(response, module_label, "uuid")
+    cached_data = extract_response(response)[module_label]["uuid"] % None
 
+    assert cached_data is not None
+    assert data is not None
     assert data != cached_data
     assert len(mockserver.retrieve_requests(module_label)) == 2

@@ -4,7 +4,7 @@ Anonymous identity should trigger after the oidc identity evaluation
 """
 import pytest
 
-from testsuite.utils import extract_from_response
+from testsuite.utils import extract_response
 
 
 @pytest.fixture(scope="module")
@@ -21,8 +21,10 @@ def test_priority_anonymous(client, auth, oidc_provider):
     """
     response = client.get("/get", auth=auth)
     assert response.status_code == 200
-    assert extract_from_response(response)["identity"]["iss"] == oidc_provider.well_known["issuer"]
+    iss = extract_response(response)["identity"]["iss"] % None
+    assert iss == oidc_provider.well_known["issuer"]
 
     response = client.get("/get")
     assert response.status_code == 200
-    assert extract_from_response(response)["identity"] == {"anonymous": True}
+    identity = extract_response(response)["identity"] % None
+    assert identity == {"anonymous": True}
