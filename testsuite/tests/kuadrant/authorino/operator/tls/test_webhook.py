@@ -74,7 +74,7 @@ def authorization(authorization, openshift, module_label, authorino_domain) -> A
 
     # get user info from admission webhook
     authorization.identity.remove_all()
-    authorization.identity.kubernetes("k8s-userinfo", "context.request.http.body.@fromstr|request.userInfo")
+    authorization.identity.plain("k8s-userinfo", "context.request.http.body.@fromstr|request.userInfo")
 
     # add OPA policy to process admission webhook request
     authorization.authorization.opa_policy("features", OPA_POLICY)

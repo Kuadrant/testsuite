@@ -51,8 +51,8 @@ class Identities(abc.ABC):
         """Adds anonymous identity"""
 
     @abc.abstractmethod
-    def kubernetes(self, name, auth_json, **common_features):
-        """Adds kubernetes identity"""
+    def plain(self, name, auth_json, **common_features):
+        """Adds plain identity"""
 
     @abc.abstractmethod
     def remove_all(self):
