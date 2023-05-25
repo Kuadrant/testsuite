@@ -142,6 +142,10 @@ class Authorization(LifecycleObject):
     def set_deny_with(self, code, value):
         """Set denyWith"""
 
+    @abc.abstractmethod
+    def add_rule(self, when: list[Rule]):
+        """Add rule for the skip of entire AuthConfig"""
+
 
 class PreexistingAuthorino(Authorino):
     """Authorino which is already deployed prior to the testrun"""
