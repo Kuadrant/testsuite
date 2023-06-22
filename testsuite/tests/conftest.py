@@ -1,5 +1,6 @@
 """Root conftest"""
 import signal
+from urllib.parse import urlparse
 
 import pytest
 from dynaconf import ValidationError
@@ -35,6 +36,25 @@ def pytest_runtest_setup(item):
         pytest.skip("Excluding performance tests")
     if "glbc" in marks and not item.config.getoption("--glbc"):
         pytest.skip("Excluding glbc tests")
+
+
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_makereport(item, call):  # pylint: disable=unused-argument
+    """Add jira link to html report"""
+    pytest_html = item.config.pluginmanager.getplugin("html")
+    outcome = yield
+    report = outcome.get_result()
+    extra = getattr(report, "extra", [])
+    if report.when == "setup":
+        for marker in item.iter_markers(name="issue"):
+            issue = marker.args[0]
+            url = urlparse(issue)
+            if "github" in url.hostname:
+                label = url.path.replace("/issues/", "#")[1:]
+            else:
+                label = issue
+            extra.append(pytest_html.extras.url(issue, name=label))
+        report.extra = extra
 
 
 @pytest.fixture(scope="session", autouse=True)
