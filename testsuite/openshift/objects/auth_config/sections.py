@@ -65,6 +65,15 @@ class IdentitySection(Section, Identities):
         self.add_item(name, {"mtls": {"selector": {"matchLabels": {selector_key: selector_value}}}}, **common_features)
 
     @modify
+    def kubernetes(self, name: str, *audiences, **common_features):
+        """Adds Kubernetes identity
+        Args:
+            :param name: name of the identity
+            :param audiences: token audiences
+        """
+        self.add_item(name, {"kubernetes": {"audiences": [*audiences]}}, **common_features)
+
+    @modify
     def oidc(self, name, endpoint, credentials="authorization_header", selector="Bearer", **common_features):
         """Adds OIDC identity"""
         self.add_item(

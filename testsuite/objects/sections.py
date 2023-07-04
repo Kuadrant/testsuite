@@ -39,6 +39,10 @@ class Identities(abc.ABC):
         """Adds OIDC identity provider"""
 
     @abc.abstractmethod
+    def kubernetes(self, name: str, *audiences, **common_features):
+        """Adds Kubernetes identity"""
+
+    @abc.abstractmethod
     def api_key(self, name, all_namespaces, match_label, match_expression, credentials, selector, **common_features):
         """Adds API Key identity"""
 
