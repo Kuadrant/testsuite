@@ -2,7 +2,7 @@
 import pytest
 
 from testsuite.objects import Rule
-from testsuite.utils import extract_from_response
+from testsuite.utils import extract_response
 
 
 @pytest.fixture(scope="module")
@@ -10,10 +10,10 @@ def authorization(authorization):
     """Add to the AuthConfig response, which will only trigger on POST requests"""
     authorization.responses.add(
         {
-            "name": "auth-json",
+            "name": "simple",
             "json": {
                 "properties": [
-                    {"name": "auth", "value": "response"},
+                    {"name": "data", "value": "response"},
                 ]
             },
         },
@@ -31,10 +31,10 @@ def test_skip_response(client, auth):
     assert response.status_code == 200
 
     # verify that response was not returned on a GET request
-    with pytest.raises(KeyError, match="Auth-Json"):
-        extract_from_response(response)
+    assert "simple" not in response.json()["headers"]
 
     response = client.post("/post", auth=auth)
     assert response.status_code == 200
     # verify that response is returned on a POST request
-    assert extract_from_response(response)
+    value = extract_response(response) % None
+    assert value == "response"

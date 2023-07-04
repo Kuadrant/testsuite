@@ -1,7 +1,7 @@
 """Test for api key identities, with different credential methods, sequential trigger according to their priorities"""
 import pytest
 
-from testsuite.utils import extract_from_response
+from testsuite.utils import extract_response
 
 
 @pytest.fixture(scope="module")
@@ -48,13 +48,13 @@ def test_priority_api_key(client, first_api_key, second_api_key, first_label, se
     # verify that first API key is available to identify with and is used for identification
     response = client.get("/get", headers={"authorization": "APIKEY " + first_api_key})
     assert response.status_code == 200
-    label = extract_from_response(response)["identity"]["metadata"]["labels"]["group"]
+    label = extract_response(response)["identity"]["metadata"]["labels"]["group"] % None
     assert label == first_label
 
     # verify that second API key is available to identify with and is used for identification
     response = client.get("/get", params={"APIKEY": second_api_key})
     assert response.status_code == 200
-    label = extract_from_response(response)["identity"]["metadata"]["labels"]["group"]
+    label = extract_response(response)["identity"]["metadata"]["labels"]["group"] % None
     assert label == second_label
 
     # verify that if both keys credential methods are used at the same time,
@@ -63,5 +63,5 @@ def test_priority_api_key(client, first_api_key, second_api_key, first_label, se
         "/get", headers={"authorization": "APIKEY " + first_api_key}, params={"APIKEY": second_api_key}
     )
     assert response.status_code == 200
-    label = extract_from_response(response)["identity"]["metadata"]["labels"]["group"]
+    label = extract_response(response)["identity"]["metadata"]["labels"]["group"] % None
     assert label == first_label

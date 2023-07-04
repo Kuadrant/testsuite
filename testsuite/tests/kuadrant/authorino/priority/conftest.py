@@ -8,14 +8,5 @@ def authorization(authorization):
     Add to the AuthConfig response with *auth* key from AuthJson,
     to test used identity and resolved metadata dependencies
     """
-    authorization.responses.add(
-        {
-            "name": "auth-json",
-            "json": {
-                "properties": [
-                    {"name": "auth", "valueFrom": {"authJSON": "auth"}},
-                ]
-            },
-        }
-    )
+    authorization.responses.add_simple("auth")
     return authorization

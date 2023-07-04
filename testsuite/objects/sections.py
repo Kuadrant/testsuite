@@ -81,3 +81,7 @@ class Responses(abc.ABC):
     @abc.abstractmethod
     def add(self, response, **common_features):
         """Add response to AuthConfig"""
+
+    @abc.abstractmethod
+    def add_simple(self, auth_json, name="auth-json", key="data", **common_features):
+        """Add simple response to AuthConfig"""

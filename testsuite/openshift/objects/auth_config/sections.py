@@ -161,6 +161,9 @@ class MetadataSection(Section, Metadata):
 class ResponsesSection(Section, Responses):
     """Section which contains response configuration"""
 
+    def add_simple(self, auth_json, name="simple", key="data", **common_features):
+        self.add({"name": name, "json": {"properties": [{"name": key, "valueFrom": {"authJSON": auth_json}}]}})
+
     @modify
     def add(self, response, **common_features):
         """Adds response section to AuthConfig."""
