@@ -3,6 +3,8 @@ import json
 
 import pytest
 
+from testsuite.objects import Property, Value
+
 
 @pytest.fixture(scope="module", params=["123456789", "standardCharacters", "specialcharacters+*-."])
 def header_name(request):
@@ -11,11 +13,11 @@ def header_name(request):
 
 
 @pytest.fixture(scope="module")
-def responses(header_name):
-    """Returns response to be added to the AuthConfig"""
-    return [
-        {"name": "header", "wrapperKey": header_name, "json": {"properties": [{"name": "anything", "value": "one"}]}}
-    ]
+def authorization(authorization, header_name):
+    """Add response to Authorization"""
+    authorization.responses.remove_all()  # delete previous responses due to the parametrization
+    authorization.responses.json("header", [Property("anything", Value("one"))], wrapper_key=header_name)
+    return authorization
 
 
 def test_wrapper_key_with(auth, client, header_name):

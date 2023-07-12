@@ -3,14 +3,15 @@ import json
 
 import pytest
 
+from testsuite.objects import Property, Value
+
 
 @pytest.fixture(scope="module")
-def responses():
-    """Returns response to be added to the AuthConfig"""
-    return [
-        {"name": "Header", "json": {"properties": [{"name": "anything", "value": "one"}]}},
-        {"name": "X-Test", "json": {"properties": [{"name": "anything", "value": "two"}]}},
-    ]
+def authorization(authorization):
+    """Add response to Authorization"""
+    authorization.responses.json("header", [Property("anything", Value("one"))])
+    authorization.responses.json("X-Test", [Property("anything", Value("two"))])
+    return authorization
 
 
 def test_multiple_responses(auth, client):
