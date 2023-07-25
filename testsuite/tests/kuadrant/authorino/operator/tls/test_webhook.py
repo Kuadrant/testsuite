@@ -8,7 +8,7 @@ import pytest
 import openshift as oc
 from openshift import OpenShiftPythonException
 
-from testsuite.objects import Authorization, Rule, Value
+from testsuite.objects import Authorization, Rule, ValueFrom
 from testsuite.certificates import CertInfo
 from testsuite.utils import cert_builder
 from testsuite.openshift.objects.ingress import Ingress
@@ -78,7 +78,7 @@ def authorization(authorization, openshift, module_label, authorino_domain) -> A
 
     # add OPA policy to process admission webhook request
     authorization.authorization.opa_policy("features", OPA_POLICY)
-    user_value = Value(jsonPath="auth.identity.username")
+    user_value = ValueFrom("auth.identity.username")
 
     when = [
         Rule("auth.authorization.features.allow", "eq", "true"),

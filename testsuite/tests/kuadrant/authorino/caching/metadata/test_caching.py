@@ -3,7 +3,7 @@ from time import sleep
 
 import pytest
 
-from testsuite.objects import Cache, Value
+from testsuite.objects import Cache, ValueFrom
 from testsuite.utils import extract_response
 
 
@@ -16,7 +16,7 @@ def cache_ttl():
 @pytest.fixture(scope="module")
 def authorization(authorization, module_label, expectation_path, cache_ttl):
     """Adds Cached Metadata to the AuthConfig"""
-    meta_cache = Cache(cache_ttl, Value(jsonPath="context.request.http.path"))
+    meta_cache = Cache(cache_ttl, ValueFrom("context.request.http.path"))
     authorization.metadata.http_metadata(module_label, expectation_path, "GET", cache=meta_cache)
     return authorization
 

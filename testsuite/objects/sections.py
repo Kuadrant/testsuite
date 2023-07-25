@@ -4,7 +4,7 @@ import abc
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from testsuite.objects import Rule, Value
+    from testsuite.objects import Rule, ABCValue
 
 
 class Authorizations(abc.ABC):
@@ -27,7 +27,7 @@ class Authorizations(abc.ABC):
         """Adds JSON pattern-matching authorization rule (authorization.json)"""
 
     @abc.abstractmethod
-    def kubernetes(self, name: str, user: "Value", kube_attrs: dict, **common_features):
+    def kubernetes(self, name: str, user: "ABCValue", kube_attrs: dict, **common_features):
         """Adds kubernetes authorization rule."""
 
 
