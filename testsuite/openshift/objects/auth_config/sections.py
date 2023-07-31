@@ -171,7 +171,14 @@ class ResponsesSection(Section, Responses):
     """Section which contains response configuration"""
 
     def add_simple(self, auth_json, name="simple", key="data", **common_features):
-        self.add({"name": name, "json": {"properties": [{"name": key, "valueFrom": {"authJSON": auth_json}}]}})
+        """Adds simple response to AuthConfig"""
+        self.add(
+            {
+                "name": name,
+                "json": {"properties": [{"name": key, "valueFrom": {"authJSON": auth_json}}]},
+                **common_features,
+            }
+        )
 
     @modify
     def add(self, response, **common_features):
