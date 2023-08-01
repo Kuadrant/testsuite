@@ -1,8 +1,17 @@
 """AuthConfig CR object"""
-from dataclasses import asdict
 from typing import Dict, Literal, Iterable, TYPE_CHECKING
 
-from testsuite.objects import Identities, Metadata, Responses, MatchExpression, Authorizations, Rule, Cache, Value
+from testsuite.objects import (
+    asdict,
+    Identities,
+    Metadata,
+    Responses,
+    MatchExpression,
+    Authorizations,
+    Rule,
+    Cache,
+    ABCValue,
+)
 from testsuite.openshift.objects import modify
 
 if TYPE_CHECKING:
@@ -45,7 +54,7 @@ class Section:
         if metrics:
             item["metrics"] = metrics
         if cache:
-            item["cache"] = cache.to_dict()
+            item["cache"] = asdict(cache)
         if priority:
             item["priority"] = priority
         self.section.append(item)
@@ -215,7 +224,7 @@ class AuthorizationsSection(Section, Authorizations):
         self.add_item(name, {"opa": {"externalRegistry": {"endpoint": endpoint, "ttl": ttl}}}, **common_features)
 
     @modify
-    def kubernetes(self, name: str, user: Value, kube_attrs: dict, **common_features):
+    def kubernetes(self, name: str, user: ABCValue, kube_attrs: dict, **common_features):
         """Adds Kubernetes authorization
 
         :param name: name of kubernetes authorization
@@ -226,7 +235,7 @@ class AuthorizationsSection(Section, Authorizations):
         self.add_item(
             name,
             {
-                "kubernetes": {"user": user.to_dict(), "resourceAttributes": kube_attrs},
+                "kubernetes": {"user": asdict(user), "resourceAttributes": kube_attrs},
             },
             **common_features
         )

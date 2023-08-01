@@ -1,10 +1,49 @@
 """Module containing base classes for common objects"""
 import abc
-from dataclasses import dataclass
+from dataclasses import dataclass, is_dataclass, fields
+from copy import deepcopy
 from functools import cached_property
-from typing import Literal, List
+from typing import Literal, Union
 
 from testsuite.objects.sections import Metadata, Identities, Authorizations, Responses
+
+JSONValues = Union[None, str, int, bool, list["JSONValues"], dict[str, "JSONValues"]]
+
+
+def asdict(obj) -> dict[str, JSONValues]:
+    """
+    This function converts dataclass object to dictionary.
+    While it works similar to `dataclasses.asdict` a notable change is usage of
+    overriding `to_dict()` function if dataclass contains it.
+    This function works recursively in lists, tuples and dicts. All other values are passed to copy.deepcopy function.
+    """
+    if not is_dataclass(obj):
+        raise TypeError("asdict() should be called on dataclass instances")
+    return _asdict_recurse(obj)
+
+
+def _asdict_recurse(obj):
+    if hasattr(obj, "asdict"):
+        return obj.asdict()
+
+    if not is_dataclass(obj):
+        return deepcopy(obj)
+
+    result = {}
+    for field in fields(obj):
+        value = getattr(obj, field.name)
+        if value is None:
+            continue  # do not include None values
+
+        if is_dataclass(value):
+            result[field.name] = _asdict_recurse(value)
+        elif isinstance(value, (list, tuple)):
+            result[field.name] = type(value)(_asdict_recurse(i) for i in value)
+        elif isinstance(value, dict):
+            result[field.name] = type(value)((_asdict_recurse(k), _asdict_recurse(v)) for k, v in value.items())
+        else:
+            result[field.name] = deepcopy(value)
+    return result
 
 
 @dataclass
@@ -15,7 +54,7 @@ class MatchExpression:
     """
 
     operator: Literal["In", "NotIn", "Exists", "DoesNotExist"]
-    values: List[str]
+    values: list[str]
     key: str = "group"
 
 
@@ -35,20 +74,30 @@ class Rule:
     value: str
 
 
-class Value:
-    """Dataclass for specifying a Value in Authorization, can be either constant or value from AuthJson (jsonPath)"""
+@dataclass
+class ABCValue(abc.ABC):
+    """
+    Abstract Dataclass for specifying a Value in Authorization,
+    can be either static or reference to value in AuthJson.
+    """
 
-    # pylint: disable=invalid-name
-    def __init__(self, value=None, jsonPath=None) -> None:
-        super().__init__()
-        if not (value is None) ^ (jsonPath is None):
-            raise AttributeError("Exactly one of the `value` and `jsonPath` argument must be specified")
-        self.value = value
-        self.jsonPath = jsonPath
 
-    def to_dict(self):
-        """Returns dict representation of itself (shallow copy only)"""
-        return {"value": self.value} if self.value else {"valueFrom": {"authJson": self.jsonPath}}
+@dataclass
+class Value(ABCValue):
+    """Dataclass for static Value. Can be any value allowed in JSON: None, string, integer, bool, list, dict"""
+
+    value: JSONValues
+
+
+@dataclass
+class ValueFrom(ABCValue):
+    """Dataclass for dynamic Value. It contains reference path to existing value in AuthJson."""
+
+    authJSON: str  # pylint: disable=invalid-name
+
+    def asdict(self):
+        """Override `asdict` function"""
+        return {"valueFrom": {"authJSON": self.authJSON}}
 
 
 @dataclass
@@ -56,19 +105,14 @@ class Cache:
     """Dataclass for specifying Cache in Authorization"""
 
     ttl: int
-    key: Value
-
-    def to_dict(self):
-        """Returns dict representation of itself (shallow copy only)"""
-        return {"ttl": self.ttl, "key": self.key.to_dict()}
+    key: ABCValue
 
 
 @dataclass
 class PatternRef:
     """Dataclass for specifying Pattern reference in Authorization"""
 
-    # pylint: disable=invalid-name
-    patternRef: str
+    patternRef: str  # pylint: disable=invalid-name
 
 
 class LifecycleObject(abc.ABC):
