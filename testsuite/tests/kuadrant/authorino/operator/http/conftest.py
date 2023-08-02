@@ -1,13 +1,13 @@
 """Conftest for all tests requiring custom deployment of Authorino"""
 import pytest
 
-from testsuite.objects import Authorization
 from testsuite.httpx import HttpxBackoffClient
+from testsuite.openshift.objects.auth_config import AuthConfig
 
 
 # pylint: disable=unused-argument
 @pytest.fixture(scope="module")
-def authorization(authorization, wildcard_domain, openshift, module_label) -> Authorization:
+def authorization(authorization, wildcard_domain, openshift, module_label) -> AuthConfig:
     """In case of Authorino, AuthConfig used for authorization"""
     authorization.remove_all_hosts()
     authorization.add_host(wildcard_domain)

@@ -3,11 +3,7 @@ from typing import Dict, Literal, Iterable, TYPE_CHECKING
 
 from testsuite.objects import (
     asdict,
-    Identities,
-    Metadata,
-    Responses,
     MatchExpression,
-    Authorizations,
     Rule,
     Cache,
     ABCValue,
@@ -60,7 +56,7 @@ class Section:
         self.section.append(item)
 
 
-class IdentitySection(Section, Identities):
+class Identities(Section):
     """Section which contains identity configuration"""
 
     @modify
@@ -147,7 +143,7 @@ class IdentitySection(Section, Identities):
         self.section.clear()
 
 
-class MetadataSection(Section, Metadata):
+class Metadata(Section):
     """Section which contains metadata configuration"""
 
     @modify
@@ -176,11 +172,18 @@ class MetadataSection(Section, Metadata):
         self.add_item(name, {"uma": {"endpoint": endpoint, "credentialsRef": {"name": credentials}}}, **common_features)
 
 
-class ResponsesSection(Section, Responses):
+class Responses(Section):
     """Section which contains response configuration"""
 
     def add_simple(self, auth_json, name="simple", key="data", **common_features):
-        self.add({"name": name, "json": {"properties": [{"name": key, "valueFrom": {"authJSON": auth_json}}]}})
+        """Adds simple response to AuthConfig"""
+        self.add(
+            {
+                "name": name,
+                "json": {"properties": [{"name": key, "valueFrom": {"authJSON": auth_json}}]},
+                **common_features,
+            }
+        )
 
     @modify
     def add(self, response, **common_features):
@@ -188,7 +191,7 @@ class ResponsesSection(Section, Responses):
         self.add_item(response.pop("name"), response, **common_features)
 
 
-class AuthorizationsSection(Section, Authorizations):
+class Authorizations(Section):
     """Section which contains authorization configuration"""
 
     @modify

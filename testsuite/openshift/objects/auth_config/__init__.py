@@ -2,14 +2,14 @@
 from functools import cached_property
 from typing import Dict, List
 
-from testsuite.objects import Authorization, Responses, Metadata, Identities, Authorizations, Rule
+from testsuite.objects import Rule
 from testsuite.openshift.client import OpenShiftClient
 from testsuite.openshift.objects import OpenShiftObject, modify
-from .sections import AuthorizationsSection, IdentitySection, MetadataSection, ResponsesSection
+from .sections import Identities, Metadata, Responses, Authorizations
 from ..route import Route
 
 
-class AuthConfig(OpenShiftObject, Authorization):
+class AuthConfig(OpenShiftObject):
     """Represents AuthConfig CR from Authorino"""
 
     @property
@@ -20,22 +20,22 @@ class AuthConfig(OpenShiftObject, Authorization):
     @cached_property
     def authorization(self) -> Authorizations:
         """Gives access to authorization settings"""
-        return AuthorizationsSection(self, "authorization")
+        return Authorizations(self, "authorization")
 
     @cached_property
     def identity(self) -> Identities:
         """Gives access to identity settings"""
-        return IdentitySection(self, "identity")
+        return Identities(self, "identity")
 
     @cached_property
     def metadata(self) -> Metadata:
         """Gives access to metadata settings"""
-        return MetadataSection(self, "metadata")
+        return Metadata(self, "metadata")
 
     @cached_property
     def responses(self) -> Responses:
         """Gives access to response settings"""
-        return ResponsesSection(self, "response")
+        return Responses(self, "response")
 
     @classmethod
     def create_instance(

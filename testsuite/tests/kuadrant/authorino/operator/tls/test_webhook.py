@@ -8,8 +8,9 @@ import pytest
 import openshift as oc
 from openshift import OpenShiftPythonException
 
-from testsuite.objects import Authorization, Rule, ValueFrom
+from testsuite.objects import Rule, ValueFrom
 from testsuite.certificates import CertInfo
+from testsuite.openshift.objects.auth_config import AuthConfig
 from testsuite.utils import cert_builder
 from testsuite.openshift.objects.ingress import Ingress
 
@@ -65,7 +66,7 @@ def authorino_parameters(authorino_parameters, specific_authorino_name):
 
 # pylint: disable=unused-argument
 @pytest.fixture(scope="module")
-def authorization(authorization, openshift, module_label, authorino_domain) -> Authorization:
+def authorization(authorization, openshift, module_label, authorino_domain) -> AuthConfig:
     """In case of Authorino, AuthConfig used for authorization"""
 
     # Authorino should have specific url so it is accessible by k8s webhook
