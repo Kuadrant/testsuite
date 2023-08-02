@@ -7,6 +7,8 @@ from testsuite.objects import (
     Rule,
     Cache,
     ABCValue,
+    ValueFrom,
+    Property,
 )
 from testsuite.openshift.objects import modify
 
@@ -175,20 +177,61 @@ class Metadata(Section):
 class Responses(Section):
     """Section which contains response configuration"""
 
-    def add_simple(self, auth_json, name="simple", key="data", **common_features):
-        """Adds simple response to AuthConfig"""
-        self.add(
+    def _add(
+        self,
+        name: str,
+        value: dict,
+        wrapper_key: str = None,
+        wrapper: Literal["httpHeader", "envoyDynamicMetadata"] = None,
+        **common_features
+    ):
+        """Add response to AuthConfig"""
+        if wrapper:
+            value["wrapper"] = wrapper
+        if wrapper_key:
+            value["wrapperKey"] = wrapper_key
+
+        self.add_item(name, value, **common_features)
+
+    def add_simple(self, auth_json: str, name="simple", key="data", **common_features):
+        """Add simple response to AuthConfig"""
+        self.json(name, [Property(key, ValueFrom(auth_json))], **common_features)
+
+    @modify
+    def json(self, name: str, properties: list[Property], **common_features):
+        """Adds json response to AuthConfig"""
+        asdict_properties = [asdict(p) for p in properties]
+        self._add(name, {"json": {"properties": asdict_properties}}, **common_features)
+
+    @modify
+    def plain(self, name: str, value: ABCValue, **common_features):
+        """Adds plain response to AuthConfig"""
+        self._add(name, {"plain": asdict(value)}, **common_features)
+
+    @modify
+    def wristband(self, name: str, issuer: str, secret_name: str, algorithm: str = "RS256", **common_features):
+        """Adds wristband response to AuthConfig"""
+        self._add(
+            name,
             {
                 "name": name,
-                "json": {"properties": [{"name": key, "valueFrom": {"authJSON": auth_json}}]},
-                **common_features,
-            }
+                "wristband": {
+                    "issuer": issuer,
+                    "signingKeyRefs": [
+                        {
+                            "name": secret_name,
+                            "algorithm": algorithm,
+                        }
+                    ],
+                },
+            },
+            **common_features
         )
 
     @modify
-    def add(self, response, **common_features):
-        """Adds response section to AuthConfig."""
-        self.add_item(response.pop("name"), response, **common_features)
+    def remove_all(self):
+        """Removes all responses from AuthConfig"""
+        self.section.clear()
 
 
 class Authorizations(Section):

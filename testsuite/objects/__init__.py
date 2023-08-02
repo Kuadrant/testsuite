@@ -98,6 +98,18 @@ class ValueFrom(ABCValue):
 
 
 @dataclass
+class Property:
+    """Dataclass for static and dynamic values. Property is a Value with name."""
+
+    name: str
+    value: ABCValue
+
+    def asdict(self):
+        """Override `asdict` function"""
+        return {"name": self.name, **asdict(self.value)}
+
+
+@dataclass
 class Cache:
     """Dataclass for specifying Cache in Authorization"""
 
