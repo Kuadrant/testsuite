@@ -28,7 +28,7 @@ black: poetry
 	poetry run black --check testsuite --diff
 
 reformat: poetry
-	pipenv run black testsuite
+	poetry run black testsuite
 
 all-is-package:
 	@echo
