@@ -22,8 +22,15 @@ class RemoteMapping:
 
     def __iter__(self):
         """Return iterator for requested resource"""
-        data = self._client.do_action("get", self._resource_name, parse_output=True)
-        return iter(data["items"])
+        data = self._client.do_action(
+            "get",
+            self._resource_name,
+            "-o",
+            "json",
+            "--ignore-not-found=true",
+            parse_output=True,
+        )
+        return iter(data.as_dict()["items"])
 
     def __getitem__(self, name):
         """Return requested resource as APIObject"""

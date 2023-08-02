@@ -20,3 +20,7 @@ class Routes(RemoteMapping):
         return self._client.do_action(
             "expose", "service", f"--name={name}", "-o", "json", service, *extra_args, parse_output=True
         )
+
+    def for_service(self, service_name: str) -> list:
+        """Return routes for specific service"""
+        return [r for r in self if r["spec"]["to"]["name"] == service_name]
