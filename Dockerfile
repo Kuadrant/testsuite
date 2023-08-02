@@ -6,7 +6,7 @@ Bind kubeconfig to /opt/kubeconfig \
 Bind a dir to /test-run-results to get reports "
 
 RUN useradd --no-log-init -u 1001 -g root -m testsuite
-RUN dnf install -y python3 pip make git && dnf clean all
+RUN dnf install -y python311 pip make git && dnf clean all
 
 RUN curl https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable/openshift-client-linux.tar.gz >/tmp/oc.tgz && \
 	tar xzf /tmp/oc.tgz -C /usr/local/bin && \

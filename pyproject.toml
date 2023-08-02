@@ -7,7 +7,7 @@ readme = "README.md"
 #packages = [{include = "kuadrant_testsuite"}]
 
 [tool.poetry.group.main.dependencies]
-python = "^3.9"
+python = "^3.11"
 typing_extensions = "*"
 pytest-xdist = "*"
 pytest = "*"

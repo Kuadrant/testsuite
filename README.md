@@ -39,7 +39,7 @@ You can run and manage environment for testsuite with the included Makefile, but
 ### Local development setup
 
 Requirements:
-* Python 3.9+
+* Python 3.11+
 * [poetry](https://python-poetry.org/)
 * [CFSSL](https://github.com/cloudflare/cfssl)
 * [OpenShift CLI tools](https://docs.openshift.com/container-platform/latest/cli_reference/openshift_cli/getting-started-cli.html) (oc)
