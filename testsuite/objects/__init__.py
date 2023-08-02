@@ -135,6 +135,11 @@ class Authorino(LifecycleObject):
 
     @property
     @abc.abstractmethod
+    def metrics_service(self):
+        """Authorino metrics service name"""
+
+    @property
+    @abc.abstractmethod
     def authorization_url(self):
         """Authorization URL that can be plugged into envoy"""
 
@@ -147,13 +152,18 @@ class Authorino(LifecycleObject):
 class PreexistingAuthorino(Authorino):
     """Authorino which is already deployed prior to the testrun"""
 
-    def __init__(self, authorization_url, oidc_url) -> None:
+    def __init__(self, authorization_url, oidc_url, metrics_service) -> None:
         super().__init__()
         self._authorization_url = authorization_url
         self._oidc_url = oidc_url
+        self._metrics_service = metrics_service
 
     def wait_for_ready(self):
         return True
+
+    @property
+    def metrics_service(self):
+        return self._metrics_service
 
     @property
     def authorization_url(self):

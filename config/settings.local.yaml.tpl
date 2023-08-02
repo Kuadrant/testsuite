@@ -34,6 +34,7 @@
 #    deploy: false                               # If false, the testsuite will use already deployed authorino for testing
 #    auth_url: ""                                # authorization URL for already deployed Authorino
 #    oidc_url: ""                                # oidc URL for already deployed Authorino
+#    metrics_service_name: ""                    # controller metrics service name for already deployer Authorino
 #  envoy:
 #    image: "docker.io/envoyproxy/envoy:v1.23-latest"  # Envoy image, the testsuite should use, only for Authorino tests now
 #  kuadrant:
