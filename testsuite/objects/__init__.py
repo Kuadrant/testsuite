@@ -1,10 +1,10 @@
 """Module containing base classes for common objects"""
 import abc
-from dataclasses import dataclass, is_dataclass, fields
+from dataclasses import dataclass, is_dataclass, fields, field
 from copy import deepcopy
-from typing import Literal, Union
+from typing import Literal, Optional
 
-JSONValues = Union[None, str, int, bool, list["JSONValues"], dict[str, "JSONValues"]]
+JSONValues = None | str | int | bool | list["JSONValues"] | dict[str, "JSONValues"]
 
 
 def asdict(obj) -> dict[str, JSONValues]:
@@ -76,7 +76,14 @@ class ABCValue(abc.ABC):
     """
     Abstract Dataclass for specifying a Value in Authorization,
     can be either static or reference to value in AuthJson.
+
+    Optional features:
+        - name: for use as JsonProperty
+        - overwrite: for use in ExtendedProperty
     """
+
+    name: Optional[str] = field(default=None, kw_only=True)
+    overwrite: Optional[bool] = field(default=None, kw_only=True)
 
 
 @dataclass
@@ -87,14 +94,20 @@ class Value(ABCValue):
 
 
 @dataclass
+class AuthJSON:
+    authJSON: str  # pylint: disable=invalid-name
+
+
+@dataclass
 class ValueFrom(ABCValue):
     """Dataclass for dynamic Value. It contains reference path to existing value in AuthJson."""
 
-    authJSON: str  # pylint: disable=invalid-name
+    valueFrom: AuthJSON | str  # pylint: disable=invalid-name
 
-    def asdict(self):
-        """Override `asdict` function"""
-        return {"valueFrom": {"authJSON": self.authJSON}}
+    def __post_init__(self):
+        """Set valueFrom to be an instance of _AuthJson"""
+        if not isinstance(self.valueFrom, AuthJSON):
+            self.valueFrom = AuthJSON(self.valueFrom)
 
 
 @dataclass

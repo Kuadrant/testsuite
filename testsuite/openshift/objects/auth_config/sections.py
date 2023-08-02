@@ -59,6 +59,23 @@ class Section:
 class Identities(Section):
     """Section which contains identity configuration"""
 
+    def add_item(
+        self,
+        name,
+        value,
+        priority: int = None,
+        when: Iterable[Rule] = None,
+        metrics: bool = None,
+        cache: Cache = None,
+        extended_properties: list[ABCValue] = None,
+    ):
+        """
+        Adds optional extendedProperties feature specific to IdentitySection and then calls parent add_idem() method
+        """
+        if extended_properties:
+            value["extendedProperties"] = [asdict(i) for i in extended_properties]
+        super().add_item(name, value, priority, when, metrics, cache)
+
     @modify
     def mtls(self, name: str, selector_key: str, selector_value: str, **common_features):
         """Adds mTLS identity
@@ -135,7 +152,7 @@ class Identities(Section):
     @modify
     def plain(self, name, auth_json, **common_features):
         """Adds plain identity"""
-        self.add_item(name, {"plain": {"authJSON": auth_json}, **common_features})
+        self.add_item(name, {"plain": {"authJSON": auth_json}}, **common_features)
 
     @modify
     def remove_all(self):
