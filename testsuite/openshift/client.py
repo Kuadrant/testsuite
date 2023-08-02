@@ -32,12 +32,12 @@ class OpenShiftClient:
     def __init__(self, project: str, api_url: str = None, token: str = None, kubeconfig_path: str = None):
         self._project = project
         self._api_url = api_url
-        self.token = token
+        self._token = token
         self._kubeconfig_path = kubeconfig_path
 
     def change_project(self, project) -> "OpenShiftClient":
         """Return new OpenShiftClient with a different project"""
-        return OpenShiftClient(project, self._api_url, self.token, self._kubeconfig_path)
+        return OpenShiftClient(project, self._api_url, self._token, self._kubeconfig_path)
 
     @cached_property
     def context(self):
@@ -46,7 +46,7 @@ class OpenShiftClient:
 
         context.project_name = self._project
         context.api_url = self._api_url
-        context.token = self.token
+        context.token = self._token
         context.kubeconfig_path = self._kubeconfig_path
 
         return context
@@ -56,6 +56,12 @@ class OpenShiftClient:
         """Returns real API url"""
         with self.context:
             return oc.whoami("--show-server=true")
+
+    @property
+    def token(self):
+        """Returns real OpenShift token"""
+        with self.context:
+            return oc.whoami("-t")
 
     @cached_property
     def apps_url(self):
