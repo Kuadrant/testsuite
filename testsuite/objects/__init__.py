@@ -2,9 +2,9 @@
 import abc
 from dataclasses import dataclass, is_dataclass, fields, field
 from copy import deepcopy
-from typing import Literal, Union, Optional
+from typing import Literal, Optional
 
-JSONValues = Union[None, str, int, bool, list["JSONValues"], dict[str, "JSONValues"]]
+JSONValues = None | str | int | bool | list["JSONValues"] | dict[str, "JSONValues"]
 
 # pylint: disable=invalid-name
 
@@ -13,7 +13,7 @@ def asdict(obj) -> dict[str, JSONValues]:
     """
     This function converts dataclass object to dictionary.
     While it works similar to `dataclasses.asdict` a notable change is usage of
-    overriding `to_dict()` function if dataclass contains it.
+    overriding `asdict()` function if dataclass contains it.
     This function works recursively in lists, tuples and dicts. All other values are passed to copy.deepcopy function.
     """
     if not is_dataclass(obj):
@@ -133,6 +133,22 @@ class Property:
     def asdict(self):
         """Override `asdict` function"""
         return {"name": self.name, **asdict(self.value)}
+
+
+@dataclass
+class ExtendedProperty(Property):
+    """
+    Dataclass extending Property class adding optional `overwrite` feature
+    used in extended_properties functionality in Identity section.
+    """
+
+    overwrite: Optional[bool] = None
+
+    def asdict(self):
+        """Extend inherited `asdict` function to include new attributes."""
+        if self.overwrite is not None:
+            return {**super().asdict(), "overwrite": self.overwrite}
+        return super().asdict()
 
 
 @dataclass
