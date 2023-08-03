@@ -119,6 +119,65 @@ class Cache:
 
 
 @dataclass
+class Wristband:
+    """Dataclass for Wristband used in ResponseProperties"""
+
+    issuer: str
+    secret_name: str
+    algorithm: str = "RS256"
+
+    def asdict(self):
+        """Override `asdict` function"""
+        return {
+            "issuer": self.issuer,
+            "signingKeyRefs": [
+                {
+                    "name": self.secret_name,
+                    "algorithm": self.algorithm,
+                }
+            ],
+        }
+
+
+@dataclass
+class Properties:
+    properties: Optional[list[ABCValue]]
+
+    def __post_init__(self):
+        for prop in self.properties:
+            if prop.name is None:
+                raise AttributeError("Values in properties list must have `name` attribute.")
+
+
+@dataclass
+class ResponseProperties:
+    """
+    Dataclass for dynamic response definition.
+
+    Attributes:
+        :param name:        Name of the property and by default name of the header
+        :param json:        List of Value objects with name attribute
+        :param wrapper:     Optional `httpHeader` or `envoyDynamicMetadata` value
+        :param wrapperKey:  Optional header name
+        :param wristband:   Optional wristband functionality
+    """
+
+    name: str
+    json: Optional[Properties] | Optional[list[ABCValue]] = None
+
+    wrapper: Optional[Literal["httpHeader", "envoyDynamicMetadata"]] = None
+    wrapperKey: Optional[str] = None  # pylint: disable=invalid-name
+    wristband: Optional[Wristband] = None
+
+    def __post_init__(self):
+        """Check for correct usage. And transform `self.json` to an instance of _Property."""
+        if not (self.wristband is None) ^ (self.json is None):
+            raise AttributeError("Exactly one of the `properties` and `wristband` argument must be specified")
+        if not isinstance(self.json, Properties):
+            self.json = Properties(self.json)
+
+
+@dataclass
 class PatternRef:
     """Dataclass for specifying Pattern reference in Authorization"""
 

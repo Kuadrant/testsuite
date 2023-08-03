@@ -7,6 +7,8 @@ from testsuite.objects import (
     Rule,
     Cache,
     ABCValue,
+    ValueFrom,
+    ResponseProperties,
 )
 from testsuite.openshift.objects import modify
 
@@ -193,18 +195,13 @@ class Responses(Section):
     """Section which contains response configuration"""
 
     def add_simple(self, auth_json, name="simple", key="data", **common_features):
-        """Adds simple response to AuthConfig"""
-        self.add(
-            {
-                "name": name,
-                "json": {"properties": [{"name": key, "valueFrom": {"authJSON": auth_json}}]},
-                **common_features,
-            }
-        )
+        self.add(asdict(ResponseProperties(name=name, json=[ValueFrom(auth_json, name=key)])), **common_features)
 
     @modify
     def add(self, response, **common_features):
         """Adds response section to AuthConfig."""
+        if isinstance(response, ResponseProperties):
+            response = asdict(response)
         self.add_item(response.pop("name"), response, **common_features)
 
 

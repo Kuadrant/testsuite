@@ -3,6 +3,7 @@
 import json
 
 import pytest
+from testsuite.objects import ResponseProperties, Value
 
 
 @pytest.fixture(scope="module")
@@ -27,7 +28,7 @@ def path_and_value(request):
 def responses(path_and_value):
     """Returns response to be added to the AuthConfig"""
     path, _ = path_and_value
-    return [{"name": "header", "json": {"properties": [{"name": "anything", "valueFrom": {"authJSON": path}}]}}]
+    return [ResponseProperties("header", json=[Value(path, name="anything")])]
 
 
 def test_auth_json_path(auth, client, path_and_value):

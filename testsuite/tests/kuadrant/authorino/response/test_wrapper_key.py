@@ -2,6 +2,7 @@
 import json
 
 import pytest
+from testsuite.objects import ResponseProperties, Value
 
 
 @pytest.fixture(scope="module", params=["123456789", "standardCharacters", "specialcharacters+*-."])
@@ -14,7 +15,11 @@ def header_name(request):
 def responses(header_name):
     """Returns response to be added to the AuthConfig"""
     return [
-        {"name": "header", "wrapperKey": header_name, "json": {"properties": [{"name": "anything", "value": "one"}]}}
+        ResponseProperties(
+            name="header",
+            wrapperKey=header_name,
+            json=[Value(value="one", name="anything")],
+        )
     ]
 
 
