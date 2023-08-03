@@ -3,7 +3,8 @@ import typing
 from abc import ABC, abstractmethod
 from functools import cached_property
 
-from openshift import Selector
+import openshift
+from openshift import Selector, ModelError
 
 from testsuite.httpx import HttpxBackoffClient
 from testsuite.openshift.client import OpenShiftClient
@@ -145,3 +146,73 @@ class Gateway(Referencable, Proxy):
     @property
     def reference(self):
         return {"group": "gateway.networking.k8s.io", "kind": "Gateway", "name": self.name, "namespace": self.namespace}
+
+
+class MGCGateway(OpenShiftObject, Referencable):
+    """Gateway object for purposes of MGC"""
+
+    @classmethod
+    def create_instance(
+        cls,
+        openshift: OpenShiftClient,
+        name: str,
+        gateway_class_name: str,
+        hostname: str,
+        placement: typing.Optional[str] = None,
+    ):
+        """Creates new instance of Gateway"""
+        labels = {}
+        if placement is not None:
+            labels = {"cluster.open-cluster-management.io/placement": placement}
+
+        model = {
+            "apiVersion": "gateway.networking.k8s.io/v1beta1",
+            "kind": "Gateway",
+            "metadata": {"name": name, "namespace": openshift.project, "labels": labels},
+            "spec": {
+                "gatewayClassName": gateway_class_name,
+                "listeners": [
+                    {
+                        "name": "api",
+                        "port": 443,
+                        "protocol": "HTTPS",
+                        "hostname": hostname,
+                        "allowedRoutes": {"namespaces": {"from": "All"}},
+                    }
+                ],
+            },
+        }
+
+        return cls(model, context=openshift.context)
+
+    def is_ready(self):
+        """Checks whether the gateway got its IP address assigned thus is ready"""
+        try:
+            addresses = self.model["status"]["addresses"]
+            multi_cluster_addresses = [
+                address for address in addresses if address["type"] == "kuadrant.io/MultiClusterIPAddress"
+            ]
+            return len(multi_cluster_addresses) > 0
+        except (KeyError, ModelError):
+            return False
+
+    def wait_for_ready(self):
+        """Waits for the gateway to be ready in the sense of is_ready(self)"""
+        with openshift.timeout(90):
+            success, _, _ = self.self_selector().until_all(success_func=lambda obj: MGCGateway(obj.model).is_ready())
+            assert success, "Gateway didn't get ready in time"
+            self.refresh()
+
+    @property
+    def hostname(self):
+        """Hostname of the first listener"""
+        return self.model["spec"]["listeners"][0]["hostname"]
+
+    @property
+    def reference(self):
+        return {
+            "group": "gateway.networking.k8s.io",
+            "kind": "Gateway",
+            "name": self.name(),
+            "namespace": self.namespace(),
+        }
