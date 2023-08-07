@@ -1,4 +1,4 @@
-.PHONY: commit-acceptance pylint mypy black reformat test poetry poetry-no-dev glbc container-image
+.PHONY: commit-acceptance pylint mypy black reformat test poetry poetry-no-dev glbc container-image clean
 
 TB ?= short
 LOGLEVEL ?= INFO
@@ -66,6 +66,10 @@ poetry.lock: pyproject.toml
 poetry: .make-poetry-sync
 
 poetry-no-dev: .make-poetry-sync-no-dev
+
+clean:
+	-rm -f .make-poetry-sync .make-poetry-sync-no-dev
+	poetry env remove --all
 
 # Check http://marmelab.com/blog/2016/02/29/auto-documented-makefile.html
 help: ## Print this help
