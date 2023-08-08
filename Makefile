@@ -1,4 +1,4 @@
-.PHONY: commit-acceptance pylint mypy black reformat test poetry poetry-no-dev glbc container-image
+.PHONY: commit-acceptance pylint mypy black reformat test poetry poetry-no-dev mgc container-image
 
 TB ?= short
 LOGLEVEL ?= INFO
@@ -37,7 +37,7 @@ all-is-package:
 
 # pattern to run individual testfile or all testfiles in directory
 testsuite/%: FORCE poetry-no-dev
-	$(PYTEST) --performance --glbc -v $(flags) $@
+	$(PYTEST) --performance --mgc -v $(flags) $@
 
 test: ## Run test
 test pytest tests: poetry-no-dev
@@ -47,9 +47,9 @@ performance: ## Run performance tests
 performance: poetry-no-dev
 	$(PYTEST) --performance $(flags) testsuite/tests/kuadrant/authorino/performance
 
-glbc: ## Run glbc tests
-glbc: poetry-no-dev
-	$(PYTEST) --glbc $(flags) testsuite/tests/glbc
+mgc: ## Run mgc tests
+mgc: poetry-no-dev
+	$(PYTEST) --mgc $(flags) testsuite/tests/mgc
 
 poetry.lock: pyproject.toml
 	poetry lock

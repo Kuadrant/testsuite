@@ -19,6 +19,8 @@ import pytest
 from testsuite.openshift.httpbin import Httpbin
 from testsuite.openshift.objects.gateway_api import MGCGateway, HTTPRoute
 
+pytestmark = [pytest.mark.mgc]
+
 
 @pytest.fixture(scope="module")
 def base_domain(openshift):

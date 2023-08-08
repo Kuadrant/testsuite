@@ -7,8 +7,6 @@
 #    kubeconfig_path: "~/.kube/config"         # Optional: Kubeconfig to use, if None the default one is used
 #  openshift2:
 #    project: "kuadrant2"                      # Required: Secondary OpenShift project, for running tests across projects
-#  kcp:                                        # Required for glbc tests
-#    project: "glbc-test"                      # Optional: namespace for glbc tests to run, if None uses current namespace
 #  tools:
 #    project: "tools"                          # Optional: OpenShift project, where external tools are located
 #  rhsso:

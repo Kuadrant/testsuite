@@ -26,7 +26,7 @@ def pytest_addoption(parser):
     parser.addoption(
         "--performance", action="store_true", default=False, help="Run also performance tests (default: False)"
     )
-    parser.addoption("--glbc", action="store_true", default=False, help="Run also glbc tests (default: False)")
+    parser.addoption("--mgc", action="store_true", default=False, help="Run also mgc tests (default: False)")
 
 
 def pytest_runtest_setup(item):
@@ -34,8 +34,8 @@ def pytest_runtest_setup(item):
     marks = [i.name for i in item.iter_markers()]
     if "performance" in marks and not item.config.getoption("--performance"):
         pytest.skip("Excluding performance tests")
-    if "glbc" in marks and not item.config.getoption("--glbc"):
-        pytest.skip("Excluding glbc tests")
+    if "mgc" in marks and not item.config.getoption("--mgc"):
+        pytest.skip("Excluding MGC tests")
 
 
 @pytest.hookimpl(hookwrapper=True)
@@ -109,22 +109,6 @@ def openshift2(testconfig):
         pytest.skip("Openshift2 required but second_project was not set")
     if not client.connected:
         pytest.fail("You are not logged into Openshift or the namespace for Openshift2 doesn't exist")
-    return client
-
-
-@pytest.fixture(scope="session")
-def kcp(testconfig):
-    """Modified OpenShift client acting as Kcp client"""
-    client = testconfig["kcp"]
-    if client is None:
-        pytest.skip("Kcp required but was not configured")
-
-    # does not work for kcp yet
-    # internally implemented using `oc status` command that seems internally touching project kind
-    # that is not available on kcp
-    # if not client.connected:
-    #     pytest.fail("You are not logged into Openshift or the namespace for Kcp doesn't exist")
-
     return client
 
 
