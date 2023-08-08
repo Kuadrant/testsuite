@@ -1,23 +1,15 @@
 """Test condition to skip the response section of AuthConfig"""
 import pytest
 
-from testsuite.objects import Rule
+from testsuite.objects import Property, Rule, Value
 from testsuite.utils import extract_response
 
 
 @pytest.fixture(scope="module")
 def authorization(authorization):
     """Add to the AuthConfig response, which will only trigger on POST requests"""
-    authorization.responses.add(
-        {
-            "name": "simple",
-            "json": {
-                "properties": [
-                    {"name": "data", "value": "response"},
-                ]
-            },
-        },
-        when=[Rule("context.request.http.method", "eq", "POST")],
+    authorization.responses.json(
+        "simple", [Property("data", Value("response"))], when=[Rule("context.request.http.method", "eq", "POST")]
     )
     return authorization
 

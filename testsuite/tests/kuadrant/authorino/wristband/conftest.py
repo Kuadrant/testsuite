@@ -62,22 +62,7 @@ def wristband_endpoint(openshift, authorino, authorization_name):
 @pytest.fixture(scope="module")
 def authorization(authorization, wristband_secret, wristband_endpoint) -> AuthConfig:
     """Add wristband response with the signing key to the AuthConfig"""
-    authorization.responses.add(
-        {
-            "name": "wristband",
-            "wrapper": "envoyDynamicMetadata",
-            "wristband": {
-                "issuer": wristband_endpoint,
-                "tokenDuration": 300,  # default value
-                "signingKeyRefs": [
-                    {
-                        "name": wristband_secret,
-                        "algorithm": "RS256",
-                    }
-                ],
-            },
-        }
-    )
+    authorization.responses.wristband("wristband", wristband_endpoint, wristband_secret, wrapper="envoyDynamicMetadata")
     return authorization
 
 

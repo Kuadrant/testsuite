@@ -3,11 +3,14 @@ import json
 
 import pytest
 
+from testsuite.objects import Property, Value
+
 
 @pytest.fixture(scope="module")
-def responses():
-    """Returns response to be added to the AuthConfig"""
-    return [{"name": "header", "json": {"properties": [{"name": "anything", "value": "one"}]}}]
+def authorization(authorization):
+    """Add response to Authorization"""
+    authorization.responses.json("header", [Property("anything", Value("one"))])
+    return authorization
 
 
 def test_simple_response_with(auth, client):

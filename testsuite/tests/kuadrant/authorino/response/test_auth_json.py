@@ -4,6 +4,8 @@ import json
 
 import pytest
 
+from testsuite.objects import Property, ValueFrom
+
 
 @pytest.fixture(scope="module")
 def issuer(oidc_provider):
@@ -24,10 +26,13 @@ def path_and_value(request):
 
 
 @pytest.fixture(scope="module")
-def responses(path_and_value):
-    """Returns response to be added to the AuthConfig"""
+def authorization(authorization, path_and_value):
+    """Add response to Authorization"""
     path, _ = path_and_value
-    return [{"name": "header", "json": {"properties": [{"name": "anything", "valueFrom": {"authJSON": path}}]}}]
+
+    authorization.responses.remove_all()  # delete previous responses due to the parametrization
+    authorization.responses.json("header", [Property("anything", ValueFrom(path))])
+    return authorization
 
 
 def test_auth_json_path(auth, client, path_and_value):

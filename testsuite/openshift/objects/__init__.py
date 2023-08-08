@@ -46,4 +46,6 @@ class OpenShiftObject(APIObject):
 
     def delete(self, ignore_not_found=True, cmd_args=None):
         """Deletes the resource, by default ignored not found"""
-        return super().delete(ignore_not_found, cmd_args)
+        deleted = super().delete(ignore_not_found, cmd_args)
+        self.committed = False
+        return deleted

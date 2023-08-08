@@ -6,23 +6,16 @@ from base64 import standard_b64encode
 
 import pytest
 
+from testsuite.objects import Property, ValueFrom
+
 
 @pytest.fixture(scope="module")
-def responses():
-    """Returns response to be added to the AuthConfig"""
-    return [
-        {
-            "name": "header",
-            "json": {
-                "properties": [
-                    {
-                        "name": "anything",
-                        "valueFrom": {"authJSON": "context.request.http.headers.test|@base64:decode"},
-                    }
-                ]
-            },
-        }
-    ]
+def authorization(authorization):
+    """Add response to Authorization"""
+    authorization.responses.json(
+        "header", [Property("anything", ValueFrom("context.request.http.headers.test|@base64:decode"))]
+    )
+    return authorization
 
 
 @pytest.mark.parametrize(
