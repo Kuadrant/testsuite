@@ -29,10 +29,10 @@ class Httpbin(LifecycleObject, Referencable):
         return f"{self.name}.{self.openshift.project}.svc.cluster.local"
 
     def commit(self):
-        with resources.path("testsuite.resources", "httpbin.yaml") as path:
-            self.httpbin_objects = self.openshift.new_app(
-                path, {"NAME": self.name, "LABEL": self.label, "REPLICAS": self.replicas}
-            )
+        self.httpbin_objects = self.openshift.new_app(
+            resources.files("testsuite.resources").joinpath("httpbin.yaml"),
+            {"NAME": self.name, "LABEL": self.label, "REPLICAS": self.replicas},
+        )
 
         with self.openshift.context:
             assert self.openshift.is_ready(self.httpbin_objects.narrow("deployment")), "Httpbin wasn't ready in time"

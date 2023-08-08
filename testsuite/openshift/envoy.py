@@ -102,20 +102,19 @@ class TLSEnvoy(Envoy):
         return HttpxBackoffClient(base_url=f"https://{self.hostname}", **kwargs)
 
     def commit(self):
-        with resources.path("testsuite.resources.tls", "envoy.yaml") as path:
-            self.envoy_objects = self.openshift.new_app(
-                path,
-                {
-                    "NAME": self.name,
-                    "LABEL": self.label,
-                    "AUTHORINO_URL": self.authorino.authorization_url,
-                    "UPSTREAM_URL": self.httpbin_hostname,
-                    "AUTHORINO_CA_SECRET": self.authorino_ca_secret,
-                    "ENVOY_CA_SECRET": self.backend_ca_secret,
-                    "ENVOY_CERT_SECRET": self.envoy_cert_secret,
-                    "ENVOY_IMAGE": self.image,
-                },
-            )
+        self.envoy_objects = self.openshift.new_app(
+            resources.files("testsuite.resources.tls").joinpath("envoy.yaml"),
+            {
+                "NAME": self.name,
+                "LABEL": self.label,
+                "AUTHORINO_URL": self.authorino.authorization_url,
+                "UPSTREAM_URL": self.httpbin_hostname,
+                "AUTHORINO_CA_SECRET": self.authorino_ca_secret,
+                "ENVOY_CA_SECRET": self.backend_ca_secret,
+                "ENVOY_CERT_SECRET": self.envoy_cert_secret,
+                "ENVOY_IMAGE": self.image,
+            },
+        )
 
         with self.openshift.context:
             assert self.openshift.is_ready(self.envoy_objects.narrow("deployment")), "Envoy wasn't ready in time"
