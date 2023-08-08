@@ -26,7 +26,7 @@ def pytest_addoption(parser):
     parser.addoption(
         "--performance", action="store_true", default=False, help="Run also performance tests (default: False)"
     )
-    parser.addoption("--glbc", action="store_true", default=False, help="Run also glbc tests (default: False)")
+    parser.addoption("--mgc", action="store_true", default=False, help="Run also mgc tests (default: False)")
 
 
 def pytest_runtest_setup(item):
@@ -34,8 +34,8 @@ def pytest_runtest_setup(item):
     marks = [i.name for i in item.iter_markers()]
     if "performance" in marks and not item.config.getoption("--performance"):
         pytest.skip("Excluding performance tests")
-    if "glbc" in marks and not item.config.getoption("--glbc"):
-        pytest.skip("Excluding glbc tests")
+    if "mgc" in marks and not item.config.getoption("--mgc"):
+        pytest.skip("Excluding MGC tests")
 
 
 @pytest.hookimpl(hookwrapper=True)

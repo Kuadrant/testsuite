@@ -41,7 +41,7 @@ line-length = 120
 markers = [
     "issue: Reference to covered issue",
     "performance: Performance tests have unique needs",
-    "glbc: GLBC tests have specific needs"
+    "mgc: MGC tests have specific needs"
 ]
 filterwarnings = [
     "ignore: WARNING the new order is not taken into account:UserWarning",
