@@ -1,20 +1,20 @@
 """Test for API key auth credentials"""
 import pytest
 
-from testsuite.openshift.objects.auth_config import AuthConfig
+from testsuite.objects import Credentials
 
 
 @pytest.fixture(scope="module", params=["authorization_header", "custom_header", "query", "cookie"])
 def credentials(request):
     """Location where are auth credentials passed"""
-    return request.param
+    return Credentials(request.param, "APIKEY")
 
 
 @pytest.fixture(scope="module")
-def authorization(openshift, blame, envoy, module_label, credentials):
+def authorization(authorization, api_key, credentials):
     """Add API key identity to AuthConfig"""
-    authorization = AuthConfig.create_instance(openshift, blame("ac"), envoy.route, labels={"testRun": module_label})
-    authorization.identity.api_key("api_key", match_label=module_label, credentials=credentials, selector="API_KEY")
+    authorization.identity.clear_all()
+    authorization.identity.add_api_key("api_key", credentials=credentials, selector=api_key.selector)
     return authorization
 
 

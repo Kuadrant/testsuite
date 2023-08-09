@@ -22,7 +22,7 @@ def authorization2(hostname2, blame, openshift2, module_label, oidc_provider):
     auth = AuthConfig.create_instance(
         openshift2, blame("ac"), None, hostnames=[hostname2], labels={"testRun": module_label}
     )
-    auth.identity.oidc("rhsso", oidc_provider.well_known["issuer"])
+    auth.identity.add_oidc("rhsso", oidc_provider.well_known["issuer"])
     return auth
 
 

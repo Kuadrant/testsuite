@@ -8,7 +8,7 @@ from testsuite.objects import Rule
 def authorization(authorization):
     """Add to the AuthConfig authorization with opa policy that will always reject POST requests"""
     when_post = [Rule("context.request.http.method", "eq", "POST")]
-    authorization.authorization.opa_policy("opa", "allow { false }", when=when_post)
+    authorization.authorization.add_opa_policy("opa", "allow { false }", when=when_post)
     return authorization
 
 

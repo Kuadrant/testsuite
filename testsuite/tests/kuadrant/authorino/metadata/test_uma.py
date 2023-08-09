@@ -54,8 +54,8 @@ def authorization(authorization, rhsso, client):
     # To prevent the flakiness of these tests, we are adding a new retry code: 404
     client.add_retry_code(404)
 
-    authorization.metadata.uma_metadata("resource-data", rhsso.well_known["issuer"], "uma-client-secret")
-    authorization.authorization.opa_policy("opa", VALIDATE_RESOURCE_OWNER)
+    authorization.metadata.add_uma("resource-data", rhsso.well_known["issuer"], "uma-client-secret")
+    authorization.authorization.add_opa_policy("opa", VALIDATE_RESOURCE_OWNER)
     return authorization
 
 

@@ -4,6 +4,7 @@ from typing import Optional, Dict
 import pytest
 
 from testsuite.certificates import Certificate, CertInfo
+from testsuite.objects import Selector
 from testsuite.openshift.envoy import TLSEnvoy
 from testsuite.utils import cert_builder
 
@@ -127,15 +128,15 @@ def invalid_cert(certificates):
 
 
 @pytest.fixture(scope="module")
-def selector_params(module_label):
+def selector(module_label):
     """Label key-value pair for the CA secret discovery"""
-    return "testLabel", module_label
+    return Selector(matchLabels={"testLabel": module_label})
 
 
 @pytest.fixture(scope="module")
-def authorino_labels(selector_params) -> Dict[str, str]:
+def authorino_labels(selector) -> Dict[str, str]:
     """Labels for the proper Authorino discovery"""
-    labels = {"authorino.kuadrant.io/managed-by": "authorino", selector_params[0]: selector_params[1]}
+    labels = {"authorino.kuadrant.io/managed-by": "authorino", **selector.matchLabels}
     return labels
 
 

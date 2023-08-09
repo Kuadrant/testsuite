@@ -11,7 +11,7 @@ def oidc_provider(rhsso):
 @pytest.fixture(scope="module")
 def authorization(authorization, rhsso):
     """Add RHSSO identity to AuthConfig"""
-    authorization.identity.oidc("rhsso", rhsso.well_known["issuer"])
+    authorization.identity.add_oidc("rhsso", rhsso.well_known["issuer"])
     return authorization
 
 

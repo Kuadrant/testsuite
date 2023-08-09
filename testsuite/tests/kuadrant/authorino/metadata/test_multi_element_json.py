@@ -23,7 +23,7 @@ def authorization(authorization, json_mock_expectation):
     """
     Adds auth metadata HTTP endpoint and header 'Auth-Json' inspecting parsed metadata value.
     """
-    authorization.metadata.http_metadata("mock", json_mock_expectation, "GET")
+    authorization.metadata.add_http("mock", json_mock_expectation, "GET")
     authorization.responses.add_simple("auth.metadata.mock")
     return authorization
 

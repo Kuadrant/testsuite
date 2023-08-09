@@ -32,7 +32,7 @@ def authorization(request, authorino, blame, openshift, module_label):
             hostnames=[hostname],
             labels={"testRun": module_label, "sharding": sharding_label},
         )
-        auth.responses.json("header", [Property("anything", Value(sharding_label))])
+        auth.responses.add_json("header", [Property("anything", Value(sharding_label))])
         request.addfinalizer(auth.delete)
         auth.commit()
         return auth

@@ -2,13 +2,13 @@
 import pytest
 
 from testsuite.httpx.auth import HeaderApiKeyAuth
+from testsuite.objects import Selector
 
 
 @pytest.fixture(scope="function")
 def api_key(create_api_key, module_label):
     """Creates API key Secret"""
-    api_key = "api_key_value"
-    return create_api_key("api-key", module_label, api_key)
+    return create_api_key("api-key", module_label, "api_key_value")
 
 
 @pytest.fixture(scope="function")
@@ -20,7 +20,7 @@ def auth(api_key):
 @pytest.fixture(scope="module")
 def authorization(authorization, module_label):
     """Creates AuthConfig with API key identity"""
-    authorization.identity.api_key("api_key", match_label=module_label)
+    authorization.identity.add_api_key("api_key", selector=Selector(matchLabels={"group": module_label}))
     return authorization
 
 

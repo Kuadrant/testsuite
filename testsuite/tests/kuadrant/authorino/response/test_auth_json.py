@@ -30,8 +30,8 @@ def authorization(authorization, path_and_value):
     """Add response to Authorization"""
     path, _ = path_and_value
 
-    authorization.responses.remove_all()  # delete previous responses due to the parametrization
-    authorization.responses.json("header", [Property("anything", ValueFrom(path))])
+    authorization.responses.clear_all()  # delete previous responses due to the parametrization
+    authorization.responses.add_json("header", [Property("anything", ValueFrom(path))])
     return authorization
 
 

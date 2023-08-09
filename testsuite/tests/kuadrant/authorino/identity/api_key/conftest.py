@@ -7,8 +7,7 @@ from testsuite.httpx.auth import HeaderApiKeyAuth
 @pytest.fixture(scope="module")
 def api_key(create_api_key, module_label):
     """Creates API key Secret"""
-    api_key = "api_key_value"
-    return create_api_key("api-key", module_label, api_key)
+    return create_api_key("api-key", module_label, "api_key_value")
 
 
 @pytest.fixture(scope="module")

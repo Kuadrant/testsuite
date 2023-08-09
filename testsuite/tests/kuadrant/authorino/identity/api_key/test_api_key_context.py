@@ -5,9 +5,9 @@ from testsuite.utils import extract_response
 
 
 @pytest.fixture(scope="module")
-def authorization(authorization, module_label):
+def authorization(authorization, api_key):
     """Setup AuthConfig for test"""
-    authorization.identity.api_key("api_key", match_label=module_label)
+    authorization.identity.add_api_key("api_key", selector=api_key.selector)
     authorization.responses.add_simple("auth.identity")
     return authorization
 

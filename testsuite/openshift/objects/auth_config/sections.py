@@ -60,7 +60,7 @@ class Section:
 
     @modify
     def clear_all(self):
-        """Removes all identities from AuthConfig"""
+        """Clears content of a Section"""
         self.section.clear()
 
 
@@ -96,9 +96,9 @@ class IdentitySection(Section):
     def add_api_key(
         self,
         name,
+        selector: Selector,
         *,
         all_namespaces: bool = False,
-        selector: Selector = None,
         credentials: Credentials = None,
         **common_features
     ):

@@ -10,7 +10,7 @@ from testsuite.utils import extract_response
 @pytest.fixture(scope="module")
 def authorization(authorization):
     """Add anonymous identity with low priority to the AuthConfig"""
-    authorization.identity.anonymous("anonymous", priority=1)
+    authorization.identity.add_anonymous("anonymous", priority=1)
     return authorization
 
 

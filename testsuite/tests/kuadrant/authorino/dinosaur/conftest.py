@@ -85,8 +85,9 @@ def resource_info(request, mockserver, module_label):
     return _resource_info
 
 
+# pylint: disable=unused-argument
 @pytest.fixture()
-def commit():
+def commit(authorization):
     """Ensure no default resources are created"""
 
 
