@@ -5,7 +5,7 @@ from typing import Dict, List
 from testsuite.objects import Rule
 from testsuite.openshift.client import OpenShiftClient
 from testsuite.openshift.objects import OpenShiftObject, modify
-from .sections import Identities, Metadata, Responses, Authorizations
+from .sections import IdentitySection, MetadataSection, ResponseSection, AuthorizationSection
 from ..route import Route
 
 
@@ -18,24 +18,24 @@ class AuthConfig(OpenShiftObject):
         return self.model.spec
 
     @cached_property
-    def authorization(self) -> Authorizations:
+    def authorization(self) -> AuthorizationSection:
         """Gives access to authorization settings"""
-        return Authorizations(self, "authorization")
+        return AuthorizationSection(self, "authorization")
 
     @cached_property
-    def identity(self) -> Identities:
+    def identity(self) -> IdentitySection:
         """Gives access to identity settings"""
-        return Identities(self, "identity")
+        return IdentitySection(self, "identity")
 
     @cached_property
-    def metadata(self) -> Metadata:
+    def metadata(self) -> MetadataSection:
         """Gives access to metadata settings"""
-        return Metadata(self, "metadata")
+        return MetadataSection(self, "metadata")
 
     @cached_property
-    def responses(self) -> Responses:
+    def responses(self) -> ResponseSection:
         """Gives access to response settings"""
-        return Responses(self, "response")
+        return ResponseSection(self, "response")
 
     @classmethod
     def create_instance(

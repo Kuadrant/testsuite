@@ -1,10 +1,12 @@
 """Module containing base classes for common objects"""
 import abc
-from dataclasses import dataclass, is_dataclass, fields
+from dataclasses import dataclass, is_dataclass, fields, field
 from copy import deepcopy
-from typing import Literal, Union
+from typing import Literal, Union, Optional
 
 JSONValues = Union[None, str, int, bool, list["JSONValues"], dict[str, "JSONValues"]]
+
+# pylint: disable=invalid-name
 
 
 def asdict(obj) -> dict[str, JSONValues]:
@@ -56,6 +58,30 @@ class MatchExpression:
 
 
 @dataclass
+class Selector:
+    """Dataclass for specifying selectors based on either expression or labels"""
+
+    matchExpressions: Optional[list[MatchExpression]] = field(default=None, kw_only=True)
+    matchLabels: Optional[dict[str, str]] = field(default=None, kw_only=True)
+
+    def __post_init__(self):
+        if not (self.matchLabels is None) ^ (self.matchExpressions is None):
+            raise AttributeError("`matchLabels` xor `matchExpressions` argument must be used")
+
+
+@dataclass
+class Credentials:
+    """Dataclass for Credentials structure"""
+
+    in_location: str
+    keySelector: str
+
+    def asdict(self):
+        """Custom asdict, because I cannot use 'in' as a name"""
+        return {"in": self.in_location, "keySelector": self.keySelector}
+
+
+@dataclass
 class Rule:
     """
     Data class for rules represented by simple pattern-matching expressions.
@@ -90,7 +116,7 @@ class Value(ABCValue):
 class ValueFrom(ABCValue):
     """Dataclass for dynamic Value. It contains reference path to existing value in AuthJson."""
 
-    authJSON: str  # pylint: disable=invalid-name
+    authJSON: str
 
     def asdict(self):
         """Override `asdict` function"""
@@ -121,7 +147,7 @@ class Cache:
 class PatternRef:
     """Dataclass for specifying Pattern reference in Authorization"""
 
-    patternRef: str  # pylint: disable=invalid-name
+    patternRef: str
 
 
 class LifecycleObject(abc.ABC):

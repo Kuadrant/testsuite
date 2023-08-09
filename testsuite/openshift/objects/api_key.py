@@ -1,12 +1,19 @@
 """API Key Secret CR object"""
 import base64
+from functools import cached_property
 
+from testsuite.objects import Selector
 from testsuite.openshift.client import OpenShiftClient
 from testsuite.openshift.objects import OpenShiftObject, modify
 
 
 class APIKey(OpenShiftObject):
     """Represents API Key Secret CR for Authorino"""
+
+    def __init__(self, value, label, dict_to_model=None, string_to_model=None, context=None):
+        self.label = label
+        self.value = value
+        super().__init__(dict_to_model, string_to_model, context)
 
     def __str__(self):
         return base64.b64decode(self.model.data["api_key"]).decode("utf-8")
@@ -26,7 +33,12 @@ class APIKey(OpenShiftObject):
             "type": "Opaque",
         }
 
-        return cls(model, context=openshift.context)
+        return cls(api_key, label, dict_to_model=model, context=openshift.context)
+
+    @cached_property
+    def selector(self):
+        """Return Selector for this ApiKey"""
+        return Selector(matchLabels={"group": self.label})
 
     @modify
     def update_api_key(self, api_key):
