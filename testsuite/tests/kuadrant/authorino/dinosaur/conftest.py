@@ -104,27 +104,23 @@ def authorization(
     request,
 ):
     """Creates AuthConfig object from template"""
-    with resources.path("testsuite.resources", "dinosaur_config.yaml") as path:
-        auth = openshift.new_app(
-            path,
-            {
-                "NAME": blame("ac"),
-                "NAMESPACE": openshift.project,
-                "LABEL": module_label,
-                "HOST": envoy.hostname,
-                "RHSSO_ISSUER": rhsso.well_known["issuer"],
-                "ADMIN_ISSUER": admin_rhsso.well_known["issuer"],
-                "TERMS_AND_CONDITIONS": terms_and_conditions("false"),
-                "CLUSTER_INFO": cluster_info(rhsso.client_name),
-                "RESOURCE_INFO": resource_info("123", rhsso.client_name),
-            },
-        )
+    auth = openshift.new_app(
+        resources.files("testsuite.resources").joinpath("dinosaur_config.yaml"),
+        {
+            "NAME": blame("ac"),
+            "NAMESPACE": openshift.project,
+            "LABEL": module_label,
+            "HOST": envoy.hostname,
+            "RHSSO_ISSUER": rhsso.well_known["issuer"],
+            "ADMIN_ISSUER": admin_rhsso.well_known["issuer"],
+            "TERMS_AND_CONDITIONS": terms_and_conditions("false"),
+            "CLUSTER_INFO": cluster_info(rhsso.client_name),
+            "RESOURCE_INFO": resource_info("123", rhsso.client_name),
+        },
+    )
 
-        def _delete():
-            auth.delete()
-
-        request.addfinalizer(_delete)
-        return auth
+    request.addfinalizer(auth.delete)
+    return auth
 
 
 @pytest.fixture(scope="module")
