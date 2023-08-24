@@ -16,7 +16,7 @@ from testsuite.oidc.auth0 import Auth0Provider
 from testsuite.openshift.httpbin import Httpbin
 from testsuite.openshift.envoy import Envoy
 from testsuite.oidc.rhsso import RHSSO
-from testsuite.openshift.objects.gateway_api.gateway import Gateway
+from testsuite.openshift.objects.gateway_api.gateway import GatewayProxy, Gateway
 from testsuite.openshift.objects.proxy import Proxy
 from testsuite.openshift.objects.route import Route
 from testsuite.utils import randomize, _whoami
@@ -251,11 +251,21 @@ def backend(request, openshift, blame, label):
 
 
 @pytest.fixture(scope="module")
+def gateway(request, openshift, blame, wildcard_domain, module_label) -> Gateway:
+    """Gateway object to use when working with Gateway API"""
+    gateway = Gateway.create_instance(openshift, blame("gw"), "istio", wildcard_domain, {"app": module_label})
+    request.addfinalizer(gateway.delete)
+    gateway.commit()
+    gateway.wait_for_ready()
+    return gateway
+
+
+@pytest.fixture(scope="module")
 def proxy(request, kuadrant, authorino, openshift, blame, backend, module_label, testconfig) -> Proxy:
     """Deploys Envoy that wire up the Backend behind the reverse-proxy and Authorino instance"""
     if kuadrant:
-        config = testconfig["kuadrant"]["gateway"]
-        envoy: Proxy = Gateway(openshift, config["name"], config["project"], module_label, backend)
+        gateway_object = request.getfixturevalue("gateway")
+        envoy: Proxy = GatewayProxy(openshift, gateway_object, module_label, backend)
     else:
         envoy = Envoy(openshift, authorino, blame("envoy"), module_label, backend, testconfig["envoy"]["image"])
     request.addfinalizer(envoy.delete)
