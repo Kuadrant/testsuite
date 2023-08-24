@@ -13,15 +13,15 @@ def authorization(authorization, blame, cert_attributes):
     return authorization
 
 
-def test_mtls_multiple_attributes_success(envoy_authority, valid_cert, envoy):
+def test_mtls_multiple_attributes_success(envoy_authority, valid_cert, route):
     """Test successful mtls authentication with two matching attributes"""
-    with envoy.client(verify=envoy_authority, cert=valid_cert) as client:
+    with route.client(verify=envoy_authority, cert=valid_cert) as client:
         response = client.get("/get")
         assert response.status_code == 200
 
 
-def test_mtls_multiple_attributes_fail(envoy_authority, custom_cert, envoy):
+def test_mtls_multiple_attributes_fail(envoy_authority, custom_cert, route):
     """Test mtls authentication with one matched and one unmatched attributes"""
-    with envoy.client(verify=envoy_authority, cert=custom_cert) as client:
+    with route.client(verify=envoy_authority, cert=custom_cert) as client:
         response = client.get("/get")
         assert response.status_code == 403

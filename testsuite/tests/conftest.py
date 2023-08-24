@@ -16,8 +16,9 @@ from testsuite.oidc.auth0 import Auth0Provider
 from testsuite.openshift.httpbin import Httpbin
 from testsuite.openshift.envoy import Envoy
 from testsuite.oidc.rhsso import RHSSO
-from testsuite.openshift.objects.gateway_api import Gateway
+from testsuite.openshift.objects.gateway_api.gateway import Gateway
 from testsuite.openshift.objects.proxy import Proxy
+from testsuite.openshift.objects.route import Route
 from testsuite.utils import randomize, _whoami
 
 
@@ -250,7 +251,7 @@ def backend(request, openshift, blame, label):
 
 
 @pytest.fixture(scope="module")
-def envoy(request, kuadrant, authorino, openshift, blame, backend, module_label, testconfig) -> Proxy:
+def proxy(request, kuadrant, authorino, openshift, blame, backend, module_label, testconfig) -> Proxy:
     """Deploys Envoy that wire up the Backend behind the reverse-proxy and Authorino instance"""
     if kuadrant:
         config = testconfig["kuadrant"]["gateway"]
@@ -260,6 +261,12 @@ def envoy(request, kuadrant, authorino, openshift, blame, backend, module_label,
     request.addfinalizer(envoy.delete)
     envoy.commit()
     return envoy
+
+
+@pytest.fixture(scope="module")
+def route(proxy, module_label) -> Route:
+    """Exposed Route object"""
+    return proxy.expose_hostname(module_label)
 
 
 @pytest.fixture(scope="session")

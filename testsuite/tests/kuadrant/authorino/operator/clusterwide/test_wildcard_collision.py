@@ -10,7 +10,7 @@ from testsuite.openshift.objects.auth_config import AuthConfig
 
 # pylint: disable = unused-argument
 @pytest.fixture(scope="module")
-def authorization(authorino, blame, openshift, module_label, envoy, wildcard_domain):
+def authorization(authorino, blame, openshift, module_label, proxy, wildcard_domain):
     """In case of Authorino, AuthConfig used for authorization"""
     auth = AuthConfig.create_instance(
         openshift, blame("ac"), None, hostnames=[wildcard_domain], labels={"testRun": module_label}
@@ -21,7 +21,7 @@ def authorization(authorino, blame, openshift, module_label, envoy, wildcard_dom
 
 # pylint: disable = unused-argument
 @pytest.fixture(scope="module")
-def authorization2(authorino, blame, openshift2, module_label, envoy, wildcard_domain):
+def authorization2(authorino, blame, openshift2, module_label, proxy, wildcard_domain):
     """In case of Authorino, AuthConfig used for authorization"""
     auth = AuthConfig.create_instance(
         openshift2, blame("ac"), None, hostnames=[wildcard_domain], labels={"testRun": module_label}

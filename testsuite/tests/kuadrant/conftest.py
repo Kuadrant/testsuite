@@ -36,12 +36,10 @@ def authorization_name(blame):
 
 
 @pytest.fixture(scope="module")
-def authorization(authorino, kuadrant, oidc_provider, envoy, authorization_name, openshift, module_label):
+def authorization(authorino, kuadrant, oidc_provider, route, authorization_name, openshift, module_label):
     """Authorization object (In case of Kuadrant AuthPolicy)"""
     if kuadrant:
-        policy = AuthPolicy.create_instance(
-            openshift, authorization_name, envoy.route, labels={"testRun": module_label}
-        )
+        policy = AuthPolicy.create_instance(openshift, authorization_name, route, labels={"testRun": module_label})
         policy.identity.add_oidc("rhsso", oidc_provider.well_known["issuer"])
         return policy
     return None
@@ -54,12 +52,10 @@ def rate_limit_name(blame):
 
 
 @pytest.fixture(scope="module")
-def rate_limit(kuadrant, openshift, rate_limit_name, envoy, module_label):
+def rate_limit(kuadrant, openshift, rate_limit_name, route, module_label):
     """Rate limit"""
     if kuadrant:
-        return RateLimitPolicy.create_instance(
-            openshift, rate_limit_name, envoy.route, labels={"testRun": module_label}
-        )
+        return RateLimitPolicy.create_instance(openshift, rate_limit_name, route, labels={"testRun": module_label})
     return None
 
 
@@ -73,8 +69,8 @@ def commit(request, authorization, rate_limit):
 
 
 @pytest.fixture(scope="module")
-def client(envoy):
+def client(route):
     """Returns httpx client to be used for requests, it also commits AuthConfig"""
-    client = envoy.client()
+    client = route.client()
     yield client
     client.close()

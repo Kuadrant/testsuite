@@ -142,7 +142,7 @@ def authorino_labels(selector) -> Dict[str, str]:
 
 # pylint: disable-msg=too-many-locals
 @pytest.fixture(scope="module")
-def envoy(
+def proxy(
     request,
     authorino,
     openshift,

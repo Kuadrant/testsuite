@@ -51,14 +51,15 @@ class Gateway(Referencable, Proxy):
             self.route.commit()
         else:
             self.route.add_hostname(route.model.spec.host)
-        self.selector.union(route.self_selector())
+        self.selector = self.selector.union(route.self_selector())
         return HostnameWrapper(self.route, route.model.spec.host)
 
     def commit(self):
         pass
 
     def delete(self):
-        self.selector.delete()
+        with self.openshift.context:
+            self.selector.delete()
 
     @property
     def reference(self):

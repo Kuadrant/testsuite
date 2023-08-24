@@ -1,8 +1,8 @@
 """Test for RHSSO auth credentials"""
 import pytest
 
-from testsuite.objects import Credentials
 from testsuite.openshift.objects.auth_config import AuthConfig
+from testsuite.objects import Credentials
 
 
 @pytest.fixture(scope="module", params=["authorization_header", "custom_header", "query", "cookie"])
@@ -12,9 +12,9 @@ def credentials(request):
 
 
 @pytest.fixture(scope="module")
-def authorization(rhsso, openshift, blame, envoy, module_label, credentials):
+def authorization(rhsso, openshift, blame, route, module_label, credentials):
     """Add RHSSO identity to AuthConfig"""
-    authorization = AuthConfig.create_instance(openshift, blame("ac"), envoy.route, labels={"testRun": module_label})
+    authorization = AuthConfig.create_instance(openshift, blame("ac"), route, labels={"testRun": module_label})
     authorization.identity.add_oidc("rhsso", rhsso.well_known["issuer"], credentials=Credentials(credentials, "Token"))
     return authorization
 
@@ -37,8 +37,8 @@ def test_query(client, auth, credentials):
     assert response.status_code == 200 if credentials == "query" else 401
 
 
-def test_cookie(envoy, auth, credentials):
+def test_cookie(route, auth, credentials):
     """Test if auth credentials are stored in right place"""
-    with envoy.client(cookies={"Token": auth.token.access_token}) as client:
+    with route.client(cookies={"Token": auth.token.access_token}) as client:
         response = client.get("/get")
         assert response.status_code == 200 if credentials == "cookie" else 401

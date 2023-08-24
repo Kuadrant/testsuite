@@ -11,10 +11,12 @@ def envoy(request, authorino, openshift, blame, backend, testconfig):
     """Envoy"""
 
     def _envoy(auth=authorino):
-        envoy = Envoy(openshift, auth, blame("envoy"), blame("label"), backend, testconfig["envoy"]["image"])
+        name = blame("envoy")
+        envoy = Envoy(openshift, auth, name, blame("label"), backend, testconfig["envoy"]["image"])
         request.addfinalizer(envoy.delete)
         envoy.commit()
-        return envoy
+        route = envoy.expose_hostname(name)
+        return route
 
     return _envoy
 
