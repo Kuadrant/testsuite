@@ -64,6 +64,12 @@ class AuthorinoCR(OpenShiftObject, Authorino):
             return selector(f"deployment/{self.name()}").object()
 
     @property
+    def metrics_service(self):
+        """Returns Authorino metrics service APIObject"""
+        with self.context:
+            return selector(f"service/{self.name()}-controller-metrics").object()
+
+    @property
     def authorization_url(self):
         """Return service endpoint for authorization"""
         return f"{self.name()}-authorino-authorization.{self.namespace()}.svc.cluster.local"
