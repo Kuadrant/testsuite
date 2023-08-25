@@ -42,7 +42,7 @@ def authorization(authorino, kuadrant, oidc_provider, envoy, authorization_name,
         policy = AuthPolicy.create_instance(
             openshift, authorization_name, envoy.route, labels={"testRun": module_label}
         )
-        policy.identity.oidc("rhsso", oidc_provider.well_known["issuer"])
+        policy.identity.add_oidc("rhsso", oidc_provider.well_known["issuer"])
         return policy
     return None
 

@@ -7,7 +7,7 @@ from testsuite.utils import extract_response
 @pytest.fixture(scope="module")
 def authorization(authorization, module_label, expectation_path):
     """Adds simple Metadata to the AuthConfig"""
-    authorization.metadata.http_metadata(module_label, expectation_path, "GET")
+    authorization.metadata.add_http(module_label, expectation_path, "GET")
     return authorization
 
 

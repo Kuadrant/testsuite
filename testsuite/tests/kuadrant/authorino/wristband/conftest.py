@@ -62,7 +62,9 @@ def wristband_endpoint(openshift, authorino, authorization_name):
 @pytest.fixture(scope="module")
 def authorization(authorization, wristband_secret, wristband_endpoint) -> AuthConfig:
     """Add wristband response with the signing key to the AuthConfig"""
-    authorization.responses.wristband("wristband", wristband_endpoint, wristband_secret, wrapper="envoyDynamicMetadata")
+    authorization.responses.add_wristband(
+        "wristband", wristband_endpoint, wristband_secret, wrapper="envoyDynamicMetadata"
+    )
     return authorization
 
 
@@ -92,7 +94,7 @@ def authorization_authenticated(openshift, blame, hostname_authenticated, module
         hostnames=[hostname_authenticated],
         labels={"testRun": module_label},
     )
-    authorization.identity.oidc("edge-authenticated", wristband_endpoint)
+    authorization.identity.add_oidc("edge-authenticated", wristband_endpoint)
     return authorization
 
 

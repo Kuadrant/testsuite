@@ -5,5 +5,5 @@ import pytest
 @pytest.fixture(scope="module")
 def authorization(authorization):
     """For Identity tests remove all identities previously setup"""
-    authorization.identity.remove_all()
+    authorization.identity.clear_all()
     return authorization

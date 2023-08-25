@@ -8,7 +8,7 @@ from testsuite.utils import extract_response
 @pytest.fixture(scope="module")
 def authorization(authorization):
     """Add to the AuthConfig response, which will only trigger on POST requests"""
-    authorization.responses.json(
+    authorization.responses.add_json(
         "simple", [Property("data", Value("response"))], when=[Rule("context.request.http.method", "eq", "POST")]
     )
     return authorization

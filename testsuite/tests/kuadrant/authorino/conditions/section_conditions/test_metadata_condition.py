@@ -18,7 +18,7 @@ def authorization(authorization, mockserver_expectation):
     which will be only triggered on POST requests to the endpoint
     """
     when_post = [Rule("context.request.http.method", "eq", "POST")]
-    authorization.metadata.http_metadata("mock", mockserver_expectation, "GET", when=when_post)
+    authorization.metadata.add_http("mock", mockserver_expectation, "GET", when=when_post)
     return authorization
 
 

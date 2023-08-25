@@ -10,7 +10,7 @@ from testsuite.objects import Property, ValueFrom
 @pytest.fixture(scope="module")
 def authorization(authorization):
     """Setup AuthConfig for test"""
-    authorization.responses.json(
+    authorization.responses.add_json(
         "auth-json",
         [
             Property("auth", ValueFrom("auth.identity")),

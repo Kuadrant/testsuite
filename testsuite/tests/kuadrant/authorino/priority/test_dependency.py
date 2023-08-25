@@ -18,9 +18,9 @@ def mockserver_expectation(request, mockserver, module_label):
 @pytest.fixture(scope="module")
 def authorization(authorization, mockserver_expectation):
     """Add to the AuthConfig 2 metadata evaluators with different priorities: latter is dependent on the former"""
-    authorization.metadata.http_metadata("first", mockserver_expectation, "GET", priority=0)
+    authorization.metadata.add_http("first", mockserver_expectation, "GET", priority=0)
     expectation_path_with_prev_uuid_param = mockserver_expectation + "?prev_uuid={auth.metadata.first.uuid}"
-    authorization.metadata.http_metadata("second", expectation_path_with_prev_uuid_param, "GET", priority=1)
+    authorization.metadata.add_http("second", expectation_path_with_prev_uuid_param, "GET", priority=1)
 
     return authorization
 

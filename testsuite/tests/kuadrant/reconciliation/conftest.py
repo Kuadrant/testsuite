@@ -6,7 +6,7 @@ import pytest
 @pytest.fixture(scope="module")
 def authorization(authorization):
     """Add anonymous identity"""
-    authorization.identity.anonymous("anonymous")
+    authorization.identity.add_anonymous("anonymous")
     return authorization
 
 

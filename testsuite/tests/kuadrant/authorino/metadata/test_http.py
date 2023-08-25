@@ -31,8 +31,8 @@ def authorization(authorization, country_mock_expectation, module_label):
     Adds auth metadata HTTP endpoint and simple OPA policy that accepts requests,
     which contain a specific country code in their path - `/anything/{country_code}
     """
-    authorization.metadata.http_metadata("mock", country_mock_expectation, "GET")
-    authorization.authorization.opa_policy("opa_" + module_label, CHECK_COUNTRY_REGO)
+    authorization.metadata.add_http("mock", country_mock_expectation, "GET")
+    authorization.authorization.add_opa_policy("opa_" + module_label, CHECK_COUNTRY_REGO)
     return authorization
 
 

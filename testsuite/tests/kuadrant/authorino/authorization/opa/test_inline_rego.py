@@ -13,7 +13,7 @@ def header():
 @pytest.fixture(scope="module")
 def authorization(authorization, header):
     """Adds OPA policy that accepts all requests that contain `header`"""
-    authorization.authorization.opa_policy("opa", rego_allow_header(*header))
+    authorization.authorization.add_opa_policy("opa", rego_allow_header(*header))
     return authorization
 
 

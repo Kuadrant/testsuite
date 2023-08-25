@@ -12,7 +12,7 @@ def authorization(authorization, wildcard_domain, openshift, module_label) -> Au
     """In case of Authorino, AuthConfig used for authorization"""
     authorization.remove_all_hosts()
     authorization.add_host(wildcard_domain)
-    authorization.responses.json(
+    authorization.responses.add_json(
         "another-json-returned-in-a-header", [Property("propX", Value("valueX"))], wrapper_key="x-ext-auth-other-json"
     )
     return authorization

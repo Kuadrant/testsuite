@@ -1,6 +1,7 @@
 """Test for RHSSO auth credentials"""
 import pytest
 
+from testsuite.objects import Credentials
 from testsuite.openshift.objects.auth_config import AuthConfig
 
 
@@ -14,7 +15,7 @@ def credentials(request):
 def authorization(rhsso, openshift, blame, envoy, module_label, credentials):
     """Add RHSSO identity to AuthConfig"""
     authorization = AuthConfig.create_instance(openshift, blame("ac"), envoy.route, labels={"testRun": module_label})
-    authorization.identity.oidc("rhsso", rhsso.well_known["issuer"], credentials, "Token")
+    authorization.identity.add_oidc("rhsso", rhsso.well_known["issuer"], credentials=Credentials(credentials, "Token"))
     return authorization
 
 

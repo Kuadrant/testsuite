@@ -5,7 +5,7 @@ https://pkg.go.dev/k8s.io/apimachinery@v0.23.0/pkg/apis/meta/v1#LabelSelector
 """
 import pytest
 
-from testsuite.objects import MatchExpression
+from testsuite.objects import MatchExpression, Selector
 
 
 @pytest.fixture(scope="module")
@@ -17,8 +17,8 @@ def valid_label_selectors(module_label):
 @pytest.fixture(scope="module")
 def authorization(authorization, valid_label_selectors):
     """Creates AuthConfig with API key identity"""
-    expression = MatchExpression("In", valid_label_selectors)
-    authorization.identity.api_key("api_key", match_expression=expression)
+    selector = Selector(matchExpressions=[MatchExpression("In", valid_label_selectors)])
+    authorization.identity.add_api_key("api_key", selector=selector)
     return authorization
 
 

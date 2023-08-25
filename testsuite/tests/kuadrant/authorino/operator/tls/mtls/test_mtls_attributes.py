@@ -8,7 +8,7 @@ from testsuite.objects import Rule
 def authorization(authorization, blame, cert_attributes):
     """Add second pattern matching rule to the AuthConfig"""
     rule_country = Rule("auth.identity.Country", "incl", cert_attributes["C"])
-    authorization.authorization.auth_rule(blame("redhat"), rule_country)
+    authorization.authorization.add_auth_rules(blame("redhat"), [rule_country])
 
     return authorization
 

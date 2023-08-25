@@ -6,17 +6,22 @@ from testsuite.httpx.auth import HeaderApiKeyAuth
 
 
 @pytest.fixture(scope="module")
-def auth(create_api_key, module_label):
-    """Create API key and return his auth"""
-    api_key = create_api_key("api-key", module_label, "api_key_value")
+def api_key(create_api_key, module_label):
+    """Create API key"""
+    return create_api_key("api-key", module_label, "api_key_value")
+
+
+@pytest.fixture(scope="module")
+def auth(api_key):
+    """Create auth from Api Key"""
     return HeaderApiKeyAuth(api_key)
 
 
 @pytest.fixture(scope="module")
-def authorization(authorization, module_label):
+def authorization(authorization, api_key):
     """Add to the AuthConfig API key identity, which can only be used on requests to the /get path"""
     when_get = [Rule("context.request.http.path", "eq", "/get")]
-    authorization.identity.api_key("api-key", match_label=module_label, when=when_get)
+    authorization.identity.add_api_key("api-key", selector=api_key.selector, when=when_get)
     return authorization
 
 

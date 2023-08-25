@@ -58,7 +58,7 @@ def authorization(
         authorization = AuthConfig.create_instance(
             openshift, authorization_name, envoy.route, labels={"testRun": module_label}
         )
-    authorization.identity.oidc("rhsso", oidc_provider.well_known["issuer"])
+    authorization.identity.add_oidc("rhsso", oidc_provider.well_known["issuer"])
     return authorization
 
 

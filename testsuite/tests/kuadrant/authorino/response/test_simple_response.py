@@ -9,7 +9,7 @@ from testsuite.objects import Property, Value
 @pytest.fixture(scope="module")
 def authorization(authorization):
     """Add response to Authorization"""
-    authorization.responses.json("header", [Property("anything", Value("one"))])
+    authorization.responses.add_json("header", [Property("anything", Value("one"))])
     return authorization
 
 

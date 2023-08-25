@@ -9,7 +9,7 @@ from testsuite.oidc.rhsso import RHSSO
 @pytest.fixture(scope="module")
 def authorization(authorization, oidc_provider):
     """Add RHSSO identity to AuthConfig"""
-    authorization.identity.oidc("rhsso", oidc_provider.well_known["issuer"])
+    authorization.identity.add_oidc("rhsso", oidc_provider.well_known["issuer"])
     return authorization
 
 
