@@ -1,13 +1,12 @@
 """Module containing all gateway classes"""
 import typing
 
-import openshift
-from openshift import Selector, ModelError
+from openshift import Selector, ModelError, timeout
 
 from testsuite.openshift.client import OpenShiftClient
 from testsuite.openshift.objects import OpenShiftObject
 from testsuite.openshift.objects.proxy import Proxy
-from testsuite.openshift.objects.route import Route
+from testsuite.openshift.objects.route import Route, OpenshiftRoute
 from . import Referencable
 from .route import HTTPRoute, HostnameWrapper
 
@@ -103,7 +102,7 @@ class MGCGateway(Gateway):
 
     def wait_for_ready(self):
         """Waits for the gateway to be ready in the sense of is_ready(self)"""
-        with openshift.timeout(90):
+        with timeout(90):
             success, _, _ = self.self_selector().until_all(success_func=lambda obj: MGCGateway(obj.model).is_ready())
             assert success, "Gateway didn't get ready in time"
             self.refresh()
@@ -123,11 +122,9 @@ class GatewayProxy(Proxy):
         self.route: HTTPRoute = None  # type: ignore
         self.selector: Selector = None  # type: ignore
 
-    def _expose_route(self, name, service):
-        return self.openshift.routes.expose(name, service, port="api")
-
     def expose_hostname(self, name) -> Route:
-        route = self._expose_route(name, self.name)
+        route = OpenshiftRoute.create_instance(self.openshift, name, self.name, "api")
+        route.commit()
         if self.route is None:
             self.route = HTTPRoute.create_instance(
                 self.openshift,

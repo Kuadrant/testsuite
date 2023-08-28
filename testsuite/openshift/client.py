@@ -85,11 +85,6 @@ class OpenShiftClient:
         return True
 
     @cached_property
-    def routes(self):
-        """Return dict-like interface for Routes"""
-        return Routes(self)
-
-    @cached_property
     def secrets(self):
         """Return dict-like interface for Secrets"""
         return Secrets(self)
