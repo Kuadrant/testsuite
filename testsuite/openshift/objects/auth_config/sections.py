@@ -10,6 +10,7 @@ from testsuite.objects import (
     Credentials,
     ValueFrom,
     Property,
+    ExtendedProperty,
 )
 from testsuite.openshift.objects import modify
 
@@ -44,7 +45,14 @@ class Section:
         return self.obj.auth_section.setdefault(self.section_name, [])
 
     def add_item(
-        self, name, value, priority: int = None, when: Iterable[Rule] = None, metrics: bool = None, cache: Cache = None
+        self,
+        name,
+        value,
+        *,
+        priority: int = None,
+        when: Iterable[Rule] = None,
+        metrics: bool = None,
+        cache: Cache = None
     ):
         """Adds item to the section"""
         item = {"name": name, **value}
@@ -66,6 +74,14 @@ class Section:
 
 class IdentitySection(Section):
     """Section which contains identity configuration"""
+
+    def add_item(self, name, value, *, extended_properties: list[ExtendedProperty] = None, **common_features):
+        """
+        Adds optional extendedProperties feature specific to IdentitySection and then calls parent add_item() method
+        """
+        if extended_properties:
+            value["extendedProperties"] = [asdict(i) for i in extended_properties]
+        super().add_item(name, value, **common_features)
 
     @modify
     def add_mtls(self, name: str, selector: Selector, **common_features):
@@ -129,7 +145,7 @@ class IdentitySection(Section):
     @modify
     def add_plain(self, name, auth_json, **common_features):
         """Adds plain identity"""
-        self.add_item(name, {"plain": {"authJSON": auth_json}, **common_features})
+        self.add_item(name, {"plain": {"authJSON": auth_json}}, **common_features)
 
 
 class MetadataSection(Section):
