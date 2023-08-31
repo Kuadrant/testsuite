@@ -1,10 +1,23 @@
 """RateLimitPolicy related objects"""
+from dataclasses import dataclass
 from time import sleep
+from typing import Iterable, Literal
 
 import openshift as oc
+
+from testsuite.objects import Rule, asdict
 from testsuite.openshift.client import OpenShiftClient
 from testsuite.openshift.objects import OpenShiftObject, modify
 from testsuite.openshift.objects.gateway_api import Referencable
+
+
+@dataclass
+class Limit:
+    """Limit dataclass"""
+
+    limit: int
+    duration: int
+    unit: Literal["second", "minute", "day"] = "second"
 
 
 class RateLimitPolicy(OpenShiftObject):
@@ -14,25 +27,26 @@ class RateLimitPolicy(OpenShiftObject):
     def create_instance(cls, openshift: OpenShiftClient, name, route: Referencable, labels: dict[str, str] = None):
         """Creates new instance of RateLimitPolicy"""
         model = {
-            "apiVersion": "kuadrant.io/v1beta1",
+            "apiVersion": "kuadrant.io/v1beta2",
             "kind": "RateLimitPolicy",
-            "metadata": {"name": name, "namespace": openshift.project, "labels": labels},
+            "metadata": {"name": name, "labels": labels},
             "spec": {
                 "targetRef": route.reference,
-                "rateLimits": [{"limits": []}],
+                "limits": {},
             },
         }
 
         return cls(model, context=openshift.context)
 
     @modify
-    def add_limit(self, max_value, seconds, conditions: list[str] = None):
+    def add_limit(self, name, limits: Iterable[Limit], when: Iterable[Rule] = None):
         """Add another limit"""
-        limits = self.model.spec.rateLimits[0].setdefault("limits", [])
-        limit = {"maxValue": max_value, "seconds": seconds}
-        if conditions:
-            limit["conditions"] = conditions
-        limits.append(limit)
+        limit = {
+            "rates": [asdict(limit) for limit in limits],
+        }
+        if when:
+            limit["when"] = [asdict(rule) for rule in when]
+        self.model.spec.limits[name] = limit
 
     def commit(self):
         result = super().commit()

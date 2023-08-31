@@ -4,6 +4,7 @@ import enum
 import json
 import os
 import secrets
+import typing
 from collections.abc import Collection
 from importlib import resources
 from io import StringIO
@@ -16,6 +17,9 @@ from weakget import weakget
 
 from testsuite.certificates import Certificate, CFSSLClient, CertInfo
 from testsuite.config import settings
+
+if typing.TYPE_CHECKING:
+    from testsuite.openshift.objects.rate_limit import Limit
 
 MESSAGE_1KB = resources.files("testsuite.resources.performance.files").joinpath("message_1kb.txt")
 
@@ -112,18 +116,19 @@ def create_csv_file(rows: list) -> StringIO:
     return file
 
 
-def fire_requests(client, max_requests, period, grace_requests=0, iterations=1, path="/get"):
+def fire_requests(client, limit: "Limit", grace_requests=0, iterations=1, path="/get"):
     """
     Fires requests meant to test if it is correctly rate-limited
     :param client: Client instance
-    :param max_requests: Max allowed requests
-    :param period: Time period after which the counter should reset
+    :param limit: Expected rate limit
     :param grace_requests: Number of requests on top of max_requests
      which will be made but not checked, improves stability
     :param iterations: Number of periods to tests
     :param path: URL path of the request
     :return:
     """
+    period = limit.duration
+    max_requests = limit.limit
     url = f"{client.base_url}/{path}"
     for iteration in range(iterations):
         sleep(period)
