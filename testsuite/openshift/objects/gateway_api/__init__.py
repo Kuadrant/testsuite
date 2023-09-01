@@ -121,7 +121,7 @@ class Gateway(Referencable, Proxy):
 
     def add_hostname(self, name) -> str:
         route = self._expose_route(name, self.name)
-        self._selector.union(route.self_selector())
+        self._selector = self._selector.union(route.self_selector())
         self.route.add_hostname(route.model.spec.host)
         return route.model.spec.host
 
@@ -140,8 +140,9 @@ class Gateway(Referencable, Proxy):
         self._route.commit()
 
     def delete(self):
-        self._route.delete()
-        self._selector.delete()
+        with self.openshift.context:
+            self._route.delete()
+            self._selector.delete()
 
     @property
     def reference(self):
