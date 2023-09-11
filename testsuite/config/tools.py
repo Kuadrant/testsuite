@@ -10,7 +10,7 @@ def fetch_route(name, force_http=False):
     def _fetcher(settings, _):
         try:
             openshift = settings["tools"]
-            route = openshift.routes[name]
+            route = openshift.get_route(name)
             if not force_http and "tls" in route.model.spec:
                 return "https://" + route.model.spec.host
             return "http://" + route.model.spec.host
@@ -28,7 +28,7 @@ def fetch_secret(name, key):
     def _fetcher(settings, _):
         try:
             openshift = settings["tools"]
-            return openshift.secrets[name][key]
+            return openshift.get_secret(name)[key]
         # pylint: disable=broad-except
         except Exception:
             logger.warning("Unable to fetch secret %s[%s] from tools", name, key)

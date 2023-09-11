@@ -4,6 +4,7 @@ import pytest
 from testsuite.objects import Property, Value
 from testsuite.httpx import HttpxBackoffClient
 from testsuite.openshift.objects.auth_config import AuthConfig
+from testsuite.openshift.objects.route import OpenshiftRoute
 
 
 # pylint: disable=unused-argument
@@ -27,8 +28,11 @@ def client(authorization, authorino_route):
 
 
 @pytest.fixture(scope="module")
-def authorino_route(authorino, blame, openshift):
+def authorino_route(request, authorino, blame, openshift):
     """Add route for authorino http port to be able to access it."""
-    route = openshift.routes.expose(blame("route"), f"{authorino.name()}-authorino-authorization", port="http")
-    yield route
-    route.delete()
+    route = OpenshiftRoute.create_instance(
+        openshift, blame("route"), f"{authorino.name()}-authorino-authorization", target_port="http"
+    )
+    request.addfinalizer(route.delete)
+    route.commit()
+    return route

@@ -6,6 +6,7 @@ import pytest
 from testsuite.openshift.objects.auth_config import AuthConfig
 from testsuite.openshift.envoy import Envoy
 from testsuite.certificates import CertInfo
+from testsuite.openshift.objects.secret import TLSSecret
 from testsuite.utils import cert_builder
 
 
@@ -25,10 +26,11 @@ def oidc_provider(rhsso):
 def wristband_secret(blame, request, openshift, certificates) -> str:
     """Create signing wristband secret"""
     wristband_secret_name = blame("wristband-signing-key")
-    secret = openshift.create_tls_secret(
-        wristband_secret_name, certificates["signing_ca"], "cert.pem", "key.pem", "Opaque"
+    secret = TLSSecret.create_instance(
+        openshift, wristband_secret_name, certificates["signing_ca"], "cert.pem", "key.pem", "Opaque"
     )
-    request.addfinalizer(lambda: openshift.delete_selector(secret))
+    request.addfinalizer(secret.delete)
+    secret.commit()
     return wristband_secret_name
 
 

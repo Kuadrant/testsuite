@@ -3,15 +3,14 @@
 import enum
 import os
 from functools import cached_property
-from typing import Dict, Optional, Literal
+from typing import Dict
 from urllib.parse import urlparse
 
 import openshift as oc
 from openshift import Context, Selector, OpenShiftPythonException
 
-from testsuite.certificates import Certificate
-from testsuite.openshift.types.routes import Routes
-from testsuite.openshift.types.secrets import Secrets
+from testsuite.openshift.objects.route import OpenshiftRoute
+from testsuite.openshift.objects.secret import Secret
 
 
 class ServiceTypes(enum.Enum):
@@ -84,15 +83,15 @@ class OpenShiftClient:
             return False
         return True
 
-    @cached_property
-    def routes(self):
-        """Return dict-like interface for Routes"""
-        return Routes(self)
+    def get_secret(self, name):
+        """Returns dict-like structure for accessing secret data"""
+        with self.context:
+            return oc.selector(f"secret/{name}").object(cls=Secret)
 
-    @cached_property
-    def secrets(self):
-        """Return dict-like interface for Secrets"""
-        return Secrets(self)
+    def get_route(self, name):
+        """Returns dict-like structure for accessing secret data"""
+        with self.context:
+            return oc.selector(f"route/{name}").object(cls=OpenshiftRoute)
 
     def do_action(self, verb: str, *args, auto_raise: bool = True, parse_output: bool = False):
         """Run an oc command."""
@@ -137,35 +136,3 @@ class OpenShiftClient:
         """
         success, _, _ = selector.until_all(success_func=lambda obj: "readyReplicas" in obj.model.status)
         return success
-
-    def create_tls_secret(
-        self,
-        name: str,
-        certificate: Certificate,
-        cert_name: str = "tls.crt",
-        key_name: str = "tls.key",
-        type_: Literal["kubernetes.io/tls", "Opaque"] = "kubernetes.io/tls",
-        labels: Optional[Dict[str, str]] = None,
-    ):
-        """Creates a TLS or signing Opaque secret"""
-        model: Dict = {
-            "kind": "Secret",
-            "apiVersion": "v1",
-            "metadata": {
-                "name": name,
-                "labels": labels,
-            },
-            "stringData": {
-                cert_name: certificate.chain,
-                key_name: certificate.key,
-            },
-            "type": type_,
-        }
-
-        with self.context:
-            return oc.create(model, ["--save-config=true"])
-
-    def delete_selector(self, selector, ignore_not_found=True):
-        """Deletes all resources from selectior"""
-        with self.context:
-            selector.delete(ignore_not_found=ignore_not_found)

@@ -6,6 +6,7 @@ import pytest
 from testsuite.certificates import Certificate, CertInfo
 from testsuite.objects import Selector
 from testsuite.openshift.envoy import TLSEnvoy
+from testsuite.openshift.objects.secret import TLSSecret
 from testsuite.utils import cert_builder
 
 
@@ -63,8 +64,9 @@ def create_secret(blame, request, openshift):
 
     def _create_secret(certificate: Certificate, name: str, labels: Optional[Dict[str, str]] = None):
         secret_name = blame(name)
-        secret = openshift.create_tls_secret(secret_name, certificate, labels=labels)
-        request.addfinalizer(lambda: openshift.delete_selector(secret))
+        secret = TLSSecret.create_instance(openshift, secret_name, certificate, labels=labels)
+        request.addfinalizer(secret.delete)
+        secret.commit()
         return secret_name
 
     return _create_secret
