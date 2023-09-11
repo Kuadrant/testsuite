@@ -14,14 +14,13 @@ def test_wristband_token_claims(oidc_provider, auth, wristband_token, wristband_
         assert claim not in wristband_decoded
 
 
-def test_wristband_success(client_authenticated, wristband_token):
+def test_wristband_success(authenticated_client, wristband_token):
     """Test api authentication with token that was acquired after successful authentication in the edge"""
-    client_authenticated.headers = {"Authorization": "Bearer " + wristband_token}
-    response = client_authenticated.get("/get")
+    response = authenticated_client.get("/get", headers={"Authorization": "Bearer " + wristband_token})
     assert response.status_code == 200
 
 
-def test_wristband_fail(client_authenticated, auth):
+def test_wristband_fail(authenticated_client, auth):
     """Test api authentication with token that only accepted in the edge"""
-    response = client_authenticated.get("/get", auth=auth)  # oidc access token instead of wristband
+    response = authenticated_client.get("/get", auth=auth)  # oidc access token instead of wristband
     assert response.status_code == 401

@@ -42,11 +42,17 @@ def certificates(cfssl, wildcard_domain):
 
 
 @pytest.fixture(scope="module")
-def envoy(request, authorino, openshift, blame, backend, module_label, testconfig):
+def proxy(request, authorino, openshift, blame, backend, module_label, testconfig):
     """Deploys Envoy with additional edge-route match"""
     wristband_envoy = resources.files("testsuite.resources.wristband").joinpath("envoy.yaml")
     envoy = Envoy(
-        openshift, authorino, blame("envoy"), module_label, backend, testconfig["envoy"]["image"], wristband_envoy
+        openshift,
+        authorino,
+        blame("envoy"),
+        module_label,
+        backend,
+        testconfig["envoy"]["image"],
+        template=wristband_envoy,
     )
     request.addfinalizer(envoy.delete)
     envoy.commit()
@@ -79,19 +85,18 @@ def wristband_token(client, auth):
 
 
 @pytest.fixture(scope="module")
-def hostname_authenticated(envoy, blame):
+def authenticated_route(proxy, blame):
     """Second envoy route, intended for the already authenticated user"""
-    return envoy.add_hostname(blame("route-authenticated"))
+    return proxy.expose_hostname(blame("route-authenticated"))
 
 
 @pytest.fixture(scope="module")
-def authorization_authenticated(openshift, blame, hostname_authenticated, module_label, wristband_endpoint):
+def authenticated_authorization(openshift, blame, authenticated_route, module_label, wristband_endpoint):
     """Second AuthConfig with authorino oidc endpoint, protecting route for the already authenticated user"""
     authorization = AuthConfig.create_instance(
         openshift,
         blame("auth-authenticated"),
-        None,
-        hostnames=[hostname_authenticated],
+        authenticated_route,
         labels={"testRun": module_label},
     )
     authorization.identity.add_oidc("edge-authenticated", wristband_endpoint)
@@ -99,17 +104,16 @@ def authorization_authenticated(openshift, blame, hostname_authenticated, module
 
 
 @pytest.fixture(scope="module")
-def client_authenticated(hostname_authenticated, envoy):
+def authenticated_client(authenticated_route):
     """Client with route for the already authenticated user"""
-    client = envoy.client()
-    client.base_url = f"http://{hostname_authenticated}"
+    client = authenticated_route.client()
     yield client
     client.close()
 
 
 # pylint: disable=unused-argument
 @pytest.fixture(scope="module", autouse=True)
-def commit(request, commit, authorization_authenticated):
+def commit(request, commit, authenticated_authorization):
     """Commits all important stuff before tests"""
-    request.addfinalizer(authorization_authenticated.delete)
-    authorization_authenticated.commit()
+    request.addfinalizer(authenticated_authorization.delete)
+    authenticated_authorization.commit()

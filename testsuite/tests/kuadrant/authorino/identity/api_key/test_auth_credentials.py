@@ -36,8 +36,8 @@ def test_query(client, auth, credentials):
     assert response.status_code == 200 if credentials == "query" else 401
 
 
-def test_cookie(envoy, auth, credentials):
+def test_cookie(route, auth, credentials):
     """Test if auth credentials are stored in right place"""
-    with envoy.client(cookies={"API_KEY": auth.api_key}) as client:
+    with route.client(cookies={"API_KEY": auth.api_key}) as client:
         response = client.get("/get")
         assert response.status_code == 200 if credentials == "cookie" else 401

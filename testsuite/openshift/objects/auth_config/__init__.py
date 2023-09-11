@@ -1,6 +1,6 @@
 """AuthConfig CR object"""
 from functools import cached_property
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from testsuite.objects import Rule
 from testsuite.openshift.client import OpenShiftClient
@@ -39,14 +39,19 @@ class AuthConfig(OpenShiftObject):
 
     @classmethod
     def create_instance(
-        cls, openshift: OpenShiftClient, name, route: Route, labels: Dict[str, str] = None, hostnames: List[str] = None
+        cls,
+        openshift: OpenShiftClient,
+        name,
+        route: Optional[Route],
+        labels: Dict[str, str] = None,
+        hostnames: List[str] = None,
     ):
         """Creates base instance"""
         model: Dict = {
             "apiVersion": "authorino.kuadrant.io/v1beta1",
             "kind": "AuthConfig",
             "metadata": {"name": name, "namespace": openshift.project, "labels": labels},
-            "spec": {"hosts": hostnames or route.hostnames},
+            "spec": {"hosts": hostnames or [route.hostname]},  # type: ignore
         }
 
         return cls(model, context=openshift.context)

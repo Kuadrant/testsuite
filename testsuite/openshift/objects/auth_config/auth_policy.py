@@ -3,7 +3,7 @@ from typing import Dict, List
 
 from testsuite.openshift.client import OpenShiftClient
 from testsuite.openshift.objects.auth_config import AuthConfig
-from testsuite.openshift.objects.gateway_api import HTTPRoute
+from testsuite.openshift.objects.gateway_api.route import HTTPRoute
 
 
 class AuthPolicy(AuthConfig):

@@ -95,7 +95,7 @@ def commit(authorization):
 def authorization(
     openshift,
     blame,
-    envoy,
+    route,
     module_label,
     rhsso,
     terms_and_conditions,
@@ -111,7 +111,7 @@ def authorization(
             "NAME": blame("ac"),
             "NAMESPACE": openshift.project,
             "LABEL": module_label,
-            "HOST": envoy.hostname,
+            "HOST": route.hostname,
             "RHSSO_ISSUER": rhsso.well_known["issuer"],
             "ADMIN_ISSUER": admin_rhsso.well_known["issuer"],
             "TERMS_AND_CONDITIONS": terms_and_conditions("false"),

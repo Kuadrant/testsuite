@@ -159,19 +159,6 @@ objects:
     selector:
       app: ${LABEL}
       svc: envoy
-- apiVersion: route.openshift.io/v1
-  kind: Route
-  metadata:
-    name: ${NAME}
-    labels:
-      app: ${LABEL}
-  spec:
-    path: /
-    to:
-      kind: Service
-      name: ${NAME}
-    port:
-      targetPort: 8000
 parameters:
 - name: NAME
   description: "Name for the resources created"

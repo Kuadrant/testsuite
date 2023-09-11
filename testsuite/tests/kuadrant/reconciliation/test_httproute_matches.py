@@ -1,7 +1,7 @@
 """Tests that HTTPRoute spec.routes.matches changes are reconciled when changed."""
 
 
-def test_matches(client, envoy, resilient_request):
+def test_matches(client, route, resilient_request):
     """
     Tests that HTTPRoute spec.routes.matches changes are reconciled when changed
       * Test that /get works
@@ -12,7 +12,7 @@ def test_matches(client, envoy, resilient_request):
     response = client.get("/get")
     assert response.status_code == 200
 
-    envoy.route.set_match(path_prefix="/anything")
+    route.set_match(path_prefix="/anything")
 
     response = resilient_request("/get", expected_status=404)
     assert response.status_code == 404, "Matches were not reconciled"

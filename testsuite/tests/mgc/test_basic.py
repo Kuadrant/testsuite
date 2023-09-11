@@ -17,7 +17,8 @@ from time import sleep
 import httpx
 import pytest
 from testsuite.openshift.httpbin import Httpbin
-from testsuite.openshift.objects.gateway_api import MGCGateway, HTTPRoute
+from testsuite.openshift.objects.gateway_api.gateway import MGCGateway
+from testsuite.openshift.objects.gateway_api.route import HTTPRoute
 
 pytestmark = [pytest.mark.mgc]
 
@@ -102,7 +103,7 @@ def test_smoke(http_route):
     Tests whether the backend, exposed using the HTTPRoute and Gateway, was exposed correctly,
     having a tls secured endpoint with a hostname managed by MGC
     """
-    backend_hostname = http_route.hostnames[0]
+    backend_hostname = http_route.hostname[0]
     backend_client = httpx.Client(verify=False)  # self-signed certificate; TBD
 
     sleep(30)  # wait for DNS record to propagate correctly; TBD
