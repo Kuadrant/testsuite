@@ -69,14 +69,14 @@ disable = [
 good-names=["i","j","k",
            "pytestmark",
            "logger",
-           "ca"]
+           "ca", "gw"]
 
 # Mypy:
 [tool.mypy]
 implicit_optional = true
 
 [[tool.mypy.overrides]]
-module = ["dynaconf.*", "keycloak.*", "weakget.*", "openshift.*", "apyproxy.*", "click.*"]
+module = ["dynaconf.*", "keycloak.*", "weakget.*", "openshift.*", "apyproxy.*", "click.*", "py.*"]
 ignore_missing_imports = true
 
 [build-system]

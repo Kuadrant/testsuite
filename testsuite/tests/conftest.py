@@ -5,17 +5,16 @@ from urllib.parse import urlparse
 import pytest
 from dynaconf import ValidationError
 from keycloak import KeycloakAuthenticationError
-from openshift import OpenShiftPythonException
 from weakget import weakget
 
+from testsuite.certificates import CFSSLClient
+from testsuite.config import settings
 from testsuite.mockserver import Mockserver
 from testsuite.oidc import OIDCProvider
-from testsuite.config import settings
-from testsuite.certificates import CFSSLClient
 from testsuite.oidc.auth0 import Auth0Provider
-from testsuite.openshift.httpbin import Httpbin
-from testsuite.openshift.envoy import Envoy
 from testsuite.oidc.rhsso import RHSSO
+from testsuite.openshift.envoy import Envoy
+from testsuite.openshift.httpbin import Httpbin
 from testsuite.openshift.objects.gateway_api.gateway import GatewayProxy, Gateway
 from testsuite.openshift.objects.proxy import Proxy
 from testsuite.openshift.objects.route import Route
@@ -229,14 +228,6 @@ def kuadrant(testconfig, openshift):
     if len(kuadrants.model["items"]) == 0:
         pytest.fail("Running Kuadrant tests, but Kuadrant resource was not found")
 
-    # Try if the configured Gateway is deployed
-    gateway_openshift = openshift.change_project(settings["kuadrant"]["gateway"]["project"] % None)
-    name = testconfig["kuadrant"]["gateway"]["name"]
-    try:
-        gateway_openshift.do_action("get", f"Gateway/{name}")
-    except OpenShiftPythonException:
-        pytest.fail(f"Running Kuadrant tests, but Gateway/{name} was not found")
-
     # TODO: Return actual Kuadrant object
     return True
 
@@ -265,7 +256,7 @@ def proxy(request, kuadrant, authorino, openshift, blame, backend, module_label,
     """Deploys Envoy that wire up the Backend behind the reverse-proxy and Authorino instance"""
     if kuadrant:
         gateway_object = request.getfixturevalue("gateway")
-        envoy: Proxy = GatewayProxy(openshift, gateway_object, module_label, backend)
+        envoy: Proxy = GatewayProxy(gateway_object, module_label, backend)
     else:
         envoy = Envoy(openshift, authorino, blame("envoy"), module_label, backend, testconfig["envoy"]["image"])
     request.addfinalizer(envoy.delete)

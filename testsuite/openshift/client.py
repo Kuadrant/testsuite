@@ -34,6 +34,11 @@ class OpenShiftClient:
         self._token = token
         self._kubeconfig_path = kubeconfig_path
 
+    @classmethod
+    def from_context(cls, context: Context) -> "OpenShiftClient":
+        """Creates OpenShiftClient from the context"""
+        return cls(context.get_project(), context.get_api_url(), context.get_token(), context.get_kubeconfig_path())
+
     def change_project(self, project) -> "OpenShiftClient":
         """Return new OpenShiftClient with a different project"""
         return OpenShiftClient(project, self._api_url, self._token, self._kubeconfig_path)
@@ -44,7 +49,7 @@ class OpenShiftClient:
         context = Context()
 
         context.project_name = self._project
-        context.api_url = self._api_url
+        context.api_server = self._api_url
         context.token = self._token
         context.kubeconfig_path = self._kubeconfig_path
 
