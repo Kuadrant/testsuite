@@ -1,7 +1,8 @@
 """Module containing all gateway classes"""
+import json
 import typing
 
-from openshift import Selector, ModelError, timeout
+from openshift import Selector, timeout, selector
 
 from testsuite.openshift.client import OpenShiftClient
 from testsuite.openshift.objects import OpenShiftObject
@@ -37,7 +38,7 @@ class Gateway(OpenShiftObject, Referencable):
                 "listeners": [
                     {
                         "name": "api",
-                        "port": 8080,
+                        "port": 80,
                         "protocol": "HTTP",
                         "hostname": hostname,
                         "allowedRoutes": {"namespaces": {"from": "All"}},
@@ -51,6 +52,11 @@ class Gateway(OpenShiftObject, Referencable):
     def wait_for_ready(self) -> bool:
         """Waits for the gateway to be ready"""
         return True
+
+    @property
+    def openshift(self):
+        """Hostname of the first listener"""
+        return OpenShiftClient.from_context(self.context)
 
     @property
     def hostname(self):
@@ -87,33 +93,49 @@ class MGCGateway(Gateway):
         if placement is not None:
             labels["cluster.open-cluster-management.io/placement"] = placement
 
-        return Gateway.create_instance(openshift, name, gateway_class, hostname, labels)
+        return super(MGCGateway, cls).create_instance(openshift, name, gateway_class, hostname, labels)
+
+    def get_spoke_gateway(self, spokes: dict[str, OpenShiftClient]) -> "MGCGateway":
+        """
+        Returns spoke gateway on an arbitrary, and sometimes, random spoke cluster.
+        Works only for GW deployed on Hub
+        """
+        self.refresh()
+        cluster_name = json.loads(self.model.metadata.annotations["kuadrant.io/gateway-clusters"])[0]
+        spoke_client = spokes[cluster_name]
+        prefix = "kuadrant"
+        spoke_client = spoke_client.change_project(f"{prefix}-{self.namespace()}")
+        with spoke_client.context:
+            return selector(f"gateway/{self.name()}").object(cls=self.__class__)
 
     def is_ready(self):
-        """Checks whether the gateway got its IP address assigned thus is ready"""
-        try:
-            addresses = self.model["status"]["addresses"]
-            multi_cluster_addresses = [
-                address for address in addresses if address["type"] == "kuadrant.io/MultiClusterIPAddress"
-            ]
-            return len(multi_cluster_addresses) > 0
-        except (KeyError, ModelError):
-            return False
+        """Check the programmed status"""
+        for condition in self.model.status.conditions:
+            if condition.type == "Programmed" and condition.status == "True":
+                return True
+        return False
 
     def wait_for_ready(self):
         """Waits for the gateway to be ready in the sense of is_ready(self)"""
-        with timeout(90):
-            success, _, _ = self.self_selector().until_all(success_func=lambda obj: MGCGateway(obj.model).is_ready())
+        with timeout(600):
+            success, _, _ = self.self_selector().until_all(
+                success_func=lambda obj: self.__class__(obj.model).is_ready()
+            )
             assert success, "Gateway didn't get ready in time"
             self.refresh()
+            return success
+
+    def delete(self, ignore_not_found=True, cmd_args=None):
+        with timeout(90):
+            super().delete(ignore_not_found, cmd_args)
 
 
 class GatewayProxy(Proxy):
     """Wrapper for Gateway object to make it a Proxy implementation e.g. exposing hostnames outside of the cluster"""
 
-    def __init__(self, openshift: OpenShiftClient, gateway: Gateway, label, backend: "Httpbin") -> None:
+    def __init__(self, gateway: Gateway, label, backend: "Httpbin") -> None:
         super().__init__()
-        self.openshift = openshift
+        self.openshift = gateway.openshift
         self.gateway = gateway
         self.name = gateway.name()
         self.label = label
@@ -145,4 +167,6 @@ class GatewayProxy(Proxy):
         pass
 
     def delete(self):
-        self.selector.delete()
+        if self.selector:
+            self.selector.delete()
+            self.selector = None

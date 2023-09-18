@@ -24,11 +24,12 @@ def load(obj, env=None, silent=True, key=None, filename=None):
         openshift2 = client.change_project(obj["openshift2"]["project"])
     obj["openshift2"] = openshift2
 
-    kcp = None
-    if "kcp" in obj and "project" in obj["kcp"]:
-        kcp_section = config["kcp"]
-        kcp = client.change_project(kcp_section["project"] % None)
-        # when advanced scheduling is enabled on kcp/syncer, status field is not synced back from workload cluster
-        # deployment, is_ready method depends on status field that is not available yet hence we have to mock it
-        kcp.is_ready = lambda _: True
-    obj["kcp"] = kcp
+    clients = {}
+    spokes = weakget(obj)["mgc"]["spokes"] % {}
+    for name, value in spokes.items():
+        value = weakget(value)
+        clients[name] = OpenShiftClient(
+            value["project"] % None, value["api_url"] % None, value["token"] % None, value["kubeconfig_path"] % None
+        )
+    if len(clients) > 0:
+        obj["mgc"]["spokes"] = clients

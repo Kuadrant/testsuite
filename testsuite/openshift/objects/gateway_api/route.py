@@ -21,6 +21,10 @@ if typing.TYPE_CHECKING:
 class HTTPRoute(OpenShiftObject, Referencable):
     """HTTPRoute object, serves as replacement for Routes and Ingresses"""
 
+    def client(self, **kwargs) -> Client:
+        """Returns HTTPX client"""
+        return HttpxBackoffClient(base_url=f"http://{self.hostnames[0]}", **kwargs)
+
     @classmethod
     def create_instance(
         cls,
@@ -33,7 +37,7 @@ class HTTPRoute(OpenShiftObject, Referencable):
     ):
         """Creates new instance of HTTPRoute"""
         model = {
-            "apiVersion": "gateway.networking.k8s.io/v1alpha2",
+            "apiVersion": "gateway.networking.k8s.io/v1beta1",
             "kind": "HTTPRoute",
             "metadata": {"name": name, "namespace": openshift.project, "labels": labels},
             "spec": {
