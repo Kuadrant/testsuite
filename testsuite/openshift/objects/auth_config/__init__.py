@@ -6,7 +6,6 @@ from testsuite.objects import Rule, asdict
 from testsuite.openshift.client import OpenShiftClient
 from testsuite.openshift.objects import OpenShiftObject, modify
 from .sections import IdentitySection, MetadataSection, ResponseSection, AuthorizationSection
-from ..route import Route
 
 
 class AuthConfig(OpenShiftObject):
@@ -42,19 +41,19 @@ class AuthConfig(OpenShiftObject):
         cls,
         openshift: OpenShiftClient,
         name,
-        route: Optional[Route],
+        route,
         labels: Dict[str, str] = None,
-        hostnames: List[str] = None,
     ):
         """Creates base instance"""
         model: Dict = {
             "apiVersion": "authorino.kuadrant.io/v1beta2",
             "kind": "AuthConfig",
             "metadata": {"name": name, "namespace": openshift.project, "labels": labels},
-            "spec": {"hosts": hostnames or [route.hostname]},  # type: ignore
+            "spec": {"hosts": []},
         }
-
-        return cls(model, context=openshift.context)
+        obj = cls(model, context=openshift.context)
+        route.add_auth_config(obj)
+        return obj
 
     @modify
     def add_host(self, hostname):

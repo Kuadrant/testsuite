@@ -47,9 +47,9 @@ def test_query(client, auth, credentials):
         assert response.status_code == 401
 
 
-def test_cookie(route, auth, credentials):
+def test_cookie(hostname, auth, credentials):
     """Test if auth credentials are stored in right place"""
-    with route.client(cookies={"APIKEY": auth.api_key}) as client:
+    with hostname.client(cookies={"APIKEY": auth.api_key}) as client:
         response = client.get("/get")
         if credentials == "cookie":
             assert response.status_code == 200

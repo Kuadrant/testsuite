@@ -3,96 +3,6 @@ kind: Template
 metadata:
   name: envoy-template
 objects:
-- apiVersion: v1
-  kind: ConfigMap
-  metadata:
-    labels:
-      app: ${LABEL}
-    name: ${NAME}
-  data:
-    envoy.yaml: |
-      static_resources:
-        listeners:
-        - address:
-            socket_address:
-              address: 0.0.0.0
-              port_value: 8000
-          filter_chains:
-          - filters:
-            - name: envoy.http_connection_manager
-              typed_config:
-                "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
-                stat_prefix: local
-                route_config:
-                  name: local_route
-                  virtual_hosts:
-                  - name: local_service
-                    domains: ['*']
-                    typed_per_filter_config:
-                      envoy.filters.http.ext_authz:
-                        "@type": type.googleapis.com/envoy.extensions.filters.http.ext_authz.v3.ExtAuthzPerRoute
-                        check_settings:
-                          context_extensions:
-                            virtual_host: local_service
-                    routes:
-                    - match: { prefix: / }
-                      route:
-                        cluster: httpbin
-                http_filters:
-                - name: envoy.filters.http.ext_authz
-                  typed_config:
-                    "@type": type.googleapis.com/envoy.extensions.filters.http.ext_authz.v3.ExtAuthz
-                    transport_api_version: V3
-                    failure_mode_allow: false
-                    status_on_error: {code: 500}
-                    include_peer_certificate: true
-                    grpc_service:
-                      envoy_grpc:
-                        cluster_name: external_auth
-                      timeout: 1s
-                - name: envoy.filters.http.router
-                  typed_config:
-                    "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
-                use_remote_address: true
-        clusters:
-        - name: external_auth
-          connect_timeout: 0.25s
-          type: strict_dns
-          lb_policy: round_robin
-          load_assignment:
-            cluster_name: external_auth
-            endpoints:
-            - lb_endpoints:
-              - endpoint:
-                  address:
-                    socket_address:
-                      address: ${AUTHORINO_URL}
-                      port_value: 50051
-          typed_extension_protocol_options:
-            envoy.extensions.upstreams.http.v3.HttpProtocolOptions:
-              "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions
-              upstream_http_protocol_options:
-                auto_sni: true
-              explicit_http_config:
-                http2_protocol_options: {}
-        - name: httpbin
-          connect_timeout: 0.25s
-          type: strict_dns
-          lb_policy: round_robin
-          load_assignment:
-            cluster_name: httpbin
-            endpoints:
-            - lb_endpoints:
-              - endpoint:
-                  address:
-                    socket_address:
-                      address: ${UPSTREAM_URL}
-                      port_value: 8080
-      admin:
-        address:
-          socket_address:
-            address: 0.0.0.0
-            port_value: 8001
 - apiVersion: apps/v1
   kind: Deployment
   metadata:
@@ -122,6 +32,12 @@ objects:
           - /usr/local/bin/envoy
           image: ${ENVOY_IMAGE}
           name: envoy
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8001
+            initialDelaySeconds: 3
+            periodSeconds: 4
           ports:
           - containerPort: 8000
             name: web
@@ -146,7 +62,7 @@ objects:
     name: ${NAME}
   spec:
     ports:
-    - name: web
+    - name: api
       port: 8000
       protocol: TCP
     selector:
@@ -159,11 +75,5 @@ parameters:
 - name: LABEL
   description: "App label for all resources"
   required: true
-- name: AUTHORINO_URL
-  description: "Authorino URL"
-  required: true
-- name: UPSTREAM_URL
-  description: "URL for the upstream/backend"
-  required: true
 - name: ENVOY_IMAGE
-  required: false
+  required: true

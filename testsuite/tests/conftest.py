@@ -9,14 +9,17 @@ from keycloak import KeycloakAuthenticationError
 from testsuite.certificates import CFSSLClient
 from testsuite.config import settings
 from testsuite.mockserver import Mockserver
+from testsuite.objects.gateway import Gateway, GatewayRoute
+from testsuite.objects.hostname import Exposer, Hostname
 from testsuite.oidc import OIDCProvider
 from testsuite.oidc.auth0 import Auth0Provider
-from testsuite.oidc.rhsso import RHSSO
-from testsuite.openshift.envoy import Envoy
 from testsuite.openshift.httpbin import Httpbin
-from testsuite.openshift.objects.gateway_api.gateway import GatewayProxy, Gateway
-from testsuite.openshift.objects.proxy import Proxy
-from testsuite.openshift.objects.route import Route
+from testsuite.oidc.rhsso import RHSSO
+from testsuite.openshift.objects.envoy import Envoy
+from testsuite.openshift.objects.envoy.route import EnvoyVirtualRoute
+from testsuite.openshift.objects.gateway_api.gateway import KuadrantGateway
+from testsuite.openshift.objects.gateway_api.hostname import OpenShiftExposer
+from testsuite.openshift.objects.gateway_api.route import HTTPRoute
 from testsuite.utils import randomize, _whoami
 
 
@@ -240,39 +243,52 @@ def backend(request, openshift, blame, label):
 
 
 @pytest.fixture(scope="module")
-def gateway(request, openshift, blame, wildcard_domain, module_label) -> Gateway:
-    """Gateway object to use when working with Gateway API"""
-    gateway = Gateway.create_instance(openshift, blame("gw"), "istio", wildcard_domain, {"app": module_label})
-    request.addfinalizer(gateway.delete)
-    gateway.commit()
-    gateway.wait_for_ready()
-    return gateway
-
-
-@pytest.fixture(scope="module")
-def proxy(request, kuadrant, authorino, openshift, blame, backend, module_label, testconfig) -> Proxy:
+def gateway(request, kuadrant, openshift, blame, backend, module_label, testconfig, wildcard_domain) -> Gateway:
     """Deploys Envoy that wire up the Backend behind the reverse-proxy and Authorino instance"""
     if kuadrant:
-        gateway_object = request.getfixturevalue("gateway")
-        envoy: Proxy = GatewayProxy(gateway_object, module_label, backend)
+        gw = KuadrantGateway.create_instance(openshift, blame("gw"), wildcard_domain, {"app": module_label})
     else:
-        envoy = Envoy(
+        authorino = request.getfixturevalue("authorino")
+        gw = Envoy(
             openshift,
+            blame("gw"),
             authorino,
-            blame("envoy"),
-            module_label,
-            backend,
             testconfig["service_protection"]["envoy"]["image"],
+            labels={"app": module_label},
         )
-    request.addfinalizer(envoy.delete)
-    envoy.commit()
-    return envoy
+    request.addfinalizer(gw.delete)
+    gw.commit()
+    return gw
 
 
 @pytest.fixture(scope="module")
-def route(proxy, module_label) -> Route:
-    """Exposed Route object"""
-    return proxy.expose_hostname(module_label)
+def route(request, kuadrant, gateway, blame, hostname, backend, module_label) -> GatewayRoute:
+    """Route object"""
+    if kuadrant:
+        route = HTTPRoute.create_instance(gateway.openshift, blame("route"), gateway, {"app": module_label})
+    else:
+        route = EnvoyVirtualRoute.create_instance(gateway.openshift, blame("route"), gateway)
+    route.add_hostname(hostname.hostname)
+    route.add_backend(backend)
+    request.addfinalizer(route.delete)
+    route.commit()
+    return route
+
+
+@pytest.fixture(scope="module")
+def exposer(request) -> Exposer:
+    """Exposer object instance"""
+    exposer = OpenShiftExposer()
+    request.addfinalizer(exposer.delete)
+    exposer.commit()
+    return exposer
+
+
+@pytest.fixture(scope="module")
+def hostname(gateway, exposer, blame) -> Hostname:
+    """Exposed Hostname object"""
+    hostname = exposer.expose_hostname(blame("hostname"), gateway)
+    return hostname
 
 
 @pytest.fixture(scope="module")
@@ -281,3 +297,11 @@ def wildcard_domain(openshift):
     Wildcard domain of openshift cluster
     """
     return f"*.{openshift.apps_url}"
+
+
+@pytest.fixture(scope="module")
+def client(route, hostname):
+    """Returns httpx client to be used for requests, it also commits AuthConfig"""
+    client = hostname.client()
+    yield client
+    client.close()

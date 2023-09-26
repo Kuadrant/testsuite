@@ -2,36 +2,57 @@
 import pytest
 
 from testsuite.objects import Value, JsonResponse
-from testsuite.openshift.envoy import Envoy
+from testsuite.openshift.objects.envoy import Envoy
 from testsuite.openshift.objects.auth_config import AuthConfig
+from testsuite.openshift.objects.envoy.route import EnvoyVirtualRoute
 
 
 @pytest.fixture(scope="module")
-def envoy(request, authorino, openshift, blame, backend, testconfig):
-    """Envoy"""
+def setup_gateway(request, openshift, blame, testconfig, module_label):
+    """Factory method for creating Gateways in the test run"""
 
-    def _envoy(auth=authorino):
-        name = blame("envoy")
-        envoy = Envoy(openshift, auth, name, blame("label"), backend, testconfig["envoy"]["image"])
-        request.addfinalizer(envoy.delete)
-        envoy.commit()
-        route = envoy.expose_hostname(name)
-        return route
+    def _envoy(auth):
+        gw = Envoy(
+            openshift,
+            blame("gw"),
+            auth,
+            testconfig["service_protection"]["envoy"]["image"],
+            labels={"app": module_label},
+        )
+        request.addfinalizer(gw.delete)
+        gw.commit()
+        return gw
 
     return _envoy
 
 
+@pytest.fixture(scope="module")
+def setup_route(request, blame, backend, module_label):
+    """Factory method for creating Routes in the test run"""
+
+    def _route(hostname, gateway):
+        route = EnvoyVirtualRoute.create_instance(
+            gateway.openshift, blame("route"), gateway, labels={"app": module_label}
+        )
+        route.add_hostname(hostname)
+        route.add_backend(backend)
+        request.addfinalizer(route.delete)
+        route.commit()
+        return route
+
+    return _route
+
+
 # pylint: disable=unused-argument
 @pytest.fixture(scope="module")
-def authorization(request, authorino, blame, openshift, module_label):
-    """In case of Authorino, AuthConfig used for authorization"""
+def setup_authorization(request, blame, openshift, module_label):
+    """Factory method for creating AuthConfigs in the test run"""
 
-    def _authorization(hostname=None, sharding_label=None):
+    def _authorization(route, sharding_label=None):
         auth = AuthConfig.create_instance(
             openshift,
             blame("ac"),
-            None,
-            hostnames=[hostname],
+            route,
             labels={"testRun": module_label, "sharding": sharding_label},
         )
         auth.responses.add_success_header("header", JsonResponse({"anything": Value(sharding_label)}))

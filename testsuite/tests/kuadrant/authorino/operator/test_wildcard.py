@@ -6,13 +6,18 @@ import pytest
 from testsuite.openshift.objects.auth_config import AuthConfig
 
 
-# pylint: disable = unused-argument
 @pytest.fixture(scope="module")
-def authorization(authorino, blame, openshift, module_label, wildcard_domain):
+def route(route, wildcard_domain, hostname):
+    """Set route for wildcard domain"""
+    route.add_hostname(wildcard_domain)
+    route.remove_hostname(hostname.hostname)
+    return route
+
+
+@pytest.fixture(scope="module")
+def authorization(blame, route, openshift, module_label):
     """In case of Authorino, AuthConfig used for authorization"""
-    return AuthConfig.create_instance(
-        openshift, blame("ac"), None, hostnames=[wildcard_domain], labels={"testRun": module_label}
-    )
+    return AuthConfig.create_instance(openshift, blame("ac"), route, labels={"testRun": module_label})
 
 
 def test_wildcard(client):

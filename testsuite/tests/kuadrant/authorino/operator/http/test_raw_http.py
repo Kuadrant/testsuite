@@ -5,7 +5,7 @@ Test raw http authorization interface.
 
 # pylint: disable=unused-argument
 def test_authorized_via_http(authorization, client, auth):
-    """Test raw http authentization with Keycloak."""
+    """Test raw http authentication with Keycloak."""
     response = client.get("/check", auth=auth)
     assert response.status_code == 200
     assert response.text == ""
@@ -14,7 +14,7 @@ def test_authorized_via_http(authorization, client, auth):
 
 # pylint: disable=unused-argument
 def test_unauthorized_via_http(authorization, client):
-    """Test raw http authentization with unauthorized request."""
+    """Test raw http authentication with unauthorized request."""
     response = client.get("/check")
     assert response.status_code == 401
     assert response.text == ""

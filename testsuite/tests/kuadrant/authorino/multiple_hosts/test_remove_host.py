@@ -1,7 +1,7 @@
 """Test host removal"""
 
 
-def test_removing_host(client, client2, auth, authorization, second_route):
+def test_removing_host(client, client2, auth, route, second_hostname):
     """Tests that after removal of the second host, it stops working, while the first one still works"""
     response = client.get("/get", auth=auth)
     assert response.status_code == 200
@@ -9,7 +9,7 @@ def test_removing_host(client, client2, auth, authorization, second_route):
     response = client2.get("/get", auth=auth)
     assert response.status_code == 200
 
-    authorization.remove_host(second_route.hostname)
+    route.remove_hostname(second_hostname.hostname)
 
     response = client.get("/get", auth=auth)
     assert response.status_code == 200

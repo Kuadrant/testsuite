@@ -66,11 +66,3 @@ def commit(request, authorization, rate_limit):
         if component is not None:
             request.addfinalizer(component.delete)
             component.commit()
-
-
-@pytest.fixture(scope="module")
-def client(route):
-    """Returns httpx client to be used for requests, it also commits AuthConfig"""
-    client = route.client()
-    yield client
-    client.close()

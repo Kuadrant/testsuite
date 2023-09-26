@@ -1,12 +1,12 @@
 """Conftest for Edge Authentication tests"""
-from importlib import resources
 
 import pytest
 
-from testsuite.objects import WristbandSigningKeyRef, WristbandResponse
-from testsuite.openshift.objects.auth_config import AuthConfig
-from testsuite.openshift.envoy import Envoy
 from testsuite.certificates import CertInfo
+from testsuite.objects import WristbandResponse, WristbandSigningKeyRef
+from testsuite.openshift.objects.auth_config import AuthConfig
+from testsuite.openshift.objects.envoy.route import EnvoyVirtualRoute
+from testsuite.openshift.objects.envoy.wristband import WristbandEnvoy
 from testsuite.openshift.objects.secret import TLSSecret
 from testsuite.utils import cert_builder
 
@@ -45,17 +45,14 @@ def certificates(cfssl, wildcard_domain):
 
 
 @pytest.fixture(scope="module")
-def proxy(request, authorino, openshift, blame, backend, module_label, testconfig):
+def gateway(request, authorino, openshift, blame, module_label, testconfig):
     """Deploys Envoy with additional edge-route match"""
-    wristband_envoy = resources.files("testsuite.resources.wristband").joinpath("envoy.yaml")
-    envoy = Envoy(
+    envoy = WristbandEnvoy(
         openshift,
+        blame("gw"),
         authorino,
-        blame("envoy"),
-        module_label,
-        backend,
-        testconfig["envoy"]["image"],
-        template=wristband_envoy,
+        testconfig["service_protection"]["envoy"]["image"],
+        labels={"app": module_label},
     )
     request.addfinalizer(envoy.delete)
     envoy.commit()
@@ -90,18 +87,24 @@ def wristband_token(client, auth):
 
 
 @pytest.fixture(scope="module")
-def authenticated_route(proxy, blame):
+def authenticated_route(exposer, gateway, blame):
     """Second envoy route, intended for the already authenticated user"""
-    return proxy.expose_hostname(blame("route-authenticated"))
+    return exposer.expose_hostname(blame("route"), gateway)
 
 
 @pytest.fixture(scope="module")
-def authenticated_authorization(openshift, blame, authenticated_route, module_label, wristband_endpoint):
+def authenticated_authorization(request, gateway, blame, authenticated_route, module_label, wristband_endpoint):
     """Second AuthConfig with authorino oidc endpoint, protecting route for the already authenticated user"""
+    route = EnvoyVirtualRoute.create_instance(gateway.openshift, blame("route"), gateway)
+    route.add_hostname(authenticated_route.hostname)
+
+    request.addfinalizer(route.delete)
+    route.commit()
+
     authorization = AuthConfig.create_instance(
-        openshift,
+        gateway.openshift,
         blame("auth-authenticated"),
-        authenticated_route,
+        route,
         labels={"testRun": module_label},
     )
     authorization.identity.add_oidc("edge-authenticated", wristband_endpoint)

@@ -3,9 +3,9 @@ import pytest
 from httpx import ReadError, ConnectError
 
 
-def test_mtls_success(envoy_authority, valid_cert, route):
+def test_mtls_success(envoy_authority, valid_cert, hostname):
     """Test successful mtls authentication"""
-    with route.client(verify=envoy_authority, cert=valid_cert) as client:
+    with hostname.client(verify=envoy_authority, cert=valid_cert) as client:
         response = client.get("/get")
         assert response.status_code == 200
 
@@ -21,18 +21,18 @@ def test_mtls_success(envoy_authority, valid_cert, route):
         ),
     ],
 )
-def test_mtls_fail(request, cert_authority, certificate, err, err_match: str, route):
+def test_mtls_fail(request, cert_authority, certificate, err, err_match: str, hostname):
     """Test failed mtls verification"""
     ca = request.getfixturevalue(cert_authority)
     cert = request.getfixturevalue(certificate) if certificate else None
 
     with pytest.raises(err, match=err_match):
-        with route.client(verify=ca, cert=cert) as client:
+        with hostname.client(verify=ca, cert=cert) as client:
             client.get("/get")
 
 
-def test_mtls_unmatched_attributes(envoy_authority, custom_cert, route):
+def test_mtls_unmatched_attributes(envoy_authority, custom_cert, hostname):
     """Test certificate that signed by the trusted CA, though their attributes are unmatched"""
-    with route.client(verify=envoy_authority, cert=custom_cert) as client:
+    with hostname.client(verify=envoy_authority, cert=custom_cert) as client:
         response = client.get("/get")
         assert response.status_code == 403

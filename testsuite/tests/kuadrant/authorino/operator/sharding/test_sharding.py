@@ -9,7 +9,7 @@ def authorino_parameters(authorino_parameters):
     yield authorino_parameters
 
 
-def test_sharding(authorization, authorino, envoy):
+def test_sharding(setup_authorization, setup_gateway, setup_route, authorino, exposer, blame):
     """
     Setup:
         - Create Authorino that watch only AuthConfigs with label `sharding=A`
@@ -21,13 +21,18 @@ def test_sharding(authorization, authorino, envoy):
         - Send a request to the second AuthConfig
         - Assert that the response status code is 404
     """
-    envoy1 = envoy(authorino)
-    envoy2 = envoy(authorino)
-    authorization(envoy1.hostname, "A")
-    authorization(envoy2.hostname, "B")
+    gw = setup_gateway(authorino)
+    hostname = exposer.expose_hostname(blame("first"), gw)
+    route = setup_route(hostname.hostname, gw)
+    setup_authorization(route, sharding_label="A")
 
-    response = envoy1.client().get("/get")
+    gw2 = setup_gateway(authorino)
+    hostname2 = exposer.expose_hostname(blame("second"), gw2)
+    route2 = setup_route(hostname2.hostname, gw2)
+    setup_authorization(route2, sharding_label="B")
+
+    response = hostname.client().get("/get")
     assert response.status_code == 200
 
-    response = envoy2.client().get("/get")
+    response = hostname2.client().get("/get")
     assert response.status_code == 404
