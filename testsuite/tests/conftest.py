@@ -242,9 +242,11 @@ def backend(request, openshift, blame, label):
 
 
 @pytest.fixture(scope="module")
-def gateway(request, openshift, blame, wildcard_domain, module_label) -> Gateway:
+def gateway(request, openshift, blame, wildcard_domain, module_label, testconfig) -> Gateway:
     """Gateway object to use when working with Gateway API"""
-    gateway = Gateway.create_instance(openshift, blame("gw"), "istio", wildcard_domain, {"app": module_label})
+    gateway = Gateway.create_instance(
+        openshift, blame("gw"), "istio", wildcard_domain, testconfig["kuadrant"]["project"], {"app": module_label}
+    )
     request.addfinalizer(gateway.delete)
     gateway.commit()
     gateway.wait_for_ready()

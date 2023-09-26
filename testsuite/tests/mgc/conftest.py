@@ -29,7 +29,7 @@ def spokes(testconfig):
 
 
 @pytest.fixture(scope="module")
-def upstream_gateway(request, openshift, blame, hostname, module_label):
+def upstream_gateway(request, openshift, blame, hostname, module_label, testconfig):
     """Creates and returns configured and ready upstream Gateway"""
     upstream_gateway = MGCGateway.create_instance(
         openshift=openshift,
@@ -37,6 +37,7 @@ def upstream_gateway(request, openshift, blame, hostname, module_label):
         gateway_class="kuadrant-multi-cluster-gateway-instance-per-cluster",
         hostname=f"*.{hostname}",
         placement="http-gateway",
+        kuadrant_namespace=testconfig["kuadrant"]["project"],
         labels={"app": module_label},
     )
     request.addfinalizer(upstream_gateway.delete)

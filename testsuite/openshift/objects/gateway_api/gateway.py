@@ -25,6 +25,7 @@ class Gateway(OpenShiftObject, Referencable):
         name: str,
         gateway_class: str,
         hostname: str,
+        kuadrant_namespace: str,
         labels: dict[str, str] = None,
     ):
         """Creates new instance of Gateway"""
@@ -32,7 +33,11 @@ class Gateway(OpenShiftObject, Referencable):
         model = {
             "apiVersion": "gateway.networking.k8s.io/v1beta1",
             "kind": "Gateway",
-            "metadata": {"name": name, "labels": labels},
+            "metadata": {
+                "name": name,
+                "labels": labels,
+                "annotations": {"kuadrant.io/namespace": kuadrant_namespace},
+            },
             "spec": {
                 "gatewayClassName": gateway_class,
                 "listeners": [
@@ -83,6 +88,7 @@ class MGCGateway(Gateway):
         name: str,
         gateway_class: str,
         hostname: str,
+        kuadrant_namespace: str,
         labels: dict[str, str] = None,
         placement: typing.Optional[str] = None,
     ):
@@ -93,7 +99,9 @@ class MGCGateway(Gateway):
         if placement is not None:
             labels["cluster.open-cluster-management.io/placement"] = placement
 
-        return super(MGCGateway, cls).create_instance(openshift, name, gateway_class, hostname, labels)
+        return super(MGCGateway, cls).create_instance(
+            openshift, name, gateway_class, hostname, kuadrant_namespace, labels
+        )
 
     def get_spoke_gateway(self, spokes: dict[str, OpenShiftClient]) -> "MGCGateway":
         """
