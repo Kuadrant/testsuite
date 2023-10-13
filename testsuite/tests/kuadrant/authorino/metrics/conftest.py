@@ -19,9 +19,9 @@ def prometheus(request, openshift):
     # find thanos-querier route in the openshift-monitoring project
     # this route allows to query metrics
     openshift_monitoring = openshift.change_project("openshift-monitoring")
-    routes = openshift_monitoring.routes.for_service("thanos-querier")
+    routes = openshift_monitoring.get_routes_for_service("thanos-querier")
     if len(routes) > 0:
-        url = ("https://" if "tls" in routes[0]["spec"] else "http://") + routes[0]["spec"]["host"]
+        url = ("https://" if "tls" in routes[0].model.spec else "http://") + routes[0].model.spec.host
         prometheus = Prometheus(url, openshift.token, openshift.project)
         request.addfinalizer(prometheus.close)
         return prometheus
