@@ -98,6 +98,11 @@ class OpenShiftClient:
         with self.context:
             return oc.selector(f"route/{name}").object(cls=OpenshiftRoute)
 
+    def get_routes_for_service(self, service_name: str) -> list[OpenshiftRoute]:
+        """Returns list of routes for given service"""
+        with self.context:
+            return oc.selector("route", field_selectors={"spec.to.name": service_name}).objects(cls=OpenshiftRoute)
+
     def do_action(self, verb: str, *args, auto_raise: bool = True, parse_output: bool = False):
         """Run an oc command."""
         with self.context:
