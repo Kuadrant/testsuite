@@ -5,10 +5,12 @@ from weakget import weakget
 
 from testsuite.openshift.httpbin import Httpbin
 from testsuite.openshift.objects.dnspolicy import DNSPolicy
+from testsuite.openshift.objects.gateway_api import CustomReference
 from testsuite.openshift.objects.gateway_api.gateway import MGCGateway, GatewayProxy
 from testsuite.openshift.objects.gateway_api.route import HTTPRoute
 from testsuite.openshift.objects.proxy import Proxy
 from testsuite.openshift.objects.route import Route
+from testsuite.openshift.objects.tlspolicy import TLSPolicy
 
 
 @pytest.fixture(scope="module")
@@ -41,7 +43,8 @@ def upstream_gateway(request, openshift, blame, hostname, module_label):
     )
     request.addfinalizer(upstream_gateway.delete)
     upstream_gateway.commit()
-    upstream_gateway.wait_for_ready()
+    # we cannot wait here because of referencing not yet existent tls secret which would be provided later by tlspolicy
+    # upstream_gateway.wait_for_ready()
 
     return upstream_gateway
 
@@ -61,6 +64,16 @@ def initial_host(hostname):
     return f"route.{hostname}"
 
 
+@pytest.fixture(scope="session")
+def self_signed_cluster_issuer():
+    """Reference to cluster self-signed certificate issuer"""
+    return CustomReference(
+        group="cert-manager.io",
+        kind="ClusterIssuer",
+        name="selfsigned-cluster-issuer",
+    )
+
+
 @pytest.fixture(scope="module")
 def route(request, proxy, blame, gateway, initial_host, backend) -> Route:
     """Exposed Route object"""
@@ -77,9 +90,12 @@ def route(request, proxy, blame, gateway, initial_host, backend) -> Route:
     return route
 
 
+# pylint: disable=unused-argument
 @pytest.fixture(scope="module")
-def gateway(upstream_gateway, spokes):
+def gateway(upstream_gateway, spokes, hub_policies_commit):
     """Downstream gateway, e.g. gateway on a spoke cluster"""
+    # wait for upstream gateway here to be able to get spoke gateways
+    upstream_gateway.wait_for_ready()
     gw = upstream_gateway.get_spoke_gateway(spokes)
     gw.wait_for_ready()
     return gw
@@ -108,10 +124,23 @@ def dns_policy(blame, upstream_gateway, module_label):
     return policy
 
 
-@pytest.fixture(scope="module", autouse=True)
-def commit(request, dns_policy):
+@pytest.fixture(scope="module")
+def tls_policy(blame, upstream_gateway, module_label, self_signed_cluster_issuer):
+    """TLSPolicy fixture"""
+    policy = TLSPolicy.create_instance(
+        upstream_gateway.openshift,
+        blame("tls"),
+        parent=upstream_gateway,
+        issuer=self_signed_cluster_issuer,
+        labels={"app": module_label},
+    )
+    return policy
+
+
+@pytest.fixture(scope="module")
+def hub_policies_commit(request, upstream_gateway, dns_policy, tls_policy):
     """Commits all important stuff before tests"""
-    for component in [dns_policy]:
+    for component in [dns_policy, tls_policy]:
         if component is not None:
             request.addfinalizer(component.delete)
             component.commit()
