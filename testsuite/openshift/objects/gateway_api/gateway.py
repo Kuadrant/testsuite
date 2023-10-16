@@ -4,6 +4,7 @@ import typing
 
 from openshift import Selector, timeout, selector
 
+from testsuite.certificates import Certificate
 from testsuite.openshift.client import OpenShiftClient
 from testsuite.openshift.objects import OpenShiftObject
 from testsuite.openshift.objects.proxy import Proxy
@@ -93,7 +94,33 @@ class MGCGateway(Gateway):
         if placement is not None:
             labels["cluster.open-cluster-management.io/placement"] = placement
 
-        return super(MGCGateway, cls).create_instance(openshift, name, gateway_class, hostname, labels)
+        instance = super(MGCGateway, cls).create_instance(openshift, name, gateway_class, hostname, labels)
+        instance.model["spec"]["listeners"] = [
+            {
+                "name": "api",
+                "port": 443,
+                "protocol": "HTTPS",
+                "hostname": hostname,
+                "allowedRoutes": {"namespaces": {"from": "All"}},
+                "tls": {
+                    "mode": "Terminate",
+                    "certificateRefs": [{"name": f"{name}-tls", "kind": "Secret"}],
+                },
+            }
+        ]
+
+        return instance
+
+    def get_tls_cert(self) -> Certificate:
+        """Returns TLS certificate used by the gateway"""
+        tls_cert_secret_name = self.model.spec.listeners[0].tls.certificateRefs[0].name
+        tls_cert_secret = self.openshift.get_secret(tls_cert_secret_name)
+        tls_cert = Certificate(
+            key=tls_cert_secret["tls.key"],
+            certificate=tls_cert_secret["tls.crt"],
+            chain=tls_cert_secret["ca.crt"],
+        )
+        return tls_cert
 
     def get_spoke_gateway(self, spokes: dict[str, OpenShiftClient]) -> "MGCGateway":
         """
