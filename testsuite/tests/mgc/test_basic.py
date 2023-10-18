@@ -17,6 +17,8 @@ from time import sleep
 
 import pytest
 
+from testsuite.httpx import HttpxBackoffClient
+
 pytestmark = [pytest.mark.mgc]
 
 
@@ -25,12 +27,16 @@ def test_gateway_readiness(gateway):
     assert gateway.is_ready()
 
 
-def test_smoke(route):
+def test_smoke(route, upstream_gateway):
     """
     Tests whether the backend, exposed using the HTTPRoute and Gateway, was exposed correctly,
     having a tls secured endpoint with a hostname managed by MGC
     """
-    backend_client = route.client(verify=False)  # self-signed certificate; TBD
+
+    tls_cert = upstream_gateway.get_tls_cert()
+
+    # assert that tls_cert is used by the server
+    backend_client = HttpxBackoffClient(base_url=f"https://{route.hostnames[0]}", verify=tls_cert)
 
     sleep(30)  # wait for DNS record to propagate correctly; TBD
 
