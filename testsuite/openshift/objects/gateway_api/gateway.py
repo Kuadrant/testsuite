@@ -113,7 +113,7 @@ class MGCGateway(Gateway):
 
     def get_tls_cert(self) -> Certificate:
         """Returns TLS certificate used by the gateway"""
-        tls_cert_secret_name = self.model.spec.listeners[0].tls.certificateRefs[0].name
+        tls_cert_secret_name = self.cert_secret_name
         tls_cert_secret = self.openshift.get_secret(tls_cert_secret_name)
         tls_cert = Certificate(
             key=tls_cert_secret["tls.key"],
@@ -121,6 +121,11 @@ class MGCGateway(Gateway):
             chain=tls_cert_secret["ca.crt"],
         )
         return tls_cert
+
+    def delete_tls_secret(self):
+        """Deletes secret with TLS certificate used by the gateway"""
+        tls_secret = self.openshift.get_secret(self.cert_secret_name)
+        tls_secret.delete(ignore_not_found=True)
 
     def get_spoke_gateway(self, spokes: dict[str, OpenShiftClient]) -> "MGCGateway":
         """
@@ -155,6 +160,11 @@ class MGCGateway(Gateway):
     def delete(self, ignore_not_found=True, cmd_args=None):
         with timeout(90):
             super().delete(ignore_not_found, cmd_args)
+
+    @property
+    def cert_secret_name(self):
+        """Returns name of the secret with generated TLS certificate"""
+        return self.model.spec.listeners[0].tls.certificateRefs[0].name
 
 
 class GatewayProxy(Proxy):
