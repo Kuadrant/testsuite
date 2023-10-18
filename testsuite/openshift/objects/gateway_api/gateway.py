@@ -172,7 +172,7 @@ class GatewayProxy(Proxy):
         self.selector: Selector = None  # type: ignore
 
     def expose_hostname(self, name) -> Route:
-        route = OpenshiftRoute.create_instance(self.openshift, name, self.name, "api")
+        route = OpenshiftRoute.create_instance(self.openshift, name, f"{self.name}-istio", "api")
         route.commit()
         if self.route is None:
             self.route = HTTPRoute.create_instance(
