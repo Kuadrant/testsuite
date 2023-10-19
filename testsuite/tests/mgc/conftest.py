@@ -41,6 +41,7 @@ def upstream_gateway(request, openshift, blame, hostname, module_label):
         placement="http-gateway",
         labels={"app": module_label},
     )
+    request.addfinalizer(upstream_gateway.delete_tls_secret)  # pylint: disable=no-member
     request.addfinalizer(upstream_gateway.delete)
     upstream_gateway.commit()
     # we cannot wait here because of referencing not yet existent tls secret which would be provided later by tlspolicy
