@@ -4,22 +4,16 @@ import enum
 import json
 import os
 import secrets
-import typing
 from collections.abc import Collection
 from importlib import resources
 from io import StringIO
-from time import sleep
 from typing import Dict, Union
 from urllib.parse import urlparse, ParseResult
 
-import httpx
 from weakget import weakget
 
 from testsuite.certificates import Certificate, CFSSLClient, CertInfo
 from testsuite.config import settings
-
-if typing.TYPE_CHECKING:
-    from testsuite.openshift.objects.rate_limit import Limit
 
 MESSAGE_1KB = resources.files("testsuite.resources.performance.files").joinpath("message_1kb.txt")
 
@@ -114,35 +108,6 @@ def create_csv_file(rows: list) -> StringIO:
     csv.writer(file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL).writerows(rows)
     file.seek(0)
     return file
-
-
-def fire_requests(client, limit: "Limit", grace_requests=0, iterations=1, path="/get"):
-    """
-    Fires requests meant to test if it is correctly rate-limited
-    :param client: Client instance
-    :param limit: Expected rate limit
-    :param grace_requests: Number of requests on top of max_requests
-     which will be made but not checked, improves stability
-    :param iterations: Number of periods to tests
-    :param path: URL path of the request
-    :return:
-    """
-    period = limit.duration
-    max_requests = limit.limit
-    url = f"{client.base_url}/{path}"
-    for iteration in range(iterations):
-        sleep(period)
-        for i in range(max_requests):
-            assert (
-                httpx.get(url).status_code == 200
-            ), f"{i + 1}/{max_requests} request from {iteration + 1} iteration failed"
-
-        for i in range(grace_requests):
-            httpx.get(url)
-
-        assert httpx.get(url).status_code == 429, f"Iteration {iteration + 1} failed to start limiting"
-        sleep(period)
-        assert httpx.get(url).status_code == 200, f"Iteration {iteration + 1} failed to reset limits"
 
 
 def extract_response(response, header="Simple", key="data"):

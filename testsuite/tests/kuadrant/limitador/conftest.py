@@ -1,4 +1,5 @@
-"""Conftest for all limitador tests"""
+"""Conftest for rate limit tests"""
+
 import pytest
 
 

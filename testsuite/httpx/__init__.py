@@ -103,3 +103,11 @@ class HttpxBackoffClient(Client):
             if len(e.args) > 0 and any("Name or service not known" in arg for arg in e.args):
                 raise UnexpectedResponse("Didn't expect 'Name or service not known' error", None) from e
             raise
+
+    def get_many(self, url, count, *, params=None, headers=None, auth=None) -> list[Response]:
+        """Send multiple `GET` requests."""
+        responses = []
+        for _ in range(count):
+            responses.append(self.get(url, params=params, headers=headers, auth=auth))
+
+        return responses
