@@ -9,13 +9,31 @@ from testsuite.objects import (
     Selector,
     Credentials,
     ValueFrom,
-    Property,
-    ExtendedProperty,
 )
 from testsuite.openshift.objects import modify
 
 if TYPE_CHECKING:
     from testsuite.openshift.objects.auth_config import AuthConfig
+
+
+def add_common_features(
+    value: dict,
+    *,
+    priority: int = None,
+    when: Iterable[Rule] = None,
+    metrics: bool = None,
+    cache: Cache = None,
+) -> None:
+    """Add common features to value dict."""
+
+    if when:
+        value["when"] = [asdict(x) for x in when]
+    if metrics:
+        value["metrics"] = metrics
+    if cache:
+        value["cache"] = asdict(cache)
+    if priority:
+        value["priority"] = priority
 
 
 class Section:
@@ -42,29 +60,12 @@ class Section:
     @property
     def section(self):
         """The actual dict section which will be edited"""
-        return self.obj.auth_section.setdefault(self.section_name, [])
+        return self.obj.auth_section.setdefault(self.section_name, {})
 
-    def add_item(
-        self,
-        name,
-        value,
-        *,
-        priority: int = None,
-        when: Iterable[Rule] = None,
-        metrics: bool = None,
-        cache: Cache = None
-    ):
+    def add_item(self, name: str, value: dict, **common_features):
         """Adds item to the section"""
-        item = {"name": name, **value}
-        if when:
-            item["when"] = [asdict(x) for x in when]
-        if metrics:
-            item["metrics"] = metrics
-        if cache:
-            item["cache"] = asdict(cache)
-        if priority:
-            item["priority"] = priority
-        self.section.append(item)
+        add_common_features(value, **common_features)
+        self.section.update({name: value})
 
     @modify
     def clear_all(self):
@@ -75,12 +76,28 @@ class Section:
 class IdentitySection(Section):
     """Section which contains identity configuration"""
 
-    def add_item(self, name, value, *, extended_properties: list[ExtendedProperty] = None, **common_features):
+    def add_item(
+        self,
+        name,
+        value,
+        *,
+        defaults_properties: dict[str, ABCValue] = None,
+        overrides_properties: dict[str, ABCValue] = None,
+        **common_features,
+    ):
         """
-        Adds optional extendedProperties feature specific to IdentitySection and then calls parent add_item() method
+        Adds "defaults" and "overrides" properties for values in AuthJson.
+        Properties of "defaults" type are used as default value when none is defined.
+        Properties of "overrides" type are overriding any existing value.
         """
-        if extended_properties:
-            value["extendedProperties"] = [asdict(i) for i in extended_properties]
+        if defaults_properties:
+            for key, val in defaults_properties.items():
+                value.setdefault("defaults", {}).update({key: asdict(val)})
+
+        if overrides_properties:
+            for key, val in overrides_properties.items():
+                value.setdefault("overrides", {}).update({key: asdict(val)})
+
         super().add_item(name, value, **common_features)
 
     @modify
@@ -90,7 +107,7 @@ class IdentitySection(Section):
             :param name: name of the identity
             :param selector: selector to match
         """
-        self.add_item(name, {"mtls": {"selector": asdict(selector)}, **common_features})
+        self.add_item(name, {"x509": {"selector": asdict(selector)}, **common_features})
 
     @modify
     def add_kubernetes(self, name: str, audiences: list[str], **common_features):
@@ -99,14 +116,14 @@ class IdentitySection(Section):
             :param name: name of the identity
             :param audiences: token audiences
         """
-        self.add_item(name, {"kubernetes": {"audiences": audiences}}, **common_features)
+        self.add_item(name, {"kubernetesTokenReview": {"audiences": audiences}}, **common_features)
 
     @modify
     def add_oidc(self, name, endpoint, *, credentials: Credentials = None, **common_features):
         """Adds OIDC identity"""
         if credentials is None:
-            credentials = Credentials("authorization_header", "Bearer")
-        self.add_item(name, {"oidc": {"endpoint": endpoint}, "credentials": asdict(credentials)}, **common_features)
+            credentials = Credentials("authorizationHeader", "Bearer")
+        self.add_item(name, {"jwt": {"issuerUrl": endpoint}, "credentials": asdict(credentials)}, **common_features)
 
     @modify
     def add_api_key(
@@ -116,7 +133,7 @@ class IdentitySection(Section):
         *,
         all_namespaces: bool = False,
         credentials: Credentials = None,
-        **common_features
+        **common_features,
     ):
         """
         Adds API Key identity
@@ -127,14 +144,14 @@ class IdentitySection(Section):
             :param credentials: locations where credentials are passed
         """
         if credentials is None:
-            credentials = Credentials("authorization_header", "APIKEY")
+            credentials = Credentials("authorizationHeader", "APIKEY")
         self.add_item(
             name,
             {
                 "apiKey": {"selector": asdict(selector), "allNamespaces": all_namespaces},
                 "credentials": asdict(credentials),
             },
-            **common_features
+            **common_features,
         )
 
     @modify
@@ -145,7 +162,7 @@ class IdentitySection(Section):
     @modify
     def add_plain(self, name, auth_json, **common_features):
         """Adds plain identity"""
-        self.add_item(name, {"plain": {"authJSON": auth_json}}, **common_features)
+        self.add_item(name, {"plain": asdict(ValueFrom(auth_json))}, **common_features)
 
 
 class MetadataSection(Section):
@@ -158,12 +175,12 @@ class MetadataSection(Section):
             name,
             {
                 "http": {
-                    "endpoint": endpoint,
+                    "url": endpoint,
                     "method": method,
-                    "headers": [{"name": "Accept", "value": "application/json"}],
+                    "headers": {"Accept": {"value": "application/json"}},
                 }
             },
-            **common_features
+            **common_features,
         )
 
     @modify
@@ -180,35 +197,41 @@ class MetadataSection(Section):
 
 
 class ResponseSection(Section):
-    """Section which contains response configuration"""
+    """Section which contains response configuration. todo envoyDynamicMetadata"""
+
+    @property
+    def success_headers(self):
+        """Nested dict for most of the section."""
+        return self.section.setdefault("success", {}).setdefault("headers", {})
+
+    @modify
+    def clear_success_headers(self):
+        """Clears content of a success headers"""
+        self.success_headers.clear()
 
     def _add(
         self,
         name: str,
         value: dict,
-        wrapper_key: str = None,
-        wrapper: Literal["httpHeader", "envoyDynamicMetadata"] = None,
-        **common_features
+        **common_features,
     ):
         """Add response to AuthConfig"""
-        if wrapper:
-            value["wrapper"] = wrapper
-        if wrapper_key:
-            value["wrapperKey"] = wrapper_key
-
-        self.add_item(name, value, **common_features)
+        add_common_features(value, **common_features)
+        self.success_headers.update({name: value})
 
     def add_simple(self, auth_json: str, name="simple", key="data", **common_features):
         """
         Add simple response to AuthConfig, used for configuring response for debugging purposes,
         which can be easily read back using extract_response
         """
-        self.add_json(name, [Property(key, ValueFrom(auth_json))], **common_features)
+        self.add_json(name, {key: ValueFrom(auth_json)}, **common_features)
 
     @modify
-    def add_json(self, name: str, properties: list[Property], **common_features):
+    def add_json(self, name: str, properties: dict[str, ABCValue], **common_features):
         """Adds json response to AuthConfig"""
-        asdict_properties = [asdict(p) for p in properties]
+        asdict_properties = {}
+        for key, value in properties.items():
+            asdict_properties[key] = asdict(value)
         self._add(name, {"json": {"properties": asdict_properties}}, **common_features)
 
     @modify
@@ -222,7 +245,6 @@ class ResponseSection(Section):
         self._add(
             name,
             {
-                "name": name,
                 "wristband": {
                     "issuer": issuer,
                     "signingKeyRefs": [
@@ -233,7 +255,34 @@ class ResponseSection(Section):
                     ],
                 },
             },
-            **common_features
+            **common_features,
+        )
+
+    @modify
+    def set_deny_with(
+        self,
+        category: Literal["unauthenticated", "unauthorized"],
+        code: int = None,
+        message: ABCValue = None,
+        headers: dict[str, ABCValue] = None,
+        body: ABCValue = None,
+    ):
+        """Set default deny code, message, headers, and body for 'unauthenticated' and 'unauthorized' error."""
+        asdict_message = asdict(message) if message else None
+        asdict_body = asdict(body) if body else None
+        asdict_headers = None
+        if headers:
+            asdict_headers = {}
+            for key, value in headers.items():
+                asdict_headers[key] = asdict(value)
+        self.add_item(
+            category,
+            {
+                "code": code,
+                "message": asdict_message,
+                "headers": asdict_headers,
+                "body": asdict_body,
+            },
         )
 
 
@@ -243,7 +292,7 @@ class AuthorizationSection(Section):
     @modify
     def add_auth_rules(self, name, rules: list[Rule], **common_features):
         """Adds JSON pattern-matching authorization rule (authorization.json)"""
-        self.add_item(name, {"json": {"rules": [asdict(rule) for rule in rules]}}, **common_features)
+        self.add_item(name, {"patternMatching": {"patterns": [asdict(rule) for rule in rules]}}, **common_features)
 
     def add_role_rule(self, name: str, role: str, path: str, **common_features):
         """
@@ -262,14 +311,14 @@ class AuthorizationSection(Section):
     @modify
     def add_opa_policy(self, name, inline_rego, **common_features):
         """Adds Opa (https://www.openpolicyagent.org/docs/latest/) policy to the AuthConfig"""
-        self.add_item(name, {"opa": {"inlineRego": inline_rego}}, **common_features)
+        self.add_item(name, {"opa": {"rego": inline_rego}}, **common_features)
 
     @modify
     def add_external_opa_policy(self, name, endpoint, ttl=0, **common_features):
         """
         Adds OPA policy that is declared as an HTTP endpoint
         """
-        self.add_item(name, {"opa": {"externalRegistry": {"endpoint": endpoint, "ttl": ttl}}}, **common_features)
+        self.add_item(name, {"opa": {"externalPolicy": {"url": endpoint, "ttl": ttl}}}, **common_features)
 
     @modify
     def add_kubernetes(self, name: str, user: ABCValue, resource_attributes: dict, **common_features):
@@ -283,7 +332,7 @@ class AuthorizationSection(Section):
         self.add_item(
             name,
             {
-                "kubernetes": {"user": asdict(user), "resourceAttributes": resource_attributes},
+                "kubernetesSubjectAccessReview": {"user": asdict(user), "resourceAttributes": resource_attributes},
             },
-            **common_features
+            **common_features,
         )

@@ -73,12 +73,14 @@ class Selector:
 class Credentials:
     """Dataclass for Credentials structure"""
 
-    in_location: str
+    in_location: Literal["authorizationHeader", "customHeader", "queryString", "cookie"]
     keySelector: str
 
     def asdict(self):
-        """Custom asdict, because I cannot use 'in' as a name"""
-        return {"in": self.in_location, "keySelector": self.keySelector}
+        """Custom asdict because of needing to put location as parent dict key for inner dict"""
+        if self.in_location == "authorizationHeader":
+            return {self.in_location: {"prefix": self.keySelector}}
+        return {self.in_location: {"name": self.keySelector}}
 
 
 @dataclass
@@ -116,39 +118,7 @@ class Value(ABCValue):
 class ValueFrom(ABCValue):
     """Dataclass for dynamic Value. It contains reference path to existing value in AuthJson."""
 
-    authJSON: str
-
-    def asdict(self):
-        """Override `asdict` function"""
-        return {"valueFrom": {"authJSON": self.authJSON}}
-
-
-@dataclass
-class Property:
-    """Dataclass for static and dynamic values. Property is a Value with name."""
-
-    name: str
-    value: ABCValue
-
-    def asdict(self):
-        """Override `asdict` function"""
-        return {"name": self.name, **asdict(self.value)}
-
-
-@dataclass
-class ExtendedProperty(Property):
-    """
-    Dataclass extending Property class adding optional `overwrite` feature
-    used in extended_properties functionality in Identity section.
-    """
-
-    overwrite: Optional[bool] = None
-
-    def asdict(self):
-        """Extend inherited `asdict` function to include new attributes."""
-        if self.overwrite is not None:
-            return {**super().asdict(), "overwrite": self.overwrite}
-        return super().asdict()
+    selector: str
 
 
 @dataclass

@@ -23,7 +23,7 @@ class AuthPolicy(AuthConfig):
 
     @property
     def auth_section(self):
-        return self.model.spec.setdefault("authScheme", {})
+        return self.model.spec.setdefault("rules", {})
 
     # pylint: disable=unused-argument
     @classmethod
@@ -37,7 +37,7 @@ class AuthPolicy(AuthConfig):
     ):
         """Creates base instance"""
         model: Dict = {
-            "apiVersion": "kuadrant.io/v1beta1",
+            "apiVersion": "kuadrant.io/v1beta2",
             "kind": "AuthPolicy",
             "metadata": {"name": name, "namespace": openshift.project, "labels": labels},
             "spec": {

@@ -25,7 +25,7 @@ class AuthConfig(OpenShiftObject):
     @cached_property
     def identity(self) -> IdentitySection:
         """Gives access to identity settings"""
-        return IdentitySection(self, "identity")
+        return IdentitySection(self, "authentication")
 
     @cached_property
     def metadata(self) -> MetadataSection:
@@ -48,7 +48,7 @@ class AuthConfig(OpenShiftObject):
     ):
         """Creates base instance"""
         model: Dict = {
-            "apiVersion": "authorino.kuadrant.io/v1beta1",
+            "apiVersion": "authorino.kuadrant.io/v1beta2",
             "kind": "AuthConfig",
             "metadata": {"name": name, "namespace": openshift.project, "labels": labels},
             "spec": {"hosts": hostnames or [route.hostname]},  # type: ignore
@@ -70,13 +70,6 @@ class AuthConfig(OpenShiftObject):
     def remove_all_hosts(self):
         """Remove all hosts"""
         self.model.spec.hosts = []
-
-    @modify
-    def set_deny_with(self, code, value):
-        """Set denyWith"""
-        self.auth_section["denyWith"] = {
-            "unauthenticated": {"code": code, "headers": [{"name": "Location", "valueFrom": {"authJSON": value}}]}
-        }
 
     @modify
     def add_rule(self, when: list[Rule]):
