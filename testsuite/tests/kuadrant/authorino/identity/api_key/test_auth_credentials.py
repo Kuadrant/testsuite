@@ -4,7 +4,7 @@ import pytest
 from testsuite.objects import Credentials
 
 
-@pytest.fixture(scope="module", params=["authorization_header", "custom_header", "query", "cookie"])
+@pytest.fixture(scope="module", params=["authorizationHeader", "customHeader", "queryString", "cookie"])
 def credentials(request):
     """Location where are auth credentials passed"""
     return Credentials(request.param, "APIKEY")

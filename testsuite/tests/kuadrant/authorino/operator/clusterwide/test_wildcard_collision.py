@@ -4,7 +4,7 @@ Test for wildcard collisions with clusterwide authorino
 
 import pytest
 
-from testsuite.objects import Property, Value
+from testsuite.objects import Value
 from testsuite.openshift.objects.auth_config import AuthConfig
 
 
@@ -15,7 +15,7 @@ def authorization(authorino, blame, openshift, module_label, proxy, wildcard_dom
     auth = AuthConfig.create_instance(
         openshift, blame("ac"), None, hostnames=[wildcard_domain], labels={"testRun": module_label}
     )
-    auth.responses.add_json("header", [Property("anything", Value("one"))])
+    auth.responses.add_json("header", {"anything": Value("one")})
     return auth
 
 
@@ -26,7 +26,7 @@ def authorization2(authorino, blame, openshift2, module_label, proxy, wildcard_d
     auth = AuthConfig.create_instance(
         openshift2, blame("ac"), None, hostnames=[wildcard_domain], labels={"testRun": module_label}
     )
-    auth.responses.add_json("header", [Property("anything", Value("two"))])
+    auth.responses.add_json("header", {"anything": Value("two")})
     return auth
 
 

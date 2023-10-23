@@ -35,11 +35,11 @@ def authorization(authorization, first_api_key, second_api_key):
     authorization.identity.add_api_key(
         "priority-zero",
         selector=first_api_key.selector,
-        credentials=Credentials("authorization_header", "APIKEY"),
+        credentials=Credentials("authorizationHeader", "APIKEY"),
         priority=0,
     )
     authorization.identity.add_api_key(
-        "priority-one", selector=second_api_key.selector, credentials=Credentials("query", "APIKEY"), priority=1
+        "priority-one", selector=second_api_key.selector, credentials=Credentials("queryString", "APIKEY"), priority=1
     )
 
     return authorization
