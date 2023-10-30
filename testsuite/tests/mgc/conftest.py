@@ -102,11 +102,13 @@ def gateway(upstream_gateway, spokes, hub_policies_commit):
     return gw
 
 
-@pytest.fixture(scope="module")
-def base_domain(openshift):
+@pytest.fixture(scope="module", params=["aws-mz", "gcp-mz"])
+def base_domain(request, openshift):
     """Returns preconfigured base domain"""
+    mz_name = request.param
+
     with openshift.context:
-        zone = selector("managedzone/mgc-dev-mz").object()
+        zone = selector(f"managedzone/{mz_name}").object()
     return zone.model["spec"]["domainName"]
 
 
