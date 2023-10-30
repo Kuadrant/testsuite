@@ -2,7 +2,7 @@
 from functools import cached_property
 from typing import Dict, List, Optional
 
-from testsuite.objects import Rule
+from testsuite.objects import Rule, asdict
 from testsuite.openshift.client import OpenShiftClient
 from testsuite.openshift.objects import OpenShiftObject, modify
 from .sections import IdentitySection, MetadataSection, ResponseSection, AuthorizationSection
@@ -75,4 +75,4 @@ class AuthConfig(OpenShiftObject):
     def add_rule(self, when: list[Rule]):
         """Add rule for the skip of entire AuthConfig"""
         self.auth_section.setdefault("when", [])
-        self.auth_section["when"].extend([vars(x) for x in when])
+        self.auth_section["when"].extend([asdict(x) for x in when])

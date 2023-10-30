@@ -1,7 +1,10 @@
 """Module containing classes related to Auth Policy"""
 from typing import Dict, List
 
+from testsuite.objects import Rule, asdict
+
 from testsuite.openshift.client import OpenShiftClient
+from testsuite.openshift.objects import modify
 from testsuite.openshift.objects.auth_config import AuthConfig
 from testsuite.openshift.objects.gateway_api.route import HTTPRoute
 
@@ -55,3 +58,9 @@ class AuthPolicy(AuthConfig):
 
     def remove_all_hosts(self):
         return self.route.remove_all_hostnames()
+
+    @modify
+    def add_rule(self, when: list[Rule]):
+        """Add rule for the skip of entire AuthPolicy"""
+        self.model.spec.setdefault("when", [])
+        self.model.spec["when"].extend([asdict(x) for x in when])
