@@ -1,7 +1,7 @@
 """Tests for the functionality of the deep-evaluator metric samples"""
 import pytest
 
-from testsuite.objects import Property, Value
+from testsuite.objects import Value
 
 
 @pytest.fixture(scope="module")
@@ -25,7 +25,7 @@ def authorization(authorization, mockserver_expectation):
     authorization.identity.add_anonymous("anonymous", metrics=True)
     authorization.authorization.add_opa_policy("opa", "allow { true }", metrics=True)
     authorization.metadata.add_http("http", mockserver_expectation, "GET", metrics=True)
-    authorization.responses.add_json("json", [Property("auth", Value("response"))], metrics=True)
+    authorization.responses.add_json("json", {"auth": Value("response")}, metrics=True)
 
     return authorization
 

@@ -1,7 +1,7 @@
 """Basic tests for extended properties"""
 import pytest
 
-from testsuite.objects import Value, ValueFrom, ExtendedProperty
+from testsuite.objects import Value, ValueFrom
 from testsuite.utils import extract_response
 
 
@@ -16,14 +16,15 @@ def authorization(authorization, rhsso):
     authorization.identity.add_oidc(
         "rhsso",
         rhsso.well_known["issuer"],
-        extended_properties=[
-            ExtendedProperty("property_static", Value("static")),
-            # ValueFrom points to the request uri
-            ExtendedProperty("property_dynamic", ValueFrom("context.request.http.path")),
-            ExtendedProperty("property_chain_static", ValueFrom("auth.identity.property_static")),
-            ExtendedProperty("property_chain_dynamic", ValueFrom("auth.identity.property_dynamic")),
-            ExtendedProperty("property_chain_self", ValueFrom("auth.identity.property_chain_self"), overwrite=True),
-        ],
+        defaults_properties={
+            "property_static": Value("static"),
+            "property_dynamic": ValueFrom("context.request.http.path"),
+            "property_chain_static": ValueFrom("auth.identity.property_static"),
+            "property_chain_dynamic": ValueFrom("auth.identity.property_dynamic"),
+        },
+        overrides_properties={
+            "property_chain_self": ValueFrom("auth.identity.property_chain_self"),
+        },
     )
     authorization.responses.add_simple("auth.identity")
     return authorization

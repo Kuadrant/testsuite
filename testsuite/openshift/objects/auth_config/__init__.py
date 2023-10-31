@@ -2,7 +2,7 @@
 from functools import cached_property
 from typing import Dict, List, Optional
 
-from testsuite.objects import Rule
+from testsuite.objects import Rule, asdict
 from testsuite.openshift.client import OpenShiftClient
 from testsuite.openshift.objects import OpenShiftObject, modify
 from .sections import IdentitySection, MetadataSection, ResponseSection, AuthorizationSection
@@ -25,7 +25,7 @@ class AuthConfig(OpenShiftObject):
     @cached_property
     def identity(self) -> IdentitySection:
         """Gives access to identity settings"""
-        return IdentitySection(self, "identity")
+        return IdentitySection(self, "authentication")
 
     @cached_property
     def metadata(self) -> MetadataSection:
@@ -48,7 +48,7 @@ class AuthConfig(OpenShiftObject):
     ):
         """Creates base instance"""
         model: Dict = {
-            "apiVersion": "authorino.kuadrant.io/v1beta1",
+            "apiVersion": "authorino.kuadrant.io/v1beta2",
             "kind": "AuthConfig",
             "metadata": {"name": name, "namespace": openshift.project, "labels": labels},
             "spec": {"hosts": hostnames or [route.hostname]},  # type: ignore
@@ -72,14 +72,7 @@ class AuthConfig(OpenShiftObject):
         self.model.spec.hosts = []
 
     @modify
-    def set_deny_with(self, code, value):
-        """Set denyWith"""
-        self.auth_section["denyWith"] = {
-            "unauthenticated": {"code": code, "headers": [{"name": "Location", "valueFrom": {"authJSON": value}}]}
-        }
-
-    @modify
     def add_rule(self, when: list[Rule]):
         """Add rule for the skip of entire AuthConfig"""
         self.auth_section.setdefault("when", [])
-        self.auth_section["when"].extend([vars(x) for x in when])
+        self.auth_section["when"].extend([asdict(x) for x in when])

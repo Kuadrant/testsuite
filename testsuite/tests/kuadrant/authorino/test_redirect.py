@@ -3,6 +3,8 @@ Test for authorino redirect
 """
 import pytest
 
+from testsuite.objects import ValueFrom
+
 STATUS_CODE = 302
 REDIRECT_URL = "http://anything.inavlid?redirect_to="
 
@@ -10,7 +12,11 @@ REDIRECT_URL = "http://anything.inavlid?redirect_to="
 @pytest.fixture(scope="module")
 def authorization(authorization):
     """In case of Authorino, AuthConfig used for authorization"""
-    authorization.set_deny_with(STATUS_CODE, REDIRECT_URL + "{context.request.http.path}")
+    authorization.responses.set_deny_with(
+        "unauthenticated",
+        code=STATUS_CODE,
+        headers={"Location": ValueFrom(REDIRECT_URL + "{context.request.http.path}")},
+    )
     return authorization
 
 

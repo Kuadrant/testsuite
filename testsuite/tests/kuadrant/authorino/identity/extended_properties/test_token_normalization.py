@@ -1,6 +1,6 @@
 """https://github.com/Kuadrant/authorino/blob/main/docs/user-guides/token-normalization.md"""
 import pytest
-from testsuite.objects import Value, ValueFrom, ExtendedProperty, Rule
+from testsuite.objects import Value, ValueFrom, Rule
 from testsuite.httpx.auth import HeaderApiKeyAuth, HttpxOidcClientAuth
 
 
@@ -37,10 +37,12 @@ def authorization(authorization, rhsso, api_key):
     authorization.identity.add_oidc(
         "rhsso",
         rhsso.well_known["issuer"],
-        extended_properties=[ExtendedProperty("roles", ValueFrom("auth.identity.realm_access.roles"))],
+        overrides_properties={"roles": ValueFrom("auth.identity.realm_access.roles")},
     )
     authorization.identity.add_api_key(
-        "api_key", selector=api_key.selector, extended_properties=[ExtendedProperty("roles", Value(["admin"]))]
+        "api_key",
+        selector=api_key.selector,
+        defaults_properties={"roles": Value(["admin"])},
     )
 
     rule = Rule(selector="auth.identity.roles", operator="incl", value="admin")
