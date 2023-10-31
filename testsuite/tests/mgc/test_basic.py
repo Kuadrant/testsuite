@@ -13,8 +13,6 @@ Notes:
 * dnspolicies are created and bound to gateways automatically by mgc operator
 * dnspolicies leak at this moment
 """
-from time import sleep
-
 import pytest
 
 from testsuite.httpx import HttpxBackoffClient
@@ -37,8 +35,6 @@ def test_smoke(route, upstream_gateway):
 
     # assert that tls_cert is used by the server
     backend_client = HttpxBackoffClient(base_url=f"https://{route.hostnames[0]}", verify=tls_cert)
-
-    sleep(30)  # wait for DNS record to propagate correctly; TBD
 
     response = backend_client.get("get")
     assert response.status_code == 200
