@@ -3,7 +3,7 @@ from tempfile import NamedTemporaryFile
 from typing import Union
 
 import backoff
-from httpx import Client, Response
+from httpx import Client, Response, ConnectError
 
 from testsuite.certificates import Certificate
 
@@ -19,7 +19,7 @@ def create_tmp_file(content: str):
 
 
 class UnexpectedResponse(Exception):
-    """Slightly different response attributes were expected"""
+    """Slightly different response attributes were expected or no response was given"""
 
     def __init__(self, msg, response):
         super().__init__(msg)
@@ -58,6 +58,7 @@ class HttpxBackoffClient(Client):
         """Add a new retry code to"""
         self.retry_codes.add(code)
 
+    # pylint: disable=too-many-locals
     @backoff.on_exception(backoff.fibo, UnexpectedResponse, max_tries=8, jitter=None)
     def request(
         self,
@@ -76,21 +77,29 @@ class HttpxBackoffClient(Client):
         timeout=None,
         extensions=None,
     ) -> Response:
-        response = super().request(
-            method,
-            url,
-            content=content,
-            data=data,
-            files=files,
-            json=json,
-            params=params,
-            headers=headers,
-            cookies=cookies,
-            auth=auth,
-            follow_redirects=follow_redirects,
-            timeout=timeout,
-            extensions=extensions,
-        )
-        if response.status_code in self.retry_codes:
-            raise UnexpectedResponse(f"Didn't expect '{response.status_code}' status code", response)
-        return response
+        try:
+            response = super().request(
+                method,
+                url,
+                content=content,
+                data=data,
+                files=files,
+                json=json,
+                params=params,
+                headers=headers,
+                cookies=cookies,
+                auth=auth,
+                follow_redirects=follow_redirects,
+                timeout=timeout,
+                extensions=extensions,
+            )
+            if response.status_code in self.retry_codes:
+                raise UnexpectedResponse(f"Didn't expect '{response.status_code}' status code", response)
+            return response
+        except ConnectError as e:
+            # note: when the code reaches this point, negative caching might have been triggered,
+            # negative caching TTL of SOA record of the zone must be set accordingly,
+            # otherwise retry will fail if the value is too high
+            if len(e.args) > 0 and any("Name or service not known" in arg for arg in e.args):
+                raise UnexpectedResponse("Didn't expect 'Name or service not known' error", None) from e
+            raise
