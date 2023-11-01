@@ -1,0 +1,29 @@
+name: Promotes unstable image to latest
+
+on:
+  workflow_dispatch:
+
+env:
+  IMG_REGISTRY_HOST: quay.io
+  IMG_REGISTRY_ORG: kuadrant
+  IMG_NAME: testsuite
+
+jobs:
+  build:
+    name: Build and push image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Log in to Quay.io
+        uses: redhat-actions/podman-login@v1
+        with:
+          registry: ${{ env.IMG_REGISTRY_HOST }}/${{ env.IMG_REGISTRY_ORG }}
+          username: ${{ secrets.IMG_REGISTRY_USERNAME }}
+          password: ${{ secrets.IMG_REGISTRY_TOKEN }}
+      - name: Create repository name
+        run: |
+          echo "REPOSITORY=${{ env.IMG_REGISTRY_HOST }}/${{ env.IMG_REGISTRY_ORG }}/${{ env.IMG_NAME }}" >> $GITHUB_ENV
+      - name: Promotes to latest
+        run:
+          podman pull ${{ env.REPOSITORY }}:unstable
+          podman tag ${{ env.REPOSITORY }}:unstable ${{ env.REPOSITORY }}:latest
+          podman push ${{ env.REPOSITORY }}:latest

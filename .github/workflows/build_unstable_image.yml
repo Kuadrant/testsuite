@@ -2,12 +2,14 @@ name: Build and push image
 
 on:
   push:
-    tags:
-      - v*
+    branches:
+      - main
 
 env:
   IMG_REGISTRY_HOST: quay.io
   IMG_REGISTRY_ORG: kuadrant
+  IMG_NAME: testsuite
+  IMG_TAGS: unstable
 
 jobs:
   build:
@@ -16,24 +18,11 @@ jobs:
     steps:
       - name: Check out code
         uses: actions/checkout@v3
-      - name: Add tag name
-        id: tag-name
-        run: |
-          echo "IMG_TAGS=$(echo ${{ github.ref_name }} | sed -r 's/(v)(.*)/\2/')" >> $GITHUB_ENV
-      - name: Format version
-        id: format-version
-        run: |
-          echo "IMG_TAGS=${{ env.IMG_TAGS }} $(echo ${{ env.IMG_TAGS }} | sed -r 's/(.*)(\.[0-9]*)(.*)/\1/')" >> $GITHUB_ENV
-      - name: Add latest tag
-        if: ${{ !contains(github.ref_name, 'rc') }}
-        id: add-latest-tag
-        run: |
-          echo "IMG_TAGS=latest ${{ env.IMG_TAGS }}" >> $GITHUB_ENV
       - name: Build Image
         id: build-image
         uses: redhat-actions/buildah-build@v2
         with:
-          image: testsuite
+          image: ${{ env.IMG_NAME }}
           tags: ${{ env.IMG_TAGS }}
           layers: true
           platforms: linux/amd64
