@@ -1,7 +1,6 @@
 """Test for RHSSO auth credentials"""
 import pytest
 
-from testsuite.openshift.objects.auth_config import AuthConfig
 from testsuite.objects import Credentials
 
 
@@ -12,9 +11,9 @@ def credentials(request):
 
 
 @pytest.fixture(scope="module")
-def authorization(rhsso, openshift, blame, route, module_label, credentials):
-    """Add RHSSO identity to AuthConfig"""
-    authorization = AuthConfig.create_instance(openshift, blame("ac"), route, labels={"testRun": module_label})
+def authorization(authorization, rhsso, credentials):
+    """Add RHSSO identity to Authorization"""
+    authorization.identity.clear_all()
     authorization.identity.add_oidc("rhsso", rhsso.well_known["issuer"], credentials=Credentials(credentials, "Token"))
     return authorization
 
@@ -22,23 +21,35 @@ def authorization(rhsso, openshift, blame, route, module_label, credentials):
 def test_custom_selector(client, auth, credentials):
     """Test if auth credentials are stored in right place"""
     response = client.get("/get", headers={"authorization": "Token " + auth.token.access_token})
-    assert response.status_code == 200 if credentials == "authorization_header" else 401
+    if credentials == "authorization_header":
+        assert response.status_code == 200
+    else:
+        assert response.status_code == 401
 
 
 def test_custom_header(client, auth, credentials):
     """Test if auth credentials are stored in right place"""
     response = client.get("/get", headers={"Token": auth.token.access_token})
-    assert response.status_code == 200 if credentials == "custom_header" else 401
+    if credentials == "custom_header":
+        assert response.status_code == 200
+    else:
+        assert response.status_code == 401
 
 
 def test_query(client, auth, credentials):
     """Test if auth credentials are stored in right place"""
     response = client.get("/get", params={"Token": auth.token.access_token})
-    assert response.status_code == 200 if credentials == "query" else 401
+    if credentials == "query":
+        assert response.status_code == 200
+    else:
+        assert response.status_code == 401
 
 
 def test_cookie(route, auth, credentials):
     """Test if auth credentials are stored in right place"""
     with route.client(cookies={"Token": auth.token.access_token}) as client:
         response = client.get("/get")
-        assert response.status_code == 200 if credentials == "cookie" else 401
+        if credentials == "cookie":
+            assert response.status_code == 200
+        else:
+            assert response.status_code == 401
