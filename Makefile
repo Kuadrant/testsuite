@@ -1,4 +1,4 @@
-.PHONY: commit-acceptance pylint mypy black reformat test poetry poetry-no-dev mgc container-image
+.PHONY: commit-acceptance pylint mypy black reformat test performance authorino poetry poetry-no-dev mgc container-image
 
 TB ?= short
 LOGLEVEL ?= INFO
@@ -39,9 +39,13 @@ all-is-package:
 testsuite/%: FORCE poetry-no-dev
 	$(PYTEST) --performance --mgc -v $(flags) $@
 
-test: ## Run test
+test: ## Run tests
 test pytest tests: poetry-no-dev
 	$(PYTEST) -n4 -m 'not flaky' --dist loadfile $(flags) testsuite
+
+authorino: ## Run test
+authorino: poetry-no-dev
+	$(PYTEST) -n4 -m 'not flaky' --dist loadfile $(flags) testsuite/tests/kuadrant/authorino
 
 performance: ## Run performance tests
 performance: poetry-no-dev
