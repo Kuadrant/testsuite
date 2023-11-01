@@ -1,4 +1,5 @@
 """Module containing classes for working with TLS certificates"""
+import datetime
 import dataclasses
 import json
 import shutil
@@ -6,6 +7,8 @@ import subprocess
 from functools import cached_property
 from importlib import resources
 from typing import Optional, List, Dict, Any, Tuple, Collection, Union
+
+from cryptography import x509
 
 
 class CFSSLException(Exception):
@@ -22,13 +25,38 @@ class CertInfo:
     names: Optional[List[Dict[str, str]]] = None
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class Certificate:
     """Object representing Signed certificate"""
 
     key: str
     certificate: str
     chain: str
+
+    @cached_property
+    def decoded(self) -> x509.Certificate:
+        """Returns decoded certificate"""
+        return x509.load_pem_x509_certificate(self.certificate.encode("utf-8"))
+
+    @cached_property
+    def common_names(self) -> list[x509.NameAttribute]:
+        """Returns Common Names of the certificate"""
+        return self.decoded.subject.get_attributes_for_oid(x509.NameOID.COMMON_NAME)
+
+    @cached_property
+    def duration(self) -> datetime.timedelta:
+        """Returns duration of the certificate"""
+        return self.decoded.not_valid_after - self.decoded.not_valid_before
+
+    @cached_property
+    def usages(self) -> x509.KeyUsage:
+        """Returns certificate usages"""
+        return self.decoded.extensions.get_extension_for_class(x509.KeyUsage).value
+
+    @cached_property
+    def algorithm(self) -> x509.ObjectIdentifier:
+        """Returns certificate algorithm"""
+        return self.decoded.signature_algorithm_oid
 
 
 @dataclasses.dataclass

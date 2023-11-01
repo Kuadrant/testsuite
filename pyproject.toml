@@ -16,6 +16,7 @@ pytest-html = "*"
 dynaconf = "*"
 python-keycloak = ">=2.13"
 python-jose = "*"
+cryptography = "*"
 backoff = "*"
 httpx = { version = "*", extras = ["http2"] }
 openshift-client = ">=1.0.14"
