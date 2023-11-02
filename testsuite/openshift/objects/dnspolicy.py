@@ -40,9 +40,8 @@ class DNSPolicy(OpenShiftObject):
         openshift: OpenShiftClient,
         name: str,
         parent: Referencable,
-        healthCheck: HealthCheck = None,
         labels: dict[str, str] = None,
-    ):  # pylint: disable=invalid-name
+    ):
         """Creates new instance of DNSPolicy"""
 
         model: dict = {
@@ -52,12 +51,14 @@ class DNSPolicy(OpenShiftObject):
             "spec": {"targetRef": parent.reference},
         }
 
-        if healthCheck:
-            model["spec"]["healthCheck"] = asdict(healthCheck)
-
         return cls(model, context=openshift.context)
+
+    def set_health_check(self, health_check: HealthCheck):
+        """Sets health check for DNSPolicy"""
+        self.model["spec"]["healthCheck"] = asdict(health_check)
 
     def get_dns_health_probe(self) -> oc.APIObject:
         """Returns DNSHealthCheckProbe object for the created DNSPolicy"""
-        dns_probe = oc.selector("DNSHealthCheckProbe", labels={"kuadrant.io/dnspolicy": self.name()}).object()
+        with self.context:
+            dns_probe = oc.selector("DNSHealthCheckProbe", labels={"kuadrant.io/dnspolicy": self.name()}).object()
         return DNSHealthCheckProbe(dns_probe.model, context=self.context)
