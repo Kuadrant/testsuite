@@ -38,6 +38,7 @@ def upstream_gateway(request, openshift, blame, hostname, module_label):
         name=blame("mgc-gateway"),
         gateway_class="kuadrant-multi-cluster-gateway-instance-per-cluster",
         hostname=f"*.{hostname}",
+        tls=True,
         placement="http-gateway",
         labels={"app": module_label},
     )
