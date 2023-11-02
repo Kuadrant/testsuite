@@ -2,7 +2,7 @@
 import pytest
 
 from testsuite.objects import Value, JsonResponse
-from testsuite.httpx import HttpxBackoffClient
+from testsuite.httpx import KuadrantClient
 from testsuite.openshift.objects.auth_config import AuthConfig
 from testsuite.openshift.objects.route import OpenshiftRoute
 
@@ -20,7 +20,7 @@ def authorization(authorization, wildcard_domain, openshift, module_label) -> Au
 @pytest.fixture(scope="module")
 def client(authorization, authorino_route):
     """Returns httpx client to be used for requests, it also commits AuthConfig"""
-    client = HttpxBackoffClient(base_url=f"http://{authorino_route.model.spec.host}", verify=False)
+    client = KuadrantClient(base_url=f"http://{authorino_route.model.spec.host}", verify=False)
     yield client
     client.close()
 

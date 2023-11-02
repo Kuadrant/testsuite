@@ -6,7 +6,7 @@ from functools import cached_property
 
 from httpx import Client
 
-from testsuite.httpx import HttpxBackoffClient
+from testsuite.httpx import KuadrantClient
 from testsuite.openshift.client import OpenShiftClient
 from testsuite.openshift.objects import modify, OpenShiftObject
 from testsuite.openshift.objects.route import Route
@@ -23,7 +23,7 @@ class HTTPRoute(OpenShiftObject, Referencable):
 
     def client(self, **kwargs) -> Client:
         """Returns HTTPX client"""
-        return HttpxBackoffClient(base_url=f"http://{self.hostnames[0]}", **kwargs)
+        return KuadrantClient(base_url=f"http://{self.hostnames[0]}", **kwargs)
 
     @classmethod
     def create_instance(
@@ -106,7 +106,7 @@ class HostnameWrapper(Route, Referencable):
         return self._hostname
 
     def client(self, **kwargs) -> Client:
-        return HttpxBackoffClient(base_url=f"http://{self.hostname}", **kwargs)
+        return KuadrantClient(base_url=f"http://{self.hostname}", **kwargs)
 
     @property
     def reference(self) -> dict[str, str]:

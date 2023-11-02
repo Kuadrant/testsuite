@@ -1,9 +1,11 @@
 """Common classes for Httpx"""
+# I change return type of HTTPX client to Kuadrant Result
+# mypy: disable-error-code="override, return-value"
 from tempfile import NamedTemporaryFile
 from typing import Union
 
 import backoff
-from httpx import Client, Response, ConnectError
+from httpx import Client, ConnectError
 
 from testsuite.certificates import Certificate
 
@@ -18,15 +20,46 @@ def create_tmp_file(content: str):
     return file
 
 
-class UnexpectedResponse(Exception):
-    """Slightly different response attributes were expected or no response was given"""
+class Result:
+    """Result from HTTP request"""
 
-    def __init__(self, msg, response):
-        super().__init__(msg)
+    def __init__(self, retry_codes, response=None, error=None):
         self.response = response
+        self.error = error
+        self.retry_codes = retry_codes
+
+    def should_backoff(self):
+        """True, if the Result can be considered an instability and should be retried"""
+        return self.has_dns_error() or (not self.has_error() and self.status_code in self.retry_codes)
+
+    def has_error(self):
+        """True, if the request failed and an error was returned"""
+        return self.error is not None
+
+    def has_dns_error(self):
+        """True, if the result failed due to DNS failure"""
+        return (
+            self.has_error()
+            and len(self.error.args) > 0
+            and any("Name or service not known" in arg for arg in self.error.args)
+        )
+
+    def has_tls_error(self):
+        """True, if the result failed due to TLS failure"""
+        return (
+            self.has_error()
+            and len(self.error.args) > 0
+            and any("SSL: CERTIFICATE_VERIFY_FAILED" in arg for arg in self.error.args)
+        )
+
+    def __getattr__(self, item):
+        """For backwards compatibility"""
+        if self.response is not None:
+            return getattr(self.response, item)
+        return None
 
 
-class HttpxBackoffClient(Client):
+class KuadrantClient(Client):
     """Httpx client which retries unstable requests"""
 
     def __init__(self, *, verify: Union[Certificate, bool] = True, cert: Certificate = None, **kwargs):
@@ -59,7 +92,7 @@ class HttpxBackoffClient(Client):
         self.retry_codes.add(code)
 
     # pylint: disable=too-many-locals
-    @backoff.on_exception(backoff.fibo, UnexpectedResponse, max_tries=8, jitter=None)
+    @backoff.on_predicate(backoff.fibo, lambda result: result.should_backoff(), max_tries=8, jitter=None)
     def request(
         self,
         method: str,
@@ -76,7 +109,7 @@ class HttpxBackoffClient(Client):
         follow_redirects=None,
         timeout=None,
         extensions=None,
-    ) -> Response:
+    ) -> Result:
         try:
             response = super().request(
                 method,
@@ -93,18 +126,14 @@ class HttpxBackoffClient(Client):
                 timeout=timeout,
                 extensions=extensions,
             )
-            if response.status_code in self.retry_codes:
-                raise UnexpectedResponse(f"Didn't expect '{response.status_code}' status code", response)
-            return response
+            return Result(self.retry_codes, response=response)
         except ConnectError as e:
-            # note: when the code reaches this point, negative caching might have been triggered,
-            # negative caching TTL of SOA record of the zone must be set accordingly,
-            # otherwise retry will fail if the value is too high
-            if len(e.args) > 0 and any("Name or service not known" in arg for arg in e.args):
-                raise UnexpectedResponse("Didn't expect 'Name or service not known' error", None) from e
-            raise
+            return Result(self.retry_codes, error=e)
 
-    def get_many(self, url, count, *, params=None, headers=None, auth=None) -> list[Response]:
+    def get(self, *args, **kwargs) -> Result:
+        return super().get(*args, **kwargs)
+
+    def get_many(self, url, count, *, params=None, headers=None, auth=None) -> list[Result]:
         """Send multiple `GET` requests."""
         responses = []
         for _ in range(count):

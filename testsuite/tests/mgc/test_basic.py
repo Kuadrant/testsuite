@@ -15,7 +15,7 @@ Notes:
 """
 import pytest
 
-from testsuite.httpx import HttpxBackoffClient
+from testsuite.httpx import KuadrantClient
 
 pytestmark = [pytest.mark.mgc]
 
@@ -34,7 +34,9 @@ def test_smoke(route, upstream_gateway):
     tls_cert = upstream_gateway.get_tls_cert()
 
     # assert that tls_cert is used by the server
-    backend_client = HttpxBackoffClient(base_url=f"https://{route.hostnames[0]}", verify=tls_cert)
+    backend_client = KuadrantClient(base_url=f"https://{route.hostnames[0]}", verify=tls_cert)
 
-    response = backend_client.get("get")
-    assert response.status_code == 200
+    result = backend_client.get("get")
+    assert not result.has_dns_error()
+    assert not result.has_tls_error()
+    assert result.status_code == 200
