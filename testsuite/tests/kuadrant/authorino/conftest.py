@@ -1,6 +1,5 @@
 """Conftest for Authorino tests"""
 import pytest
-from weakget import weakget
 
 from testsuite.httpx.auth import HttpxOidcClientAuth
 from testsuite.objects import Authorino, PreexistingAuthorino
@@ -22,13 +21,14 @@ def authorino(authorino, openshift, blame, request, testconfig, module_label, au
     if authorino:
         return authorino
 
-    if not testconfig["authorino"]["deploy"]:
+    authorino_config = testconfig["service_protection"]["authorino"]
+    if not authorino_config["deploy"]:
         if len(authorino_parameters) > 0:
             return pytest.skip("Can't change parameters of already deployed Authorino")
         return PreexistingAuthorino(
-            testconfig["authorino"]["auth_url"],
-            testconfig["authorino"]["oidc_url"],
-            testconfig["authorino"]["metrics_service_name"],
+            authorino_config["auth_url"],
+            authorino_config["oidc_url"],
+            authorino_config["metrics_service_name"],
         )
 
     labels = authorino_parameters.setdefault("label_selectors", [])
@@ -38,8 +38,8 @@ def authorino(authorino, openshift, blame, request, testconfig, module_label, au
 
     authorino = AuthorinoCR.create_instance(
         openshift,
-        image=weakget(testconfig)["authorino"]["image"] % None,
-        log_level=weakget(testconfig)["authorino"]["log_level"] % None,
+        image=authorino_config.get("image"),
+        log_level=authorino_config.get("log_level"),
         **authorino_parameters,
     )
     request.addfinalizer(lambda: authorino.delete(ignore_not_found=True))

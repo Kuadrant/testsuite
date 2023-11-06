@@ -5,10 +5,10 @@ from testsuite.openshift.objects.gateway_api.gateway import MGCGateway
 
 
 @pytest.fixture(scope="module")
-def upstream_gateway(request, openshift, blame, hostname, module_label):
+def upstream_gateway(request, hub_openshift, blame, hostname, module_label):
     """Creates and returns configured and ready upstream Gateway with disabled tls"""
     upstream_gateway = MGCGateway.create_instance(
-        openshift=openshift,
+        openshift=hub_openshift,
         name=blame("mgc-gateway"),
         gateway_class="kuadrant-multi-cluster-gateway-instance-per-cluster",
         hostname=f"*.{hostname}",

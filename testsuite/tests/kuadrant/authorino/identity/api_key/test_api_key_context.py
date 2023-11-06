@@ -12,7 +12,7 @@ def authorization(authorization, api_key):
     return authorization
 
 
-def tests_api_key_context(client, auth, api_key, module_label, testconfig):
+def tests_api_key_context(client, auth, api_key, module_label, openshift):
     """
     Test:
         - Make request with API key authentication
@@ -22,5 +22,5 @@ def tests_api_key_context(client, auth, api_key, module_label, testconfig):
     assert response.status_code == 200
     identity = extract_response(response)
     assert identity["data"]["api_key"] % None == api_key.model.data.api_key
-    assert identity["metadata"]["namespace"] % None == testconfig["openshift"].project
+    assert identity["metadata"]["namespace"] % None == openshift.project
     assert identity["metadata"]["labels"]["group"] % None == module_label

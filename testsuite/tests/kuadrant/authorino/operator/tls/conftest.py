@@ -34,7 +34,7 @@ def cert_attributes_other(cert_attributes) -> Dict[str, str]:
     }
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def certificates(cfssl, authorino_domain, wildcard_domain, cert_attributes, cert_attributes_other):
     """
     Certificate hierarchy used for the tests
@@ -72,7 +72,7 @@ def create_secret(blame, request, openshift):
     return _create_secret
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def authorino_domain(openshift):
     """
     Hostname of the upstream certificate sent to be validated by APIcast
