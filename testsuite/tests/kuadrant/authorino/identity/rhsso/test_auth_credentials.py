@@ -21,7 +21,7 @@ def authorization(authorization, rhsso, credentials):
 def test_custom_selector(client, auth, credentials):
     """Test if auth credentials are stored in right place"""
     response = client.get("/get", headers={"authorization": "Token " + auth.token.access_token})
-    if credentials == "authorization_header":
+    if credentials == "authorizationHeader":
         assert response.status_code == 200
     else:
         assert response.status_code == 401
@@ -30,7 +30,7 @@ def test_custom_selector(client, auth, credentials):
 def test_custom_header(client, auth, credentials):
     """Test if auth credentials are stored in right place"""
     response = client.get("/get", headers={"Token": auth.token.access_token})
-    if credentials == "custom_header":
+    if credentials == "customHeader":
         assert response.status_code == 200
     else:
         assert response.status_code == 401
@@ -39,7 +39,7 @@ def test_custom_header(client, auth, credentials):
 def test_query(client, auth, credentials):
     """Test if auth credentials are stored in right place"""
     response = client.get("/get", params={"Token": auth.token.access_token})
-    if credentials == "query":
+    if credentials == "queryString":
         assert response.status_code == 200
     else:
         assert response.status_code == 401
