@@ -1,10 +1,26 @@
 # Kuadrant E2E testsuite
 
-This repository contains end-to-end tests for Kuadrant project. Currently, it only contains tests for Authorino.
+This repository contains end-to-end tests for Kuadrant project. It supports running tests either against standalone Authorino and Authorino Operator, or the entire Kuadrant, both Service Protection and MGC. For more information about Kuadrant, please visit https://kuadrant.io/
 
 ## Requirements
 
-To run the testsuite you currently need an OpenShift 4.x cluster with Authorino Operator deployed and namespace where the tests will be executed.
+### Authorino standalone tests
+* OpenShift 4.x cluster
+* Authorino Operator installed
+* Use `authorino` make target
+
+### Service Protection tests
+* OpenShift 4.x cluster
+* Kuadrant Operator installed
+* Use `test` make target
+
+### Multi-cluster Gateway Controller tests (make mgc)
+* OpenShift 4.x cluster(s)
+* OCM setup with both hub and spokes (can be a single cluster)
+* Existing GatewayClass `kuadrant-multi-cluster-gateway-instance-per-cluster`
+* Existing ManagedZones `gcp-mz` and `aws-mz` for Google Cloud and AWS respectively
+* Use `mgc` make target
+
 
 ## Configuration
 
