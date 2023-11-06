@@ -1,8 +1,5 @@
 """Test api authentication with wristband-token that was acquired after authentication on the edge layer"""
-import pytest
 from jose import jwt
-
-pytest.skip("Envoy dynamic metadata not yet implemented due to v1beta2 AuthConfig change", allow_module_level=True)
 
 
 def test_wristband_token_claims(oidc_provider, auth, wristband_token, wristband_endpoint, certificates):

@@ -197,27 +197,36 @@ class MetadataSection(Section):
 
 
 class ResponseSection(Section):
-    """Section which contains response configuration. todo envoyDynamicMetadata"""
+    """Section which contains response configuration."""
 
     @property
     def success_headers(self):
-        """Nested dict for most of the section."""
+        """Nested dict for items wrapped as HTTP headers."""
         return self.section.setdefault("success", {}).setdefault("headers", {})
 
-    @modify
-    def clear_success_headers(self):
-        """Clears content of a success headers"""
-        self.success_headers.clear()
+    @property
+    def success_dynamic_metadata(self):
+        """Nested dict for items wrapped as Envoy Dynamic Metadata."""
+        return self.section.setdefault("success", {}).setdefault("dynamicMetadata", {})
 
     def _add(
         self,
         name: str,
         value: dict,
+        wrapper: Literal["headers", "dynamicMetadata"] = "headers",
         **common_features,
     ):
-        """Add response to AuthConfig"""
+        """
+        Add response to AuthConfig.
+
+        :param wrapper: This variable configures if the response should be wrapped as HTTP headers or
+         as Envoy Dynamic Metadata. Default is "headers"
+        """
         add_common_features(value, **common_features)
-        self.success_headers.update({name: value})
+        if wrapper == "headers":
+            self.success_headers.update({name: value})
+        if wrapper == "dynamicMetadata":
+            self.success_dynamic_metadata.update({name: value})
 
     def add_simple(self, auth_json: str, name="simple", key="data", **common_features):
         """
