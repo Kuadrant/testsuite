@@ -124,8 +124,8 @@ class MGCGateway(Gateway):
 
     def delete_tls_secret(self):
         """Deletes secret with TLS certificate used by the gateway"""
-        tls_secret = self.openshift.get_secret(self.cert_secret_name)
-        tls_secret.delete(ignore_not_found=True)
+        with self.openshift.context:
+            selector(f"secret/{self.cert_secret_name}").delete(ignore_not_found=True)
 
     def get_spoke_gateway(self, spokes: dict[str, OpenShiftClient]) -> "MGCGateway":
         """
