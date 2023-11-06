@@ -1,10 +1,10 @@
 """
 Tests that a single limit is enforced as expected over one iteration
 """
+
 import pytest
 
 from testsuite.openshift.objects.rate_limit import Limit
-from testsuite.utils import fire_requests
 
 
 @pytest.fixture(
@@ -36,4 +36,8 @@ def rate_limit(rate_limit, limit):
 
 def test_limit(client, limit):
     """Tests that simple limit is applied successfully"""
-    fire_requests(client, limit, grace_requests=1)
+    responses = client.get_many("/get", limit.limit)
+    assert all(
+        r.status_code == 200 for r in responses
+    ), f"Rate Limited resource unexpectedly rejected requests {responses}"
+    assert client.get("/get").status_code == 429

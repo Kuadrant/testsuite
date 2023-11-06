@@ -60,6 +60,6 @@ class RateLimitPolicy(OpenShiftObject):
             assert success
 
         # https://github.com/Kuadrant/kuadrant-operator/issues/140
-        sleep(60)
+        sleep(90)
 
         return result
