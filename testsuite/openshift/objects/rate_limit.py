@@ -39,13 +39,15 @@ class RateLimitPolicy(OpenShiftObject):
         return cls(model, context=openshift.context)
 
     @modify
-    def add_limit(self, name, limits: Iterable[Limit], when: Iterable[Rule] = None):
+    def add_limit(self, name, limits: Iterable[Limit], when: Iterable[Rule] = None, counters: list[str] = None):
         """Add another limit"""
-        limit = {
+        limit: dict = {
             "rates": [asdict(limit) for limit in limits],
         }
         if when:
             limit["when"] = [asdict(rule) for rule in when]
+        if counters:
+            limit["counters"] = counters
         self.model.spec.limits[name] = limit
 
     def commit(self):
