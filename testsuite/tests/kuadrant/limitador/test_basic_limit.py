@@ -20,13 +20,6 @@ def limit(request):
     return request.param
 
 
-# pylint: disable=unused-argument
-@pytest.fixture(scope="module")
-def rate_limit_name(blame, limit):
-    """Generate name for each combination of limit_time"""
-    return blame("limit")
-
-
 @pytest.fixture(scope="module")
 def rate_limit(rate_limit, limit):
     """Add limit to the policy"""
