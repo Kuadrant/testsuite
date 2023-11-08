@@ -9,9 +9,9 @@ from testsuite.objects import Rule
 
 
 @pytest.fixture(scope="module")
-def user2(rhsso):
+def user2(rhsso, blame):
     """Second User which has incorrect email"""
-    return rhsso.realm.create_user("user2", "password", email="test@test.com")
+    return rhsso.realm.create_user("user2", "password", email=f"{blame('test')}@test.com")
 
 
 @pytest.fixture(scope="module")
