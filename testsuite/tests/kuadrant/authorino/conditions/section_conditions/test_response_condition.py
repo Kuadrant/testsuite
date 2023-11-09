@@ -23,7 +23,7 @@ def test_skip_response(client, auth):
     assert response.status_code == 200
 
     # verify that response was not returned on a GET request
-    assert "simple" not in response.json()["headers"]
+    assert "Simple" not in response.json()["headers"]
 
     response = client.post("/post", auth=auth)
     assert response.status_code == 200
