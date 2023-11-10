@@ -1,5 +1,5 @@
 """AuthConfig CR object"""
-from typing import Literal, Iterable, TYPE_CHECKING
+from typing import Literal, Iterable, TYPE_CHECKING, Union
 
 from testsuite.objects import (
     asdict,
@@ -9,6 +9,10 @@ from testsuite.objects import (
     Selector,
     Credentials,
     ValueFrom,
+    JsonResponse,
+    PlainResponse,
+    WristbandResponse,
+    DenyResponse,
 )
 from testsuite.openshift.objects import modify
 
@@ -199,100 +203,46 @@ class MetadataSection(Section):
 class ResponseSection(Section):
     """Section which contains response configuration."""
 
-    @property
-    def success_headers(self):
-        """Nested dict for items wrapped as HTTP headers."""
-        return self.section.setdefault("success", {}).setdefault("headers", {})
-
-    @property
-    def success_dynamic_metadata(self):
-        """Nested dict for items wrapped as Envoy Dynamic Metadata."""
-        return self.section.setdefault("success", {}).setdefault("dynamicMetadata", {})
-
-    def _add(
-        self,
-        name: str,
-        value: dict,
-        wrapper: Literal["headers", "dynamicMetadata"] = "headers",
-        **common_features,
-    ):
-        """
-        Add response to AuthConfig.
-
-        :param wrapper: This variable configures if the response should be wrapped as HTTP headers or
-         as Envoy Dynamic Metadata. Default is "headers"
-        """
-        add_common_features(value, **common_features)
-        if wrapper == "headers":
-            self.success_headers.update({name: value})
-        if wrapper == "dynamicMetadata":
-            self.success_dynamic_metadata.update({name: value})
+    SUCCESS_RESPONSE = Union[JsonResponse, PlainResponse, WristbandResponse]
 
     def add_simple(self, auth_json: str, name="simple", key="data", **common_features):
         """
         Add simple response to AuthConfig, used for configuring response for debugging purposes,
         which can be easily read back using extract_response
         """
-        self.add_json(name, {key: ValueFrom(auth_json)}, **common_features)
+        self.add_success_header(name, JsonResponse({key: ValueFrom(auth_json)}), **common_features)
 
-    @modify
-    def add_json(self, name: str, properties: dict[str, ABCValue], **common_features):
-        """Adds json response to AuthConfig"""
-        asdict_properties = {}
-        for key, value in properties.items():
-            asdict_properties[key] = asdict(value)
-        self._add(name, {"json": {"properties": asdict_properties}}, **common_features)
+    def add_success_header(self, name: str, value: SUCCESS_RESPONSE, **common_features):
+        """
+        Add item to responses.success.headers section.
+        This section is for items wrapped as HTTP headers.
+        """
 
-    @modify
-    def add_plain(self, name: str, value: ABCValue, **common_features):
-        """Adds plain response to AuthConfig"""
-        self._add(name, {"plain": asdict(value)}, **common_features)
+        success_headers = self.section.setdefault("success", {}).setdefault("headers", {})
+        asdict_value = asdict(value)
+        add_common_features(asdict_value, **common_features)
+        success_headers.update({name: asdict_value})
 
-    @modify
-    def add_wristband(self, name: str, issuer: str, secret_name: str, algorithm: str = "RS256", **common_features):
-        """Adds wristband response to AuthConfig"""
-        self._add(
-            name,
-            {
-                "wristband": {
-                    "issuer": issuer,
-                    "signingKeyRefs": [
-                        {
-                            "name": secret_name,
-                            "algorithm": algorithm,
-                        }
-                    ],
-                },
-            },
-            **common_features,
-        )
+    def add_success_dynamic(self, name: str, value: SUCCESS_RESPONSE, **common_features):
+        """
+        Add item to responses.success.dynamicMetadata section.
+        This section is for items wrapped as Envoy Dynamic Metadata.
+        """
 
-    @modify
-    def set_deny_with(
-        self,
-        category: Literal["unauthenticated", "unauthorized"],
-        code: int = None,
-        message: ABCValue = None,
-        headers: dict[str, ABCValue] = None,
-        body: ABCValue = None,
-    ):
-        """Set default deny code, message, headers, and body for 'unauthenticated' and 'unauthorized' error."""
-        asdict_message = asdict(message) if message else None
-        asdict_body = asdict(body) if body else None
-        asdict_headers = None
-        if headers:
-            asdict_headers = {}
-            for key, value in headers.items():
-                asdict_headers[key] = asdict(value)
-        self.add_item(
-            category,
-            {
-                "code": code,
-                "message": asdict_message,
-                "headers": asdict_headers,
-                "body": asdict_body,
-            },
-        )
+        success_dynamic_metadata = self.section.setdefault("success", {}).setdefault("dynamicMetadata", {})
+        asdict_value = asdict(value)
+        add_common_features(asdict_value, **common_features)
+        success_dynamic_metadata.update({name: asdict_value})
+
+    def set_unauthenticated(self, deny_response: DenyResponse):
+        """Set custom deny response for unauthenticated error."""
+
+        self.add_item("unauthenticated", asdict(deny_response))
+
+    def set_unauthorized(self, deny_response: DenyResponse):
+        """Set custom deny response for unauthorized error."""
+
+        self.add_item("unauthorized", asdict(deny_response))
 
 
 class AuthorizationSection(Section):
