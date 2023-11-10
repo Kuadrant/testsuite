@@ -3,6 +3,7 @@ from importlib import resources
 
 import pytest
 
+from testsuite.objects import WristbandSigningKeyRef, WristbandResponse
 from testsuite.openshift.objects.auth_config import AuthConfig
 from testsuite.openshift.envoy import Envoy
 from testsuite.certificates import CertInfo
@@ -70,7 +71,11 @@ def wristband_endpoint(openshift, authorino, authorization_name):
 @pytest.fixture(scope="module")
 def authorization(authorization, wristband_secret, wristband_endpoint) -> AuthConfig:
     """Add wristband response with the signing key to the AuthConfig"""
-    authorization.responses.add_wristband("wristband", wristband_endpoint, wristband_secret, wrapper="dynamicMetadata")
+
+    authorization.responses.add_success_dynamic(
+        "wristband",
+        WristbandResponse(issuer=wristband_endpoint, signingKeyRefs=[WristbandSigningKeyRef(wristband_secret)]),
+    )
     return authorization
 
 

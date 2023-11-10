@@ -1,7 +1,7 @@
 """Conftest for all tests requiring custom deployment of Authorino"""
 import pytest
 
-from testsuite.objects import Value
+from testsuite.objects import Value, JsonResponse
 from testsuite.httpx import HttpxBackoffClient
 from testsuite.openshift.objects.auth_config import AuthConfig
 from testsuite.openshift.objects.route import OpenshiftRoute
@@ -13,7 +13,7 @@ def authorization(authorization, wildcard_domain, openshift, module_label) -> Au
     """In case of Authorino, AuthConfig used for authorization"""
     authorization.remove_all_hosts()
     authorization.add_host(wildcard_domain)
-    authorization.responses.add_json("x-ext-auth-other-json", {"propX": Value("valueX")})
+    authorization.responses.add_success_header("x-ext-auth-other-json", JsonResponse({"propX": Value("valueX")}))
     return authorization
 
 

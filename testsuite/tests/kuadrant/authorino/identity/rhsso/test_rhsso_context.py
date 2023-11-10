@@ -4,18 +4,20 @@ import time
 
 import pytest
 
-from testsuite.objects import ValueFrom
+from testsuite.objects import ValueFrom, JsonResponse
 
 
 @pytest.fixture(scope="module")
 def authorization(authorization):
     """Setup AuthConfig for test"""
-    authorization.responses.add_json(
+    authorization.responses.add_success_header(
         "auth-json",
-        {
-            "auth": ValueFrom("auth.identity"),
-            "context": ValueFrom("context.request.http.headers.authorization"),
-        },
+        JsonResponse(
+            {
+                "auth": ValueFrom("auth.identity"),
+                "context": ValueFrom("context.request.http.headers.authorization"),
+            }
+        ),
     )
     return authorization
 

@@ -4,7 +4,7 @@ import json
 
 import pytest
 
-from testsuite.objects import ValueFrom
+from testsuite.objects import ValueFrom, JsonResponse
 
 
 @pytest.fixture(scope="module")
@@ -31,7 +31,7 @@ def authorization(authorization, path_and_value):
     path, _ = path_and_value
 
     authorization.responses.clear_all()  # delete previous responses due to the parametrization
-    authorization.responses.add_json("header", {"anything": ValueFrom(path)})
+    authorization.responses.add_success_header("header", JsonResponse({"anything": ValueFrom(path)}))
     return authorization
 
 

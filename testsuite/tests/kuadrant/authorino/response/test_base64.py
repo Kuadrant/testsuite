@@ -6,14 +6,14 @@ from base64 import standard_b64encode
 
 import pytest
 
-from testsuite.objects import ValueFrom
+from testsuite.objects import ValueFrom, JsonResponse
 
 
 @pytest.fixture(scope="module")
 def authorization(authorization):
     """Add response to Authorization"""
-    authorization.responses.add_json(
-        "header", {"anything": ValueFrom("context.request.http.headers.test|@base64:decode")}
+    authorization.responses.add_success_header(
+        "header", JsonResponse({"anything": ValueFrom("context.request.http.headers.test|@base64:decode")})
     )
     return authorization
 
