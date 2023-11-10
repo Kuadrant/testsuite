@@ -3,6 +3,8 @@ import functools
 
 from openshift import APIObject
 
+from testsuite.objects import LifecycleObject
+
 
 def modify(func):
     """Wraps method of a subclass of OpenShiftObject to use modify_and_apply when the object
@@ -28,7 +30,7 @@ def modify(func):
     return _wrap
 
 
-class OpenShiftObject(APIObject):
+class OpenShiftObject(APIObject, LifecycleObject):
     """Custom APIObjects which tracks if the object was already committed to the server or not"""
 
     def __init__(self, dict_to_model=None, string_to_model=None, context=None):

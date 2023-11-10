@@ -151,7 +151,7 @@ class LifecycleObject(abc.ABC):
 
 
 class Authorino(LifecycleObject):
-    """Authorino instance"""
+    """Authorino interface"""
 
     @abc.abstractmethod
     def wait_for_ready(self):

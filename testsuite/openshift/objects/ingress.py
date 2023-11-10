@@ -1,7 +1,6 @@
 """Kubernetes Ingress object"""
 from typing import Any, Dict, List, Optional, TYPE_CHECKING
 
-from testsuite.objects import LifecycleObject
 from testsuite.openshift.objects import OpenShiftObject
 
 if TYPE_CHECKING:
@@ -9,7 +8,7 @@ if TYPE_CHECKING:
     from testsuite.openshift.client import OpenShiftClient
 
 
-class Ingress(OpenShiftObject, LifecycleObject):
+class Ingress(OpenShiftObject):
     """Represents Kubernetes Ingress object"""
 
     @classmethod
