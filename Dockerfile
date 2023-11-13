@@ -21,8 +21,10 @@ WORKDIR /opt/workdir/kuadrant-testsuite
 
 COPY . .
 
-RUN mkdir -m 0700 /test-run-results && mkdir -m 0700 /opt/workdir/virtualenvs && chown testsuite /test-run-results && \
+RUN mkdir -m 0770 /test-run-results && mkdir -m 0750 /opt/workdir/virtualenvs && chown testsuite /test-run-results && \
     chown testsuite -R /opt/workdir/*
+
+RUN touch /run/kubeconfig && chmod 660 /run/kubeconfig && chown testsuite /run/kubeconfig
 
 USER testsuite
 
