@@ -32,10 +32,10 @@ def auth(oidc_provider):
 
 
 @pytest.fixture(scope="module")
-def auth2(rhsso):
+def auth2(rhsso, blame):
     """Creates new RHSSO user and returns its authentication object for HTTPX"""
     name = rhsso.user.username + "-test2"
-    user = rhsso.realm.create_user(name, "password", email="test@test.com")
+    user = rhsso.realm.create_user(name, "password", email=f"{blame('test')}@test.com")
     return HttpxOidcClientAuth.from_user(rhsso.get_token, user=user)
 
 
