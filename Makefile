@@ -19,7 +19,7 @@ ifdef html
 PYTEST += --html=$(resultsdir)/report-$(@F).html
 endif
 
-commit-acceptance: black pylint mypy all-is-package
+commit-acceptance: black pylint mypy all-is-package ## Runs pre-commit linting checks
 
 pylint mypy: poetry
 	poetry run $@ $(flags) testsuite
@@ -27,7 +27,7 @@ pylint mypy: poetry
 black: poetry
 	poetry run black --check testsuite --diff
 
-reformat: poetry
+reformat: poetry  ## Reformats testsuite with black
 	poetry run black testsuite
 
 all-is-package:
@@ -67,9 +67,9 @@ poetry.lock: pyproject.toml
 	@ touch .make-poetry-sync-no-dev
 
 
-poetry: .make-poetry-sync
+poetry: .make-poetry-sync ## Installs poetry with all dependencies
 
-poetry-no-dev: .make-poetry-sync-no-dev
+poetry-no-dev: .make-poetry-sync-no-dev ## Installs poetry without development dependencies
 
 # Check http://marmelab.com/blog/2016/02/29/auto-documented-makefile.html
 help: ## Print this help
