@@ -8,6 +8,7 @@ readme = "README.md"
 
 [tool.poetry.group.main.dependencies]
 python = "^3.11"
+setuptools = "*"  # workaround: python-keycloak depends on it
 typing_extensions = "*"
 pytest-xdist = "*"
 pytest = "*"
