@@ -9,7 +9,7 @@ else
 resultsdir ?= .
 endif
 
-PYTEST = poetry run python -m pytest --tb=$(TB)
+PYTEST = poetry run python -m pytest --tb=$(TB) -o cache_dir=$(resultsdir)/.pytest_cache.$(@F)
 
 ifdef junit
 PYTEST += --junitxml=$(resultsdir)/junit-$(@F).xml -o junit_suite_name=$(@F)
