@@ -85,6 +85,7 @@ class MGCGateway(Gateway):
         gateway_class: str,
         hostname: str,
         labels: dict[str, str] = None,
+        tls: bool = False,
         placement: typing.Optional[str] = None,
     ):
         """Creates new instance of Gateway"""
@@ -95,19 +96,21 @@ class MGCGateway(Gateway):
             labels["cluster.open-cluster-management.io/placement"] = placement
 
         instance = super(MGCGateway, cls).create_instance(openshift, name, gateway_class, hostname, labels)
-        instance.model["spec"]["listeners"] = [
-            {
-                "name": "api",
-                "port": 443,
-                "protocol": "HTTPS",
-                "hostname": hostname,
-                "allowedRoutes": {"namespaces": {"from": "All"}},
-                "tls": {
-                    "mode": "Terminate",
-                    "certificateRefs": [{"name": f"{name}-tls", "kind": "Secret"}],
-                },
-            }
-        ]
+
+        if tls:
+            instance.model["spec"]["listeners"] = [
+                {
+                    "name": "api",
+                    "port": 443,
+                    "protocol": "HTTPS",
+                    "hostname": hostname,
+                    "allowedRoutes": {"namespaces": {"from": "All"}},
+                    "tls": {
+                        "mode": "Terminate",
+                        "certificateRefs": [{"name": f"{name}-tls", "kind": "Secret"}],
+                    },
+                }
+            ]
 
         return instance
 
