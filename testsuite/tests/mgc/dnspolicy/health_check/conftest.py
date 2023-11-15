@@ -6,13 +6,13 @@ from testsuite.openshift.objects.gateway_api.gateway import MGCGateway
 
 
 @pytest.fixture(scope="module")
-def upstream_gateway(request, openshift, blame, module_label, initial_host):
+def upstream_gateway(request, hub_openshift, blame, module_label, initial_host):
     """
     Creates and returns configured and ready upstream Gateway with FQDN hostname
     Health checks available only with Fully Qualified Domain Names in gateway (no wildcards are allowed)
     """
     upstream_gateway = MGCGateway.create_instance(
-        openshift=openshift,
+        openshift=hub_openshift,
         name=blame("mgc-gateway"),
         gateway_class="kuadrant-multi-cluster-gateway-instance-per-cluster",
         hostname=initial_host,

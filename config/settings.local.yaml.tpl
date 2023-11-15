@@ -1,12 +1,11 @@
 #default:
 #  skip_cleanup: false
-#  openshift:
-#    project: "kuadrant"                       # Optional: namespace for tests to run, if None uses current project
+#  gateway_api: true                           # True, if Testsuite should test with Gateway API enabled (e.g. Full Kuadrant) or individual components (e.g. Authorino)
+#  cluster:                                    # Workload cluster where tests should run, will get overriden if run on Multicluster
+#    project: "kuadrant"                       # Optional: Default namespace for this cluster
 #    api_url: "https://api.openshift.com"      # Optional: OpenShift API URL, if None it will OpenShift that you are logged in
 #    token: "KUADRANT_RULEZ"                   # Optional: OpenShift Token, if None it will OpenShift that you are logged in
 #    kubeconfig_path: "~/.kube/config"         # Optional: Kubeconfig to use, if None the default one is used
-#  openshift2:
-#    project: "kuadrant2"                      # Required: Secondary OpenShift project, for running tests across projects
 #  tools:
 #    project: "tools"                          # Optional: OpenShift project, where external tools are located
 #  rhsso:
@@ -27,22 +26,28 @@
 #    url: "HYPERFOIL_URL"
 #    generate_reports: True                      # True, if each test should generate a report
 #    report_dir: "reports"                       # Directory, to which the reports should be saved
-#  authorino:
-#    image: "quay.io/kuadrant/authorino:latest"  # If specified will override the authorino image
-#    deploy: false                               # If false, the testsuite will use already deployed authorino for testing
-#    auth_url: ""                                # authorization URL for already deployed Authorino
-#    oidc_url: ""                                # oidc URL for already deployed Authorino
-#    metrics_service_name: ""                    # controller metrics service name for already deployer Authorino
-#  envoy:
-#    image: "docker.io/envoyproxy/envoy:v1.23-latest"  # Envoy image, the testsuite should use, only for Authorino tests now
-#  kuadrant:
-#    enabled: true                               # True, if Testsuite should test Kuadrant instead of individual operators
-#    namespace: "kuadrant"                       # Namespaces where Kuadrant resides
-#    gateway:                                    # Reference to Gateway that should be used
+#  service_protection:
+#    system_project: "kuadrant-system"           # Namespace where Kuadrant resource resides
+#    project: "kuadrant"                         # Namespace where tests will run
+#    project2: "kuadrant2"                       # Second namespace for tests, that run across multiple namespaces
+#    envoy:
+#      image: "docker.io/envoyproxy/envoy:v1.23-latest"  # Envoy image, the testsuite should use, only for Authorino tests
+#    gateway:                                      # Optional: Reference to Gateway that should be used, if empty testsuite will create its own
 #       namespace: "istio-system"
 #       name: "istio-ingressgateway"
-#  mgc:
-#    spokes:
+#    authorino:
+#      image: "quay.io/kuadrant/authorino:latest"  # If specified will override the authorino image
+#      deploy: false                               # If false, the testsuite will use already deployed authorino for testing
+#      auth_url: ""                                # authorization URL for already deployed Authorino
+#      oidc_url: ""                                # oidc URL for already deployed Authorino
+#      metrics_service_name: ""                    # controller metrics service name for already deployer Authorino
+#  control_plane:
+#    hub:                                          # Hub cluster
+#      project: "multi-cluster-gateways"         # Optional: namespace where MGC resources are created and where the hub gateway will be created
+#      api_url: "https://api.openshift.com"      # Optional: OpenShift API URL, if None it will OpenShift that you are logged in
+#      token: "KUADRANT_RULEZ"                   # Optional: OpenShift Token, if None it will OpenShift that you are logged in
+#      kubeconfig_path: "~/.kube/config"         # Optional: Kubeconfig to use, if None the default one is used
+#    spokes:                                       # List of all spokes in the multi-cluster
 #      local-cluster:
 #        project: "kuadrant"                       # Optional: namespace for tests to run, if None uses current project
 #        api_url: "https://api.openshift.com"      # Optional: OpenShift API URL, if None it will OpenShift that you are logged in

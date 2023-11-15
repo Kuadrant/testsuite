@@ -28,7 +28,7 @@ class OpenShiftClient:
 
     # pylint: disable=too-many-public-methods
 
-    def __init__(self, project: str, api_url: str = None, token: str = None, kubeconfig_path: str = None):
+    def __init__(self, project: str = None, api_url: str = None, token: str = None, kubeconfig_path: str = None):
         self._project = project
         self._api_url = api_url
         self._token = token

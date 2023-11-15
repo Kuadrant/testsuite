@@ -1,35 +1,45 @@
 """Custom dynaconf loader for loading OpenShift settings and converting them to OpenshiftClients"""
-from weakget import weakget
 
 from testsuite.openshift.client import OpenShiftClient
 
 
-# pylint: disable=unused-argument
-def load(obj, env=None, silent=True, key=None, filename=None):
+def inject_client(obj, base_client, path):
+    """Injects OpenShiftClient in the settings, changes only project"""
+    original = obj.get(path, None)
+    if original:
+        obj[path] = base_client.change_project(original)
+    else:
+        obj[path] = base_client
+
+
+def load(obj, **_):
     """Creates all OpenShift clients"""
-    config = weakget(obj)
-    section = config["openshift"]
+    section = obj.setdefault("cluster", {})
     client = OpenShiftClient(
-        section["project"] % None, section["api_url"] % None, section["token"] % None, section["kubeconfig_path"] % None
+        section.get("project"), section.get("api_url"), section.get("token"), section.get("kubeconfig_path")
     )
-    obj["openshift"] = client
+    obj["cluster"] = client
 
     tools = None
     if "tools" in obj and "project" in obj["tools"]:
         tools = client.change_project(obj["tools"]["project"])
     obj["tools"] = tools
 
-    openshift2 = None
-    if "openshift2" in obj and "project" in obj["openshift2"]:
-        openshift2 = client.change_project(obj["openshift2"]["project"])
-    obj["openshift2"] = openshift2
+    service_protection = obj.setdefault("service_protection", {})
+    inject_client(service_protection, client, "system_project")
+    inject_client(service_protection, client, "project")
+    inject_client(service_protection, client, "project2")
+
+    control_plane = obj.setdefault("control_plane", {})
+    hub = control_plane.get("hub", {})
+    hub_client = OpenShiftClient(hub.get("project"), hub.get("api_url"), hub.get("token"), hub.get("kubeconfig_path"))
+    obj["control_plane"]["hub"] = hub_client
 
     clients = {}
-    spokes = weakget(obj)["mgc"]["spokes"] % {}
+    spokes = control_plane.setdefault("spokes", {})
     for name, value in spokes.items():
-        value = weakget(value)
         clients[name] = OpenShiftClient(
-            value["project"] % None, value["api_url"] % None, value["token"] % None, value["kubeconfig_path"] % None
+            value.get("project"), value.get("api_url"), value.get("token"), value.get("kubeconfig_path")
         )
     if len(clients) > 0:
-        obj["mgc"]["spokes"] = clients
+        control_plane["spokes"] = clients

@@ -35,7 +35,7 @@ def wristband_secret(blame, request, openshift, certificates) -> str:
     return wristband_secret_name
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def certificates(cfssl, wildcard_domain):
     """Certificate hierarchy used for the wristband tests"""
     chain = {

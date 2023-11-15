@@ -14,7 +14,7 @@ def run_on_kuadrant():
     return False
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def prometheus(request, openshift):
     """
     Return an instance of OpenShift metrics client

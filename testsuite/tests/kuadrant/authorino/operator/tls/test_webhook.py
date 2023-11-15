@@ -31,7 +31,7 @@ def specific_authorino_name(blame):
     return blame("authorino")
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def authorino_domain(openshift, specific_authorino_name):
     """
     Hostname of the upstream certificate sent to be validated by APIcast
@@ -40,7 +40,7 @@ def authorino_domain(openshift, specific_authorino_name):
     return f"{specific_authorino_name}-authorino-authorization.{openshift.project}.svc"
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def certificates(cfssl, authorino_domain, wildcard_domain):
     """Certificate hierarchy used for the tests.
     Authorino certificate has *hosts* set to *authorino_domain* value.

@@ -5,7 +5,6 @@ from urllib.parse import urlparse
 import pytest
 from dynaconf import ValidationError
 from keycloak import KeycloakAuthenticationError
-from weakget import weakget
 
 from testsuite.certificates import CFSSLClient
 from testsuite.config import settings
@@ -92,19 +91,19 @@ def testconfig():
     return settings
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def openshift(testconfig):
     """OpenShift client for the primary namespace"""
-    client = testconfig["openshift"]
+    client = testconfig["service_protection"]["project"]
     if not client.connected:
         pytest.fail("You are not logged into Openshift or the namespace doesn't exist")
     return client
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def openshift2(testconfig):
     """OpenShift client for the secondary namespace located on the same cluster as primary Openshift"""
-    client = testconfig["openshift2"]
+    client = testconfig["service_protection"]["project2"]
     if client is None:
         pytest.skip("Openshift2 required but second_project was not set")
     if not client.connected:
@@ -215,15 +214,14 @@ def module_label(label):
     return randomize(label)
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def kuadrant(testconfig, openshift):
     """Returns Kuadrant instance if exists, or None"""
-    settings = weakget(testconfig)
-    if not settings["kuadrant"]["enabled"] % True:
+    if not testconfig.get("gateway_api", True):
         return None
 
     # Try if Kuadrant is deployed
-    kuadrant_openshift = openshift.change_project(settings["kuadrant"]["project"] % None)
+    kuadrant_openshift = testconfig["service_protection"]["system_project"]
     kuadrants = kuadrant_openshift.do_action("get", "kuadrant", "-o", "json", parse_output=True)
     if len(kuadrants.model["items"]) == 0:
         pytest.fail("Running Kuadrant tests, but Kuadrant resource was not found")
@@ -232,7 +230,7 @@ def kuadrant(testconfig, openshift):
     return True
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def backend(request, openshift, blame, label):
     """Deploys Httpbin backend"""
     httpbin = Httpbin(openshift, blame("httpbin"), label)
@@ -258,7 +256,14 @@ def proxy(request, kuadrant, authorino, openshift, blame, backend, module_label,
         gateway_object = request.getfixturevalue("gateway")
         envoy: Proxy = GatewayProxy(gateway_object, module_label, backend)
     else:
-        envoy = Envoy(openshift, authorino, blame("envoy"), module_label, backend, testconfig["envoy"]["image"])
+        envoy = Envoy(
+            openshift,
+            authorino,
+            blame("envoy"),
+            module_label,
+            backend,
+            testconfig["service_protection"]["envoy"]["image"],
+        )
     request.addfinalizer(envoy.delete)
     envoy.commit()
     return envoy
@@ -270,7 +275,7 @@ def route(proxy, module_label) -> Route:
     return proxy.expose_hostname(module_label)
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def wildcard_domain(openshift):
     """
     Wildcard domain of openshift cluster

@@ -25,16 +25,25 @@ def backend(request, gateway, blame, label):
 @pytest.fixture(scope="session")
 def spokes(testconfig):
     """Returns Map of spokes names and their respective clients"""
-    spokes = weakget(testconfig)["mgc"]["spokes"] % {}
+    spokes = weakget(testconfig)["control_plane"]["spokes"] % {}
     assert len(spokes) > 0, "No spokes configured"
     return spokes
 
 
+@pytest.fixture(scope="session")
+def hub_openshift(testconfig):
+    """Openshift client for a Hub cluster"""
+    client = testconfig["control_plane"]["hub"]
+    if not client.connected:
+        pytest.fail("You are not logged into Openshift or the namespace doesn't exist")
+    return client
+
+
 @pytest.fixture(scope="module")
-def upstream_gateway(request, openshift, blame, hostname, module_label):
+def upstream_gateway(request, hub_openshift, blame, hostname, module_label):
     """Creates and returns configured and ready upstream Gateway"""
     upstream_gateway = MGCGateway.create_instance(
-        openshift=openshift,
+        openshift=hub_openshift,
         name=blame("mgc-gateway"),
         gateway_class="kuadrant-multi-cluster-gateway-instance-per-cluster",
         hostname=f"*.{hostname}",
@@ -103,13 +112,18 @@ def gateway(upstream_gateway, spokes, hub_policies_commit):
     return gw
 
 
+@pytest.fixture(scope="module")
+def openshift(gateway):
+    """OpenShift client for the primary namespace"""
+    return gateway.openshift
+
+
 @pytest.fixture(scope="module", params=["aws-mz", "gcp-mz"])
-def base_domain(request, openshift):
+def base_domain(request, hub_openshift):
     """Returns preconfigured base domain"""
     mz_name = request.param
 
-    with openshift.context:
-        zone = selector(f"managedzone/{mz_name}").object()
+    zone = selector(f"managedzone/{mz_name}", static_context=hub_openshift.context).object()
     return zone.model["spec"]["domainName"]
 
 

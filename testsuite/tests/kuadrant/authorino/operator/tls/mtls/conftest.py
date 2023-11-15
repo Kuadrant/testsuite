@@ -17,7 +17,7 @@ def authorization(authorization, blame, selector, cert_attributes):
     return authorization
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def certificates(cfssl, authorino_domain, wildcard_domain, cert_attributes, cert_attributes_other):
     """Certificate hierarchy used for the mTLS tests"""
     chain = {
