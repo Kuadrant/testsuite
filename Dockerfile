@@ -12,7 +12,7 @@ RUN curl https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable/opensh
 	tar xzf /tmp/oc.tgz -C /usr/local/bin && \
 	rm /tmp/oc.tgz
 
-RUN curl -L https://github.com/cloudflare/cfssl/releases/download/v1.6.3/cfssl_1.6.3_linux_amd64 >/usr/bin/cfssl && \
+RUN curl -L https://github.com/cloudflare/cfssl/releases/download/v1.6.4/cfssl_1.6.4_linux_amd64 >/usr/bin/cfssl && \
     chmod +x /usr/bin/cfssl
 
 RUN python3.11 -m pip --no-cache-dir install poetry
