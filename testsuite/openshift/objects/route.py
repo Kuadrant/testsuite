@@ -4,7 +4,7 @@ from functools import cached_property
 
 from httpx import Client
 
-from testsuite.httpx import HttpxBackoffClient
+from testsuite.httpx import KuadrantClient
 from testsuite.openshift.objects import OpenShiftObject
 
 
@@ -53,7 +53,7 @@ class OpenshiftRoute(OpenShiftObject, Route):
         protocol = "http"
         if "tls" in self.model.spec:
             protocol = "https"
-        return HttpxBackoffClient(base_url=f"{protocol}://{self.hostname}", **kwargs)
+        return KuadrantClient(base_url=f"{protocol}://{self.hostname}", **kwargs)
 
     @cached_property
     def hostname(self):
