@@ -8,6 +8,14 @@ from testsuite.openshift.objects.rate_limit import Limit
 
 
 @pytest.fixture(scope="module")
+def kuadrant(kuadrant):
+    """Skip if not running on Kuadrant"""
+    if not kuadrant:
+        pytest.skip("Limitador tests can only run on Kuadrant for now")
+    return kuadrant
+
+
+@pytest.fixture(scope="module")
 def rate_limit(rate_limit):
     """Add limit to the policy"""
     rate_limit.add_limit(
