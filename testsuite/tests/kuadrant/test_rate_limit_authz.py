@@ -3,7 +3,7 @@
 import pytest
 
 from testsuite.httpx.auth import HttpxOidcClientAuth
-from testsuite.objects import ValueFrom
+from testsuite.objects import ValueFrom, JsonResponse
 from testsuite.openshift.objects.rate_limit import Limit
 
 
@@ -19,8 +19,8 @@ def rate_limit(rate_limit):
 @pytest.fixture(scope="module")
 def authorization(authorization):
     """Adds JSON injection, that wraps the response as Envoy Dynamic Metadata for rate limit"""
-    authorization.responses.add_json(
-        "identity", {"user": ValueFrom("auth.identity.preferred_username")}, wrapper="dynamicMetadata"
+    authorization.responses.add_success_dynamic(
+        "identity", JsonResponse({"user": ValueFrom("auth.identity.preferred_username")})
     )
     return authorization
 

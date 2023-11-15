@@ -122,6 +122,76 @@ class ValueFrom(ABCValue):
 
 
 @dataclass
+class JsonResponse:
+    """Response item as JSON injection."""
+
+    properties: dict[str, ABCValue]
+
+    def asdict(self):
+        """Custom asdict due to nested structure."""
+        asdict_properties = {}
+        for key, value in self.properties.items():
+            asdict_properties[key] = asdict(value)
+        return {"json": {"properties": asdict_properties}}
+
+
+@dataclass
+class PlainResponse:
+    """Response item as plain text value."""
+
+    plain: ABCValue
+
+
+@dataclass
+class WristbandSigningKeyRef:
+    """Name of Kubernetes secret and corresponding signing algorithm."""
+
+    name: str
+    algorithm: str = "RS256"
+
+
+@dataclass(kw_only=True)
+class WristbandResponse:
+    """
+    Response item as Festival Wristband Token.
+
+    :param issuer: Endpoint to the Authorino service that issues the wristband
+    :param signingKeyRefs: List of  Kubernetes secrets of dataclass `WristbandSigningKeyRef`
+    :param customClaims: Custom claims added to the wristband token.
+    :param tokenDuration: Time span of the wristband token, in seconds.
+    """
+
+    issuer: str
+    signingKeyRefs: list[WristbandSigningKeyRef]
+    customClaims: Optional[list[dict[str, ABCValue]]] = None
+    tokenDuration: Optional[int] = None
+
+    def asdict(self):
+        """Custom asdict due to nested structure."""
+
+        asdict_key_refs = [asdict(i) for i in self.signingKeyRefs]
+        asdict_custom_claims = [asdict(i) for i in self.customClaims] if self.customClaims else None
+        return {
+            "wristband": {
+                "issuer": self.issuer,
+                "signingKeyRefs": asdict_key_refs,
+                "customClaims": asdict_custom_claims,
+                "tokenDuration": self.tokenDuration,
+            }
+        }
+
+
+@dataclass(kw_only=True)
+class DenyResponse:
+    """Dataclass for custom responses deny reason."""
+
+    code: Optional[int] = None
+    message: Optional[ABCValue] = None
+    headers: Optional[dict[str, ABCValue]] = None
+    body: Optional[ABCValue] = None
+
+
+@dataclass
 class Cache:
     """Dataclass for specifying Cache in Authorization"""
 

@@ -1,7 +1,7 @@
 """Conftest for authorino sharding tests"""
 import pytest
 
-from testsuite.objects import Value
+from testsuite.objects import Value, JsonResponse
 from testsuite.openshift.envoy import Envoy
 from testsuite.openshift.objects.auth_config import AuthConfig
 
@@ -34,7 +34,7 @@ def authorization(request, authorino, blame, openshift, module_label):
             hostnames=[hostname],
             labels={"testRun": module_label, "sharding": sharding_label},
         )
-        auth.responses.add_json("header", {"anything": Value(sharding_label)})
+        auth.responses.add_success_header("header", JsonResponse({"anything": Value(sharding_label)}))
         request.addfinalizer(auth.delete)
         auth.commit()
         return auth

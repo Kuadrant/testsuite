@@ -3,13 +3,13 @@ import json
 
 import pytest
 
-from testsuite.objects import Value
+from testsuite.objects import Value, JsonResponse
 
 
 @pytest.fixture(scope="module")
 def authorization(authorization):
     """Add response to Authorization"""
-    authorization.responses.add_json("header", {"anything": Value("one")})
+    authorization.responses.add_success_header("header", JsonResponse({"anything": Value("one")}))
     return authorization
 
 

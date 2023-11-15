@@ -2,7 +2,7 @@
 from json import loads
 import pytest
 
-from testsuite.objects import Value, ValueFrom, Rule
+from testsuite.objects import Value, ValueFrom, Rule, DenyResponse
 
 HEADERS = {
     "x-string-header": Value("abc"),
@@ -18,19 +18,21 @@ TESTING_PATH = "/deny"
 @pytest.fixture(scope="module")
 def authorization(authorization):
     """Set custom deny responses and auth rule with only allowed path '/allow'"""
-    authorization.responses.set_deny_with(
-        "unauthenticated",
-        code=333,
-        headers=HEADERS,
-        message=Value("Unauthenticated message"),
-        body=Value("You are unauthenticated."),
+    authorization.responses.set_unauthenticated(
+        DenyResponse(
+            code=333,
+            headers=HEADERS,
+            message=Value("Unauthenticated message"),
+            body=Value("You are unauthenticated."),
+        )
     )
-    authorization.responses.set_deny_with(
-        "unauthorized",
-        code=444,
-        headers=HEADERS,
-        message=ValueFrom("My path is: " + "{context.request.http.path}"),
-        body=ValueFrom("You are not authorized to access path: " + "{context.request.http.path}"),
+    authorization.responses.set_unauthorized(
+        DenyResponse(
+            code=444,
+            headers=HEADERS,
+            message=ValueFrom("My path is: " + "{context.request.http.path}"),
+            body=ValueFrom("You are not authorized to access path: " + "{context.request.http.path}"),
+        )
     )
     # Authorize only when url path is "/allow"
     authorization.authorization.add_auth_rules("Whitelist", [Rule("context.request.http.path", "eq", "/allow")])
