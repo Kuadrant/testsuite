@@ -60,15 +60,68 @@ def gateway(request, authorino, openshift, blame, module_label, testconfig):
 
 
 @pytest.fixture(scope="module")
-def wristband_endpoint(openshift, authorino, authorization_name):
-    """Authorino oidc wristband endpoint"""
-    return f"http://{authorino.oidc_url}:8083/{openshift.project}/{authorization_name}/wristband"
+def wristband_name(blame):
+    """Name of the wristband response Authorization"""
+    return blame("auth-wristband")
 
 
 @pytest.fixture(scope="module")
-def authorization(authorization, wristband_secret, wristband_endpoint) -> AuthConfig:
-    """Add wristband response with the signing key to the AuthConfig"""
+def wristband_endpoint(openshift, authorino, wristband_name):
+    """Authorino oidc wristband endpoint"""
+    return f"http://{authorino.oidc_url}:8083/{openshift.project}/{wristband_name}/wristband"
 
+
+@pytest.fixture(scope="module")
+def authorization(authorization, wristband_endpoint) -> AuthConfig:
+    """Add wristband authentication to Authorization"""
+    authorization.identity.clear_all()
+    authorization.identity.add_oidc("edge-authenticated", wristband_endpoint)
+    return authorization
+
+
+@pytest.fixture(scope="module")
+def wristband_token(wristband_hostname, auth):
+    """Test token acquirement from oidc endpoint"""
+    with wristband_hostname.client() as client:
+        response = client.get("/auth", auth=auth)
+        assert response.status_code == 200
+
+        assert response.headers.get("wristband-token") is not None
+        return response.headers["wristband-token"]
+
+
+@pytest.fixture(scope="module")
+def wristband_hostname(exposer, gateway, blame):
+    """Hostname on which you can acquire wristband token"""
+    return exposer.expose_hostname(blame("route"), gateway)
+
+
+@pytest.fixture(scope="module")
+def wristband_authorization(
+    request,
+    gateway,
+    wristband_name,
+    oidc_provider,
+    wristband_hostname,
+    module_label,
+    wristband_endpoint,
+    wristband_secret,
+):
+    """Second AuthConfig with authorino oidc endpoint for getting the wristband token"""
+    route = EnvoyVirtualRoute.create_instance(gateway.openshift, wristband_name, gateway)
+    route.add_hostname(wristband_hostname.hostname)
+
+    request.addfinalizer(route.delete)
+    route.commit()
+
+    authorization = AuthConfig.create_instance(
+        gateway.openshift,
+        wristband_name,
+        route,
+        labels={"testRun": module_label},
+    )
+
+    authorization.identity.add_oidc("rhsso", oidc_provider.well_known["issuer"])
     authorization.responses.add_success_dynamic(
         "wristband",
         WristbandResponse(issuer=wristband_endpoint, signingKeyRefs=[WristbandSigningKeyRef(wristband_secret)]),
@@ -76,52 +129,9 @@ def authorization(authorization, wristband_secret, wristband_endpoint) -> AuthCo
     return authorization
 
 
-@pytest.fixture(scope="module")
-def wristband_token(client, auth):
-    """Test token acquirement from oidc endpoint"""
-    response = client.get("/auth", auth=auth)
-    assert response.status_code == 200
-
-    assert response.headers.get("wristband-token") is not None
-    return response.headers["wristband-token"]
-
-
-@pytest.fixture(scope="module")
-def authenticated_route(exposer, gateway, blame):
-    """Second envoy route, intended for the already authenticated user"""
-    return exposer.expose_hostname(blame("route"), gateway)
-
-
-@pytest.fixture(scope="module")
-def authenticated_authorization(request, gateway, blame, authenticated_route, module_label, wristband_endpoint):
-    """Second AuthConfig with authorino oidc endpoint, protecting route for the already authenticated user"""
-    route = EnvoyVirtualRoute.create_instance(gateway.openshift, blame("route"), gateway)
-    route.add_hostname(authenticated_route.hostname)
-
-    request.addfinalizer(route.delete)
-    route.commit()
-
-    authorization = AuthConfig.create_instance(
-        gateway.openshift,
-        blame("auth-authenticated"),
-        route,
-        labels={"testRun": module_label},
-    )
-    authorization.identity.add_oidc("edge-authenticated", wristband_endpoint)
-    return authorization
-
-
-@pytest.fixture(scope="module")
-def authenticated_client(authenticated_route):
-    """Client with route for the already authenticated user"""
-    client = authenticated_route.client()
-    yield client
-    client.close()
-
-
 # pylint: disable=unused-argument
 @pytest.fixture(scope="module", autouse=True)
-def commit(request, commit, authenticated_authorization):
+def commit(request, commit, wristband_authorization):
     """Commits all important stuff before tests"""
-    request.addfinalizer(authenticated_authorization.delete)
-    authenticated_authorization.commit()
+    request.addfinalizer(wristband_authorization.delete)
+    wristband_authorization.commit()
