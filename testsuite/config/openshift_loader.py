@@ -12,7 +12,8 @@ def inject_client(obj, base_client, path):
         obj[path] = base_client
 
 
-def load(obj, **_):
+# pylint: disable=unused-argument, too-many-locals
+def load(obj, env=None, silent=True, key=None, filename=None):
     """Creates all OpenShift clients"""
     section = obj.setdefault("cluster", {})
     client = OpenShiftClient(
