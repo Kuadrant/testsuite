@@ -1,21 +1,13 @@
 """
-This module contains the very basic tests and their dependencies for MGC
+This module contains the most basic happy path test for both DNSPolicy and TLSPolicy
 
 Prerequisites:
-* the hub cluster is also a spoke cluster so that everything happens on the only cluster
 * multi-cluster-gateways ns is created and set as openshift["project"]
 * managedclustersetbinding is created in openshift["project"]
-* placement named "local-cluster" is created in openshift["project"] and bound to clusterset
 * gateway class "kuadrant-multi-cluster-gateway-instance-per-cluster" is created
-* openshift2["project"] is set
 
-Notes:
-* dnspolicies are created and bound to gateways automatically by mgc operator
-* dnspolicies leak at this moment
 """
 import pytest
-
-from testsuite.httpx import KuadrantClient
 
 pytestmark = [pytest.mark.mgc]
 
@@ -25,18 +17,13 @@ def test_gateway_readiness(gateway):
     assert gateway.is_ready()
 
 
-def test_smoke(route, upstream_gateway):
+def test_smoke(client):
     """
     Tests whether the backend, exposed using the HTTPRoute and Gateway, was exposed correctly,
     having a tls secured endpoint with a hostname managed by MGC
     """
 
-    tls_cert = upstream_gateway.get_tls_cert()
-
-    # assert that tls_cert is used by the server
-    backend_client = KuadrantClient(base_url=f"https://{route.hostnames[0]}", verify=tls_cert)
-
-    result = backend_client.get("get")
+    result = client.get("/get")
     assert not result.has_dns_error()
     assert not result.has_tls_error()
     assert result.status_code == 200

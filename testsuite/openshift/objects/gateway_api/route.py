@@ -2,23 +2,18 @@
 
 import typing
 
-from functools import cached_property
-
 from httpx import Client
 
 from testsuite.httpx import KuadrantClient
+from testsuite.objects.gateway import GatewayRoute, Gateway
 from testsuite.openshift.client import OpenShiftClient
 from testsuite.openshift.objects import modify, OpenShiftObject
-from testsuite.openshift.objects.route import Route
-
-from . import Referencable
-
 
 if typing.TYPE_CHECKING:
     from testsuite.openshift.httpbin import Httpbin
 
 
-class HTTPRoute(OpenShiftObject, Referencable):
+class HTTPRoute(OpenShiftObject, GatewayRoute):
     """HTTPRoute object, serves as replacement for Routes and Ingresses"""
 
     def client(self, **kwargs) -> Client:
@@ -28,11 +23,9 @@ class HTTPRoute(OpenShiftObject, Referencable):
     @classmethod
     def create_instance(
         cls,
-        openshift: OpenShiftClient,
+        openshift: "OpenShiftClient",
         name,
-        parent: Referencable,
-        hostname,
-        backend: "Httpbin",
+        gateway: Gateway,
         labels: dict[str, str] = None,
     ):
         """Creates new instance of HTTPRoute"""
@@ -41,9 +34,9 @@ class HTTPRoute(OpenShiftObject, Referencable):
             "kind": "HTTPRoute",
             "metadata": {"name": name, "namespace": openshift.project, "labels": labels},
             "spec": {
-                "parentRefs": [parent.reference],
-                "hostnames": [hostname],
-                "rules": [{"backendRefs": [backend.reference]}],
+                "parentRefs": [gateway.reference],
+                "hostnames": [],
+                "rules": [],
             },
         }
 
@@ -64,13 +57,13 @@ class HTTPRoute(OpenShiftObject, Referencable):
         return self.model.spec.hostnames
 
     @modify
-    def add_hostname(self, hostname):
+    def add_hostname(self, hostname: str):
         """Adds hostname to the Route"""
         if hostname not in self.model.spec.hostnames:
             self.model.spec.hostnames.append(hostname)
 
     @modify
-    def remove_hostname(self, hostname):
+    def remove_hostname(self, hostname: str):
         """Adds hostname to the Route"""
         self.model.spec.hostnames.remove(hostname)
 
@@ -80,38 +73,24 @@ class HTTPRoute(OpenShiftObject, Referencable):
         self.model.spec.hostnames = []
 
     @modify
-    def set_match(self, path_prefix: str = None, headers: dict[str, str] = None):
+    def set_match(self, backend: "Httpbin", path_prefix: str = None):
         """Limits HTTPRoute to a certain path"""
         match = {}
         if path_prefix:
             match["path"] = {"value": path_prefix, "type": "PathPrefix"}
-        if headers:
-            match["headers"] = headers
-        self.model.spec.rules[0]["matches"] = [match]
+        for rule in self.model.spec.rules:
+            for ref in rule.backendRefs:
+                if backend.reference["name"] == ref["name"]:
+                    rule["matches"] = [match]
+                    return
+        raise NameError("This backend is not assigned to this Route")
 
+    @modify
+    def add_backend(self, backend: "Httpbin", prefix="/"):
+        self.model.spec.rules.append(
+            {"backendRefs": [backend.reference], "matches": [{"path": {"value": prefix, "type": "PathPrefix"}}]}
+        )
 
-class HostnameWrapper(Route, Referencable):
-    """
-    Wraps HTTPRoute with Route interface with specific hostname defined for a client
-    Needed because there can be only HTTPRoute for Kuadrant, while there will be multiple OpenshiftRoutes for AuthConfig
-    """
-
-    def __init__(self, route: HTTPRoute, hostname: str) -> None:
-        super().__init__()
-        self.route = route
-        self._hostname = hostname
-
-    @cached_property
-    def hostname(self) -> str:
-        return self._hostname
-
-    def client(self, **kwargs) -> Client:
-        return KuadrantClient(base_url=f"http://{self.hostname}", **kwargs)
-
-    @property
-    def reference(self) -> dict[str, str]:
-        return self.route.reference
-
-    def __getattr__(self, attr):
-        """Direct all other calls to the original route"""
-        return getattr(self.route, attr)
+    @modify
+    def remove_all_backend(self):
+        self.model.spec.rules.clear()

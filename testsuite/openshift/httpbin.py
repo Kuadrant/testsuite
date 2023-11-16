@@ -3,8 +3,8 @@ from functools import cached_property
 from importlib import resources
 
 from testsuite.objects import LifecycleObject
+from testsuite.objects.gateway import Referencable
 from testsuite.openshift.client import OpenShiftClient
-from testsuite.openshift.objects.gateway_api import Referencable
 
 
 class Httpbin(LifecycleObject, Referencable):

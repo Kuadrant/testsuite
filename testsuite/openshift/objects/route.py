@@ -1,27 +1,14 @@
 """Module containing Route related stuff"""
-from abc import ABC, abstractmethod
 from functools import cached_property
 
 from httpx import Client
 
 from testsuite.httpx import KuadrantClient
+from testsuite.objects.hostname import Hostname
 from testsuite.openshift.objects import OpenShiftObject
 
 
-class Route(ABC):
-    """Abstraction layer for Route/Ingress/HTTPRoute"""
-
-    @cached_property
-    @abstractmethod
-    def hostname(self) -> str:
-        """Returns one of the Route valid hostnames"""
-
-    @abstractmethod
-    def client(self, **kwargs) -> Client:
-        """Return Httpx client for the requests to this backend"""
-
-
-class OpenshiftRoute(OpenShiftObject, Route):
+class OpenshiftRoute(OpenShiftObject, Hostname):
     """Openshift Route object"""
 
     @classmethod

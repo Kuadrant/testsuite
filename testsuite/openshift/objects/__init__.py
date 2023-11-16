@@ -1,7 +1,7 @@
 """Base classes/methods for our own APIObjects"""
 import functools
 
-from openshift import APIObject
+from openshift import APIObject, timeout
 
 from testsuite.objects import LifecycleObject
 
@@ -48,6 +48,7 @@ class OpenShiftObject(APIObject, LifecycleObject):
 
     def delete(self, ignore_not_found=True, cmd_args=None):
         """Deletes the resource, by default ignored not found"""
-        deleted = super().delete(ignore_not_found, cmd_args)
-        self.committed = False
-        return deleted
+        with timeout(30):
+            deleted = super().delete(ignore_not_found, cmd_args)
+            self.committed = False
+            return deleted

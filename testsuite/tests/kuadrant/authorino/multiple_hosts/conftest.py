@@ -3,21 +3,21 @@ import pytest
 
 
 @pytest.fixture(scope="module")
-def second_route(proxy, blame):
-    """Second valid hostname"""
-    return proxy.expose_hostname(blame("second"))
+def second_hostname(exposer, gateway, blame):
+    """Second exposed hostname"""
+    return exposer.expose_hostname(blame("second"), gateway)
 
 
 @pytest.fixture(scope="module")
-def authorization(authorization, second_route):
-    """Adds second host to the AuthConfig"""
-    authorization.add_host(second_route.hostname)
-    return authorization
+def route(route, second_hostname):
+    """Adds second host to the HTTPRoute"""
+    route.add_hostname(second_hostname.hostname)
+    return route
 
 
 @pytest.fixture(scope="module")
-def client2(second_route):
+def client2(second_hostname):
     """Client for second hostname"""
-    client = second_route.client()
+    client = second_hostname.client()
     yield client
     client.close()

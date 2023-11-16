@@ -7,6 +7,7 @@ import pytest
 
 from testsuite.httpx.auth import HttpxOidcClientAuth
 from testsuite.oidc.rhsso import RHSSO
+from testsuite.openshift.objects.auth_config import AuthConfig
 from testsuite.utils import ContentType
 
 
@@ -95,7 +96,7 @@ def commit(authorization):
 def authorization(
     openshift,
     blame,
-    route,
+    hostname,
     module_label,
     rhsso,
     terms_and_conditions,
@@ -103,15 +104,19 @@ def authorization(
     admin_rhsso,
     resource_info,
     request,
+    route,
 ):
     """Creates AuthConfig object from template"""
-    auth = openshift.new_app(
+    # with openshift.context:
+    #     name = blame("ac")
+    #     request.addfinalizer(lambda: selector(f"authconfig/{name}").delete(ignore_not_found=True))
+    selector = openshift.new_app(
         resources.files("testsuite.resources").joinpath("dinosaur_config.yaml"),
         {
             "NAME": blame("ac"),
             "NAMESPACE": openshift.project,
             "LABEL": module_label,
-            "HOST": route.hostname,
+            "HOST": hostname.hostname,
             "RHSSO_ISSUER": rhsso.well_known["issuer"],
             "ADMIN_ISSUER": admin_rhsso.well_known["issuer"],
             "TERMS_AND_CONDITIONS": terms_and_conditions("false"),
@@ -119,8 +124,10 @@ def authorization(
             "RESOURCE_INFO": resource_info("123", rhsso.client_name),
         },
     )
-
-    request.addfinalizer(auth.delete)
+    with openshift.context:
+        auth = selector.object(cls=AuthConfig)
+        request.addfinalizer(auth.delete)
+    route.add_auth_config(auth)
     return auth
 
 

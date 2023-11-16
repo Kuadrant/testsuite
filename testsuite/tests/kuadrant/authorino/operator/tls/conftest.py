@@ -5,7 +5,9 @@ import pytest
 
 from testsuite.certificates import Certificate, CertInfo
 from testsuite.objects import Selector
-from testsuite.openshift.envoy import TLSEnvoy
+from testsuite.objects.hostname import Exposer
+from testsuite.openshift.objects.envoy.tls import TLSEnvoy
+from testsuite.openshift.objects.gateway_api.hostname import OpenShiftExposer
 from testsuite.openshift.objects.secret import TLSSecret
 from testsuite.utils import cert_builder
 
@@ -144,14 +146,13 @@ def authorino_labels(selector) -> Dict[str, str]:
 
 # pylint: disable-msg=too-many-locals
 @pytest.fixture(scope="module")
-def proxy(
+def gateway(
     request,
     authorino,
     openshift,
     create_secret,
     blame,
-    label,
-    backend,
+    module_label,
     authorino_authority,
     envoy_authority,
     envoy_cert,
@@ -165,18 +166,26 @@ def proxy(
 
     envoy = TLSEnvoy(
         openshift,
+        blame("gw"),
         authorino,
-        blame("backend"),
-        label,
-        backend,
-        testconfig["envoy"]["image"],
+        testconfig["service_protection"]["envoy"]["image"],
         authorino_secret,
         envoy_ca_secret,
         envoy_secret,
+        labels={"app": module_label},
     )
     request.addfinalizer(envoy.delete)
     envoy.commit()
     return envoy
+
+
+@pytest.fixture(scope="module")
+def exposer(request) -> Exposer:
+    """Exposer object instance with TLS passthrough"""
+    exposer = OpenShiftExposer(passthrough=True)
+    request.addfinalizer(exposer.delete)
+    exposer.commit()
+    return exposer
 
 
 @pytest.fixture(scope="module")

@@ -9,10 +9,10 @@ from testsuite.openshift.objects.route import OpenshiftRoute
 
 # pylint: disable=unused-argument
 @pytest.fixture(scope="module")
-def authorization(authorization, wildcard_domain, openshift, module_label) -> AuthConfig:
+def authorization(authorization, route, wildcard_domain, openshift, module_label) -> AuthConfig:
     """In case of Authorino, AuthConfig used for authorization"""
     authorization.remove_all_hosts()
-    authorization.add_host(wildcard_domain)
+    route.add_hostname(wildcard_domain)
     authorization.responses.add_success_header("x-ext-auth-other-json", JsonResponse({"propX": Value("valueX")}))
     return authorization
 

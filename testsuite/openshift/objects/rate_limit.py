@@ -6,9 +6,9 @@ from typing import Iterable, Literal
 import openshift as oc
 
 from testsuite.objects import Rule, asdict
+from testsuite.objects.gateway import Referencable
 from testsuite.openshift.client import OpenShiftClient
 from testsuite.openshift.objects import OpenShiftObject, modify
-from testsuite.openshift.objects.gateway_api import Referencable
 
 
 @dataclass

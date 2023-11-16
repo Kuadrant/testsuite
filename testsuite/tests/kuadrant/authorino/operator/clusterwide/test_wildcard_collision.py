@@ -8,24 +8,28 @@ from testsuite.objects import Value, JsonResponse
 from testsuite.openshift.objects.auth_config import AuthConfig
 
 
+@pytest.fixture(scope="module")
+def route(route, wildcard_domain, hostname):
+    """Set route for wildcard domain"""
+    route.add_hostname(wildcard_domain)
+    route.remove_hostname(hostname.hostname)
+    return route
+
+
 # pylint: disable = unused-argument
 @pytest.fixture(scope="module")
-def authorization(authorino, blame, openshift, module_label, proxy, wildcard_domain):
+def authorization(authorino, blame, wildcard_domain, route, openshift, module_label, gateway):
     """In case of Authorino, AuthConfig used for authorization"""
-    auth = AuthConfig.create_instance(
-        openshift, blame("ac"), None, hostnames=[wildcard_domain], labels={"testRun": module_label}
-    )
+    auth = AuthConfig.create_instance(openshift, blame("ac"), route, labels={"testRun": module_label})
     auth.responses.add_success_header("header", JsonResponse({"anything": Value("one")}))
     return auth
 
 
 # pylint: disable = unused-argument
 @pytest.fixture(scope="module")
-def authorization2(authorino, blame, openshift2, module_label, proxy, wildcard_domain):
+def authorization2(authorino, blame, route, openshift2, module_label, gateway):
     """In case of Authorino, AuthConfig used for authorization"""
-    auth = AuthConfig.create_instance(
-        openshift2, blame("ac"), None, hostnames=[wildcard_domain], labels={"testRun": module_label}
-    )
+    auth = AuthConfig.create_instance(openshift2, blame("ac"), route, labels={"testRun": module_label})
     auth.responses.add_success_header("header", JsonResponse({"anything": Value("two")}))
     return auth
 

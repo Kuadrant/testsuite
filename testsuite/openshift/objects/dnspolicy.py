@@ -5,9 +5,9 @@ from typing import Optional, Literal
 import openshift as oc
 
 from testsuite.objects import asdict
+from testsuite.objects.gateway import Referencable
 from testsuite.openshift.client import OpenShiftClient
 from testsuite.openshift.objects import OpenShiftObject
-from testsuite.openshift.objects.gateway_api import Referencable
 
 
 @dataclass
