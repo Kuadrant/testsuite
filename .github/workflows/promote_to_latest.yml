@@ -23,7 +23,7 @@ jobs:
         run: |
           echo "REPOSITORY=${{ env.IMG_REGISTRY_HOST }}/${{ env.IMG_REGISTRY_ORG }}/${{ env.IMG_NAME }}" >> $GITHUB_ENV
       - name: Promotes to latest
-        run:
+        run: |
           podman pull ${{ env.REPOSITORY }}:unstable
           podman tag ${{ env.REPOSITORY }}:unstable ${{ env.REPOSITORY }}:latest
           podman push ${{ env.REPOSITORY }}:latest
