@@ -45,17 +45,13 @@ def authorization(authorino, kuadrant, oidc_provider, route, authorization_name,
     return None
 
 
-@pytest.fixture(scope="module")
-def rate_limit_name(blame):
-    """Name of the rate limit"""
-    return blame("limit")
-
-
-@pytest.fixture(scope="module")
-def rate_limit(kuadrant, openshift, rate_limit_name, route, module_label):
+@pytest.fixture(scope="module", params=["route", "gateway"])
+def rate_limit(kuadrant, openshift, blame, request, module_label):
     """Rate limit"""
     if kuadrant:
-        return RateLimitPolicy.create_instance(openshift, rate_limit_name, route, labels={"testRun": module_label})
+        return RateLimitPolicy.create_instance(
+            openshift, blame("limit"), request.getfixturevalue(request.param), labels={"testRun": module_label}
+        )
     return None
 
 

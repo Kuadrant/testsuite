@@ -21,17 +21,17 @@ class Limit:
 
 
 class RateLimitPolicy(OpenShiftObject):
-    """RateLimitPolicy (or RLP for short) object, used for applying rate limiting rules to an Gateway/HTTPRoute"""
+    """RateLimitPolicy (or RLP for short) object, used for applying rate limiting rules to a Gateway/HTTPRoute"""
 
     @classmethod
-    def create_instance(cls, openshift: OpenShiftClient, name, route: Referencable, labels: dict[str, str] = None):
+    def create_instance(cls, openshift: OpenShiftClient, name, target: Referencable, labels: dict[str, str] = None):
         """Creates new instance of RateLimitPolicy"""
         model = {
             "apiVersion": "kuadrant.io/v1beta2",
             "kind": "RateLimitPolicy",
             "metadata": {"name": name, "labels": labels},
             "spec": {
-                "targetRef": route.reference,
+                "targetRef": target.reference,
                 "limits": {},
             },
         }
