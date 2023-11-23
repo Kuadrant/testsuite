@@ -1,7 +1,7 @@
 """Tests on mTLS authentication with multiple attributes"""
 import pytest
 
-from testsuite.objects import Rule
+from testsuite.policy.authorization import Rule
 
 
 @pytest.fixture(scope="module", autouse=True)

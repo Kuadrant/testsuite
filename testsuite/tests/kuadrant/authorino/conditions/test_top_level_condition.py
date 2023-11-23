@@ -1,7 +1,7 @@
 """Test condition to skip the entire AuthConfig"""
 import pytest
 
-from testsuite.objects import Rule
+from testsuite.policy.authorization import Rule
 
 
 @pytest.fixture(scope="module")

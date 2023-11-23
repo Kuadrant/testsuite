@@ -4,8 +4,8 @@ import yaml
 import pytest
 from openshift import selector
 
-from testsuite.openshift.objects.config_map import ConfigMap
-from testsuite.openshift.objects.metrics import ServiceMonitor, MetricsEndpoint, Prometheus
+from testsuite.openshift.config_map import ConfigMap
+from testsuite.openshift.metrics import ServiceMonitor, MetricsEndpoint, Prometheus
 
 
 @pytest.fixture(scope="module")

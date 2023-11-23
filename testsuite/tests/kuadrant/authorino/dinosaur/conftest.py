@@ -7,7 +7,7 @@ import pytest
 
 from testsuite.httpx.auth import HttpxOidcClientAuth
 from testsuite.oidc.rhsso import RHSSO
-from testsuite.openshift.objects.auth_config import AuthConfig
+from testsuite.policy.authorization.auth_config import AuthConfig
 from testsuite.utils import ContentType
 
 

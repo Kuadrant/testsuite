@@ -1,7 +1,7 @@
 """Test condition to skip the identity section of AuthConfig"""
 import pytest
 
-from testsuite.objects import Rule
+from testsuite.policy.authorization import Rule
 from testsuite.httpx.auth import HeaderApiKeyAuth
 
 

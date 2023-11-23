@@ -4,7 +4,7 @@ Tests that a single limit is enforced as expected over one iteration
 
 import pytest
 
-from testsuite.openshift.objects.rate_limit import Limit
+from testsuite.policy.rate_limit_policy import Limit
 
 
 @pytest.fixture(

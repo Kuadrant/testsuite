@@ -1,6 +1,6 @@
 """https://github.com/Kuadrant/authorino/blob/main/docs/user-guides/token-normalization.md"""
 import pytest
-from testsuite.objects import Value, ValueFrom, Rule
+from testsuite.policy.authorization import Rule, Value, ValueFrom
 from testsuite.httpx.auth import HeaderApiKeyAuth, HttpxOidcClientAuth
 
 

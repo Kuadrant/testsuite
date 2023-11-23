@@ -1,7 +1,7 @@
 """Tests for the functionality of the deep-evaluator metric samples"""
 import pytest
 
-from testsuite.objects import Value, JsonResponse
+from testsuite.policy.authorization import Value, JsonResponse
 
 
 @pytest.fixture(scope="module")

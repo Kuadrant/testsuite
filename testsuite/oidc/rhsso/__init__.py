@@ -5,7 +5,7 @@ from urllib.parse import urlparse
 from keycloak import KeycloakOpenID, KeycloakAdmin, KeycloakPostError
 
 from testsuite.oidc import OIDCProvider, Token
-from testsuite.objects import LifecycleObject
+from testsuite.lifecycle import LifecycleObject
 from .objects import Realm, Client, User
 
 

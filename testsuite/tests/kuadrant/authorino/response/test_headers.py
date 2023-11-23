@@ -3,7 +3,7 @@ import json
 
 import pytest
 
-from testsuite.objects import Value, JsonResponse
+from testsuite.policy.authorization import Value, JsonResponse
 
 
 @pytest.fixture(scope="module", params=["123456789", "standardCharacters", "specialcharacters+*-."])

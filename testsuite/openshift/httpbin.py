@@ -2,8 +2,8 @@
 from functools import cached_property
 from importlib import resources
 
-from testsuite.objects import LifecycleObject
-from testsuite.objects.gateway import Referencable
+from testsuite.lifecycle import LifecycleObject
+from testsuite.gateway import Referencable
 from testsuite.openshift.client import OpenShiftClient
 
 

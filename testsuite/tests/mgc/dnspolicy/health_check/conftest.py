@@ -2,8 +2,8 @@
 import time
 import pytest
 
-from testsuite.objects.hostname import Hostname
-from testsuite.openshift.objects.gateway_api.gateway import MGCGateway
+from testsuite.gateway import Hostname
+from testsuite.gateway.gateway_api.gateway import MGCGateway
 
 
 @pytest.fixture(scope="module")

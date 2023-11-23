@@ -1,7 +1,7 @@
 """Test condition to skip the response section of AuthConfig"""
 import pytest
 
-from testsuite.objects import Rule, Value, JsonResponse
+from testsuite.policy.authorization import Rule, Value, JsonResponse
 from testsuite.utils import extract_response
 
 

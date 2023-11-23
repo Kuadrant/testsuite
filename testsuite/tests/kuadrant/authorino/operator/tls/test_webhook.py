@@ -8,11 +8,11 @@ import pytest
 import openshift as oc
 from openshift import OpenShiftPythonException
 
-from testsuite.objects import Rule, ValueFrom
+from testsuite.policy.authorization import Rule, ValueFrom
 from testsuite.certificates import CertInfo
-from testsuite.openshift.objects.auth_config import AuthConfig
+from testsuite.policy.authorization.auth_config import AuthConfig
 from testsuite.utils import cert_builder
-from testsuite.openshift.objects.ingress import Ingress
+from testsuite.openshift.ingress import Ingress
 
 OPA_POLICY = """
     request := json.unmarshal(input.context.request.http.body).request

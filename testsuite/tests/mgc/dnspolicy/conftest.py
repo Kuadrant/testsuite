@@ -1,7 +1,7 @@
 """Conftest for DNSPolicy tests"""
 import pytest
 
-from testsuite.openshift.objects.gateway_api.gateway import MGCGateway
+from testsuite.gateway.gateway_api.gateway import MGCGateway
 
 
 @pytest.fixture(scope="module")

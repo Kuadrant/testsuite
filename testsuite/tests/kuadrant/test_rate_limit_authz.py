@@ -3,8 +3,8 @@
 import pytest
 
 from testsuite.httpx.auth import HttpxOidcClientAuth
-from testsuite.objects import ValueFrom, JsonResponse
-from testsuite.openshift.objects.rate_limit import Limit
+from testsuite.policy.authorization import ValueFrom, JsonResponse
+from testsuite.policy.rate_limit_policy import Limit
 
 
 @pytest.fixture(scope="module")

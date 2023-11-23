@@ -4,8 +4,8 @@ Test for wildcard collisions with clusterwide authorino
 
 import pytest
 
-from testsuite.objects import Value, JsonResponse
-from testsuite.openshift.objects.auth_config import AuthConfig
+from testsuite.policy.authorization import Value, JsonResponse
+from testsuite.policy.authorization.auth_config import AuthConfig
 
 
 @pytest.fixture(scope="module")

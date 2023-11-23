@@ -1,7 +1,7 @@
 """Test for api key identities, with different credential methods, sequential trigger according to their priorities"""
 import pytest
 
-from testsuite.objects import Credentials
+from testsuite.policy.authorization import Credentials
 from testsuite.utils import extract_response
 
 

@@ -2,11 +2,10 @@
 import pytest
 
 from testsuite.httpx.auth import HttpxOidcClientAuth
-from testsuite.objects import Authorino, PreexistingAuthorino
 from testsuite.openshift.client import OpenShiftClient
-from testsuite.openshift.objects.api_key import APIKey
-from testsuite.openshift.objects.auth_config import AuthConfig
-from testsuite.openshift.objects.authorino import AuthorinoCR
+from testsuite.openshift.api_key import APIKey
+from testsuite.policy.authorization.auth_config import AuthConfig
+from testsuite.openshift.authorino import AuthorinoCR, Authorino, PreexistingAuthorino
 
 
 @pytest.fixture(scope="module")

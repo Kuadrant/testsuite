@@ -1,7 +1,7 @@
 """Test for RHSSO auth credentials"""
 import pytest
 
-from testsuite.objects import Credentials
+from testsuite.policy.authorization import Credentials
 
 
 @pytest.fixture(scope="module", params=["authorizationHeader", "customHeader", "queryString", "cookie"])

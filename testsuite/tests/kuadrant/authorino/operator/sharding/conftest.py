@@ -1,10 +1,10 @@
 """Conftest for authorino sharding tests"""
 import pytest
 
-from testsuite.objects import Value, JsonResponse
-from testsuite.openshift.objects.envoy import Envoy
-from testsuite.openshift.objects.auth_config import AuthConfig
-from testsuite.openshift.objects.envoy.route import EnvoyVirtualRoute
+from testsuite.policy.authorization import Value, JsonResponse
+from testsuite.gateway.envoy import Envoy
+from testsuite.policy.authorization.auth_config import AuthConfig
+from testsuite.gateway.envoy.route import EnvoyVirtualRoute
 
 
 @pytest.fixture(scope="module")
