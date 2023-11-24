@@ -1,7 +1,7 @@
 """Test condition to skip the response section of AuthConfig"""
 import pytest
 
-from testsuite.policy.authorization import Rule, Value, JsonResponse
+from testsuite.policy.authorization import Pattern, Value, JsonResponse
 from testsuite.utils import extract_response
 
 
@@ -9,7 +9,7 @@ from testsuite.utils import extract_response
 def authorization(authorization):
     """Add to the AuthConfig response, which will only trigger on POST requests"""
     authorization.responses.add_success_header(
-        "simple", JsonResponse({"data": Value("response")}), when=[Rule("context.request.http.method", "eq", "POST")]
+        "simple", JsonResponse({"data": Value("response")}), when=[Pattern("context.request.http.method", "eq", "POST")]
     )
     return authorization
 

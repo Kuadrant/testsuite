@@ -5,7 +5,7 @@ https://github.com/Kuadrant/authorino/blob/main/docs/features.md#oidc-userinfo-m
 import pytest
 
 from testsuite.httpx.auth import HttpxOidcClientAuth
-from testsuite.policy.authorization import Rule
+from testsuite.policy.authorization import Pattern
 
 
 @pytest.fixture(scope="module")
@@ -22,7 +22,7 @@ def authorization(authorization, rhsso):
     """
     authorization.metadata.add_user_info("user-info", "rhsso")
     authorization.authorization.add_auth_rules(
-        "rule", [Rule("auth.metadata.user-info.email", "eq", rhsso.user.properties["email"])]
+        "rule", [Pattern("auth.metadata.user-info.email", "eq", rhsso.user.properties["email"])]
     )
     return authorization
 

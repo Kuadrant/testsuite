@@ -2,7 +2,7 @@
 from json import loads
 import pytest
 
-from testsuite.policy.authorization import Rule, Value, ValueFrom, DenyResponse
+from testsuite.policy.authorization import Pattern, Value, ValueFrom, DenyResponse
 
 HEADERS = {
     "x-string-header": Value("abc"),
@@ -35,7 +35,7 @@ def authorization(authorization):
         )
     )
     # Authorize only when url path is "/allow"
-    authorization.authorization.add_auth_rules("Whitelist", [Rule("context.request.http.path", "eq", "/allow")])
+    authorization.authorization.add_auth_rules("Whitelist", [Pattern("context.request.http.path", "eq", "/allow")])
     return authorization
 
 

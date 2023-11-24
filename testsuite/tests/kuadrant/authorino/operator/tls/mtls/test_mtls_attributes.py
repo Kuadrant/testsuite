@@ -1,13 +1,13 @@
 """Tests on mTLS authentication with multiple attributes"""
 import pytest
 
-from testsuite.policy.authorization import Rule
+from testsuite.policy.authorization import Pattern
 
 
 @pytest.fixture(scope="module", autouse=True)
 def authorization(authorization, blame, cert_attributes):
     """Add second pattern matching rule to the AuthConfig"""
-    rule_country = Rule("auth.identity.Country", "incl", cert_attributes["C"])
+    rule_country = Pattern("auth.identity.Country", "incl", cert_attributes["C"])
     authorization.authorization.add_auth_rules(blame("redhat"), [rule_country])
 
     return authorization

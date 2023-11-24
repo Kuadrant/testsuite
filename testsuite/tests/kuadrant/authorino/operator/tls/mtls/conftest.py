@@ -3,7 +3,7 @@ import pytest
 
 from testsuite.certificates import CertInfo
 from testsuite.utils import cert_builder
-from testsuite.policy.authorization import Rule
+from testsuite.policy.authorization import Pattern
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -11,7 +11,7 @@ def authorization(authorization, blame, selector, cert_attributes):
     """Create AuthConfig with mtls identity and pattern matching rule"""
     authorization.identity.add_mtls(blame("mtls"), selector=selector)
 
-    rule_organization = Rule("auth.identity.Organization", "incl", cert_attributes["O"])
+    rule_organization = Pattern("auth.identity.Organization", "incl", cert_attributes["O"])
     authorization.authorization.add_auth_rules(blame("redhat"), [rule_organization])
 
     return authorization

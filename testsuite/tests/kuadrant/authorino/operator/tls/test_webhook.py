@@ -8,7 +8,7 @@ import pytest
 import openshift as oc
 from openshift import OpenShiftPythonException
 
-from testsuite.policy.authorization import Rule, ValueFrom
+from testsuite.policy.authorization import Pattern, ValueFrom
 from testsuite.certificates import CertInfo
 from testsuite.policy.authorization.auth_config import AuthConfig
 from testsuite.utils import cert_builder
@@ -82,8 +82,8 @@ def authorization(authorization, openshift, module_label, authorino_domain) -> A
     user_value = ValueFrom("auth.identity.username")
 
     when = [
-        Rule("auth.authorization.features.allow", "eq", "true"),
-        Rule("auth.authorization.features.verb", "eq", "CREATE"),
+        Pattern("auth.authorization.features.allow", "eq", "true"),
+        Pattern("auth.authorization.features.verb", "eq", "CREATE"),
     ]
     kube_attrs = {
         "namespace": {"value": openshift.project},
@@ -97,8 +97,8 @@ def authorization(authorization, openshift, module_label, authorino_domain) -> A
     )
 
     when = [
-        Rule("auth.authorization.features.allow", "eq", "true"),
-        Rule("auth.authorization.features.verb", "eq", "DELETE"),
+        Pattern("auth.authorization.features.allow", "eq", "true"),
+        Pattern("auth.authorization.features.verb", "eq", "DELETE"),
     ]
     kube_attrs = {
         "namespace": {"value": openshift.project},
