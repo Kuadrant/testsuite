@@ -5,6 +5,7 @@ from testsuite.policy.authorization import (
     Selector,
     Credentials,
     Rule,
+    Pattern,
     ABCValue,
     ValueFrom,
     JsonResponse,
@@ -261,8 +262,8 @@ class AuthorizationSection(Section):
             :param role: name of role
             :param path: path to apply this rule to
         """
-        rule = Rule("auth.identity.realm_access.roles", "incl", role)
-        when = Rule("context.request.http.path", "matches", path)
+        rule = Pattern("auth.identity.realm_access.roles", "incl", role)
+        when = Pattern("context.request.http.path", "matches", path)
         common_features.setdefault("when", [])
         common_features["when"].append(when)
         self.add_auth_rules(name, [rule], **common_features)

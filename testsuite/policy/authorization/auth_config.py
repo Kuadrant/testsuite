@@ -5,7 +5,8 @@ from typing import Dict
 from testsuite.utils import asdict
 from testsuite.openshift import OpenShiftObject, modify
 from testsuite.openshift.client import OpenShiftClient
-from .sections import AuthorizationSection, IdentitySection, MetadataSection, ResponseSection, Rule
+from .sections import AuthorizationSection, IdentitySection, MetadataSection, ResponseSection
+from . import Rule, Pattern
 
 
 class AuthConfig(OpenShiftObject):
@@ -75,3 +76,10 @@ class AuthConfig(OpenShiftObject):
         """Add rule for the skip of entire AuthConfig"""
         self.auth_section.setdefault("when", [])
         self.auth_section["when"].extend([asdict(x) for x in when])
+
+    @modify
+    def add_patterns(self, patterns: dict[str, list[Pattern]]):
+        """Add named pattern-matching expressions to be referenced in other "when" rules."""
+        self.model.spec.setdefault("patterns", {})
+        for key, value in patterns.items():
+            self.model.spec["patterns"].update({key: [asdict(x) for x in value]})

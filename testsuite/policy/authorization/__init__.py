@@ -45,7 +45,7 @@ class Credentials:
 
 
 @dataclass
-class Rule:
+class Pattern:
     """
     Data class for rules represented by simple pattern-matching expressions.
     Args:
@@ -58,6 +58,33 @@ class Rule:
     selector: str
     operator: Literal["eq", "neq", "incl", "excl", "matches"]
     value: str
+
+
+@dataclass
+class AnyPattern:
+    """Dataclass specifying *OR* operation on patterns. Any one needs to pass for this block to pass."""
+
+    any: list["Rule"]
+
+
+@dataclass
+class AllPattern:
+    """Dataclass specifying *AND* operation on patterns. All need to pass for this block to pass."""
+
+    all: list["Rule"]
+
+
+@dataclass
+class PatternRef:
+    """
+    Dataclass that references other pattern-matching expression by name.
+    Use authorization.add_patterns() function to define named pattern-matching expression.
+    """
+
+    patternRef: str
+
+
+Rule = Pattern | AnyPattern | AllPattern | PatternRef
 
 
 @dataclass
@@ -158,10 +185,3 @@ class Cache:
 
     ttl: int
     key: ABCValue
-
-
-@dataclass
-class PatternRef:
-    """Dataclass for specifying Pattern reference in Authorization"""
-
-    patternRef: str

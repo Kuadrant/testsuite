@@ -5,7 +5,7 @@ from typing import Iterable, Literal
 
 import openshift as oc
 
-from testsuite.policy.authorization import Rule
+from testsuite.policy.authorization import Pattern
 from testsuite.utils import asdict
 from testsuite.gateway import Referencable
 from testsuite.openshift.client import OpenShiftClient
@@ -40,7 +40,7 @@ class RateLimitPolicy(OpenShiftObject):
         return cls(model, context=openshift.context)
 
     @modify
-    def add_limit(self, name, limits: Iterable[Limit], when: Iterable[Rule] = None, counters: list[str] = None):
+    def add_limit(self, name, limits: Iterable[Limit], when: Iterable[Pattern] = None, counters: list[str] = None):
         """Add another limit"""
         limit: dict = {
             "rates": [asdict(limit) for limit in limits],
