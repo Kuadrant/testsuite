@@ -25,8 +25,9 @@ def rate_limit(rate_limit):
 
 
 @pytest.fixture(scope="module")
-def authorization(authorization):
-    """Adds JSON injection, that wraps the response as Envoy Dynamic Metadata for rate limit"""
+def authorization(authorization, oidc_provider):
+    """Adds rhsso identity and JSON injection, that wraps the response as Envoy Dynamic Metadata for rate limit"""
+    authorization.identity.add_oidc("rhsso", oidc_provider.well_known["issuer"])
     authorization.responses.add_success_dynamic(
         "identity", JsonResponse({"user": ValueFrom("auth.identity.preferred_username")})
     )

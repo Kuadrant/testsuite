@@ -13,7 +13,6 @@ def credentials(request):
 @pytest.fixture(scope="module")
 def authorization(authorization, api_key, credentials):
     """Add API key identity to AuthConfig"""
-    authorization.identity.clear_all()
     authorization.identity.add_api_key(
         "api_key", credentials=Credentials(credentials, "APIKEY"), selector=api_key.selector
     )

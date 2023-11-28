@@ -3,13 +3,6 @@ import backoff
 import pytest
 
 
-@pytest.fixture(scope="module")
-def authorization(authorization):
-    """Add anonymous identity"""
-    authorization.identity.add_anonymous("anonymous")
-    return authorization
-
-
 @pytest.fixture(scope="module", autouse=True)
 def commit(request, authorization):
     """Only commit authorization"""
