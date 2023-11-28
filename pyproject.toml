@@ -16,6 +16,7 @@ pytest-html = "*"
 dynaconf = "*"
 python-keycloak = ">=3.6"
 python-jose = "*"
+lxml = "*"
 cryptography = "*"
 backoff = "*"
 httpx = { version = "*", extras = ["http2"] }
