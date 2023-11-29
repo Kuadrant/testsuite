@@ -58,6 +58,11 @@ class Result:
             return getattr(self.response, item)
         return None
 
+    def __str__(self):
+        if self.error is None:
+            return f"Result[status_code={self.response.status_code}]"
+        return f"Result[error={self.error}]"
+
 
 class KuadrantClient(Client):
     """Httpx client which retries unstable requests"""
