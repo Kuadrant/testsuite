@@ -1,6 +1,4 @@
 """Tests that envoy deployed with TLS security works with Authorino"""
-import pytest
-from httpx import ReadError
 
 
 def test_valid_certificate(envoy_authority, valid_cert, auth, hostname):
@@ -12,13 +10,13 @@ def test_valid_certificate(envoy_authority, valid_cert, auth, hostname):
 
 def test_no_certificate(hostname, envoy_authority):
     """Test that request without certificate will be rejected"""
-    with pytest.raises(ReadError, match="certificate required"):
-        with hostname.client(verify=envoy_authority) as client:
-            client.get("/get")
+    with hostname.client(verify=envoy_authority) as client:
+        result = client.get("/get")
+        result.has_cert_required_error()
 
 
 def test_invalid_certificate(envoy_authority, invalid_cert, auth, hostname):
     """Tests that certificate with different CA will be rejeceted"""
-    with pytest.raises(ReadError, match="unknown ca"):
-        with hostname.client(verify=envoy_authority, cert=invalid_cert) as client:
-            client.get("/get", auth=auth)
+    with hostname.client(verify=envoy_authority, cert=invalid_cert) as client:
+        result = client.get("/get", auth=auth)
+        result.has_unknown_ca_error()
