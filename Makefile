@@ -1,4 +1,4 @@
-.PHONY: commit-acceptance pylint mypy black reformat test performance authorino poetry poetry-no-dev mgc container-image
+.PHONY: commit-acceptance pylint mypy black reformat test performance authorino poetry poetry-no-dev mgc container-image polish-junit reportportal
 
 TB ?= short
 LOGLEVEL ?= INFO
@@ -10,6 +10,7 @@ resultsdir ?= .
 endif
 
 PYTEST = poetry run python -m pytest --tb=$(TB) -o cache_dir=$(resultsdir)/.pytest_cache.$(@F)
+RUNSCRIPT = poetry run ./scripts/
 
 ifdef junit
 PYTEST += --junitxml=$(resultsdir)/junit-$(@F).xml -o junit_suite_name=$(@F)
@@ -70,6 +71,18 @@ poetry.lock: pyproject.toml
 poetry: .make-poetry-sync ## Installs poetry with all dependencies
 
 poetry-no-dev: .make-poetry-sync-no-dev ## Installs poetry without development dependencies
+
+polish-junit: ## Remove skipped tests and logs from passing tests
+polish-junit:
+	gzip -f $(resultsdir)/junit-*.xml
+	# 'cat' on next line is neessary to avoid wipe of the files
+	for file in $(resultsdir)/junit-*.xml.gz; do zcat $$file | $(RUNSCRIPT)xslt-apply ./xslt/polish-junit.xsl >$${file%.gz}; done  # bashism!!!
+	# this deletes something it didn't create, dangerous!!!
+	-rm -f $(resultsdir)/junit-*.xml.gz
+
+reportportal: ## Upload results to reportportal. Appropriate variables for juni2reportportal must be set
+reportportal: polish-junit
+	$(RUNSCRIPT)junit2reportportal $(resultsdir)/junit-*.xml
 
 # Check http://marmelab.com/blog/2016/02/29/auto-documented-makefile.html
 help: ## Print this help
