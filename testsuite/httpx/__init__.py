@@ -5,7 +5,7 @@ from tempfile import NamedTemporaryFile
 from typing import Union
 
 import backoff
-from httpx import Client, ConnectError
+from httpx import Client, RequestError
 
 from testsuite.certificates import Certificate
 
@@ -127,7 +127,7 @@ class KuadrantClient(Client):
                 extensions=extensions,
             )
             return Result(self.retry_codes, response=response)
-        except ConnectError as e:
+        except RequestError as e:
             return Result(self.retry_codes, error=e)
 
     def get(self, *args, **kwargs) -> Result:
