@@ -13,7 +13,6 @@ def credentials(request):
 @pytest.fixture(scope="module")
 def authorization(authorization, rhsso, credentials):
     """Add RHSSO identity to Authorization"""
-    authorization.identity.clear_all()
     authorization.identity.add_oidc("rhsso", rhsso.well_known["issuer"], credentials=Credentials(credentials, "Token"))
     return authorization
 

@@ -39,9 +39,7 @@ def authorization_name(blame):
 def authorization(authorino, kuadrant, oidc_provider, route, authorization_name, openshift, module_label):
     """Authorization object (In case of Kuadrant AuthPolicy)"""
     if kuadrant:
-        policy = AuthPolicy.create_instance(openshift, authorization_name, route, labels={"testRun": module_label})
-        policy.identity.add_oidc("rhsso", oidc_provider.well_known["issuer"])
-        return policy
+        return AuthPolicy.create_instance(openshift, authorization_name, route, labels={"testRun": module_label})
     return None
 
 
