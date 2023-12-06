@@ -26,10 +26,3 @@ def authorization(authorization):
     """Adds `aut.metadata` to the AuthJson"""
     authorization.responses.add_simple("auth.metadata")
     return authorization
-
-
-@pytest.fixture(autouse=True)
-def commit(request, authorization):
-    """Commits all important stuff before tests"""
-    request.addfinalizer(authorization.delete)
-    authorization.commit()

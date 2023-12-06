@@ -60,3 +60,4 @@ def commit(request, authorization, rate_limit):
         if component is not None:
             request.addfinalizer(component.delete)
             component.commit()
+            component.wait_for_ready()

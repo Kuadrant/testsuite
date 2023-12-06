@@ -8,6 +8,7 @@ def commit(request, authorization):
     """Only commit authorization"""
     request.addfinalizer(authorization.delete)
     authorization.commit()
+    authorization.wait_for_ready()
 
 
 @pytest.fixture(scope="module")
