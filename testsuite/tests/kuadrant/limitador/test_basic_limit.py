@@ -10,9 +10,9 @@ from testsuite.policy.rate_limit_policy import Limit
 @pytest.fixture(
     scope="module",
     params=[
-        pytest.param(Limit(2, 20), id="2 requests every 20 sec"),
-        pytest.param(Limit(5, 15), id="5 requests every 15 sec"),
-        pytest.param(Limit(3, 10), id="3 request every 10 sec"),
+        pytest.param(Limit(2, 15), id="2 requests every 15 sec"),
+        pytest.param(Limit(5, 10), id="5 requests every 10 sec"),
+        pytest.param(Limit(3, 5), id="3 request every 5 sec"),
     ],
 )
 def limit(request):
