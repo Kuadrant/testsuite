@@ -18,13 +18,12 @@ class AuthPolicy(AuthConfig):
     def auth_section(self):
         return self.model.spec.setdefault("rules", {})
 
-    # pylint: disable=unused-argument
     @classmethod
-    def create_instance(  # type: ignore
+    def create_instance(
         cls,
         openshift: OpenShiftClient,
         name,
-        route: Referencable,
+        target: Referencable,
         labels: Dict[str, str] = None,
     ):
         """Creates base instance"""
@@ -33,7 +32,8 @@ class AuthPolicy(AuthConfig):
             "kind": "AuthPolicy",
             "metadata": {"name": name, "namespace": openshift.project, "labels": labels},
             "spec": {
-                "targetRef": route.reference,
+                "targetRef": target.reference,
+                "rules": {},
             },
         }
 

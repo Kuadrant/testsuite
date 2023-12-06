@@ -41,7 +41,7 @@ class AuthConfig(OpenShiftObject):
         cls,
         openshift: OpenShiftClient,
         name,
-        route,
+        target,
         labels: Dict[str, str] = None,
     ):
         """Creates base instance"""
@@ -52,7 +52,7 @@ class AuthConfig(OpenShiftObject):
             "spec": {"hosts": []},
         }
         obj = cls(model, context=openshift.context)
-        route.add_auth_config(obj)
+        target.add_auth_config(obj)
         return obj
 
     @modify
