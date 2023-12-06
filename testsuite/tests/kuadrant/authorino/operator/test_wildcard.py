@@ -3,7 +3,7 @@ Test for wildcard host
 """
 import pytest
 
-from testsuite.openshift.objects.auth_config import AuthConfig
+from testsuite.policy.authorization.auth_config import AuthConfig
 
 
 @pytest.fixture(scope="module")

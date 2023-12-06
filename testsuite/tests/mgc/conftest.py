@@ -3,13 +3,12 @@ import pytest
 from openshift import selector
 from weakget import weakget
 
-from testsuite.objects.gateway import GatewayRoute, CustomReference
-from testsuite.objects.hostname import Exposer
-from testsuite.openshift.objects.dnspolicy import DNSPolicy
-from testsuite.openshift.objects.gateway_api.gateway import MGCGateway
-from testsuite.openshift.objects.gateway_api.hostname import DNSPolicyExposer
-from testsuite.openshift.objects.gateway_api.route import HTTPRoute
-from testsuite.openshift.objects.tlspolicy import TLSPolicy
+from testsuite.gateway import CustomReference, GatewayRoute, Exposer
+from testsuite.policy.dns_policy import DNSPolicy
+from testsuite.gateway.gateway_api.gateway import MGCGateway
+from testsuite.gateway.gateway_api.hostname import DNSPolicyExposer
+from testsuite.gateway.gateway_api.route import HTTPRoute
+from testsuite.policy.tls_policy import TLSPolicy
 
 
 @pytest.fixture(scope="session")

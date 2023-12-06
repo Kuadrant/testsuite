@@ -9,8 +9,8 @@ from urllib.parse import urlparse
 import openshift as oc
 from openshift import Context, Selector, OpenShiftPythonException
 
-from testsuite.openshift.objects.route import OpenshiftRoute
-from testsuite.openshift.objects.secret import Secret
+from .route import OpenshiftRoute
+from .secret import Secret
 
 
 class ServiceTypes(enum.Enum):

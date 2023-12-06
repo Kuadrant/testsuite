@@ -1,10 +1,10 @@
 """Conftest for all tests requiring custom deployment of Authorino"""
 import pytest
 
-from testsuite.objects import Value, JsonResponse
+from testsuite.policy.authorization import Value, JsonResponse
 from testsuite.httpx import KuadrantClient
-from testsuite.openshift.objects.auth_config import AuthConfig
-from testsuite.openshift.objects.route import OpenshiftRoute
+from testsuite.policy.authorization.auth_config import AuthConfig
+from testsuite.openshift.route import OpenshiftRoute
 
 
 # pylint: disable=unused-argument

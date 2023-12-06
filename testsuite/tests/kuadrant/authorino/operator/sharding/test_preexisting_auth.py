@@ -3,7 +3,7 @@
 import pytest
 from weakget import weakget
 
-from testsuite.openshift.objects.authorino import AuthorinoCR
+from testsuite.openshift.authorino import AuthorinoCR
 
 
 @pytest.fixture(scope="module")

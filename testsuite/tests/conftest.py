@@ -9,17 +9,16 @@ from keycloak import KeycloakAuthenticationError
 from testsuite.certificates import CFSSLClient
 from testsuite.config import settings
 from testsuite.mockserver import Mockserver
-from testsuite.objects.gateway import Gateway, GatewayRoute
-from testsuite.objects.hostname import Exposer, Hostname
+from testsuite.gateway import Gateway, GatewayRoute, Hostname, Exposer
 from testsuite.oidc import OIDCProvider
 from testsuite.oidc.auth0 import Auth0Provider
 from testsuite.openshift.httpbin import Httpbin
 from testsuite.oidc.rhsso import RHSSO
-from testsuite.openshift.objects.envoy import Envoy
-from testsuite.openshift.objects.envoy.route import EnvoyVirtualRoute
-from testsuite.openshift.objects.gateway_api.gateway import KuadrantGateway
-from testsuite.openshift.objects.gateway_api.hostname import OpenShiftExposer
-from testsuite.openshift.objects.gateway_api.route import HTTPRoute
+from testsuite.gateway.envoy import Envoy
+from testsuite.gateway.envoy.route import EnvoyVirtualRoute
+from testsuite.gateway.gateway_api.gateway import KuadrantGateway
+from testsuite.gateway.gateway_api.hostname import OpenShiftExposer
+from testsuite.gateway.gateway_api.route import HTTPRoute
 from testsuite.utils import randomize, _whoami
 
 

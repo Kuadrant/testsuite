@@ -1,7 +1,7 @@
 """Conftest for metadata feature tests"""
 import pytest
 
-from testsuite.openshift.objects import OpenShiftObject
+from testsuite.openshift import OpenShiftObject
 
 
 @pytest.fixture(scope="module")

@@ -3,11 +3,11 @@
 import pytest
 
 from testsuite.certificates import CertInfo
-from testsuite.objects import WristbandResponse, WristbandSigningKeyRef
-from testsuite.openshift.objects.auth_config import AuthConfig
-from testsuite.openshift.objects.envoy.route import EnvoyVirtualRoute
-from testsuite.openshift.objects.envoy.wristband import WristbandEnvoy
-from testsuite.openshift.objects.secret import TLSSecret
+from testsuite.policy.authorization import WristbandSigningKeyRef, WristbandResponse
+from testsuite.policy.authorization.auth_config import AuthConfig
+from testsuite.gateway.envoy.route import EnvoyVirtualRoute
+from testsuite.gateway.envoy.wristband import WristbandEnvoy
+from testsuite.openshift.secret import TLSSecret
 from testsuite.utils import cert_builder
 
 

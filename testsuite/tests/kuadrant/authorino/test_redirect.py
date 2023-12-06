@@ -3,7 +3,7 @@ Test for authorino redirect
 """
 import pytest
 
-from testsuite.objects import ValueFrom, DenyResponse
+from testsuite.policy.authorization import ValueFrom, DenyResponse
 
 STATUS_CODE = 302
 REDIRECT_URL = "http://anything.inavlid?redirect_to="

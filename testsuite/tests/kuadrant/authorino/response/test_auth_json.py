@@ -4,7 +4,7 @@ import json
 
 import pytest
 
-from testsuite.objects import ValueFrom, JsonResponse
+from testsuite.policy.authorization import ValueFrom, JsonResponse
 
 
 @pytest.fixture(scope="module")

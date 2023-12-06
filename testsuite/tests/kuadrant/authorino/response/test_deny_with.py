@@ -2,7 +2,7 @@
 from json import loads
 import pytest
 
-from testsuite.objects import Value, ValueFrom, Rule, DenyResponse
+from testsuite.policy.authorization import Rule, Value, ValueFrom, DenyResponse
 
 HEADERS = {
     "x-string-header": Value("abc"),

@@ -2,8 +2,8 @@
  all methods are placeholders for now since we do not work with Kuadrant"""
 import pytest
 
-from testsuite.openshift.objects.auth_config.auth_policy import AuthPolicy
-from testsuite.openshift.objects.rate_limit import RateLimitPolicy
+from testsuite.policy.authorization.auth_policy import AuthPolicy
+from testsuite.policy.rate_limit_policy import RateLimitPolicy
 
 
 @pytest.fixture(scope="session")

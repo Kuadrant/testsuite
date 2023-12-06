@@ -5,7 +5,7 @@ from typing import Generator, Callable, Union
 from httpx import Auth, Request, URL, Response
 
 from testsuite.oidc.rhsso import User
-from testsuite.openshift.objects.api_key import APIKey
+from testsuite.openshift.api_key import APIKey
 from testsuite.oidc import Token
 
 TokenType = Union[Token, Callable[[], Token]]

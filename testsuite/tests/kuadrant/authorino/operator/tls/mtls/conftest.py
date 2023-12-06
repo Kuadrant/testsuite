@@ -3,7 +3,7 @@ import pytest
 
 from testsuite.certificates import CertInfo
 from testsuite.utils import cert_builder
-from testsuite.objects import Rule
+from testsuite.policy.authorization import Rule
 
 
 @pytest.fixture(scope="module", autouse=True)

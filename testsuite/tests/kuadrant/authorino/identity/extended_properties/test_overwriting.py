@@ -1,7 +1,7 @@
 """https://github.com/Kuadrant/authorino/pull/399"""
 import pytest
 
-from testsuite.objects import Value
+from testsuite.policy.authorization import Value
 from testsuite.utils import extract_response
 
 

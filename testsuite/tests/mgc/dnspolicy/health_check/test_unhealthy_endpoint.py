@@ -1,7 +1,7 @@
 """Tests for DNSPolicy health checks - unhealthy endpoint"""
 import pytest
 
-from testsuite.openshift.objects.dnspolicy import HealthCheck
+from testsuite.policy.dns_policy import HealthCheck
 
 pytestmark = [pytest.mark.mgc]
 

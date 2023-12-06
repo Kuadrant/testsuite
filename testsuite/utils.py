@@ -5,6 +5,8 @@ import json
 import os
 import secrets
 from collections.abc import Collection
+from copy import deepcopy
+from dataclasses import is_dataclass, fields
 from importlib import resources
 from io import StringIO
 from typing import Dict, Union
@@ -16,6 +18,8 @@ from testsuite.certificates import Certificate, CFSSLClient, CertInfo
 from testsuite.config import settings
 
 MESSAGE_1KB = resources.files("testsuite.resources.performance.files").joinpath("message_1kb.txt")
+
+JSONValues = None | str | int | bool | list["JSONValues"] | dict[str, "JSONValues"]
 
 
 class ContentType(enum.Enum):
@@ -119,3 +123,39 @@ def extract_response(response, header="Simple", key="data"):
     :return: Extracted value
     """
     return weakget(json.loads(response.json()["headers"][header]))[key]
+
+
+def asdict(obj) -> dict[str, JSONValues]:
+    """
+    This function converts dataclass object to dictionary.
+    While it works similar to `dataclasses.asdict` a notable change is usage of
+    overriding `asdict()` function if dataclass contains it.
+    This function works recursively in lists, tuples and dicts. All other values are passed to copy.deepcopy function.
+    """
+    if not is_dataclass(obj):
+        raise TypeError("asdict() should be called on dataclass instances")
+    return _asdict_recurse(obj)
+
+
+def _asdict_recurse(obj):
+    if hasattr(obj, "asdict"):
+        return obj.asdict()
+
+    if not is_dataclass(obj):
+        return deepcopy(obj)
+
+    result = {}
+    for field in fields(obj):
+        value = getattr(obj, field.name)
+        if value is None:
+            continue  # do not include None values
+
+        if is_dataclass(value):
+            result[field.name] = _asdict_recurse(value)
+        elif isinstance(value, (list, tuple)):
+            result[field.name] = type(value)(_asdict_recurse(i) for i in value)
+        elif isinstance(value, dict):
+            result[field.name] = type(value)((_asdict_recurse(k), _asdict_recurse(v)) for k, v in value.items())
+        else:
+            result[field.name] = deepcopy(value)
+    return result

@@ -1,7 +1,7 @@
 """Basic tests for extended properties"""
 import pytest
 
-from testsuite.objects import Value, ValueFrom
+from testsuite.policy.authorization import Value, ValueFrom
 from testsuite.utils import extract_response
 
 
