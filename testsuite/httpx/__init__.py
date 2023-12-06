@@ -30,27 +30,27 @@ class Result:
 
     def should_backoff(self):
         """True, if the Result can be considered an instability and should be retried"""
-        return self.has_dns_error() or (not self.has_error() and self.status_code in self.retry_codes)
+        return self.has_dns_error() or (self.error is None and self.status_code in self.retry_codes)
 
-    def has_error(self):
-        """True, if the request failed and an error was returned"""
-        return self.error is not None
+    def has_error(self, error_msg: str) -> bool:
+        """True, if the request failed and an error with message was returned"""
+        return self.error is not None and len(self.error.args) > 0 and any(error_msg in arg for arg in self.error.args)
 
     def has_dns_error(self):
         """True, if the result failed due to DNS failure"""
-        return (
-            self.has_error()
-            and len(self.error.args) > 0
-            and any("Name or service not known" in arg for arg in self.error.args)
-        )
+        return self.has_error("Name or service not known")
 
-    def has_tls_error(self):
-        """True, if the result failed due to TLS failure"""
-        return (
-            self.has_error()
-            and len(self.error.args) > 0
-            and any("SSL: CERTIFICATE_VERIFY_FAILED" in arg for arg in self.error.args)
-        )
+    def has_cert_verify_error(self):
+        """True, if the result failed due to TLS certificate verification failure"""
+        return self.has_error("SSL: CERTIFICATE_VERIFY_FAILED")
+
+    def has_unknown_ca_error(self):
+        """True, if the result failed due to TLS unknown certificate authority failure"""
+        return self.has_error("SSL: TLSV1_ALERT_UNKNOWN_CA")
+
+    def has_cert_required_error(self):
+        """True, if the result failed due to TLS certificate absense failure"""
+        return self.has_error("SSL: TLSV13_ALERT_CERTIFICATE_REQUIRED")
 
     def __getattr__(self, item):
         """For backwards compatibility"""

@@ -25,5 +25,5 @@ def test_smoke(client):
 
     result = client.get("/get")
     assert not result.has_dns_error()
-    assert not result.has_tls_error()
+    assert not result.has_cert_verify_error()
     assert result.status_code == 200

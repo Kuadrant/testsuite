@@ -1,6 +1,8 @@
 """mTLS authentication tests"""
+from typing import Callable
 import pytest
-from httpx import ReadError, ConnectError
+
+from testsuite.httpx import Result
 
 
 def test_mtls_success(envoy_authority, valid_cert, hostname):
@@ -11,24 +13,22 @@ def test_mtls_success(envoy_authority, valid_cert, hostname):
 
 
 @pytest.mark.parametrize(
-    "cert_authority, certificate, err, err_match",
+    "cert_authority, certificate, check_error",
     [
-        pytest.param("envoy_authority", "self_signed_cert", ReadError, "unknown ca", id="Self-Signed Certificate"),
-        pytest.param("envoy_authority", "invalid_cert", ReadError, "unknown ca", id="Invalid certificate"),
-        pytest.param("envoy_authority", None, ReadError, "certificate required", id="Without certificate"),
-        pytest.param(
-            "invalid_authority", "valid_cert", ConnectError, "certificate verify failed", id="Unknown authority"
-        ),
+        pytest.param("envoy_authority", "self_signed_cert", Result.has_unknown_ca_error, id="Self-signed cert"),
+        pytest.param("envoy_authority", "invalid_cert", Result.has_unknown_ca_error, id="Invalid certificate"),
+        pytest.param("envoy_authority", None, Result.has_cert_required_error, id="Without certificate"),
+        pytest.param("invalid_authority", "valid_cert", Result.has_cert_verify_error, id="Unknown authority"),
     ],
 )
-def test_mtls_fail(request, cert_authority, certificate, err, err_match: str, hostname):
+def test_mtls_fail(request, cert_authority, certificate, check_error: Callable, hostname):
     """Test failed mtls verification"""
     ca = request.getfixturevalue(cert_authority)
     cert = request.getfixturevalue(certificate) if certificate else None
 
-    with pytest.raises(err, match=err_match):
-        with hostname.client(verify=ca, cert=cert) as client:
-            client.get("/get")
+    with hostname.client(verify=ca, cert=cert) as client:
+        result = client.get("/get")
+        assert check_error(result)
 
 
 def test_mtls_unmatched_attributes(envoy_authority, custom_cert, hostname):
