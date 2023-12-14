@@ -1,13 +1,13 @@
 """Test condition to skip the entire AuthConfig"""
 import pytest
 
-from testsuite.policy.authorization import Rule
+from testsuite.policy.authorization import Pattern
 
 
 @pytest.fixture(scope="module")
 def authorization(authorization, module_label):
     """Add rule to the AuthConfig to skip entire authn/authz with certain request header"""
-    authorization.add_rule([Rule("context.request.http.headers.key", "neq", module_label)])
+    authorization.add_rule([Pattern("context.request.http.headers.key", "neq", module_label)])
     return authorization
 
 

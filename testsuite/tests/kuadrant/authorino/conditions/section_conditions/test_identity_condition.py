@@ -1,7 +1,7 @@
 """Test condition to skip the identity section of AuthConfig"""
 import pytest
 
-from testsuite.policy.authorization import Rule
+from testsuite.policy.authorization import Pattern
 from testsuite.httpx.auth import HeaderApiKeyAuth
 
 
@@ -20,7 +20,7 @@ def auth(api_key):
 @pytest.fixture(scope="module")
 def authorization(authorization, api_key):
     """Add to the AuthConfig API key identity, which can only be used on requests to the /get path"""
-    when_get = [Rule("context.request.http.path", "eq", "/get")]
+    when_get = [Pattern("context.request.http.path", "eq", "/get")]
     authorization.identity.add_api_key("api-key", selector=api_key.selector, when=when_get)
     return authorization
 

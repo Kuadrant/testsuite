@@ -1,6 +1,6 @@
 """https://github.com/Kuadrant/authorino/blob/main/docs/user-guides/token-normalization.md"""
 import pytest
-from testsuite.policy.authorization import Rule, Value, ValueFrom
+from testsuite.policy.authorization import Pattern, Value, ValueFrom
 from testsuite.httpx.auth import HeaderApiKeyAuth, HttpxOidcClientAuth
 
 
@@ -45,8 +45,8 @@ def authorization(authorization, rhsso, api_key):
         defaults_properties={"roles": Value(["admin"])},
     )
 
-    rule = Rule(selector="auth.identity.roles", operator="incl", value="admin")
-    when = Rule(selector="context.request.http.method", operator="eq", value="DELETE")
+    rule = Pattern(selector="auth.identity.roles", operator="incl", value="admin")
+    when = Pattern(selector="context.request.http.method", operator="eq", value="DELETE")
     authorization.authorization.add_auth_rules("only-admins-can-delete", rules=[rule], when=[when])
     return authorization
 

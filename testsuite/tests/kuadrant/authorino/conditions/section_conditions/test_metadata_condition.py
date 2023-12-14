@@ -1,7 +1,7 @@
 """Test condition to skip the metadata section of AuthConfig"""
 import pytest
 
-from testsuite.policy.authorization import Rule
+from testsuite.policy.authorization import Pattern
 
 
 @pytest.fixture(scope="module")
@@ -17,7 +17,7 @@ def authorization(authorization, mockserver_expectation):
     Add to the AuthConfig metadata evaluator with get http request to the mockserver,
     which will be only triggered on POST requests to the endpoint
     """
-    when_post = [Rule("context.request.http.method", "eq", "POST")]
+    when_post = [Pattern("context.request.http.method", "eq", "POST")]
     authorization.metadata.add_http("mock", mockserver_expectation, "GET", when=when_post)
     return authorization
 

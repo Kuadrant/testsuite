@@ -1,13 +1,13 @@
 """Test condition to skip the authorization section of AuthConfig"""
 import pytest
 
-from testsuite.policy.authorization import Rule
+from testsuite.policy.authorization import Pattern
 
 
 @pytest.fixture(scope="module")
 def authorization(authorization):
     """Add to the AuthConfig authorization with opa policy that will always reject POST requests"""
-    when_post = [Rule("context.request.http.method", "eq", "POST")]
+    when_post = [Pattern("context.request.http.method", "eq", "POST")]
     authorization.authorization.add_opa_policy("opa", "allow { false }", when=when_post)
     return authorization
 
