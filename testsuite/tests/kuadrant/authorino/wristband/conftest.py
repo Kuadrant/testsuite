@@ -135,3 +135,4 @@ def commit(request, commit, wristband_authorization):
     """Commits all important stuff before tests"""
     request.addfinalizer(wristband_authorization.delete)
     wristband_authorization.commit()
+    wristband_authorization.wait_for_ready()

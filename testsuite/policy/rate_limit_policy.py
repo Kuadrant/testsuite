@@ -51,18 +51,15 @@ class RateLimitPolicy(OpenShiftObject):
             limit["counters"] = counters
         self.model.spec.limits[name] = limit
 
-    def commit(self):
-        result = super().commit()
-
-        # wait for RLP to be actually applied, conditions itself is not enough, sleep is needed
-        def _policy_is_ready(obj):
-            return "conditions" in obj.model.status and obj.model.status.conditions[0].status == "True"
-
+    def wait_for_ready(self):
+        """Wait for RLP to be actually applied, conditions itself is not enough, sleep is needed"""
         with oc.timeout(90):
-            success, _, _ = self.self_selector().until_all(success_func=_policy_is_ready, tolerate_failures=5)
-            assert success
+            success, _, _ = self.self_selector().until_all(
+                success_func=lambda obj: "conditions" in obj.model.status
+                and obj.model.status.conditions[0].status == "True",
+                tolerate_failures=5,
+            )
+            assert success, f"{self.kind()} did not get ready in time"
 
         # https://github.com/Kuadrant/kuadrant-operator/issues/140
         sleep(90)
-
-        return result

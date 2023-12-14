@@ -86,3 +86,4 @@ def commit(request, authorization):
     """Commits all important stuff before tests"""
     request.addfinalizer(authorization.delete)
     authorization.commit()
+    authorization.wait_for_ready()

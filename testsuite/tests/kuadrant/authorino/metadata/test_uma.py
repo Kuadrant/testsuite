@@ -41,7 +41,8 @@ def auth2(rhsso):
 
 
 @pytest.fixture(scope="module")
-def authorization(authorization, rhsso, client):
+def authorization(client_secret, authorization, rhsso, client):
+    # pylint: disable=unused-argument
     """
     Adds UMA resource-level authorization metadata feature and OPA policy that authorize user access to the resource.
     Creates two client resources on RHSSO client:
