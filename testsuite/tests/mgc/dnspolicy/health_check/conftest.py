@@ -1,5 +1,4 @@
 """Conftest for DNSPolicy health checks"""
-import time
 import pytest
 
 from testsuite.gateway import Hostname
@@ -51,5 +50,4 @@ def dns_policy(dns_policy, health_check):
 @pytest.fixture(scope="module")
 def dns_health_probe(dns_policy, route):  # pylint: disable=unused-argument
     """Wait for health check to start monitoring endpoint and return according DNSHealthCheckProbe object"""
-    time.sleep(10)
     return dns_policy.get_dns_health_probe()

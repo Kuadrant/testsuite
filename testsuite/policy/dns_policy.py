@@ -2,7 +2,9 @@
 from dataclasses import dataclass
 from typing import Optional, Literal
 
+import backoff
 import openshift as oc
+from openshift import OpenShiftPythonException
 
 from testsuite.utils import asdict
 from testsuite.gateway import Referencable
@@ -57,6 +59,7 @@ class DNSPolicy(OpenShiftObject):
         """Sets health check for DNSPolicy"""
         self.model["spec"]["healthCheck"] = asdict(health_check)
 
+    @backoff.on_exception(backoff.fibo, OpenShiftPythonException, max_tries=13, jitter=None)
     def get_dns_health_probe(self) -> oc.APIObject:
         """Returns DNSHealthCheckProbe object for the created DNSPolicy"""
         with self.context:
