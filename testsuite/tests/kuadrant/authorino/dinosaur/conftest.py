@@ -1,20 +1,12 @@
 """
-Conftest for anonymized use cases tests
+Conftest for dinosaur test
 """
-from importlib import resources
-
 import pytest
 
 from testsuite.httpx.auth import HttpxOidcClientAuth
 from testsuite.oidc.rhsso import RHSSO
-from testsuite.policy.authorization.auth_config import AuthConfig
 from testsuite.utils import ContentType
-
-
-@pytest.fixture(scope="module")
-def run_on_kuadrant():
-    """We did not implement all the features of this AuthConfig in AuthPolicy"""
-    return False
+from testsuite.policy.authorization import Pattern, PatternRef, Value, ValueFrom, DenyResponse
 
 
 @pytest.fixture(scope="session")
@@ -25,7 +17,7 @@ def admin_rhsso(request, testconfig, blame, rhsso):
         rhsso.server_url,
         rhsso.username,
         rhsso.password,
-        blame("realm"),
+        blame("admin"),
         blame("client"),
         rhsso.test_username,
         rhsso.test_password,
@@ -86,49 +78,155 @@ def resource_info(request, mockserver, module_label):
     return _resource_info
 
 
-# pylint: disable=unused-argument
-@pytest.fixture()
-def commit(authorization):
-    """Ensure no default resources are created"""
-
-
 @pytest.fixture(scope="module")
-def authorization(
-    openshift,
-    blame,
-    hostname,
-    module_label,
-    rhsso,
-    terms_and_conditions,
-    cluster_info,
-    admin_rhsso,
-    resource_info,
-    request,
-    route,
-):
-    """Creates AuthConfig object from template"""
-    # with openshift.context:
-    #     name = blame("ac")
-    #     request.addfinalizer(lambda: selector(f"authconfig/{name}").delete(ignore_not_found=True))
-    selector = openshift.new_app(
-        resources.files("testsuite.resources").joinpath("dinosaur_config.yaml"),
+def authorization(authorization, rhsso, terms_and_conditions, cluster_info, admin_rhsso, resource_info):
+    """Creates complex Authorization Config."""
+    path_fourth_element = 'context.request.http.path.@extract:{"sep":"/","pos":4}'
+    path_third_element = 'context.request.http.path.@extract:{"sep":"/","pos":3}'
+    authorization.add_patterns(
         {
-            "NAME": blame("ac"),
-            "NAMESPACE": openshift.project,
-            "LABEL": module_label,
-            "HOST": hostname.hostname,
-            "RHSSO_ISSUER": rhsso.well_known["issuer"],
-            "ADMIN_ISSUER": admin_rhsso.well_known["issuer"],
-            "TERMS_AND_CONDITIONS": terms_and_conditions("false"),
-            "CLUSTER_INFO": cluster_info(rhsso.client_name),
-            "RESOURCE_INFO": resource_info("123", rhsso.client_name),
-        },
+            "api-route": [Pattern("context.request.http.path", "matches", "^/anything/dinosaurs_mgmt/.+")],
+            "v1-route": [Pattern(path_third_element, "eq", "v1")],
+            "dinosaurs-route": [Pattern(path_fourth_element, "eq", "dinosaurs")],
+            "dinosaur-resource-route": [Pattern("context.request.http.path", "matches", "/dinosaurs/[^/]+$")],
+            "create-dinosaur-route": [
+                Pattern("context.request.http.path", "matches", "/dinosaurs/?$"),
+                Pattern("context.request.http.method", "eq", "POST"),
+            ],
+            "metrics-federate-route": [
+                Pattern(path_fourth_element, "eq", "dinosaurs"),
+                Pattern("context.request.http.path", "matches", "/metrics/federate$"),
+            ],
+            "service-accounts-route": [Pattern(path_fourth_element, "eq", "service_accounts")],
+            "supported-instance-types-route": [Pattern(path_fourth_element, "eq", "instance_types")],
+            "agent-clusters-route": [Pattern(path_fourth_element, "eq", "agent-clusters")],
+            "admin-route": [Pattern(path_fourth_element, "eq", "admin")],
+            "acl-required": [
+                Pattern(path_fourth_element, "neq", "agent-clusters"),
+                Pattern(path_fourth_element, "neq", "admin"),
+            ],
+            "user-sso": [Pattern("auth.identity.iss", "eq", rhsso.well_known["issuer"])],
+            "admin-sso": [Pattern("auth.identity.iss", "eq", admin_rhsso.well_known["issuer"])],
+            "require-org-id": [Pattern("auth.identity.org_id", "neq", "")],
+        }
     )
-    with openshift.context:
-        auth = selector.object(cls=AuthConfig)
-        request.addfinalizer(auth.delete)
-    route.add_auth_config(auth)
-    return auth
+    authorization.add_rule([PatternRef("api-route"), PatternRef("v1-route")])
+
+    authorization.identity.clear_all()
+    authorization.identity.add_oidc(
+        "user-sso",
+        rhsso.well_known["issuer"],
+        ttl=3600,
+        defaults_properties={"org_id": ValueFrom("auth.identity.middle_name")},
+    )
+    authorization.identity.add_oidc(
+        "admin-sso", admin_rhsso.well_known["issuer"], ttl=3600, when=[PatternRef("admin-route")]
+    )
+
+    authorization.metadata.add_http(
+        "terms-and-conditions", terms_and_conditions("false"), "GET", when=[PatternRef("create-dinosaur-route")]
+    )
+    authorization.metadata.add_http(
+        "cluster-info", cluster_info(rhsso.client_name), "GET", when=[PatternRef("agent-clusters-route")]
+    )
+    authorization.metadata.add_http(
+        "resource-info", resource_info("123", rhsso.client_name), "GET", when=[PatternRef("dinosaur-resource-route")]
+    )
+
+    authorization.authorization.add_auth_rules("bearer-token", [Pattern("auth.identity.typ", "eq", "Bearer")])
+    authorization.authorization.add_opa_policy(
+        "deny-list",
+        """list := [
+  "denied-test-user1@example.com"
+]
+denied { list[_] == input.auth.identity.email }
+allow { not denied }
+""",
+        when=[PatternRef("acl-required")],
+    )
+    authorization.authorization.add_opa_policy(
+        "allow-list",
+        """list := [
+  "123"
+]
+allow { list[_] == input.auth.identity.org_id }
+""",
+        when=[PatternRef("acl-required")],
+    )
+    authorization.authorization.add_auth_rules(
+        "terms-and-conditions",
+        [Pattern("auth.metadata.terms-and-conditions.terms_required", "eq", "false")],
+        when=[PatternRef("create-dinosaur-route")],
+    )
+    for name in ["dinosaurs", "metrics-federate", "service-accounts", "supported-instance-types"]:
+        authorization.authorization.add_auth_rules(
+            name, [PatternRef("user-sso"), PatternRef("require-org-id")], when=[PatternRef(f"{name}-route")]
+        )
+
+    authorization.authorization.add_auth_rules(
+        "agent-clusters", [PatternRef("user-sso")], when=[PatternRef("agent-clusters-route")]
+    )
+    authorization.authorization.add_opa_policy(
+        "cluster-id",
+        """allow { input.auth.identity.azp == object.get(input.auth.metadata, "cluster-info", {}).client_id }""",
+        when=[PatternRef("agent-clusters-route")],
+    )
+    authorization.authorization.add_opa_policy(
+        "owner",
+        """org_id := input.auth.identity.org_id
+filter_by_org { org_id }
+is_org_admin := input.auth.identity.is_org_admin
+resource_data := object.get(input.auth.metadata, "resource-info", {})
+same_org { resource_data.org_id == org_id }
+is_owner { resource_data.owner == input.auth.identity.azp }
+has_permission { filter_by_org; same_org; is_org_admin }
+has_permission { filter_by_org; same_org; is_owner }
+has_permission { not filter_by_org; is_owner }
+method := input.context.request.http.method
+allow { method == "GET";    has_permission }
+allow { method == "DELETE"; has_permission }
+allow { method == "PATCH";  has_permission }
+""",
+        when=[PatternRef("dinosaur-resource-route")],
+    )
+    authorization.authorization.add_opa_policy(
+        "admin-rbac",
+        """method := input.context.request.http.method
+roles := input.auth.identity.realm_access.roles
+allow { method == "GET";    roles[_] == "admin-full" }
+allow { method == "GET";    roles[_] == "admin-read" }
+allow { method == "GET";    roles[_] == "admin-write" }
+allow { method == "PATCH";  roles[_] == "admin-full" }
+allow { method == "PATCH";  roles[_] == "admin-write" }
+allow { method == "DELETE"; roles[_] == "admin-full" }
+""",
+        when=[PatternRef("admin-route"), PatternRef("admin-sso")],
+    )
+    authorization.authorization.add_opa_policy(
+        "require-admin-sso",
+        """allow { false }""",
+        when=[PatternRef("admin-route"), PatternRef("user-sso")],
+    )
+    authorization.authorization.add_auth_rules(
+        "internal-endpoints", [Pattern(path_fourth_element, "neq", "authz-metadata")]
+    )
+
+    authorization.responses.set_unauthorized(
+        DenyResponse(
+            headers={"content-type": Value("application/json")},
+            body=Value(
+                """{
+  "kind": "Error",
+  "id": "403",
+  "href": "/api/dinosaurs_mgmt/v1/errors/403",
+  "code": "DINOSAURS-MGMT-403",
+  "reason": "Forbidden"
+}"""
+            ),
+        )
+    )
+
+    return authorization
 
 
 @pytest.fixture(scope="module")
