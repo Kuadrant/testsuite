@@ -124,11 +124,13 @@ class IdentitySection(Section):
         self.add_item(name, {"kubernetesTokenReview": {"audiences": audiences}}, **common_features)
 
     @modify
-    def add_oidc(self, name, endpoint, *, credentials: Credentials = None, **common_features):
+    def add_oidc(self, name, endpoint, *, ttl: int = 0, credentials: Credentials = None, **common_features):
         """Adds OIDC identity"""
         if credentials is None:
             credentials = Credentials("authorizationHeader", "Bearer")
-        self.add_item(name, {"jwt": {"issuerUrl": endpoint}, "credentials": asdict(credentials)}, **common_features)
+        self.add_item(
+            name, {"jwt": {"issuerUrl": endpoint, "ttl": ttl}, "credentials": asdict(credentials)}, **common_features
+        )
 
     @modify
     def add_api_key(
