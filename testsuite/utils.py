@@ -138,9 +138,6 @@ def asdict(obj) -> dict[str, JSONValues]:
 
 
 def _asdict_recurse(obj):
-    if hasattr(obj, "asdict"):
-        return obj.asdict()
-
     if not is_dataclass(obj):
         return deepcopy(obj)
 
@@ -156,6 +153,8 @@ def _asdict_recurse(obj):
             result[field.name] = type(value)(_asdict_recurse(i) for i in value)
         elif isinstance(value, dict):
             result[field.name] = type(value)((_asdict_recurse(k), _asdict_recurse(v)) for k, v in value.items())
+        elif isinstance(value, enum.Enum):
+            result[field.name] = value.value
         else:
             result[field.name] = deepcopy(value)
     return result

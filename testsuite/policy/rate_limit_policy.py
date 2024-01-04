@@ -1,13 +1,13 @@
 """RateLimitPolicy related objects"""
 from dataclasses import dataclass
 from time import sleep
-from typing import Iterable, Literal
+from typing import Iterable, Literal, Optional
 
 import openshift as oc
 
-from testsuite.policy.authorization import Pattern
+from testsuite.policy.authorization import Rule
 from testsuite.utils import asdict
-from testsuite.gateway import Referencable
+from testsuite.gateway import Referencable, HTTPMatcher
 from testsuite.openshift.client import OpenShiftClient
 from testsuite.openshift import OpenShiftObject, modify
 
@@ -19,6 +19,17 @@ class Limit:
     limit: int
     duration: int
     unit: Literal["second", "minute", "day"] = "second"
+
+
+@dataclass
+class RouteSelect:
+    """
+    HTRTPPathMatch, HTTPHeaderMatch, HTTPQueryParamMatch, HTTPMethodMatch
+    https://docs.kuadrant.io/kuadrant-operator/doc/reference/route-selectors/#routeselector
+    """
+
+    matches: Optional[list[HTTPMatcher]] = None
+    hostnames: Optional[list[str]] = None
 
 
 class RateLimitPolicy(OpenShiftObject):
@@ -40,7 +51,14 @@ class RateLimitPolicy(OpenShiftObject):
         return cls(model, context=openshift.context)
 
     @modify
-    def add_limit(self, name, limits: Iterable[Limit], when: Iterable[Pattern] = None, counters: list[str] = None):
+    def add_limit(
+        self,
+        name,
+        limits: Iterable[Limit],
+        when: Iterable[Rule] = None,
+        counters: list[str] = None,
+        route_selectors: Iterable[RouteSelect] = None,
+    ):
         """Add another limit"""
         limit: dict = {
             "rates": [asdict(limit) for limit in limits],
@@ -49,6 +67,8 @@ class RateLimitPolicy(OpenShiftObject):
             limit["when"] = [asdict(rule) for rule in when]
         if counters:
             limit["counters"] = counters
+        if route_selectors:
+            limit["routeSelectors"] = [asdict(rule) for rule in route_selectors]
         self.model.spec.limits[name] = limit
 
     def wait_for_ready(self):
