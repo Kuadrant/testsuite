@@ -5,7 +5,7 @@ https://pkg.go.dev/k8s.io/apimachinery@v0.23.0/pkg/apis/meta/v1#LabelSelector
 """
 import pytest
 
-from testsuite.policy.authorization import MatchExpression, Selector
+from testsuite.openshift import Selector, MatchExpression
 
 
 @pytest.fixture(scope="module")

@@ -2,7 +2,7 @@
 import pytest
 
 from testsuite.httpx.auth import HeaderApiKeyAuth
-from testsuite.policy.authorization import Selector
+from testsuite.openshift import Selector
 
 
 @pytest.fixture(scope="function")

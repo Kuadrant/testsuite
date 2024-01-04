@@ -2,7 +2,6 @@
 from typing import Literal, Iterable, TYPE_CHECKING, Union
 
 from testsuite.policy.authorization import (
-    Selector,
     Credentials,
     Rule,
     Pattern,
@@ -15,7 +14,7 @@ from testsuite.policy.authorization import (
     Cache,
 )
 from testsuite.utils import asdict
-from testsuite.openshift import modify
+from testsuite.openshift import modify, Selector
 
 if TYPE_CHECKING:
     from .auth_config import AuthConfig

@@ -1,33 +1,11 @@
 """Authorization related objects"""
 import abc
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Literal, Optional
 from testsuite.utils import asdict, JSONValues
 
 
 # pylint: disable=invalid-name
-@dataclass
-class MatchExpression:
-    """
-    Data class intended for defining K8 Label Selector expressions.
-    Used by selector.matchExpressions API key identity.
-    """
-
-    operator: Literal["In", "NotIn", "Exists", "DoesNotExist"]
-    values: list[str]
-    key: str = "group"
-
-
-@dataclass
-class Selector:
-    """Dataclass for specifying selectors based on either expression or labels"""
-
-    matchExpressions: Optional[list[MatchExpression]] = field(default=None, kw_only=True)
-    matchLabels: Optional[dict[str, str]] = field(default=None, kw_only=True)
-
-    def __post_init__(self):
-        if not (self.matchLabels is None) ^ (self.matchExpressions is None):
-            raise AttributeError("`matchLabels` xor `matchExpressions` argument must be used")
 
 
 @dataclass

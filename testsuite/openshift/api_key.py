@@ -2,9 +2,8 @@
 import base64
 from functools import cached_property
 
-from testsuite.policy.authorization import Selector
 from testsuite.openshift.client import OpenShiftClient
-from testsuite.openshift import OpenShiftObject, modify
+from testsuite.openshift import OpenShiftObject, modify, Selector
 
 
 class APIKey(OpenShiftObject):
