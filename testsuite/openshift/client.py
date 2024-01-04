@@ -1,6 +1,5 @@
 """This module implements an openshift interface with openshift oc client wrapper."""
 
-import enum
 import os
 from functools import cached_property
 from typing import Dict
@@ -11,15 +10,6 @@ from openshift import Context, Selector, OpenShiftPythonException
 
 from .route import OpenshiftRoute
 from .secret import Secret
-
-
-class ServiceTypes(enum.Enum):
-    """Service types enum."""
-
-    CLUSTER_IP = "clusterip"
-    EXTERNAL_NAME = "externalname"
-    LOAD_BALANCER = "loadbalancer"
-    NODE_PORT = "nodeport"
 
 
 class OpenShiftClient:
