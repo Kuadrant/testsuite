@@ -1,14 +1,16 @@
-"""Module for Httpbin backend classes"""
+"""Httpbin related classes"""
 from functools import cached_property
-from importlib import resources
 
 from testsuite.lifecycle import LifecycleObject
 from testsuite.gateway import Referencable
+from testsuite.openshift import Selector
 from testsuite.openshift.client import OpenShiftClient
+from testsuite.openshift.deployment import Deployment
+from testsuite.openshift.service import Service, ServicePort
 
 
 class Httpbin(LifecycleObject, Referencable):
-    """Httpbin deployed in OpenShift through template"""
+    """Httpbin deployed in OpenShift"""
 
     def __init__(self, openshift: OpenShiftClient, name, label, replicas=1) -> None:
         super().__init__()
@@ -17,7 +19,8 @@ class Httpbin(LifecycleObject, Referencable):
         self.label = label
         self.replicas = replicas
 
-        self.httpbin_objects = None
+        self.deployment = None
+        self.service = None
 
     @property
     def reference(self):
@@ -29,27 +32,39 @@ class Httpbin(LifecycleObject, Referencable):
         return f"{self.name}.{self.openshift.project}.svc.cluster.local"
 
     def commit(self):
-        self.httpbin_objects = self.openshift.new_app(
-            resources.files("testsuite.resources").joinpath("httpbin.yaml"),
-            {"NAME": self.name, "LABEL": self.label, "REPLICAS": self.replicas},
+        match_labels = {"app": self.label, "deployment": self.name}
+        self.deployment = Deployment.create_instance(
+            self.openshift,
+            self.name,
+            container_name="httpbin",
+            image="quay.io/jsmadis/httpbin:latest",
+            ports={"api": 8080},
+            selector=Selector(matchLabels=match_labels),
+            labels={"app": self.label},
         )
+        self.deployment.commit()
+
+        self.service = Service.create_instance(
+            self.openshift,
+            self.name,
+            selector=match_labels,
+            ports=[ServicePort(name="http", port=8080, targetPort="api")],
+        )
+        self.service.commit()
 
         with self.openshift.context:
-            assert self.openshift.is_ready(self.httpbin_objects.narrow("deployment")), "Httpbin wasn't ready in time"
+            assert self.openshift.is_ready(self.deployment.self_selector()), "Httpbin wasn't ready in time"
 
     def delete(self):
         with self.openshift.context:
-            if self.httpbin_objects:
-                self.httpbin_objects.delete()
-        self.httpbin_objects = None
-
-    @cached_property
-    def service(self):
-        """Service associated with httpbin"""
-        with self.openshift.context:
-            return self.httpbin_objects.narrow("service").object()
+            if self.service:
+                self.service.delete()
+                self.service = None
+            if self.deployment:
+                self.deployment.delete()
+                self.deployment = None
 
     @cached_property
     def port(self):
         """Service port that httpbin listens on"""
-        return self.service.model.spec.ports[0].get("port")
+        return self.service.get_port("http").port

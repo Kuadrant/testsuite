@@ -1,5 +1,16 @@
 """Service related objects"""
+from dataclasses import dataclass, asdict
+
 from testsuite.openshift import OpenShiftObject
+
+
+@dataclass
+class ServicePort:
+    """Kubernetes Service Port object"""
+
+    name: str
+    port: int
+    targetPort: int | str  # pylint: disable=invalid-name
 
 
 class Service(OpenShiftObject):
@@ -11,7 +22,7 @@ class Service(OpenShiftObject):
         openshift,
         name,
         selector: dict[str, str],
-        ports: list[dict[str, str]],
+        ports: list[ServicePort],
         labels: dict[str, str] = None,
     ):
         """Creates new Service"""
@@ -23,7 +34,7 @@ class Service(OpenShiftObject):
                 "labels": labels,
             },
             "spec": {
-                "ports": ports,
+                "ports": [asdict(port) for port in ports],
                 "selector": selector,
             },
         }
