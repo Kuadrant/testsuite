@@ -16,7 +16,7 @@ default:
     project: "kuadrant"
     project2: "kuadrant2"
     envoy:
-      image: "docker.io/envoyproxy/envoy:v1.23-latest"
+      image: "quay.io/phala/envoy:v1.28-latest"
     gateway:
        project: "istio-system"
        name: "istio-ingressgateway"

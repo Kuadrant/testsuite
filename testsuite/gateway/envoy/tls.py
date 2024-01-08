@@ -1,9 +1,9 @@
 """Envoy Gateway implementation with TLS setup"""
-from importlib import resources
 from typing import TYPE_CHECKING
 
 import yaml
 
+from testsuite.openshift.deployment import Deployment, SecretVolume, VolumeMount
 from . import Envoy, EnvoyConfig
 
 if TYPE_CHECKING:
@@ -30,7 +30,7 @@ typed_config:
   common_tls_context:
     validation_context:
       trusted_ca:
-        filename: /etc/ssl/certs/authorino/tls.crt
+        filename: /etc/ssl/certs/authorino-ca/tls.crt
 """
 
 
@@ -67,19 +67,14 @@ class TLSEnvoy(Envoy):
             self._config["envoy.yaml"] = yaml.dump(config)
         return self._config
 
-    def commit(self):
-        self.config.commit()
-        self.envoy_objects = self.openshift.new_app(
-            resources.files("testsuite.resources.tls").joinpath("envoy.yaml"),
-            {
-                "NAME": self.name,
-                "LABEL": self.app_label,
-                "AUTHORINO_CA_SECRET": self.authorino_ca_secret,
-                "ENVOY_CA_SECRET": self.backend_ca_secret,
-                "ENVOY_CERT_SECRET": self.envoy_cert_secret,
-                "ENVOY_IMAGE": self.image,
-            },
-        )
+    def create_deployment(self) -> Deployment:
+        deployment = super().create_deployment()
+        deployment.add_volume(SecretVolume(secret_name=self.authorino_ca_secret, name="authorino-ca", readOnly=True))
+        deployment.add_volume(SecretVolume(secret_name=self.backend_ca_secret, name="envoy-ca", readOnly=True))
+        deployment.add_volume(SecretVolume(secret_name=self.envoy_cert_secret, name="envoy-cert", readOnly=True))
 
-        with self.openshift.context:
-            assert self.openshift.is_ready(self.envoy_objects.narrow("deployment")), "Envoy wasn't ready in time"
+        deployment.add_mount(VolumeMount(mountPath="/etc/ssl/certs/authorino-ca", name="authorino-ca"))
+        deployment.add_mount(VolumeMount(mountPath="/etc/ssl/certs/envoy-ca", name="envoy-ca"))
+        deployment.add_mount(VolumeMount(mountPath="/etc/ssl/certs/envoy", name="envoy-cert"))
+
+        return deployment
