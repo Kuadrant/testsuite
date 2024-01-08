@@ -1,5 +1,4 @@
 """Classes related to Gateways"""
-import abc
 import enum
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
@@ -9,7 +8,7 @@ from httpx import Client
 
 from testsuite.certificates import Certificate
 from testsuite.lifecycle import LifecycleObject
-from testsuite.utils import asdict, _asdict_recurse
+from testsuite.utils import asdict
 
 if TYPE_CHECKING:
     from testsuite.openshift.client import OpenShiftClient
@@ -76,10 +75,6 @@ class PathMatch:
     type: Optional[MatchType] = None
     value: Optional[str] = None
 
-    # def asdict(self):
-    #     """Custom dict due to nested structure of matchers."""
-    #     return {"path": _asdict_recurse(self, False)}
-
 
 @dataclass
 class HeadersMatch:
@@ -89,10 +84,6 @@ class HeadersMatch:
     value: str
     type: Optional[Literal[MatchType.EXACT, MatchType.REGULAR_EXPRESSION]] = None
 
-    # def asdict(self):
-    #     """Custom dict due to nested structure of matchers."""
-    #     return {"headers": [_asdict_recurse(self, False)]}
-
 
 @dataclass
 class QueryParamsMatch:
@@ -101,23 +92,6 @@ class QueryParamsMatch:
     name: str
     value: str
     type: Optional[Literal[MatchType.EXACT, MatchType.REGULAR_EXPRESSION]] = None
-
-    # def asdict(self):
-    #     """Custom dict due to nested structure of matchers."""
-    #     return {"queryParams": [_asdict_recurse(self, False)]}
-
-
-@dataclass
-class MethodMatch:
-    """
-    HTTPMethod describes how to select a HTTP route by matching the HTTP method. The value is expected in upper case.
-    """
-
-    value: HTTPMethod = None
-
-    def asdict(self):
-        """Custom dict due to nested structure of matchers."""
-        return {"method": self.value.value}
 
 
 @dataclass
@@ -132,7 +106,7 @@ class RouteMatch:
     path: Optional[PathMatch] = None
     headers: Optional[List[HeadersMatch]] = None
     query_params: Optional[List[QueryParamsMatch]] = None
-    method: HTTPMethod = None
+    method: Optional[HTTPMethod] = None
 
 
 class Gateway(LifecycleObject, Referencable):

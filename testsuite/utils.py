@@ -138,6 +138,9 @@ def asdict(obj) -> dict[str, JSONValues]:
 
 
 def _asdict_recurse(obj):
+    if hasattr(obj, "asdict"):
+        return obj.asdict()
+
     if not is_dataclass(obj):
         return deepcopy(obj)
 

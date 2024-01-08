@@ -1,13 +1,13 @@
 """RateLimitPolicy related objects"""
 from dataclasses import dataclass
 from time import sleep
-from typing import Iterable, Literal, Optional
+from typing import Iterable, Literal, Optional, List
 
 import openshift as oc
 
 from testsuite.policy.authorization import Rule
 from testsuite.utils import asdict
-from testsuite.gateway import Referencable, HTTPMatcher
+from testsuite.gateway import Referencable, RouteMatch
 from testsuite.openshift.client import OpenShiftClient
 from testsuite.openshift import OpenShiftObject, modify
 
@@ -22,14 +22,20 @@ class Limit:
 
 
 @dataclass
-class RouteSelect:
+class RouteSelector:
     """
-    HTRTPPathMatch, HTTPHeaderMatch, HTTPQueryParamMatch, HTTPMethodMatch
+    RouteSelector is an object composed of a set of HTTPRouteMatch objects (from Gateway API -
+    HTRTPPathMatch, HTTPHeaderMatch, HTTPQueryParamMatch, HTTPMethodMatch),
+    and an additional hostnames field.
     https://docs.kuadrant.io/kuadrant-operator/doc/reference/route-selectors/#routeselector
     """
 
-    matches: Optional[list[HTTPMatcher]] = None
+    matches: Optional[list[RouteMatch]] = None
     hostnames: Optional[list[str]] = None
+
+    def __init__(self, *matches: RouteMatch, hostnames: Optional[List[str]] = None):
+        self.matches = list(matches) if matches else []
+        self.hostnames = hostnames
 
 
 class RateLimitPolicy(OpenShiftObject):
@@ -57,7 +63,7 @@ class RateLimitPolicy(OpenShiftObject):
         limits: Iterable[Limit],
         when: Iterable[Rule] = None,
         counters: list[str] = None,
-        route_selectors: Iterable[RouteSelect] = None,
+        route_selectors: Iterable[RouteSelector] = None,
     ):
         """Add another limit"""
         limit: dict = {
