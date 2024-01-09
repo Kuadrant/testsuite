@@ -25,7 +25,7 @@ class Limit:
 class RouteSelector:
     """
     RouteSelector is an object composed of a set of HTTPRouteMatch objects (from Gateway API -
-    HTRTPPathMatch, HTTPHeaderMatch, HTTPQueryParamMatch, HTTPMethodMatch),
+    HTTPPathMatch, HTTPHeaderMatch, HTTPQueryParamMatch, HTTPMethodMatch),
     and an additional hostnames field.
     https://docs.kuadrant.io/kuadrant-operator/doc/reference/route-selectors/#routeselector
     """

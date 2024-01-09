@@ -97,9 +97,8 @@ class QueryParamsMatch:
 @dataclass
 class RouteMatch:
     """
-    Abstract Dataclass for HTTPRouteMatch.
-    API specification consists of two layers: HTTPRouteMatch which can contain 4 matchers (see offsprings).
-    We merged this to a single Matcher representation for simplicity, which is why we need custom `asdict` methods.
+    HTTPRouteMatch defines the predicate used to match requests to a given action.
+    Multiple match types are ANDed together, i.e. the match will evaluate to true only if all conditions are satisfied.
     https://gateway-api.sigs.k8s.io/reference/spec/#gateway.networking.k8s.io/v1.HTTPRouteMatch
     """
 
@@ -162,6 +161,14 @@ class GatewayRoute(LifecycleObject, Referencable):
     @abstractmethod
     def remove_all_hostnames(self):
         """Remove all hostnames from the Route"""
+
+    @abstractmethod
+    def add_rule(self, backend: "Httpbin", *route_matches: RouteMatch):
+        """Adds rule to the Route"""
+
+    @abstractmethod
+    def remove_all_rules(self):
+        """Remove all rules from the Route"""
 
     @abstractmethod
     def add_backend(self, backend: "Httpbin", prefix):

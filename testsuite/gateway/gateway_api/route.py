@@ -5,9 +5,10 @@ import typing
 from httpx import Client
 
 from testsuite.httpx import KuadrantClient
-from testsuite.gateway import Gateway, GatewayRoute
+from testsuite.gateway import Gateway, GatewayRoute, PathMatch, MatchType, RouteMatch
 from testsuite.openshift.client import OpenShiftClient
 from testsuite.openshift import OpenShiftObject, modify
+from testsuite.utils import asdict
 
 if typing.TYPE_CHECKING:
     from testsuite.openshift.httpbin import Httpbin
@@ -73,17 +74,20 @@ class HTTPRoute(OpenShiftObject, GatewayRoute):
         self.model.spec.hostnames = []
 
     @modify
-    def set_match(self, backend: "Httpbin", path_prefix: str = None):
-        """Limits HTTPRoute to a certain path"""
-        match = {}
-        if path_prefix:
-            match["path"] = {"value": path_prefix, "type": "PathPrefix"}
-        for rule in self.model.spec.rules:
-            for ref in rule.backendRefs:
-                if backend.reference["name"] == ref["name"]:
-                    rule["matches"] = [match]
-                    return
-        raise NameError("This backend is not assigned to this Route")
+    def add_rule(self, backend: "Httpbin", *route_matches: RouteMatch):
+        """Adds rule to the Route"""
+        rules = {"backendRefs": [backend.reference]}
+        matches = list(route_matches)
+        if len(matches) == 0:
+            matches.append(RouteMatch(path=PathMatch(type=MatchType.PATH_PREFIX, value="/")))
+
+        rules["matches"] = [asdict(match) for match in matches]
+        self.model.spec.rules.append(rules)
+
+    @modify
+    def remove_all_rules(self):
+        """Remove all rules from the Route"""
+        self.model.spec.rules = []
 
     @modify
     def add_backend(self, backend: "Httpbin", prefix="/"):
