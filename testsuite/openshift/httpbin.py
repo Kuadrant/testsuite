@@ -43,6 +43,7 @@ class Httpbin(LifecycleObject, Referencable):
             labels={"app": self.label},
         )
         self.deployment.commit()
+        self.deployment.wait_for_ready()
 
         self.service = Service.create_instance(
             self.openshift,
@@ -51,9 +52,6 @@ class Httpbin(LifecycleObject, Referencable):
             ports=[ServicePort(name="http", port=8080, targetPort="api")],
         )
         self.service.commit()
-
-        with self.openshift.context:
-            assert self.openshift.is_ready(self.deployment.self_selector()), "Httpbin wasn't ready in time"
 
     def delete(self):
         with self.openshift.context:
