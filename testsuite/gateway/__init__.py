@@ -1,7 +1,8 @@
 """Classes related to Gateways"""
+import enum
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Any, Optional, TYPE_CHECKING
+from typing import Any, Optional, TYPE_CHECKING, Literal, List
 
 from httpx import Client
 
@@ -43,6 +44,68 @@ class CustomReference(Referencable):
     namespace: Optional[str] = None
     sectionName: Optional[str] = None  # pylint: disable=invalid-name
     port: Optional[int] = None
+
+
+class HTTPMethod(enum.Enum):
+    """HTTP methods supported by Matchers"""
+
+    CONNECT = "CONNECT"
+    DELETE = "DELETE"
+    GET = "GET"
+    HEAD = "HEAD"
+    OPTIONS = "OPTIONS"
+    PATCH = "PATCH"
+    POST = "POST"
+    PUT = "PUT"
+    TRACE = "TRACE"
+
+
+class MatchType(enum.Enum):
+    """MatchType specifies the semantics of how HTTP header values should be compared."""
+
+    EXACT = "Exact"
+    PATH_PREFIX = "PathPrefix"
+    REGULAR_EXPRESSION = "RegularExpression"
+
+
+@dataclass
+class PathMatch:
+    """HTTPPathMatch describes how to select an HTTP route by matching the HTTP request path."""
+
+    type: Optional[MatchType] = None
+    value: Optional[str] = None
+
+
+@dataclass
+class HeadersMatch:
+    """HTTPHeaderMatch describes how to select a HTTP route by matching HTTP request headers."""
+
+    name: str
+    value: str
+    type: Optional[Literal[MatchType.EXACT, MatchType.REGULAR_EXPRESSION]] = None
+
+
+@dataclass
+class QueryParamsMatch:
+    """HTTPQueryParamMatch describes how to select a HTTP route by matching HTTP query parameters."""
+
+    name: str
+    value: str
+    type: Optional[Literal[MatchType.EXACT, MatchType.REGULAR_EXPRESSION]] = None
+
+
+@dataclass
+class RouteMatch:
+    """
+    HTTPRouteMatch defines the predicate used to match requests to a given action.
+    Multiple match types are ANDed together, i.e. the match will evaluate to true only if all conditions are satisfied.
+    https://gateway-api.sigs.k8s.io/reference/spec/#gateway.networking.k8s.io/v1.HTTPRouteMatch
+    """
+
+    path: Optional[PathMatch] = None
+    headers: Optional[List[HeadersMatch]] = None
+    query_params: Optional[List[QueryParamsMatch]] = None
+    method: Optional[HTTPMethod] = None
 
 
 class Gateway(LifecycleObject, Referencable):
@@ -98,6 +161,14 @@ class GatewayRoute(LifecycleObject, Referencable):
     @abstractmethod
     def remove_all_hostnames(self):
         """Remove all hostnames from the Route"""
+
+    @abstractmethod
+    def add_rule(self, backend: "Httpbin", *route_matches: RouteMatch):
+        """Adds rule to the Route"""
+
+    @abstractmethod
+    def remove_all_rules(self):
+        """Remove all rules from the Route"""
 
     @abstractmethod
     def add_backend(self, backend: "Httpbin", prefix):
