@@ -48,6 +48,7 @@ def auth2(rhsso, blame):
     return HttpxOidcClientAuth.from_user(rhsso.get_token, user=user)
 
 
+@pytest.mark.parametrize("rate_limit", ["route", "gateway"], indirect=True)
 def test_authz_limit(client, auth, auth2):
     """Tests that rate limit is applied for two users independently"""
     responses = client.get_many("/get", 5, auth=auth)
