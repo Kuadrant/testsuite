@@ -163,14 +163,6 @@ class GatewayRoute(LifecycleObject, Referencable):
         """Remove all hostnames from the Route"""
 
     @abstractmethod
-    def add_rule(self, backend: "Httpbin", *route_matches: RouteMatch):
-        """Adds rule to the Route"""
-
-    @abstractmethod
-    def remove_all_rules(self):
-        """Remove all rules from the Route"""
-
-    @abstractmethod
     def add_backend(self, backend: "Httpbin", prefix):
         """Adds another backend to the Route, with specific prefix"""
 
