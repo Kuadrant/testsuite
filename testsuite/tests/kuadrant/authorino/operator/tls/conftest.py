@@ -4,7 +4,7 @@ from typing import Optional, Dict
 import pytest
 
 from testsuite.certificates import Certificate, CertInfo
-from testsuite.policy.authorization import Selector
+from testsuite.openshift import Selector
 from testsuite.gateway import Exposer
 from testsuite.gateway.envoy.tls import TLSEnvoy
 from testsuite.gateway.gateway_api.hostname import OpenShiftExposer
