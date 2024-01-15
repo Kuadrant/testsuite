@@ -56,7 +56,7 @@ class Result:
         """For backwards compatibility"""
         if self.response is not None:
             return getattr(self.response, item)
-        return None
+        raise AttributeError from self.error
 
     def __str__(self):
         if self.error is None:
