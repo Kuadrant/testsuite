@@ -43,13 +43,18 @@ def authorization(authorino, kuadrant, oidc_provider, route, authorization_name,
     return None
 
 
-@pytest.fixture(scope="module", params=["route", "gateway"])
-def rate_limit(kuadrant, openshift, blame, request, module_label):
-    """Rate limit"""
+@pytest.fixture(scope="module")
+def rate_limit(kuadrant, openshift, blame, request, module_label, route, gateway):
+    """
+    Rate limit object.
+    Request is used for indirect parametrization, with two possible parameters:
+        1. `route` (default)
+        2. `gateway`
+    """
+    target_ref = request.getfixturevalue(getattr(request, "param", "route"))
+
     if kuadrant:
-        return RateLimitPolicy.create_instance(
-            openshift, blame("limit"), request.getfixturevalue(request.param), labels={"testRun": module_label}
-        )
+        return RateLimitPolicy.create_instance(openshift, blame("limit"), target_ref, labels={"testRun": module_label})
     return None
 
 

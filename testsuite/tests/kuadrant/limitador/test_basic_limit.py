@@ -27,6 +27,7 @@ def rate_limit(rate_limit, limit):
     return rate_limit
 
 
+@pytest.mark.parametrize("rate_limit", ["route", "gateway"], indirect=True)
 def test_limit(client, limit):
     """Tests that simple limit is applied successfully"""
     responses = client.get_many("/get", limit.limit)
