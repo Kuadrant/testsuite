@@ -68,4 +68,6 @@ class DNSPolicyExposer(Exposer):
         self.tls_cert = tls_cert
 
     def expose_hostname(self, name, gateway: Gateway) -> Hostname:
-        return StaticHostname(f"{name}.{self.base_domain}", gateway.get_tls_cert())
+        return StaticHostname(
+            f"{name}.{self.base_domain}", gateway.get_tls_cert() if self.tls_cert is None else self.tls_cert
+        )

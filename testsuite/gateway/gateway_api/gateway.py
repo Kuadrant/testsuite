@@ -125,7 +125,7 @@ class MGCGateway(KuadrantGateway):
         tls_cert = Certificate(
             key=tls_cert_secret["tls.key"],
             certificate=tls_cert_secret["tls.crt"],
-            chain=tls_cert_secret["ca.crt"],
+            chain=tls_cert_secret["ca.crt"] if "ca.crt" in tls_cert_secret else None,
         )
         return tls_cert
 
