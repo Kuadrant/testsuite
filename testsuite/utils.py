@@ -3,6 +3,7 @@ import csv
 import enum
 import json
 import os
+import getpass
 import secrets
 from collections.abc import Collection
 from copy import deepcopy
@@ -48,7 +49,7 @@ def _whoami():
         return settings["tester"]
 
     try:
-        return os.getlogin()
+        return getpass.getuser()
     # want to catch broad exception and fallback at any circumstance
     # pylint: disable=broad-except
     except Exception:
