@@ -12,7 +12,7 @@ BASE_CONFIG = """
         - address:
             socket_address:
               address: 0.0.0.0
-              port_value: 8000
+              port_value: 8080
           filter_chains:
           - filters:
             - name: envoy.http_connection_manager
