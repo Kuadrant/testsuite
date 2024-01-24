@@ -73,7 +73,7 @@ class OpenShiftClient:
     def connected(self):
         """Returns True, if user is logged in and the project exists"""
         try:
-            self.do_action("status")
+            self.do_action("get", "ns", self._project)
         except OpenShiftPythonException:
             return False
         return True
