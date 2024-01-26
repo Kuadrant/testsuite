@@ -1,5 +1,6 @@
 """Configure all the components through Kuadrant,
  all methods are placeholders for now since we do not work with Kuadrant"""
+
 import pytest
 
 from testsuite.policy.authorization.auth_policy import AuthPolicy

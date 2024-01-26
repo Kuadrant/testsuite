@@ -1,4 +1,5 @@
 """Conftest for clusterwide tests"""
+
 import pytest
 
 from testsuite.policy.authorization.auth_config import AuthConfig

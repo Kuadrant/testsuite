@@ -1,4 +1,5 @@
 """Conftest for DNSPolicy health checks"""
+
 import time
 import pytest
 

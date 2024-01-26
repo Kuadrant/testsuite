@@ -1,4 +1,5 @@
 """Module containing Route related stuff"""
+
 from functools import cached_property
 
 from httpx import Client

@@ -1,4 +1,5 @@
 """Test patterns reference functionality and All/Any logical expressions."""
+
 import pytest
 
 from testsuite.policy.authorization import Pattern, PatternRef, AnyPattern, AllPattern

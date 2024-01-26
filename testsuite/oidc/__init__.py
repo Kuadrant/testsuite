@@ -1,4 +1,5 @@
 """Common classes for OIDC provider"""
+
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Callable, Tuple

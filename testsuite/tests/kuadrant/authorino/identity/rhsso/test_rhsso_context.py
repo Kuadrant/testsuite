@@ -1,4 +1,5 @@
 """Test for RHSSO identity context"""
+
 import json
 import time
 

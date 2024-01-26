@@ -1,4 +1,5 @@
 """Deployment related objects"""
+
 from dataclasses import dataclass
 from typing import Any
 

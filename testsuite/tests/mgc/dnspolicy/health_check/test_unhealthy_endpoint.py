@@ -1,4 +1,5 @@
 """Tests for DNSPolicy health checks - unhealthy endpoint"""
+
 import pytest
 
 from testsuite.policy.dns_policy import HealthCheck

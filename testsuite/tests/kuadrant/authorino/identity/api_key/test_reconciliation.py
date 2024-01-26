@@ -1,4 +1,5 @@
 """Tests Secret reconciliation for API key identity verification & authentication"""
+
 import pytest
 
 from testsuite.httpx.auth import HeaderApiKeyAuth

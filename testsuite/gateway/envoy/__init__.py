@@ -1,4 +1,5 @@
 """Envoy Gateway module"""
+
 import time
 from typing import Optional
 

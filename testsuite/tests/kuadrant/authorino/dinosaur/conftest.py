@@ -1,6 +1,7 @@
 """
 Conftest for dinosaur test
 """
+
 import pytest
 
 from testsuite.httpx.auth import HttpxOidcClientAuth

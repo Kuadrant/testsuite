@@ -1,4 +1,5 @@
 """Conftest for authorino API key identity"""
+
 import pytest
 
 from testsuite.httpx.auth import HeaderApiKeyAuth

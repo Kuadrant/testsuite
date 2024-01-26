@@ -2,6 +2,7 @@
 Tests for external auth metadata. Online fetching of (OIDC) UserInfo data, associated with an OIDC identity source:
 https://github.com/Kuadrant/authorino/blob/main/docs/features.md#oidc-userinfo-metadatauserinfo
 """
+
 import pytest
 
 from testsuite.httpx.auth import HttpxOidcClientAuth

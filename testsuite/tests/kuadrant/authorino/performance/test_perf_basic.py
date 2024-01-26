@@ -3,6 +3,7 @@
     Fill necessary data to benchmark template.
     Run the test and assert results.
 """
+
 from importlib import resources
 
 import pytest

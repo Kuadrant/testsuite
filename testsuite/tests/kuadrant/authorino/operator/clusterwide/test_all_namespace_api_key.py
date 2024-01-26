@@ -2,6 +2,7 @@
 Tests for API key identity for AuthConfig configured with all_namespaces=true for cluster-wide
 API key secret placement.
 """
+
 import pytest
 
 from testsuite.httpx.auth import HeaderApiKeyAuth

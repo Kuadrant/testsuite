@@ -1,4 +1,5 @@
 """Common classes for Httpx"""
+
 # I change return type of HTTPX client to Kuadrant Result
 # mypy: disable-error-code="override, return-value"
 from tempfile import NamedTemporaryFile

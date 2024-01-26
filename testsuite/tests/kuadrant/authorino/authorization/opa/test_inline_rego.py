@@ -1,4 +1,5 @@
 """Tests for Open Policy Agent (OPA) Rego policies"""
+
 import pytest
 
 from testsuite.utils import rego_allow_header

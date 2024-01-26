@@ -1,4 +1,5 @@
 """Tests for integrity of the metrics endpoints"""
+
 import pytest
 
 

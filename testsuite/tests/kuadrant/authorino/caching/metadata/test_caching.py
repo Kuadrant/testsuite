@@ -1,4 +1,5 @@
 """Tests metadata caching"""
+
 from time import sleep
 
 import pytest

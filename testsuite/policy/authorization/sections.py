@@ -1,4 +1,5 @@
 """Sections inside of AuthConfig"""
+
 from typing import Literal, Iterable, TYPE_CHECKING, Union
 
 from testsuite.policy.authorization import (

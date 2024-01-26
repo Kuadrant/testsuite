@@ -1,4 +1,5 @@
 """Conftest for multiple hosts tests"""
+
 import pytest
 
 

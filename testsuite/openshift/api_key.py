@@ -1,4 +1,5 @@
 """API Key Secret CR object"""
+
 import base64
 from functools import cached_property
 

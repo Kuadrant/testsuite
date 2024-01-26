@@ -1,4 +1,5 @@
 """Tests that the RLP is correctly apply to the route rule"""
+
 import pytest
 
 from testsuite.gateway import RouteMatch, PathMatch, MatchType

@@ -1,4 +1,5 @@
 """Conftest for MGC tests"""
+
 import pytest
 from openshift import selector
 from weakget import weakget

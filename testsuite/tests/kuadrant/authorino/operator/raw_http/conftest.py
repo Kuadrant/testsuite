@@ -1,4 +1,5 @@
 """Conftest for all tests requiring custom deployment of Authorino"""
+
 import pytest
 
 from testsuite.policy.authorization import Value, JsonResponse

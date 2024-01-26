@@ -1,4 +1,5 @@
 """Envoy Gateway implementation with TLS setup"""
+
 from typing import TYPE_CHECKING
 
 import yaml

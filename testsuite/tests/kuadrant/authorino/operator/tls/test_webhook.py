@@ -1,6 +1,7 @@
 """
 Test raw http authorization used in Kubernetes Validating Webhooks.
 """
+
 import base64
 from typing import Any, Dict
 import pytest

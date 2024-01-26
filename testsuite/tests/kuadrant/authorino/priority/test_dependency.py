@@ -1,4 +1,5 @@
 """Test for evaluators dependencies resolving according to their priorities"""
+
 import pytest
 
 from testsuite.utils import extract_response

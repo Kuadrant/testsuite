@@ -1,4 +1,5 @@
 """Test for api key identities, with different credential methods, sequential trigger according to their priorities"""
+
 import pytest
 
 from testsuite.policy.authorization import Credentials

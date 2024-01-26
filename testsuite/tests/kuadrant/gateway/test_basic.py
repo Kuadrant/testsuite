@@ -1,4 +1,5 @@
 """Test for AuthPolicy attached directly to gateway"""
+
 import pytest
 
 

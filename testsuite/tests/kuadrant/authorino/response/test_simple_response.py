@@ -1,4 +1,5 @@
 """Tests that simplest JSON response returns correct header"""
+
 import json
 
 import pytest

@@ -1,4 +1,5 @@
 """Root conftest"""
+
 import signal
 from urllib.parse import urlparse
 

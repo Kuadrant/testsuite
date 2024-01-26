@@ -1,4 +1,5 @@
 """Basic test of role based authentication"""
+
 import pytest
 from testsuite.httpx.auth import HttpxOidcClientAuth
 

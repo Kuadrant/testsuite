@@ -1,4 +1,5 @@
 """Module containing facade for hyperfoil manipulation"""
+
 import shutil
 import typing
 from io import StringIO

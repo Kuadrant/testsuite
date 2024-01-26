@@ -1,4 +1,5 @@
 """Envoy Config"""
+
 import yaml
 
 from testsuite.openshift.httpbin import Httpbin

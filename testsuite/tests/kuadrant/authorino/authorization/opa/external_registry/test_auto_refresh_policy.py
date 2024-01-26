@@ -2,6 +2,7 @@
 Tests for Open Policy Agent (OPA) policy pulled from external registry.
 Registry is represented by Mockserver Expectation that returns Rego query.
 """
+
 import time
 
 import pytest

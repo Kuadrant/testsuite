@@ -1,4 +1,5 @@
 """mTLS authentication tests"""
+
 from typing import Callable
 import pytest
 

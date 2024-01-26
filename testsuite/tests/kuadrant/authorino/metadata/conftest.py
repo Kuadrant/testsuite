@@ -1,4 +1,5 @@
 """Conftest for metadata feature tests"""
+
 import pytest
 
 from testsuite.openshift import OpenShiftObject

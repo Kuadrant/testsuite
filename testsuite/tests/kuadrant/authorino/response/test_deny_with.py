@@ -1,4 +1,5 @@
 """Test for custom deny responses."""
+
 from json import loads
 import pytest
 

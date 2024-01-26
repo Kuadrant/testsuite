@@ -1,4 +1,5 @@
 """Dynaconf loader for fetching data from tools namespace"""
+
 import logging
 
 logger = logging.getLogger(__name__)

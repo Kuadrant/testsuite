@@ -1,6 +1,7 @@
 """
 Tests base64 decoding abilities of Authorino and it's escaping of strings
 """
+
 import json
 from base64 import standard_b64encode
 

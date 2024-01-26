@@ -1,4 +1,5 @@
 """Test api authentication with wristband-token that was acquired after authentication on the edge layer"""
+
 from jose import jwt
 
 

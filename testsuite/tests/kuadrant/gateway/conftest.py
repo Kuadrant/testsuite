@@ -1,4 +1,5 @@
 """Conftest for gateway tests"""
+
 import pytest
 
 from testsuite.httpx.auth import HttpxOidcClientAuth

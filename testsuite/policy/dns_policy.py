@@ -1,4 +1,5 @@
 """Module for DNSPolicy related classes"""
+
 from dataclasses import dataclass
 from typing import Optional, Literal
 

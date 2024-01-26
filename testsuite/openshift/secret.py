@@ -1,4 +1,5 @@
 """Module containing Secret related classes"""
+
 import base64
 from typing import Literal
 

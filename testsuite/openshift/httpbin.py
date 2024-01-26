@@ -1,4 +1,5 @@
 """Httpbin related classes"""
+
 from functools import cached_property
 
 from testsuite.lifecycle import LifecycleObject

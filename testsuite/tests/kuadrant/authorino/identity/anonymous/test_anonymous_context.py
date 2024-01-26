@@ -1,4 +1,5 @@
 """Test for anonymous identity context"""
+
 import pytest
 
 from testsuite.utils import extract_response

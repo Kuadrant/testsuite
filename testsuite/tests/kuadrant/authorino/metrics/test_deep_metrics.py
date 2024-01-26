@@ -1,4 +1,5 @@
 """Tests for the functionality of the deep-evaluator metric samples"""
+
 import pytest
 
 from testsuite.policy.authorization import Value, JsonResponse

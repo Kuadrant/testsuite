@@ -1,4 +1,5 @@
 """Module implements Service Monitor CR for OpenShift"""
+
 from dataclasses import dataclass
 
 from testsuite.utils import asdict

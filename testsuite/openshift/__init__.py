@@ -1,4 +1,5 @@
 """OpenShift common objects"""
+
 import functools
 from dataclasses import dataclass, field
 from typing import Optional, Literal
