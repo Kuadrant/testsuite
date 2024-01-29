@@ -1,4 +1,5 @@
 """Service related objects"""
+
 from dataclasses import dataclass, asdict
 
 from testsuite.openshift import OpenShiftObject

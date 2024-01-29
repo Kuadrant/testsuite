@@ -1,4 +1,5 @@
 """Module containing classes for working with TLS certificates"""
+
 import dataclasses
 import datetime
 import json

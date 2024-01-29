@@ -1,4 +1,5 @@
 """Authorino CR object"""
+
 import abc
 from typing import Any, Dict, List
 

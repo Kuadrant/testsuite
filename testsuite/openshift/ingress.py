@@ -1,4 +1,5 @@
 """Kubernetes Ingress object"""
+
 from typing import Any, Dict, List, Optional, TYPE_CHECKING
 
 from testsuite.openshift import OpenShiftObject

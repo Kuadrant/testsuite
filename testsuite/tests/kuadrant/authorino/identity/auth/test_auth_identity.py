@@ -1,4 +1,5 @@
 """Tests basic authentication with RHSSO/Auth0 as identity provider"""
+
 import pytest
 
 from testsuite.httpx.auth import HttpxOidcClientAuth

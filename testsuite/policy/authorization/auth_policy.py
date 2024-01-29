@@ -1,4 +1,5 @@
 """Module containing classes related to AuthPolicy"""
+
 from typing import Dict, TYPE_CHECKING
 
 from testsuite.utils import asdict

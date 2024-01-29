@@ -1,4 +1,5 @@
 """Conftest for all Identity tests"""
+
 import pytest
 
 

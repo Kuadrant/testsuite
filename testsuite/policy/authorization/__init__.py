@@ -1,4 +1,5 @@
 """Authorization related objects"""
+
 import abc
 from dataclasses import dataclass
 from typing import Literal, Optional

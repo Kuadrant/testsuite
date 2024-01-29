@@ -1,4 +1,5 @@
 """Module containing all classes necessary to work with Auth0"""
+
 from functools import cached_property
 
 import httpx

@@ -1,6 +1,7 @@
 """
 Test for authorino redirect
 """
+
 import pytest
 
 from testsuite.policy.authorization import ValueFrom, DenyResponse

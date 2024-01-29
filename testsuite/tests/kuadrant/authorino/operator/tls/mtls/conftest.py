@@ -1,4 +1,5 @@
 """Conftest for all mTLS tests"""
+
 import pytest
 
 from testsuite.certificates import CertInfo

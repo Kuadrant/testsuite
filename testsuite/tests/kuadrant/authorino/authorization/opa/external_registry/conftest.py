@@ -1,4 +1,5 @@
 """Conftest for OPA policy located on external registry"""
+
 import pytest
 
 from testsuite.utils import rego_allow_header

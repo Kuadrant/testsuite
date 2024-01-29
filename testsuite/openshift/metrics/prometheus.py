@@ -1,4 +1,5 @@
 """Simple client for the OpenShift metrics"""
+
 from typing import Callable
 from datetime import datetime
 

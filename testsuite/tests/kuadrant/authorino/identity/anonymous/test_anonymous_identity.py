@@ -1,4 +1,5 @@
 """Test for anonymous identity"""
+
 import pytest
 
 

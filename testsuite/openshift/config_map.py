@@ -1,4 +1,5 @@
 """Config map"""
+
 from testsuite.openshift import OpenShiftObject
 
 

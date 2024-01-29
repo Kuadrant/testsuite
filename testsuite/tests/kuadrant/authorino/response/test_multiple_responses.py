@@ -1,4 +1,5 @@
 """Tests multiple responses specified"""
+
 import json
 
 import pytest

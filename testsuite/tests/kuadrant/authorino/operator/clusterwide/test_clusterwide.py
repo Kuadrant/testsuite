@@ -1,4 +1,5 @@
 """Test that Authorino can reconcile resources in multiple namespaces"""
+
 import pytest
 
 

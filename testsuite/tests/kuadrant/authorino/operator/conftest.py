@@ -1,4 +1,5 @@
 """Module containing common features of all Operator tests"""
+
 import pytest
 
 

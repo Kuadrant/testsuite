@@ -7,6 +7,7 @@ Prerequisites:
 * gateway class "kuadrant-multi-cluster-gateway-instance-per-cluster" is created
 
 """
+
 import pytest
 
 pytestmark = [pytest.mark.mgc]

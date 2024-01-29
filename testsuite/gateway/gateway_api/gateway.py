@@ -1,4 +1,5 @@
 """Module containing all gateway classes"""
+
 # mypy: disable-error-code="override"
 import json
 from typing import Optional

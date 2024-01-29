@@ -1,4 +1,5 @@
 """Tests on mTLS authentication with multiple attributes"""
+
 import pytest
 
 from testsuite.policy.authorization import Pattern

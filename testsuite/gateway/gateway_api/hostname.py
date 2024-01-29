@@ -1,4 +1,5 @@
 """Module containing implementation for Hostname related classes of Gateway API"""
+
 from httpx import Client
 
 from testsuite.certificates import Certificate

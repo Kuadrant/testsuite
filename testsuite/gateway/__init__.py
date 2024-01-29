@@ -1,4 +1,5 @@
 """Classes related to Gateways"""
+
 import enum
 from abc import ABC, abstractmethod
 from dataclasses import dataclass

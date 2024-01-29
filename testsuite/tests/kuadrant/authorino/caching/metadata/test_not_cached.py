@@ -1,4 +1,5 @@
 """Tests for metadata without caching feature"""
+
 import pytest
 
 from testsuite.utils import extract_response

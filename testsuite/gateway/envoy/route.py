@@ -1,4 +1,5 @@
 """GatewayRoute implementation for pure Envoy Deployment"""
+
 import typing
 
 from testsuite.gateway import Gateway, GatewayRoute

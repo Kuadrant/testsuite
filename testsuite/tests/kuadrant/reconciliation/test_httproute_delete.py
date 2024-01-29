@@ -1,4 +1,5 @@
 """Tests that AuthPolicy is reconciled after HTTPRoute deletion."""
+
 import pytest
 
 

@@ -3,6 +3,7 @@ Tests identity verification & authentication with API keys.
 Using K8 notation for API key Secret label selector - selector.matchExpressions
 https://pkg.go.dev/k8s.io/apimachinery@v0.23.0/pkg/apis/meta/v1#LabelSelector
 """
+
 import pytest
 
 from testsuite.openshift import Selector, MatchExpression

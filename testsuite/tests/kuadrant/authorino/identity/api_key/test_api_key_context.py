@@ -1,4 +1,5 @@
 """Test for API key identity context"""
+
 import pytest
 
 from testsuite.utils import extract_response

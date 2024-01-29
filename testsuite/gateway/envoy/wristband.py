@@ -1,4 +1,5 @@
 """Wristband Envoy"""
+
 import yaml
 
 from testsuite.gateway.envoy import Envoy, EnvoyConfig

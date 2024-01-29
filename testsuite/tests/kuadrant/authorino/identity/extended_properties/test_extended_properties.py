@@ -1,4 +1,5 @@
 """Basic tests for extended properties"""
+
 import pytest
 
 from testsuite.policy.authorization import Value, ValueFrom

@@ -1,4 +1,5 @@
 """Conftest for the Authorino metrics tests"""
+
 import yaml
 
 import pytest

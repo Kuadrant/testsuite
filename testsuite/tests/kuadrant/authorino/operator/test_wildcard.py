@@ -1,6 +1,7 @@
 """
 Test for wildcard host
 """
+
 import pytest
 
 from testsuite.policy.authorization.auth_config import AuthConfig

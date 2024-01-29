@@ -1,4 +1,5 @@
 """Conftest for Authorino priorities tests"""
+
 import pytest
 
 

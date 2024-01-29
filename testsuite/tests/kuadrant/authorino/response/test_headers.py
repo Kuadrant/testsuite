@@ -1,4 +1,5 @@
 """Tests that wrapperKey property returns value in the correct header"""
+
 import json
 
 import pytest

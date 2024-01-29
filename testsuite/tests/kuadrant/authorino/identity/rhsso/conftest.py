@@ -1,4 +1,5 @@
 """Conftest for authorino rhsso tests"""
+
 import pytest
 
 

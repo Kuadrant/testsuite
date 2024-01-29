@@ -1,4 +1,5 @@
 """Module for TLSPolicy related classes"""
+
 from testsuite.gateway import Referencable
 from testsuite.openshift.client import OpenShiftClient
 from testsuite.openshift import OpenShiftObject

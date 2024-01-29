@@ -1,4 +1,5 @@
 """Conftest for authorino sharding tests"""
+
 import pytest
 
 from testsuite.policy.authorization import Value, JsonResponse

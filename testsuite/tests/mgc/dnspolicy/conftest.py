@@ -1,4 +1,5 @@
 """Conftest for DNSPolicy tests"""
+
 import pytest
 
 from testsuite.gateway.gateway_api.gateway import MGCGateway

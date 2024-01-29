@@ -2,6 +2,7 @@
 Test for anonymous identity low priority trigger.
 Anonymous identity should trigger after the oidc identity evaluation
 """
+
 import pytest
 
 from testsuite.utils import extract_response

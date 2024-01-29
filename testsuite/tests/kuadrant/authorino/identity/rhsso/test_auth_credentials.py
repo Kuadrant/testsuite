@@ -1,4 +1,5 @@
 """Test for RHSSO auth credentials"""
+
 import pytest
 
 from testsuite.policy.authorization import Credentials

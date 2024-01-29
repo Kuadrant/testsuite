@@ -1,6 +1,7 @@
 """
 Conftest for performance tests
 """
+
 import os
 import warnings
 from datetime import datetime

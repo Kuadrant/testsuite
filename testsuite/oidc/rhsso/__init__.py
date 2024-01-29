@@ -1,4 +1,5 @@
 """Objects for RHSSO"""
+
 from functools import cached_property
 from urllib.parse import urlparse
 

@@ -7,6 +7,7 @@ Test setup consist of:
     2. Add OPA policy to AuthConfig. Rego query (`CHECK_COUNTRY_REGO`) parses the request path and allows only those
        containing country code saved in metadata.
 """
+
 import pytest
 
 from testsuite.utils import ContentType

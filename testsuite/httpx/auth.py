@@ -1,4 +1,5 @@
 """Auth Classes for HttpX"""
+
 from functools import cached_property
 from typing import Generator, Callable, Union
 

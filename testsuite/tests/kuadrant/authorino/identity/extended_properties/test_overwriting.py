@@ -1,4 +1,5 @@
 """https://github.com/Kuadrant/authorino/pull/399"""
+
 import pytest
 
 from testsuite.policy.authorization import Value
