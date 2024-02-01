@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from time import sleep
 from typing import Iterable, Literal, Optional, List
 
-import openshift as oc
+import openshift_client as oc
 
 from testsuite.policy.authorization import Rule
 from testsuite.utils import asdict

@@ -3,8 +3,7 @@
 import abc
 from typing import Any, Dict, List
 
-import openshift
-from openshift import selector
+from openshift_client import selector, timeout
 
 from testsuite.openshift.client import OpenShiftClient
 from testsuite.openshift import OpenShiftObject
@@ -74,7 +73,7 @@ class AuthorinoCR(OpenShiftObject, Authorino):
 
     def wait_for_ready(self):
         """Waits until Authorino CR reports ready status"""
-        with openshift.timeout(90):
+        with timeout(90):
             success, _, _ = self.self_selector().until_all(
                 success_func=lambda obj: len(obj.model.status.conditions) > 0
                 and all(x.status == "True" for x in obj.model.status.conditions)

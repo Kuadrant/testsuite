@@ -4,7 +4,7 @@ import functools
 from dataclasses import dataclass, field
 from typing import Optional, Literal
 
-from openshift import APIObject, timeout
+from openshift_client import APIObject, timeout
 
 from testsuite.lifecycle import LifecycleObject
 

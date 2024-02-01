@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from typing import Optional, Literal
 
-import openshift as oc
+import openshift_client as oc
 
 from testsuite.utils import asdict
 from testsuite.gateway import Referencable

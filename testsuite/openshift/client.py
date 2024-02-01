@@ -5,8 +5,8 @@ from functools import cached_property
 from typing import Dict
 from urllib.parse import urlparse
 
-import openshift as oc
-from openshift import Context, Selector, OpenShiftPythonException
+import openshift_client as oc
+from openshift_client import Context, Selector, OpenShiftPythonException
 
 from .route import OpenshiftRoute
 from .secret import Secret
