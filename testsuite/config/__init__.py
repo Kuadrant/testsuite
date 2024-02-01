@@ -20,7 +20,7 @@ class DefaultValueValidator(Validator):
                 )
             },
             default=default,
-            when=Validator(name, must_exist=False),
+            when=Validator(name, must_exist=False) | Validator(name, eq=None),
             **kwargs
         )
 
