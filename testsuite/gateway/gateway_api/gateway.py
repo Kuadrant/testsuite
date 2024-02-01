@@ -4,7 +4,7 @@
 import json
 from typing import Optional
 
-import openshift as oc
+import openshift_client as oc
 
 from testsuite.certificates import Certificate
 from testsuite.gateway import Gateway

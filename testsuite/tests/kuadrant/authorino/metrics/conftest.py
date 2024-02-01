@@ -3,7 +3,7 @@
 import yaml
 
 import pytest
-from openshift import selector
+from openshift_client import selector
 
 from testsuite.openshift.config_map import ConfigMap
 from testsuite.openshift.metrics import ServiceMonitor, MetricsEndpoint, Prometheus

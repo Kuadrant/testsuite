@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from typing import Any
 
-import openshift as oc
+import openshift_client as oc
 
 from testsuite.openshift import OpenShiftObject, Selector, modify
 from testsuite.utils import asdict

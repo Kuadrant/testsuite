@@ -6,8 +6,8 @@ import base64
 from typing import Any, Dict
 import pytest
 
-import openshift as oc
-from openshift import OpenShiftPythonException
+import openshift_client as oc
+from openshift_client import OpenShiftPythonException
 
 from testsuite.policy.authorization import Pattern, ValueFrom
 from testsuite.certificates import CertInfo

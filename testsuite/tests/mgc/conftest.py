@@ -1,7 +1,7 @@
 """Conftest for MGC tests"""
 
 import pytest
-from openshift import selector
+from openshift_client import selector
 from weakget import weakget
 
 from testsuite.gateway import CustomReference, GatewayRoute, Exposer

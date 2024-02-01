@@ -3,7 +3,7 @@
 from functools import cached_property
 from typing import Dict
 
-import openshift as oc
+import openshift_client as oc
 
 from testsuite.utils import asdict
 from testsuite.openshift import OpenShiftObject, modify
