@@ -1,7 +1,6 @@
 default:
   skip_cleanup: false
   dynaconf_merge: true
-  standalone: false
   cluster: {}
   tools:
     project: "tools"

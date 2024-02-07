@@ -1,7 +1,6 @@
 #default:
 #  skip_cleanup: false
 #  tester: "someuser"                          # Optional: name of the user, who is running the tests, defaults to whoami/uid
-#  standalone: false                           # True, if Testsuite should test only individual components (e.g. Authorino/limitador operators)
 #  cluster:                                    # Workload cluster where tests should run, will get overriden if run on Multicluster
 #    project: "kuadrant"                       # Optional: Default namespace for this cluster
 #    api_url: "https://api.openshift.com"      # Optional: OpenShift API URL, if None it will OpenShift that you are logged in

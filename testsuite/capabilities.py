@@ -12,9 +12,6 @@ def has_kuadrant():
     """Returns True, if Kuadrant deployment is present and should be used"""
     spokes = weakget(settings)["control_plane"]["spokes"] % {}
 
-    if settings.get("standalone", False):
-        return False, "Standalone mode is enabled"
-
     for name, openshift in spokes.items():
         # Try if Kuadrant is deployed
         if not openshift.connected:
@@ -29,20 +26,9 @@ def has_kuadrant():
 
 
 @functools.cache
-def is_standalone():
-    """Return True, if the testsuite is configured to run with envoy in standalone mode, without Gateway API"""
-    if not settings.get("standalone", False):
-        return False, "Standalone mode is disabled"
-    return True, None
-
-
-@functools.cache
 def has_mgc():
     """Returns True, if MGC is configured and deployed"""
     spokes = weakget(settings)["control_plane"]["spokes"] % {}
-
-    if settings.get("standalone", False):
-        return False, "Standalone mode is enabled"
 
     if len(spokes) == 0:
         return False, "Spokes are not configured"
