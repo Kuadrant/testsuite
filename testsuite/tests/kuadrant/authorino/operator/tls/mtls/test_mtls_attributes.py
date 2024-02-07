@@ -4,6 +4,8 @@ import pytest
 
 from testsuite.policy.authorization import Pattern
 
+pytestmark = [pytest.mark.authorino, pytest.mark.standalone_only]
+
 
 @pytest.fixture(scope="module", autouse=True)
 def authorization(authorization, blame, cert_attributes):
