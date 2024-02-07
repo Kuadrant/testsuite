@@ -1,4 +1,4 @@
-.PHONY: commit-acceptance pylint mypy black reformat test performance authorino poetry poetry-no-dev mgc container-image polish-junit reportportal
+.PHONY: commit-acceptance pylint mypy black reformat test performance authorino poetry poetry-no-dev mgc container-image polish-junit reportportal authorino-standalone limitador kuadrant kuadrant-only
 
 TB ?= short
 LOGLEVEL ?= INFO
@@ -38,23 +38,39 @@ all-is-package:
 
 # pattern to run individual testfile or all testfiles in directory
 testsuite/%: FORCE poetry-no-dev
-	$(PYTEST) --performance --mgc -v $(flags) $@
+	$(PYTEST) --performance -v $(flags) $@
 
-test: ## Run tests
+test: ## Run all non mgc tests
 test pytest tests: poetry-no-dev
-	$(PYTEST) -n4 -m 'not flaky' --dist loadfile $(flags) testsuite
+	$(PYTEST) -n4 -m 'not mgc' --dist loadfile $(flags) testsuite
 
-authorino: ## Run test
+authorino: ## Run only authorino related tests
 authorino: poetry-no-dev
-	$(PYTEST) -n4 -m 'not flaky' --dist loadfile $(flags) testsuite/tests/kuadrant/authorino
+	$(PYTEST) -n4 -m 'authorino' --dist loadfile --enforce $(flags) testsuite
+
+authorino-standalone: ## Run only test capable of running with standalone Authorino
+authorino-standalone: poetry-no-dev
+	$(PYTEST) -n4 -m 'authorino and not kuadrant_only' --dist loadfile --enforce $(flags) testsuite/tests/kuadrant/authorino
+
+limitador: ## Run only Limitador related tests
+limitador: poetry-no-dev
+	$(PYTEST) -n4 -m 'limitador' --dist loadfile --enforce $(flags) testsuite
+
+kuadrant: ## Run all tests available on Kuadrant
+kuadrant: poetry-no-dev
+	$(PYTEST) -n4 -m 'not standalone_only' --dist loadfile --enforce $(flags) testsuite
+
+kuadrant-only: ## Run Kuadrant-only tests
+kuadrant-only: poetry-no-dev
+	$(PYTEST) -n4 -m 'kuadrant_only' --dist loadfile --enforce $(flags) testsuite
+
+mgc: ## Run mgc tests
+mgc: poetry-no-dev
+	$(PYTEST) -m "mgc" --enforce $(flags) testsuite
 
 performance: ## Run performance tests
 performance: poetry-no-dev
 	$(PYTEST) --performance $(flags) testsuite/tests/kuadrant/authorino/performance
-
-mgc: ## Run mgc tests
-mgc: poetry-no-dev
-	$(PYTEST) --mgc $(flags) testsuite/tests/mgc
 
 poetry.lock: pyproject.toml
 	poetry lock

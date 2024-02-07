@@ -8,6 +8,9 @@ from testsuite.policy.authorization import ValueFrom, Cache
 from testsuite.utils import extract_response
 
 
+pytestmark = [pytest.mark.authorino]
+
+
 @pytest.fixture(scope="module")
 def cache_ttl():
     """Returns TTL in seconds for Cached Metadata"""

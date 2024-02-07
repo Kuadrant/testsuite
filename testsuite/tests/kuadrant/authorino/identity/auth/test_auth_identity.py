@@ -6,6 +6,8 @@ from testsuite.httpx.auth import HttpxOidcClientAuth
 from testsuite.oidc import OIDCProvider
 from testsuite.oidc.rhsso import RHSSO
 
+pytestmark = [pytest.mark.authorino]
+
 
 @pytest.fixture(scope="module")
 def authorization(authorization, oidc_provider):

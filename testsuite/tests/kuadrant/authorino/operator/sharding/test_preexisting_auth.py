@@ -5,6 +5,8 @@ from weakget import weakget
 
 from testsuite.openshift.authorino import AuthorinoCR
 
+pytestmark = [pytest.mark.authorino, pytest.mark.standalone_only]
+
 
 @pytest.fixture(scope="module")
 def setup_authorino(openshift, blame, testconfig, module_label, request):

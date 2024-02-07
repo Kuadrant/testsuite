@@ -1,5 +1,9 @@
 """Tests for Open Policy Agent (OPA) using Mockserver Expectations as http endpoint with Rego query"""
 
+import pytest
+
+pytestmark = [pytest.mark.authorino]
+
 
 def test_allowed_by_opa(client, auth, header):
     """Tests a request that should be authorized by OPA external registry declaration"""

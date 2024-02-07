@@ -4,6 +4,8 @@ Test for complex AuthConfig
 
 import pytest
 
+pytestmark = [pytest.mark.authorino]
+
 ERROR_MESSAGE = {
     "kind": "Error",
     "id": "403",

@@ -4,6 +4,8 @@ import pytest
 
 from testsuite.policy.authorization import Credentials
 
+pytestmark = [pytest.mark.authorino]
+
 
 @pytest.fixture(scope="module", params=["authorizationHeader", "customHeader", "queryString", "cookie"])
 def credentials(request):

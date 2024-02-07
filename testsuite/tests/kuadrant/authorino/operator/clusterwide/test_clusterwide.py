@@ -2,6 +2,8 @@
 
 import pytest
 
+pytestmark = [pytest.mark.authorino, pytest.mark.standalone_only]
+
 
 @pytest.mark.parametrize(
     "client_fixture",

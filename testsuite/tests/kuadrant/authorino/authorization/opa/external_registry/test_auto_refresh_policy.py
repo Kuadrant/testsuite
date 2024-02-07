@@ -10,6 +10,9 @@ import pytest
 from testsuite.utils import rego_allow_header
 
 
+pytestmark = [pytest.mark.authorino]
+
+
 @pytest.fixture(scope="module")
 def updated_header():
     """Header for updated OPA policy"""

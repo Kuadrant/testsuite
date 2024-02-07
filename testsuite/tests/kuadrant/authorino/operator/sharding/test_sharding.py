@@ -2,6 +2,8 @@
 
 import pytest
 
+pytestmark = [pytest.mark.authorino, pytest.mark.standalone_only]
+
 
 @pytest.fixture(scope="module")
 def authorino_parameters(authorino_parameters):

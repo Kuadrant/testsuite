@@ -6,6 +6,8 @@ import pytest
 
 from testsuite.policy.authorization import Value, JsonResponse
 
+pytestmark = [pytest.mark.authorino]
+
 
 @pytest.fixture(scope="module")
 def authorization(authorization):

@@ -1,6 +1,9 @@
 """Test api authentication with wristband-token that was acquired after authentication on the edge layer"""
 
+import pytest
 from jose import jwt
+
+pytestmark = [pytest.mark.authorino, pytest.mark.standalone_only]
 
 
 def test_wristband_token_claims(oidc_provider, auth, wristband_token, wristband_endpoint, certificates):

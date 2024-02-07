@@ -5,6 +5,8 @@ import pytest
 from testsuite.httpx.auth import HeaderApiKeyAuth
 from testsuite.openshift import Selector
 
+pytestmark = [pytest.mark.authorino]
+
 
 @pytest.fixture(scope="function")
 def api_key(create_api_key, module_label):

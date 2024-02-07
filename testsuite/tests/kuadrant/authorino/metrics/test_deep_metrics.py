@@ -4,6 +4,8 @@ import pytest
 
 from testsuite.policy.authorization import Value, JsonResponse
 
+pytestmark = [pytest.mark.authorino, pytest.mark.standalone_only]
+
 
 @pytest.fixture(scope="module")
 def mockserver_expectation(request, mockserver, module_label):

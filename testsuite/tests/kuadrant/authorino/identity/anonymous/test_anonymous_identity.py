@@ -2,6 +2,8 @@
 
 import pytest
 
+pytestmark = [pytest.mark.authorino]
+
 
 @pytest.fixture(scope="module")
 def authorization(authorization, rhsso):

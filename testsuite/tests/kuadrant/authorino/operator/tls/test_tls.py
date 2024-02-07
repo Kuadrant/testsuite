@@ -1,5 +1,9 @@
 """Tests that envoy deployed with TLS security works with Authorino"""
 
+import pytest
+
+pytestmark = [pytest.mark.authorino, pytest.mark.standalone_only]
+
 
 def test_valid_certificate(envoy_authority, valid_cert, auth, hostname):
     """Tests that valid certificate will be accepted"""

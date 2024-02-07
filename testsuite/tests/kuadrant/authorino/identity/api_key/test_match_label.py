@@ -3,6 +3,9 @@
 import pytest
 
 
+pytestmark = [pytest.mark.authorino]
+
+
 @pytest.fixture(scope="module")
 def authorization(authorization, api_key):
     """Creates AuthConfig with API key identity"""

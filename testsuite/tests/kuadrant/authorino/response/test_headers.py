@@ -6,6 +6,8 @@ import pytest
 
 from testsuite.policy.authorization import Value, JsonResponse
 
+pytestmark = [pytest.mark.authorino]
+
 
 @pytest.fixture(scope="module", params=["123456789", "standardCharacters", "specialcharacters+*-."])
 def header_name(request):

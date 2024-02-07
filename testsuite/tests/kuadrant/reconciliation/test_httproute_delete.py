@@ -2,6 +2,8 @@
 
 import pytest
 
+pytestmark = [pytest.mark.kuadrant_only]
+
 
 @pytest.mark.issue("https://github.com/Kuadrant/kuadrant-operator/issues/124")
 def test_delete(client, route, authorization, resilient_request):

@@ -1,5 +1,9 @@
 """Test host removal"""
 
+import pytest
+
+pytestmark = [pytest.mark.authorino]
+
 
 def test_removing_host(client, client2, auth, route, second_hostname):
     """Tests that after removal of the second host, it stops working, while the first one still works"""

@@ -11,12 +11,6 @@ from testsuite.openshift.secret import TLSSecret
 from testsuite.utils import cert_builder
 
 
-@pytest.fixture(scope="module")
-def run_on_kuadrant():
-    """Kuadrant doesn't allow customization of Authorino parameters"""
-    return False
-
-
 @pytest.fixture(scope="session")
 def oidc_provider(rhsso):
     """Fixture which enables switching out OIDC providers for individual modules"""

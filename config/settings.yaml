@@ -1,7 +1,7 @@
 default:
   skip_cleanup: false
   dynaconf_merge: true
-  gateway_api: true
+  standalone: false
   cluster: {}
   tools:
     project: "tools"

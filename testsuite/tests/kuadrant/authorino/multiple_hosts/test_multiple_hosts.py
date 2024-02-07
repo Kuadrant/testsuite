@@ -1,5 +1,9 @@
 """Tests AuthConfig with multiple specified hosts"""
 
+import pytest
+
+pytestmark = [pytest.mark.authorino]
+
 
 def test_original_host(client, auth):
     """Tests correct host"""

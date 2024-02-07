@@ -41,7 +41,7 @@ settings = Dynaconf(
         DefaultValueValidator("rhsso.url", default=fetch_route("no-ssl-sso")),
         DefaultValueValidator("rhsso.password", default=fetch_secret("credential-sso", "ADMIN_PASSWORD")),
         DefaultValueValidator("mockserver.url", default=fetch_route("mockserver", force_http=True)),
-        Validator("gateway_api", must_exist=False, eq=False)
+        Validator("standalone", must_exist=False, eq=True)
         | Validator("service_protection.gateway.name", must_exist=True),
     ],
     validate_only=["authorino", "kuadrant"],

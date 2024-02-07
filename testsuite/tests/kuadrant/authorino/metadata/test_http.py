@@ -12,6 +12,9 @@ import pytest
 
 from testsuite.utils import ContentType
 
+pytestmark = [pytest.mark.authorino]
+
+
 ALLOWED_COUNTRY = {"countryCode": "SK"}
 CHECK_COUNTRY_REGO = """allow {
 split(input.context.request.http.path, "/") = [_, _, country_code]

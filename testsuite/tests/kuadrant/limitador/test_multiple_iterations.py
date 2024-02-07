@@ -8,6 +8,8 @@ import pytest
 
 from testsuite.policy.rate_limit_policy import Limit
 
+pytestmark = [pytest.mark.kuadrant_only, pytest.mark.limitador]
+
 
 @pytest.fixture(scope="module")
 def rate_limit(rate_limit):
