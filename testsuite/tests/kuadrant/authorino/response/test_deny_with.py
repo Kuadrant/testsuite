@@ -15,6 +15,8 @@ HEADERS = {
 
 TESTING_PATH = "/deny"
 
+pytestmark = [pytest.mark.authorino]
+
 
 @pytest.fixture(scope="module")
 def authorization(authorization):

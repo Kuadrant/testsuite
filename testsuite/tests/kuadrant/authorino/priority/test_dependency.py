@@ -4,6 +4,8 @@ import pytest
 
 from testsuite.utils import extract_response
 
+pytestmark = [pytest.mark.authorino]
+
 
 @pytest.fixture(scope="module")
 def mockserver_expectation(request, mockserver, module_label):

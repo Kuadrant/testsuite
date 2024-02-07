@@ -6,6 +6,8 @@ import pytest
 
 from testsuite.httpx.auth import HttpxOidcClientAuth
 
+pytestmark = [pytest.mark.authorino]
+
 
 @pytest.fixture(scope="module")
 def auth0_auth(auth0):

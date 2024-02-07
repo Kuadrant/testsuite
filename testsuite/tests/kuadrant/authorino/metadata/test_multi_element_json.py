@@ -7,6 +7,7 @@ import pytest
 
 from testsuite.utils import ContentType, extract_response
 
+pytestmark = [pytest.mark.authorino]
 
 MULTI_ELEMENT_JSON = '{"foo": "bar"}\n{"blah": "bleh"}'
 

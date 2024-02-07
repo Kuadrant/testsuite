@@ -2,6 +2,10 @@
 Test raw http authorization interface.
 """
 
+import pytest
+
+pytestmark = [pytest.mark.authorino, pytest.mark.standalone_only]
+
 
 # pylint: disable=unused-argument
 def test_authorized_via_http(authorization, client, auth):

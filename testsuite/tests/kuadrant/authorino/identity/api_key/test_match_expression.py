@@ -9,6 +9,9 @@ import pytest
 from testsuite.openshift import Selector, MatchExpression
 
 
+pytestmark = [pytest.mark.authorino]
+
+
 @pytest.fixture(scope="module")
 def valid_label_selectors(module_label):
     """Accepted labels for selector.matchExpressions in AuthConfig"""

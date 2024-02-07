@@ -3,6 +3,8 @@
 import pytest
 from testsuite.httpx.auth import HttpxOidcClientAuth
 
+pytestmark = [pytest.mark.authorino]
+
 
 @pytest.fixture(scope="function")
 def user_with_role(rhsso, realm_role, blame):

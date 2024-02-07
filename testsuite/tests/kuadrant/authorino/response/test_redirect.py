@@ -9,6 +9,8 @@ from testsuite.policy.authorization import ValueFrom, DenyResponse
 STATUS_CODE = 302
 REDIRECT_URL = "http://anything.inavlid?redirect_to="
 
+pytestmark = [pytest.mark.authorino]
+
 
 @pytest.fixture(scope="module")
 def authorization(authorization):

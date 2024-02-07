@@ -12,6 +12,8 @@ import pytest
 
 from testsuite.httpx.auth import HttpxOidcClientAuth
 
+pytestmark = [pytest.mark.authorino]
+
 VALIDATE_RESOURCE_OWNER = """
 metadata := object.get(input.auth.metadata, "resource-data", [])[0]
 

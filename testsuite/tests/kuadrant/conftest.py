@@ -7,22 +7,9 @@ from testsuite.policy.authorization.auth_policy import AuthPolicy
 from testsuite.policy.rate_limit_policy import RateLimitPolicy
 
 
-@pytest.fixture(scope="session")
-def run_on_kuadrant():
-    """True, if the tests should pass when running on Kuadrant"""
-    return True
-
-
-@pytest.fixture(scope="module", autouse=True)
-def skip_no_kuadrant(kuadrant, run_on_kuadrant):
-    """Skips all tests that are not working with Kuadrant"""
-    if kuadrant and not run_on_kuadrant:
-        pytest.skip("This test doesn't work with Kuadrant")
-
-
 # pylint: disable=unused-argument
 @pytest.fixture(scope="module")
-def authorino(kuadrant, skip_no_kuadrant):
+def authorino(kuadrant):
     """Authorino instance when configured through Kuadrant"""
     if kuadrant:
         # No available modification

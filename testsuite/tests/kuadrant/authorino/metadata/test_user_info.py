@@ -8,6 +8,8 @@ import pytest
 from testsuite.httpx.auth import HttpxOidcClientAuth
 from testsuite.policy.authorization import Pattern
 
+pytestmark = [pytest.mark.authorino]
+
 
 @pytest.fixture(scope="module")
 def user2(rhsso, blame):

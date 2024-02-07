@@ -7,6 +7,8 @@ import pytest
 from testsuite.policy.authorization import Value, JsonResponse
 from testsuite.policy.authorization.auth_config import AuthConfig
 
+pytestmark = [pytest.mark.authorino, pytest.mark.standalone_only]
+
 
 @pytest.fixture(scope="module")
 def route(route, wildcard_domain, hostname):

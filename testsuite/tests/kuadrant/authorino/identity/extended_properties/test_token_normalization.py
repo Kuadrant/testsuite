@@ -4,6 +4,8 @@ import pytest
 from testsuite.policy.authorization import Pattern, Value, ValueFrom
 from testsuite.httpx.auth import HeaderApiKeyAuth, HttpxOidcClientAuth
 
+pytestmark = [pytest.mark.authorino]
+
 
 @pytest.fixture(scope="module")
 def api_key(create_api_key, module_label):

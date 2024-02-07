@@ -10,12 +10,6 @@ from testsuite.openshift.metrics import ServiceMonitor, MetricsEndpoint, Prometh
 
 
 @pytest.fixture(scope="module")
-def run_on_kuadrant():
-    """Kuadrant doesn't allow customization of Authorino parameters"""
-    return False
-
-
-@pytest.fixture(scope="module")
 def prometheus(request, openshift):
     """
     Return an instance of OpenShift metrics client

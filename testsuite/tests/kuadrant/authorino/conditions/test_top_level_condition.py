@@ -4,6 +4,8 @@ import pytest
 
 from testsuite.policy.authorization import Pattern
 
+pytestmark = [pytest.mark.authorino]
+
 
 @pytest.fixture(scope="module")
 def authorization(authorization, module_label):

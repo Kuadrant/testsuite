@@ -7,6 +7,8 @@ import pytest
 
 from testsuite.httpx.auth import HeaderApiKeyAuth
 
+pytestmark = [pytest.mark.authorino, pytest.mark.standalone_only]
+
 
 @pytest.fixture(scope="module")
 def api_key(create_api_key, module_label, openshift2):

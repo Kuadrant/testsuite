@@ -7,12 +7,7 @@ from testsuite.policy.authorization import ValueFrom, JsonResponse
 from testsuite.policy.rate_limit_policy import Limit
 
 
-@pytest.fixture(scope="module")
-def kuadrant(kuadrant):
-    """Skip if not running on Kuadrant"""
-    if not kuadrant:
-        pytest.skip("Limitador tests can only run on Kuadrant for now")
-    return kuadrant
+pytestmark = [pytest.mark.kuadrant_only, pytest.mark.limitador]
 
 
 @pytest.fixture(scope="module")

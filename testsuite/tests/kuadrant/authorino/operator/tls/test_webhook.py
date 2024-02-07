@@ -15,6 +15,8 @@ from testsuite.policy.authorization.auth_config import AuthConfig
 from testsuite.utils import cert_builder
 from testsuite.openshift.ingress import Ingress
 
+pytestmark = [pytest.mark.authorino, pytest.mark.standalone_only]
+
 OPA_POLICY = """
     request := json.unmarshal(input.context.request.http.body).request
     verb := request.operation
