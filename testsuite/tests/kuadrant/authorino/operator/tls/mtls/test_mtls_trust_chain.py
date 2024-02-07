@@ -2,6 +2,8 @@
 
 import pytest
 
+pytestmark = [pytest.mark.authorino, pytest.mark.standalone_only]
+
 
 @pytest.fixture(scope="module", autouse=True)
 def create_intermediate_authority_secrets(create_secret, authorino_labels, certificates):
