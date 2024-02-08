@@ -13,14 +13,6 @@ def commit(request, authorization):
 
 
 @pytest.fixture(scope="module")
-def kuadrant(kuadrant):
-    """Skip if not running on Kuadrant"""
-    if not kuadrant:
-        pytest.skip("Reconciliation test can only be run on Kuadrant")
-    return kuadrant
-
-
-@pytest.fixture(scope="module")
 def resilient_request(client):
     """Fixture which allows to send retrying requests until the expected status code is returned"""
 

@@ -2,6 +2,8 @@
 
 import pytest
 
+pytestmark = [pytest.mark.kuadrant_only]
+
 
 @pytest.fixture(scope="module")
 def rate_limit():

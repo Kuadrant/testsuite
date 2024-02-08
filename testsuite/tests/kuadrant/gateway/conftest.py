@@ -7,14 +7,6 @@ from testsuite.policy.authorization.auth_policy import AuthPolicy
 
 
 @pytest.fixture(scope="module")
-def kuadrant(kuadrant):
-    """Skip if not running on Kuadrant"""
-    if not kuadrant:
-        pytest.skip("Gateway tests are only for Kuadrant")
-    return kuadrant
-
-
-@pytest.fixture(scope="module")
 def gateway_ready(gateway):
     """Returns ready gateway"""
     gateway.wait_for_ready()
