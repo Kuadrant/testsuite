@@ -7,7 +7,7 @@ import pytest
 from dynaconf import ValidationError
 from keycloak import KeycloakAuthenticationError
 
-from testsuite.capabilities import has_kuadrant, has_mgc, is_standalone
+from testsuite.capabilities import has_kuadrant, has_mgc
 from testsuite.certificates import CFSSLClient
 from testsuite.config import settings
 from testsuite.mockserver import Mockserver
@@ -29,7 +29,10 @@ def pytest_addoption(parser):
     parser.addoption(
         "--performance", action="store_true", default=False, help="Run also performance tests (default: False)"
     )
-    parser.addoption("--enforce", action="store_true", default=False, help="Fails tests instead of skip")
+    parser.addoption(
+        "--enforce", action="store_true", default=False, help="Fails tests instead of skip, if capabilities are missing"
+    )
+    parser.addoption("--standalone", action="store_true", default=False, help="Runs testsuite in standalone mode")
 
 
 def pytest_runtest_setup(item):
@@ -43,18 +46,25 @@ def pytest_runtest_setup(item):
     if "performance" in marks and not item.config.getoption("--performance"):
         pytest.skip("Excluding performance tests")
     skip_or_fail = pytest.fail if item.config.getoption("--enforce") else pytest.skip
-    if "kuadrant_only" in marks:
-        kuadrant, error = has_kuadrant()
-        if not kuadrant:
-            skip_or_fail(f"Unable to locate Kuadrant installation: {error}")
-    if "standalone_only" in marks:
-        status, error = is_standalone()
-        if not status:
-            skip_or_fail(f"Unable to run Standalone tests: {error}")
-    if "mgc" in marks:
-        mgc, error = has_mgc()
-        if not mgc:
-            skip_or_fail(f"Unable to locate MGC installation: {error}")
+    standalone = item.config.getoption("--standalone")
+    if standalone:
+        if "mgc" in marks:
+            skip_or_fail("Unable to run MGC test: Standalone mode is enabled")
+        if "kuadrant_only" in marks:
+            skip_or_fail("Unable to run Kuadrant Only tests: Standalone mode is enabled")
+    else:
+        if "standalone_only" in marks:
+            skip_or_fail(
+                "Unable to run Standalone only test: Standalone mode is disabled, please use --standalone flag"
+            )
+        if "kuadrant_only" in marks:
+            kuadrant, error = has_kuadrant()
+            if not kuadrant:
+                skip_or_fail(f"Unable to locate Kuadrant installation: {error}")
+        if "mgc" in marks:
+            mgc, error = has_mgc()
+            if not mgc:
+                skip_or_fail(f"Unable to locate MGC installation: {error}")
 
 
 @pytest.hookimpl(hookwrapper=True)
@@ -241,9 +251,9 @@ def module_label(label):
 
 
 @pytest.fixture(scope="module")
-def kuadrant(testconfig, openshift):
+def kuadrant(request, testconfig, openshift):
     """Returns Kuadrant instance if exists, or None"""
-    if testconfig.get("standalone", False):
+    if request.config.getoption("--standalone"):
         return None
 
     # Try if Kuadrant is deployed
