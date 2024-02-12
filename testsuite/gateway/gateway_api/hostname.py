@@ -71,3 +71,9 @@ class DNSPolicyExposer(Exposer):
         return StaticHostname(
             f"{name}.{self.base_domain}", gateway.get_tls_cert() if self.tls_cert is None else self.tls_cert
         )
+
+    def commit(self):
+        pass
+
+    def delete(self):
+        pass
