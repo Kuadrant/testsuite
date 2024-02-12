@@ -129,12 +129,18 @@ def testconfig():
 
 
 @pytest.fixture(scope="session")
-def openshift(testconfig):
+def hub_openshift(testconfig):
     """OpenShift client for the primary namespace"""
     client = testconfig["service_protection"]["project"]
     if not client.connected:
         pytest.fail("You are not logged into Openshift or the namespace doesn't exist")
     return client
+
+
+@pytest.fixture(scope="session")
+def openshift(hub_openshift):
+    """OpenShift client for the primary namespace"""
+    return hub_openshift
 
 
 @pytest.fixture(scope="session")
