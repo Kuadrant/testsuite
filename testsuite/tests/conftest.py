@@ -42,19 +42,19 @@ def pytest_runtest_setup(item):
     marks = [i.name for i in item.iter_markers()]
     if "performance" in marks and not item.config.getoption("--performance"):
         pytest.skip("Excluding performance tests")
-    skip_func = pytest.fail if item.config.getoption("--enforce") else pytest.skip
+    skip_or_fail = pytest.fail if item.config.getoption("--enforce") else pytest.skip
     if "kuadrant_only" in marks:
         kuadrant, error = has_kuadrant()
         if not kuadrant:
-            skip_func(f"Unable to locate Kuadrant installation: {error}")
+            skip_or_fail(f"Unable to locate Kuadrant installation: {error}")
     if "standalone_only" in marks:
         status, error = is_standalone()
         if not status:
-            skip_func(f"Unable to run Standalone tests: {error}")
+            skip_or_fail(f"Unable to run Standalone tests: {error}")
     if "mgc" in marks:
         mgc, error = has_mgc()
         if not mgc:
-            skip_func(f"Unable to locate MGC installation: {error}")
+            skip_or_fail(f"Unable to locate MGC installation: {error}")
 
 
 @pytest.hookimpl(hookwrapper=True)
@@ -74,6 +74,12 @@ def pytest_runtest_makereport(item, call):  # pylint: disable=unused-argument
                 label = issue
             extra.append(pytest_html.extras.url(issue, name=label))
         report.extra = extra
+
+
+@pytest.fixture(scope="session")
+def skip_or_fail(request):
+    """Skips or fails tests depending on --enforce option"""
+    return pytest.fail if request.config.getoption("--enforce") else pytest.skip
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -121,18 +127,18 @@ def openshift(testconfig):
 
 
 @pytest.fixture(scope="module")
-def openshift2(testconfig):
+def openshift2(testconfig, skip_or_fail):
     """OpenShift client for the secondary namespace located on the same cluster as primary Openshift"""
     client = testconfig["service_protection"]["project2"]
     if client is None:
-        pytest.skip("Openshift2 required but second_project was not set")
+        skip_or_fail("Openshift2 required but second_project was not set")
     if not client.connected:
         pytest.fail("You are not logged into Openshift or the namespace for Openshift2 doesn't exist")
     return client
 
 
 @pytest.fixture(scope="session")
-def rhsso(request, testconfig, blame):
+def rhsso(request, testconfig, blame, skip_or_fail):
     """RHSSO OIDC Provider fixture"""
     try:
         testconfig.validators.validate(only="rhsso")
@@ -153,9 +159,9 @@ def rhsso(request, testconfig, blame):
         info.commit()
         return info
     except KeycloakAuthenticationError:
-        return pytest.skip("Unable to login into SSO, please check the credentials provided")
+        return skip_or_fail("Unable to login into SSO, please check the credentials provided")
     except KeyError as exc:
-        return pytest.skip(f"SSO configuration item is missing: {exc}")
+        return skip_or_fail(f"SSO configuration item is missing: {exc}")
 
 
 @pytest.fixture(scope="session")
@@ -169,22 +175,22 @@ def auth0(testconfig):
 
 
 @pytest.fixture(scope="session")
-def cfssl(testconfig):
+def cfssl(testconfig, skip_or_fail):
     """CFSSL client library"""
     client = CFSSLClient(binary=testconfig["cfssl"])
     if not client.exists:
-        pytest.skip("Skipping CFSSL tests as CFSSL binary path is not properly configured")
+        skip_or_fail("Skipping CFSSL tests as CFSSL binary path is not properly configured")
     return client
 
 
 @pytest.fixture(scope="module")
-def mockserver(testconfig):
+def mockserver(testconfig, skip_or_fail):
     """Returns mockserver"""
     try:
         testconfig.validators.validate(only=["mockserver"])
         return Mockserver(testconfig["mockserver"]["url"])
     except (KeyError, ValidationError) as exc:
-        return pytest.skip(f"Mockserver configuration item is missing: {exc}")
+        return skip_or_fail(f"Mockserver configuration item is missing: {exc}")
 
 
 @pytest.fixture(scope="session")
