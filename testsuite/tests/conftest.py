@@ -21,7 +21,7 @@ from testsuite.oidc.rhsso import RHSSO
 from testsuite.gateway.envoy import Envoy
 from testsuite.gateway.envoy.route import EnvoyVirtualRoute
 from testsuite.gateway.gateway_api.gateway import KuadrantGateway
-from testsuite.gateway.gateway_api.hostname import OpenShiftExposer
+from testsuite.gateway.exposers import OpenShiftExposer
 from testsuite.gateway.gateway_api.route import HTTPRoute
 from testsuite.utils import randomize, _whoami
 
