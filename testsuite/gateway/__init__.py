@@ -188,7 +188,7 @@ class Hostname(ABC):
         """Returns full hostname in string form associated with this object"""
 
 
-class Exposer:
+class Exposer(LifecycleObject):
     """Exposes hostnames to be accessible from outside"""
 
     @abstractmethod
