@@ -44,10 +44,10 @@ pytestmark = [pytest.mark.mgc]
 
 
 @pytest.fixture(scope="module")
-def cluster_issuer():
+def cluster_issuer(hub_openshift):
     """Reference to cluster Let's Encrypt certificate issuer"""
     try:
-        selector("clusterissuer/letsencrypt-staging").object()
+        selector("clusterissuer/letsencrypt-staging", static_context=hub_openshift.context).object()
     except OpenShiftPythonException as exc:
         pytest.skip(f"letsencrypt-staging ClusterIssuer is not present on the cluster: {exc}")
     return CustomReference(
@@ -65,6 +65,8 @@ def exposer(base_domain, hub_gateway) -> Exposer:
     return DNSPolicyExposer(base_domain, tls_cert=dataclasses.replace(old_cert, chain=old_cert.certificate + root_cert))
 
 
+# Reduce scope of the base_domain fixture so the test only runs on aws-mz ManagedZone
+@pytest.mark.parametrize("base_domain", ["aws-mz"], indirect=True)
 def test_smoke_letsencrypt(client):
     """
     Tests whether the backend, exposed using the HTTPRoute and Gateway, was exposed correctly,
