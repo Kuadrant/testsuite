@@ -48,17 +48,15 @@ def auth(oidc_provider):
 def test_no_limit_for_auth_user(client, auth):
     """Test that no limit is not applied for authenticated user"""
     responses = client.get_many("/get", 7, auth=auth)
-    assert all(
-        r.status_code == 200 for r in responses
-    ), f"Rate Limited resource unexpectedly rejected requests {responses}"
+    responses.assert_all(status_code=200)
 
 
 def test_anonymous_identity(client, auth):
     """Test that an anonymous requests are correctly limited"""
     assert client.get("/get", auth=auth).status_code == 200
+
     responses = client.get_many("/get", 5)
-    assert all(
-        r.status_code == 200 for r in responses
-    ), f"Rate Limited resource unexpectedly rejected requests {responses}"
+    responses.assert_all(status_code=200)
+
     assert client.get("/get").status_code == 429
     assert client.get("/get", auth=auth).status_code == 200

@@ -65,6 +65,18 @@ class Result:
         return f"Result[error={self.error}]"
 
 
+class ResultList(list):
+    """List-like object for Result"""
+
+    def assert_all(self, status_code):
+        """Assert all responses that contain certain status code"""
+        for request in self:
+            assert request.status_code == status_code, (
+                f"Status code assertion failed for request {self.index(request)+1} out of {len(self)} requests: "
+                f"{request} != {status_code}"
+            )
+
+
 class KuadrantClient(Client):
     """Httpx client which retries unstable requests"""
 
@@ -139,9 +151,9 @@ class KuadrantClient(Client):
     def get(self, *args, **kwargs) -> Result:
         return super().get(*args, **kwargs)
 
-    def get_many(self, url, count, *, params=None, headers=None, auth=None) -> list[Result]:
+    def get_many(self, url, count, *, params=None, headers=None, auth=None) -> ResultList:
         """Send multiple `GET` requests."""
-        responses = []
+        responses = ResultList()
         for _ in range(count):
             responses.append(self.get(url, params=params, headers=headers, auth=auth))
 

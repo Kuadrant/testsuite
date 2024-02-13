@@ -34,9 +34,15 @@ def rate_limit(rate_limit):
 def test_rule(client):
     """Tests that RLP correctly applies to the given HTTPRoute rule"""
     responses = client.get_many("/get", 5)
-    assert all(
-        r.status_code == 200 for r in responses
-    ), f"Rate Limited resource unexpectedly rejected requests {responses}"
+    responses.assert_all(status_code=200)
+
     assert client.get("/get").status_code == 429
+
     response = client.get("/anything")
     assert response.status_code == 200
+
+
+def test_rule_missmatch(client):
+    """Tests that RLP is not applied for not existing route rule"""
+    responses = client.get_many("/anything/test", 7)
+    responses.assert_all(status_code=200)

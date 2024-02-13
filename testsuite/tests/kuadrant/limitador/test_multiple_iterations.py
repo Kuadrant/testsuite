@@ -23,8 +23,6 @@ def test_multiple_iterations(client):
     """Tests that simple limit is applied successfully and works for multiple iterations"""
     for _ in range(10):
         responses = client.get_many("/get", 5)
-        assert all(
-            r.status_code == 200 for r in responses
-        ), f"Rate Limited resource unexpectedly rejected requests {responses}"
+        responses.assert_all(status_code=200)
         assert client.get("/get").status_code == 429
         sleep(10)

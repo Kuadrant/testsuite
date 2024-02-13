@@ -47,8 +47,7 @@ def auth2(rhsso, blame):
 def test_authz_limit(client, auth, auth2):
     """Tests that rate limit is applied for two users independently"""
     responses = client.get_many("/get", 5, auth=auth)
-    assert all(
-        r.status_code == 200 for r in responses
-    ), f"Rate Limited resource unexpectedly rejected requests {responses}"
+    responses.assert_all(status_code=200)
+
     assert client.get("/get", auth=auth).status_code == 429
     assert client.get("/get", auth=auth2).status_code == 200
