@@ -78,7 +78,7 @@ def create_secret(blame, request, openshift):
 @pytest.fixture(scope="module")
 def authorino_domain(openshift):
     """
-    Hostname of the upstream certificate sent to be validated by APIcast
+    Hostname of the upstream certificate sent to be validated by Envoy
     May be overwritten to configure different test cases
     """
     return f"*.{openshift.project}.svc.cluster.local"
@@ -181,9 +181,10 @@ def gateway(
 
 
 @pytest.fixture(scope="module")
-def exposer(request) -> Exposer:
+def exposer(request, hub_openshift) -> Exposer:
     """Exposer object instance with TLS passthrough"""
-    exposer = OpenShiftExposer(passthrough=True)
+    exposer = OpenShiftExposer(hub_openshift)
+    exposer.passthrough = True
     request.addfinalizer(exposer.delete)
     exposer.commit()
     return exposer

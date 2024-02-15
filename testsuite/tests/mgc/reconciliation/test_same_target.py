@@ -1,20 +1,11 @@
 """Tests that DNSPolicy/TLSPolicy is rejected when the Gateway already has a policy of the same kind"""
 
 import pytest
-from openshift_client import selector
 
 from testsuite.policy.tls_policy import TLSPolicy
 from testsuite.tests.mgc.reconciliation import dns_policy
-from testsuite.utils import generate_tail
 
 pytestmark = [pytest.mark.mgc]
-
-
-@pytest.fixture(scope="module")
-def base_domain(hub_openshift):
-    """Returns preconfigured base domain"""
-    zone = selector("managedzone/aws-mz", static_context=hub_openshift.context).object()
-    return f"{generate_tail()}.{zone.model['spec']['domainName']}"
 
 
 @pytest.mark.parametrize(

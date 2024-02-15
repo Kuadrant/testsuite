@@ -38,10 +38,18 @@ settings = Dynaconf(
             Validator("service_protection.authorino.auth_url", must_exist=True)
             & Validator("service_protection.authorino.oidc_url", must_exist=True)
         ),
+        Validator(
+            "default_exposer",
+            # If exposer was successfully converted, it will no longer be a string"""
+            condition=lambda exposer: not isinstance(exposer, str),
+            must_exist=True,
+            messages={"condition": "{value} is not valid exposer"},
+        ),
+        Validator("control_plane.managedzone", must_exist=True, ne=None),
         DefaultValueValidator("rhsso.url", default=fetch_route("no-ssl-sso")),
         DefaultValueValidator("rhsso.password", default=fetch_secret("credential-sso", "ADMIN_PASSWORD")),
         DefaultValueValidator("mockserver.url", default=fetch_route("mockserver", force_http=True)),
     ],
-    validate_only=["authorino", "kuadrant"],
-    loaders=["dynaconf.loaders.env_loader", "testsuite.config.openshift_loader"],
+    validate_only=["authorino", "kuadrant", "default_exposer", "control_plane"],
+    loaders=["dynaconf.loaders.env_loader", "testsuite.config.openshift_loader", "testsuite.config.exposer"],
 )
