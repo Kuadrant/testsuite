@@ -1,7 +1,6 @@
 """Conftest for MGC tests"""
 
 import pytest
-from openshift_client import selector
 from weakget import weakget
 
 from testsuite.backend.httpbin import Httpbin
@@ -11,7 +10,6 @@ from testsuite.gateway.gateway_api.gateway import MGCGateway
 from testsuite.gateway.gateway_api.hostname import DNSPolicyExposer
 from testsuite.gateway.gateway_api.route import HTTPRoute
 from testsuite.policy.tls_policy import TLSPolicy
-from testsuite.utils import generate_tail
 
 
 @pytest.fixture(scope="session")
@@ -32,13 +30,13 @@ def hub_openshift(testconfig):
 
 
 @pytest.fixture(scope="module")
-def hub_gateway(request, hub_openshift, blame, base_domain, module_label) -> MGCGateway:
+def hub_gateway(request, hub_openshift, blame, wildcard_domain, module_label) -> MGCGateway:
     """Creates and returns configured and ready Hub Gateway"""
     hub_gateway = MGCGateway.create_instance(
         openshift=hub_openshift,
         name=blame("mgc-gateway"),
         gateway_class="kuadrant-multi-cluster-gateway-instance-per-cluster",
-        hostname=f"*.{base_domain}",
+        hostname=wildcard_domain,
         tls=True,
         placement="http-gateway",
         labels={"app": module_label},
@@ -74,17 +72,23 @@ def route(request, gateway, blame, hostname, backend, module_label) -> GatewayRo
 
 
 @pytest.fixture(scope="module")
-def exposer(base_domain, hub_gateway) -> Exposer:
+def exposer(request, hub_openshift) -> Exposer:
     """DNSPolicyExposer setup with expected TLS certificate"""
-    return DNSPolicyExposer(base_domain, tls_cert=hub_gateway.get_tls_cert())
+    exposer = DNSPolicyExposer(hub_openshift)
+    request.addfinalizer(exposer.delete)
+    exposer.commit()
+    return exposer
 
 
 # pylint: disable=unused-argument
 @pytest.fixture(scope="module")
-def gateway(hub_gateway, spokes, hub_policies_commit):
+def gateway(exposer, hub_gateway, spokes, hub_policies_commit):
     """Downstream gateway, e.g. gateway on a spoke cluster"""
     # wait for upstream gateway here to be able to get spoke gateways
     hub_gateway.wait_for_ready()
+    # Only here is Hub Gateway ready, which means only here we can assign verify
+    exposer.verify = hub_gateway.get_tls_cert()
+
     gw = hub_gateway.get_spoke_gateway(spokes)
     gw.wait_for_ready()
     return gw
@@ -94,15 +98,6 @@ def gateway(hub_gateway, spokes, hub_policies_commit):
 def openshift(gateway):
     """OpenShift client for the primary namespace"""
     return gateway.openshift
-
-
-@pytest.fixture(scope="module", params=["aws-mz", "gcp-mz"])
-def base_domain(request, hub_openshift):
-    """Returns preconfigured base domain"""
-    mz_name = request.param
-
-    zone = selector(f"managedzone/{mz_name}", static_context=hub_openshift.context).object()
-    return f"{generate_tail()}.{zone.model['spec']['domainName']}"
 
 
 @pytest.fixture(scope="module")
@@ -144,3 +139,17 @@ def backend(request, openshift, blame, label):
     request.addfinalizer(httpbin.delete)
     httpbin.commit()
     return httpbin
+
+
+@pytest.fixture(scope="module")
+def base_domain(exposer):
+    """Returns preconfigured base domain"""
+    return exposer.base_domain
+
+
+@pytest.fixture(scope="module")
+def wildcard_domain(base_domain):
+    """
+    Wildcard domain of openshift cluster
+    """
+    return f"*.{base_domain}"

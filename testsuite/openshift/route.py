@@ -12,6 +12,10 @@ from testsuite.openshift import OpenShiftObject
 class OpenshiftRoute(OpenShiftObject, Hostname):
     """Openshift Route object"""
 
+    def __init__(self, dict_to_model=None, string_to_model=None, context=None):
+        super().__init__(dict_to_model, string_to_model, context)
+        self.verify = None
+
     @classmethod
     def create_instance(
         cls,
@@ -41,6 +45,7 @@ class OpenshiftRoute(OpenShiftObject, Hostname):
         protocol = "http"
         if "tls" in self.model.spec:
             protocol = "https"
+            kwargs.setdefault("verify", self.verify)
         return KuadrantClient(base_url=f"{protocol}://{self.hostname}", **kwargs)
 
     @cached_property
