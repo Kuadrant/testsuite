@@ -51,7 +51,7 @@ def hub_gateway(request, hub_openshift, blame, base_domain, module_label) -> MGC
 
 
 @pytest.fixture(scope="session")
-def self_signed_cluster_issuer():
+def cluster_issuer():
     """Reference to cluster self-signed certificate issuer"""
     return CustomReference(
         group="cert-manager.io",
@@ -111,13 +111,13 @@ def dns_policy(blame, hub_gateway, module_label):
 
 
 @pytest.fixture(scope="module")
-def tls_policy(blame, hub_gateway, module_label, self_signed_cluster_issuer):
+def tls_policy(blame, hub_gateway, module_label, cluster_issuer):
     """TLSPolicy fixture"""
     policy = TLSPolicy.create_instance(
         hub_gateway.openshift,
         blame("tls"),
         parent=hub_gateway,
-        issuer=self_signed_cluster_issuer,
+        issuer=cluster_issuer,
         labels={"app": module_label},
     )
     return policy
