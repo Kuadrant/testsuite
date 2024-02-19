@@ -4,7 +4,7 @@ import functools
 from dataclasses import dataclass, field
 from typing import Optional, Literal
 
-from openshift_client import APIObject, timeout
+from openshift_client import APIObject, timeout, OpenShiftPythonException
 
 from testsuite.lifecycle import LifecycleObject
 
@@ -31,6 +31,17 @@ class OpenShiftObject(APIObject, LifecycleObject):
             deleted = super().delete(ignore_not_found, cmd_args)
             self.committed = False
             return deleted
+
+    def wait_until(self, test_function, timelimit=90):
+        """Waits until the test function succeeds for this object"""
+        try:
+            with timeout(timelimit):
+                success, _, _ = self.self_selector().until_all(
+                    success_func=lambda obj: test_function(self.__class__(obj.model))
+                )
+                return success
+        except OpenShiftPythonException:
+            return False
 
 
 def modify(func):
