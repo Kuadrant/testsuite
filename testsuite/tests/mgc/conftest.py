@@ -10,6 +10,7 @@ from testsuite.gateway.gateway_api.gateway import MGCGateway
 from testsuite.gateway.gateway_api.hostname import DNSPolicyExposer
 from testsuite.gateway.gateway_api.route import HTTPRoute
 from testsuite.policy.tls_policy import TLSPolicy
+from testsuite.utils import generate_tail
 
 
 @pytest.fixture(scope="session")
@@ -100,7 +101,7 @@ def base_domain(request, hub_openshift):
     mz_name = request.param
 
     zone = selector(f"managedzone/{mz_name}", static_context=hub_openshift.context).object()
-    return zone.model["spec"]["domainName"]
+    return f"{generate_tail()}.{zone.model['spec']['domainName']}"
 
 
 @pytest.fixture(scope="module")
