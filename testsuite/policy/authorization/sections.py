@@ -115,13 +115,13 @@ class IdentitySection(Section):
         self.add_item(name, {"x509": {"selector": asdict(selector)}, **common_features})
 
     @modify
-    def add_kubernetes(self, name: str, audiences: list[str], **common_features):
+    def add_kubernetes(self, name: str, audiences: list[str] = None, **common_features):
         """Adds Kubernetes identity
         Args:
             :param name: name of the identity
             :param audiences: token audiences
         """
-        self.add_item(name, {"kubernetesTokenReview": {"audiences": audiences}}, **common_features)
+        self.add_item(name, {"kubernetesTokenReview": {"audiences": audiences} if audiences else {}}, **common_features)
 
     @modify
     def add_oidc(self, name, endpoint, *, ttl: int = 0, credentials: Credentials = None, **common_features):
