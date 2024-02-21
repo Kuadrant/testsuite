@@ -6,7 +6,6 @@ from typing import Generator, Callable, Union
 from httpx import Auth, Request, URL, Response
 
 from testsuite.oidc.rhsso import User
-from testsuite.openshift.api_key import APIKey
 from testsuite.oidc import Token
 
 TokenType = Union[Token, Callable[[], Token]]
@@ -57,7 +56,7 @@ class HttpxOidcClientAuth(Auth):
 class HeaderApiKeyAuth(Auth):
     """Auth class for authentication with API key"""
 
-    def __init__(self, api_key: APIKey, prefix: str = "APIKEY") -> None:
+    def __init__(self, api_key, prefix: str = "APIKEY") -> None:
         super().__init__()
         self.api_key = str(api_key)
         self.prefix = prefix
