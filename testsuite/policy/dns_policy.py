@@ -12,10 +12,18 @@ from testsuite.openshift import OpenShiftObject
 
 
 @dataclass
-class HealthCheck:  # pylint: disable=invalid-name
+class AdditionalHeadersRef:
+    """Object representing DNSPolicy additionalHeadersRef field"""
+
+    name: str
+
+
+@dataclass
+class HealthCheck:  # pylint: disable=invalid-name,too-many-instance-attributes
     """Object representing DNSPolicy health check specification"""
 
     allowInsecureCertificates: Optional[bool] = None
+    additionalHeadersRef: Optional[AdditionalHeadersRef] = None
     endpoint: Optional[str] = None
     expectedResponses: Optional[list[int]] = None
     failureThreshold: Optional[int] = None
