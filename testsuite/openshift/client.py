@@ -8,6 +8,7 @@ from urllib.parse import urlparse
 import openshift_client as oc
 from openshift_client import Context, Selector, OpenShiftPythonException
 
+from .kuadrant import KuadrantCR
 from .route import OpenshiftRoute
 from .secret import Secret
 
@@ -77,6 +78,13 @@ class OpenShiftClient:
         except OpenShiftPythonException:
             return False
         return True
+
+    def get_kuadrant(self, name) -> KuadrantCR:
+        """Returns dict-like structure for accessing"""
+        with self.context:
+            kuadrant = oc.selector(f"kuadrant/{name}").object(cls=KuadrantCR)
+            kuadrant.committed = True
+            return kuadrant
 
     def get_secret(self, name):
         """Returns dict-like structure for accessing secret data"""
