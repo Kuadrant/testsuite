@@ -5,6 +5,7 @@ from openshift_client import selector
 
 from testsuite.policy.tls_policy import TLSPolicy
 from testsuite.tests.mgc.reconciliation import dns_policy
+from testsuite.utils import generate_tail
 
 pytestmark = [pytest.mark.mgc]
 
@@ -13,7 +14,7 @@ pytestmark = [pytest.mark.mgc]
 def base_domain(hub_openshift):
     """Returns preconfigured base domain"""
     zone = selector("managedzone/aws-mz", static_context=hub_openshift.context).object()
-    return zone.model["spec"]["domainName"]
+    return f"{generate_tail()}.{zone.model['spec']['domainName']}"
 
 
 @pytest.mark.parametrize(
