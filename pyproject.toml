@@ -23,7 +23,6 @@ httpx = { version = "*", extras = ["http2"] }
 openshift-client = ">=2"
 apyproxy = "*"
 weakget = "*"
-flaky = "*"
 
 
 [tool.poetry.group.dev.dependencies]
