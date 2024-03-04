@@ -2,6 +2,7 @@
 
 import pytest
 
+from testsuite.gateway.envoy.route import EnvoyVirtualRoute
 from testsuite.policy.authorization.auth_config import AuthConfig
 
 
@@ -18,10 +19,19 @@ def hostname2(exposer, gateway, blame):
 
 
 @pytest.fixture(scope="module")
-def authorization2(route, hostname2, blame, openshift2, module_label, oidc_provider):
-    """Second valid hostname"""
+def route2(request, gateway, blame, hostname2):
+    """Create virtual route for the second hostname"""
+    route = EnvoyVirtualRoute.create_instance(gateway.openshift, blame("route"), gateway)
     route.add_hostname(hostname2.hostname)
-    auth = AuthConfig.create_instance(openshift2, blame("ac"), route, labels={"testRun": module_label})
+    request.addfinalizer(route.delete)
+    route.commit()
+    return route
+
+
+@pytest.fixture(scope="module")
+def authorization2(route2, blame, openshift2, module_label, oidc_provider):
+    """Second valid hostname"""
+    auth = AuthConfig.create_instance(openshift2, blame("ac"), route2, labels={"testRun": module_label})
     auth.identity.add_oidc("rhsso", oidc_provider.well_known["issuer"])
     return auth
 
