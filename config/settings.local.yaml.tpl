@@ -40,7 +40,7 @@
 #      deploy: false                               # If false, the testsuite will use already deployed authorino for testing
 #      auth_url: ""                                # authorization URL for already deployed Authorino
 #      oidc_url: ""                                # oidc URL for already deployed Authorino
-#      metrics_service_name: ""                    # controller metrics service name for already deployer Authorino
+#      metrics_service_name: ""                    # controller metrics service name for already deployed Authorino
 #  control_plane:
 #    hub:                                          # Hub cluster
 #      project: "multi-cluster-gateways"         # Optional: namespace where MGC resources are created and where the hub gateway will be created

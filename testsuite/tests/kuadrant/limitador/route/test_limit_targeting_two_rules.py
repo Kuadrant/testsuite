@@ -6,6 +6,9 @@ from testsuite.gateway import RouteMatch, PathMatch, MatchType
 from testsuite.policy.rate_limit_policy import RouteSelector, Limit
 
 
+pytestmark = [pytest.mark.kuadrant_only, pytest.mark.limitador]
+
+
 @pytest.fixture(scope="module")
 def rate_limit(rate_limit):
     """Add limit to the policy"""
