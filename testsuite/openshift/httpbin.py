@@ -2,15 +2,14 @@
 
 from functools import cached_property
 
-from testsuite.lifecycle import LifecycleObject
-from testsuite.gateway import Referencable
+from testsuite.openshift.backend import Backend
 from testsuite.openshift import Selector
 from testsuite.openshift.client import OpenShiftClient
 from testsuite.openshift.deployment import Deployment
 from testsuite.openshift.service import Service, ServicePort
 
 
-class Httpbin(LifecycleObject, Referencable):
+class Httpbin(Backend):
     """Httpbin deployed in OpenShift"""
 
     def __init__(self, openshift: OpenShiftClient, name, label, replicas=1) -> None:

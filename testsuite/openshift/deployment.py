@@ -1,7 +1,7 @@
 """Deployment related objects"""
 
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Optional
 
 import openshift_client as oc
 
@@ -9,6 +9,25 @@ from testsuite.openshift import OpenShiftObject, Selector, modify
 from testsuite.utils import asdict
 
 # pylint: disable=invalid-name
+
+
+@dataclass
+class ContainerResources:
+    """Deployment ContainerResources object"""
+
+    limits_cpu: Optional[str] = None
+    limits_memory: Optional[str] = None
+    requests_cpu: Optional[str] = None
+    requests_memory: Optional[str] = None
+
+    def asdict(self):
+        """Remove None pairs and nest limits and requests resources for the result dict"""
+        result = {}
+        for key, value in self.__dict__.items():
+            if value is not None:
+                category, resource = key.split("_")
+                result.setdefault(category, {})[resource] = value
+        return result
 
 
 @dataclass
@@ -72,7 +91,9 @@ class Deployment(OpenShiftObject):
         volumes: list[Volume] = None,
         volume_mounts: list[VolumeMount] = None,
         readiness_probe: dict[str, Any] = None,
-    ):
+        resources: Optional[ContainerResources] = None,
+        lifecycle: dict[str, Any] = None,
+    ):  # pylint: disable=too-many-locals
         """
         Creates new instance of Deployment
         Supports only single container Deployments everything else should be edited directly
@@ -116,6 +137,12 @@ class Deployment(OpenShiftObject):
 
         if readiness_probe:
             container["readinessProbe"] = readiness_probe
+
+        if resources:
+            container["resources"] = asdict(resources)
+
+        if lifecycle:
+            container["lifecycle"] = lifecycle
 
         return cls(model, context=openshift.context)
 
