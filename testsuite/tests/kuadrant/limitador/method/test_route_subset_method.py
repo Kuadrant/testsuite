@@ -6,6 +6,9 @@ from testsuite.gateway import RouteMatch, PathMatch, MatchType, HTTPMethod
 from testsuite.policy.rate_limit_policy import Limit, RouteSelector
 
 
+pytestmark = [pytest.mark.kuadrant_only, pytest.mark.limitador]
+
+
 @pytest.fixture(scope="module")
 def route(route, backend):
     """Add new rule to the route"""
