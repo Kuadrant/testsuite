@@ -29,8 +29,9 @@ class EnvoyVirtualRoute(GatewayRoute):
         self.hostnames: list[str] = []
 
     def add_backend(self, backend: "Backend", prefix="/"):
-        self.gateway.config.add_backend(backend, prefix)
-        self.gateway.rollout()
+        if not self.gateway.config.has_backend(backend, prefix):
+            self.gateway.config.add_backend(backend, prefix)
+            self.gateway.rollout()
 
     def remove_all_backend(self):
         self.gateway.config.remove_all_backends()

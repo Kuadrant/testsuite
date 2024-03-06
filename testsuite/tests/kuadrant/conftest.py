@@ -8,7 +8,7 @@ from testsuite.policy.rate_limit_policy import RateLimitPolicy
 
 
 # pylint: disable=unused-argument
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def authorino(kuadrant):
     """Authorino instance when configured through Kuadrant"""
     if kuadrant:
@@ -24,10 +24,10 @@ def authorization_name(blame):
 
 
 @pytest.fixture(scope="module")
-def authorization(authorino, kuadrant, oidc_provider, route, authorization_name, openshift, module_label):
+def authorization(kuadrant, oidc_provider, route, authorization_name, openshift, label):
     """Authorization object (In case of Kuadrant AuthPolicy)"""
     if kuadrant:
-        return AuthPolicy.create_instance(openshift, authorization_name, route, labels={"testRun": module_label})
+        return AuthPolicy.create_instance(openshift, authorization_name, route, labels={"testRun": label})
     return None
 
 

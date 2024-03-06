@@ -97,7 +97,7 @@ def wristband_authorization(
     wristband_name,
     oidc_provider,
     wristband_hostname,
-    module_label,
+    label,
     wristband_endpoint,
     wristband_secret,
 ):
@@ -112,7 +112,7 @@ def wristband_authorization(
         gateway.openshift,
         wristband_name,
         route,
-        labels={"testRun": module_label},
+        labels={"testRun": label},
     )
 
     authorization.identity.add_oidc("rhsso", oidc_provider.well_known["issuer"])
