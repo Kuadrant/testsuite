@@ -6,6 +6,7 @@ from urllib.parse import urlparse
 import pytest
 from dynaconf import ValidationError
 from keycloak import KeycloakAuthenticationError
+from openshift_client import OpenShiftPythonException
 
 from testsuite.capabilities import has_kuadrant, has_mgc
 from testsuite.certificates import CFSSLClient
@@ -14,6 +15,7 @@ from testsuite.mockserver import Mockserver
 from testsuite.gateway import Gateway, GatewayRoute, Hostname, Exposer
 from testsuite.oidc import OIDCProvider
 from testsuite.oidc.auth0 import Auth0Provider
+from testsuite.openshift.client import OpenShiftClient
 from testsuite.openshift.httpbin import Httpbin
 from testsuite.oidc.rhsso import RHSSO
 from testsuite.gateway.envoy import Envoy
@@ -250,20 +252,24 @@ def module_label(label):
     return randomize(label)
 
 
+@pytest.fixture(scope="session")
+def kuadrant_client(testconfig) -> OpenShiftClient:
+    """Returns OpenShift client for Kuadrant namespace"""
+    return testconfig["service_protection"]["system_project"]
+
+
 @pytest.fixture(scope="module")
-def kuadrant(request, testconfig, openshift):
+def kuadrant(request, testconfig, kuadrant_client):
     """Returns Kuadrant instance if exists, or None"""
     if request.config.getoption("--standalone"):
         return None
 
-    # Try if Kuadrant is deployed
-    kuadrant_openshift = testconfig["service_protection"]["system_project"]
-    kuadrants = kuadrant_openshift.do_action("get", "kuadrant", "-o", "json", parse_output=True)
-    if len(kuadrants.model["items"]) == 0:
+    try:
+        kuadrant = kuadrant_client.get_kuadrant("kuadrant-sample")
+    except OpenShiftPythonException:
         pytest.fail("Running Kuadrant tests, but Kuadrant resource was not found")
 
-    # TODO: Return actual Kuadrant object
-    return True
+    return kuadrant
 
 
 @pytest.fixture(scope="module")
