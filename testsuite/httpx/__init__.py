@@ -31,7 +31,11 @@ class Result:
 
     def should_backoff(self):
         """True, if the Result can be considered an instability and should be retried"""
-        return self.has_dns_error() or (self.error is None and self.status_code in self.retry_codes)
+        return (
+            self.has_dns_error()
+            or (self.error is None and self.status_code in self.retry_codes)
+            or self.has_error("Server disconnected without sending a response.")
+        )
 
     def has_error(self, error_msg: str) -> bool:
         """True, if the request failed and an error with message was returned"""
@@ -57,7 +61,7 @@ class Result:
         """For backwards compatibility"""
         if self.response is not None:
             return getattr(self.response, item)
-        raise AttributeError from self.error
+        raise self.error
 
     def __str__(self):
         if self.error is None:
