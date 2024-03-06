@@ -1,0 +1,27 @@
+default:
+  skip_cleanup: false
+  dynaconf_merge: true
+  cluster: {}
+  tools:
+    project: "tools"
+  cfssl: "cfssl"
+  rhsso:
+    username: "admin"
+    test_user:
+      username: "testUser"
+      password: "testPassword"
+  service_protection:
+    system_project: "kuadrant-system"
+    project: "kuadrant"
+    project2: "kuadrant2"
+    envoy:
+      image: "quay.io/phala/envoy:v1.28-latest"
+    gateway:
+       project: "istio-system"
+       name: "istio-ingressgateway"
+    authorino:
+      deploy: true
+      log_level: "debug"
+  hyperfoil:
+    generate_reports: True
+    reports_dir: "reports"

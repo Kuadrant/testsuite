@@ -1,0 +1,6 @@
+.make-poetry-sync
+.make-poetry-sync-no-dev
+.github
+.mypy_cache
+.pytest_cache
+.poetry.lock
