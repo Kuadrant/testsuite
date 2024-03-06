@@ -38,27 +38,21 @@ def prometheus(request, openshift):
 
 
 @pytest.fixture(scope="module")
-def label_metrics_service(authorino, module_label):
+def authorino(authorino, module_label):
     """Label Authorino controller-metrics service for the proper discovery"""
     authorino.metrics_service.label({"app": module_label})
+    return authorino
 
 
-# pylint: disable=unused-argument
-@pytest.fixture(scope="module", autouse=True)
-def create_service_monitor(openshift, blame, module_label, label_metrics_service):
+@pytest.fixture(scope="module")
+def service_monitor(openshift, blame, module_label):
     """Create ServiceMonitor object to follow Authorino /metrics and /server-metrics endpoints"""
     endpoints = [MetricsEndpoint("/metrics", "http"), MetricsEndpoint("/server-metrics", "http")]
-    service_monitor = ServiceMonitor.create_instance(
-        openshift, blame("sm"), endpoints, match_labels={"app": module_label}
-    )
-
-    service_monitor.commit()
-    yield service_monitor
-    service_monitor.delete()
+    return ServiceMonitor.create_instance(openshift, blame("sm"), endpoints, match_labels={"app": module_label})
 
 
 @pytest.fixture(scope="module", autouse=True)
-def send_request(client, auth):
-    """Send a simple get request so that a few metrics can appear"""
-    response = client.get("/get", auth=auth)
-    assert response.status_code == 200
+def commit(commit, request, service_monitor):  # pylint: disable=unused-argument
+    """Commit service monitor object"""
+    request.addfinalizer(service_monitor.delete)
+    service_monitor.commit()
