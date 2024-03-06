@@ -1,8 +1,8 @@
-"""Httpbin related classes"""
+"""Httpbin implementation of Backend"""
 
 from functools import cached_property
 
-from testsuite.openshift.backend import Backend
+from testsuite.backend import Backend
 from testsuite.openshift import Selector
 from testsuite.openshift.client import OpenShiftClient
 from testsuite.openshift.deployment import Deployment
@@ -10,7 +10,7 @@ from testsuite.openshift.service import Service, ServicePort
 
 
 class Httpbin(Backend):
-    """Httpbin deployed in OpenShift"""
+    """Httpbin deployed in Kubernetes as Backend"""
 
     def __init__(self, openshift: OpenShiftClient, name, label, replicas=1) -> None:
         super().__init__()
