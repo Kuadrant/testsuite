@@ -14,7 +14,7 @@ from testsuite.mockserver import Mockserver
 from testsuite.gateway import Gateway, GatewayRoute, Hostname, Exposer
 from testsuite.oidc import OIDCProvider
 from testsuite.oidc.auth0 import Auth0Provider
-from testsuite.openshift.httpbin import Httpbin
+from testsuite.backend.httpbin import Httpbin
 from testsuite.oidc.rhsso import RHSSO
 from testsuite.gateway.envoy import Envoy
 from testsuite.gateway.envoy.route import EnvoyVirtualRoute

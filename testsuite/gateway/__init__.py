@@ -13,7 +13,7 @@ from testsuite.utils import asdict
 
 if TYPE_CHECKING:
     from testsuite.openshift.client import OpenShiftClient
-    from testsuite.openshift.httpbin import Httpbin
+    from testsuite.backend import Backend
 
 
 class Referencable(ABC):
@@ -164,7 +164,7 @@ class GatewayRoute(LifecycleObject, Referencable):
         """Remove all hostnames from the Route"""
 
     @abstractmethod
-    def add_backend(self, backend: "Httpbin", prefix):
+    def add_backend(self, backend: "Backend", prefix):
         """Adds another backend to the Route, with specific prefix"""
 
     @abstractmethod

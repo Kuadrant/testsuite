@@ -2,7 +2,7 @@
 
 import yaml
 
-from testsuite.openshift.httpbin import Httpbin
+from testsuite.backend import Backend
 from testsuite.openshift import modify
 from testsuite.openshift.config_map import ConfigMap
 
@@ -108,7 +108,7 @@ class EnvoyConfig(ConfigMap):
         )
 
     @modify
-    def add_backend(self, backend: Httpbin, prefix: str):
+    def add_backend(self, backend: Backend, prefix: str):
         """Adds backend to the EnvoyConfig"""
         config = yaml.safe_load(self["envoy.yaml"])
         config["static_resources"]["clusters"].append(yaml.safe_load(CLUSTER.replace("${backend_url}", backend.url)))

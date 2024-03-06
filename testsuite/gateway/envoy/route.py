@@ -6,7 +6,7 @@ from testsuite.gateway import Gateway, GatewayRoute
 
 if typing.TYPE_CHECKING:
     from testsuite.openshift.client import OpenShiftClient
-    from testsuite.openshift.httpbin import Httpbin
+    from testsuite.backend import Backend
     from testsuite.policy.authorization.auth_config import AuthConfig
 
 
@@ -28,7 +28,7 @@ class EnvoyVirtualRoute(GatewayRoute):
         self.auth_configs: list["AuthConfig"] = []
         self.hostnames: list[str] = []
 
-    def add_backend(self, backend: "Httpbin", prefix="/"):
+    def add_backend(self, backend: "Backend", prefix="/"):
         self.gateway.config.add_backend(backend, prefix)
         self.gateway.rollout()
 
