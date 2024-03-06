@@ -42,7 +42,7 @@ testsuite/%: FORCE poetry-no-dev
 
 test: ## Run all non mgc tests
 test pytest tests: poetry-no-dev
-	$(PYTEST) -n4 -m 'not mgc' --dist loadfile $(flags) testsuite
+	$(PYTEST) -n4 -m 'not mgc' --dist loadfile --enforce $(flags) testsuite
 
 authorino: ## Run only authorino related tests
 authorino: poetry-no-dev

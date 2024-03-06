@@ -57,14 +57,13 @@ def pytest_runtest_setup(item):
             skip_or_fail(
                 "Unable to run Standalone only test: Standalone mode is disabled, please use --standalone flag"
             )
-        if "kuadrant_only" in marks:
-            kuadrant, error = has_kuadrant()
-            if not kuadrant:
-                skip_or_fail(f"Unable to locate Kuadrant installation: {error}")
         if "mgc" in marks:
             mgc, error = has_mgc()
             if not mgc:
                 skip_or_fail(f"Unable to locate MGC installation: {error}")
+        kuadrant, error = has_kuadrant()
+        if not kuadrant:
+            skip_or_fail(f"Unable to locate Kuadrant installation: {error}")
 
 
 @pytest.hookimpl(hookwrapper=True)
@@ -251,16 +250,10 @@ def module_label(label):
 
 
 @pytest.fixture(scope="module")
-def kuadrant(request, testconfig, openshift):
+def kuadrant(request):
     """Returns Kuadrant instance if exists, or None"""
     if request.config.getoption("--standalone"):
         return None
-
-    # Try if Kuadrant is deployed
-    kuadrant_openshift = testconfig["service_protection"]["system_project"]
-    kuadrants = kuadrant_openshift.do_action("get", "kuadrant", "-o", "json", parse_output=True)
-    if len(kuadrants.model["items"]) == 0:
-        pytest.fail("Running Kuadrant tests, but Kuadrant resource was not found")
 
     # TODO: Return actual Kuadrant object
     return True

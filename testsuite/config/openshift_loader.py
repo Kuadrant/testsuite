@@ -27,7 +27,6 @@ def load(obj, env=None, silent=True, key=None, filename=None):
     obj["tools"] = tools
 
     service_protection = obj.setdefault("service_protection", {})
-    inject_client(service_protection, client, "system_project")
     inject_client(service_protection, client, "project")
     inject_client(service_protection, client, "project2")
 
