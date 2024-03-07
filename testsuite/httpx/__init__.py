@@ -97,7 +97,8 @@ class KuadrantClient(Client):
             _cert = (cert_file.name, key_file.name)
 
         # Mypy does not understand the typing magic I have done
-        super().__init__(verify=_verify or verify, cert=_cert or cert, **kwargs)  # type: ignore
+        self.verify = _verify or verify
+        super().__init__(verify=self.verify, cert=_cert or cert, **kwargs)  # type: ignore
 
     def close(self) -> None:
         super().close()

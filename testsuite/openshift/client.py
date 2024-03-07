@@ -83,6 +83,11 @@ class OpenShiftClient:
         with self.context:
             return oc.selector(f"secret/{name}").object(cls=Secret)
 
+    def service_exists(self, name) -> bool:
+        """Returns True if service with the given name exists"""
+        with self.context:
+            return oc.selector(f"svc/{name}").count_existing() == 1
+
     def get_route(self, name):
         """Returns dict-like structure for accessing secret data"""
         with self.context:

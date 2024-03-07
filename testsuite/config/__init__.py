@@ -2,7 +2,7 @@
 
 from dynaconf import Dynaconf, Validator
 
-from testsuite.config.tools import fetch_route, fetch_secret
+from testsuite.config.tools import fetch_route, fetch_service, fetch_secret
 
 
 # pylint: disable=too-few-public-methods
@@ -38,6 +38,10 @@ settings = Dynaconf(
             Validator("service_protection.authorino.auth_url", must_exist=True)
             & Validator("service_protection.authorino.oidc_url", must_exist=True)
         ),
+        DefaultValueValidator(
+            "tracing.collector_url", default=fetch_service("jaeger-collector", protocol="rpc", port=4317)
+        ),
+        DefaultValueValidator("tracing.query_url", default=fetch_route("jaeger-query", force_http=True)),
         DefaultValueValidator("rhsso.url", default=fetch_route("no-ssl-sso")),
         DefaultValueValidator("rhsso.password", default=fetch_secret("credential-sso", "ADMIN_PASSWORD")),
         DefaultValueValidator("mockserver.url", default=fetch_route("mockserver", force_http=True)),
