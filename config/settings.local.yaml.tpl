@@ -41,6 +41,7 @@
 #      auth_url: ""                                # authorization URL for already deployed Authorino
 #      oidc_url: ""                                # oidc URL for already deployed Authorino
 #      metrics_service_name: ""                    # controller metrics service name for already deployed Authorino
+#  default_exposer: "openshift"                    # Exposer type that should be used, options: 'openshift'
 #  control_plane:
 #    hub:                                          # Hub cluster
 #      project: "multi-cluster-gateways"         # Optional: namespace where MGC resources are created and where the hub gateway will be created

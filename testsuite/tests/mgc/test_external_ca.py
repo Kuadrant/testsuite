@@ -37,8 +37,7 @@ import pytest
 from openshift_client import selector
 from openshift_client.model import OpenShiftPythonException
 
-from testsuite.gateway import Exposer, CustomReference
-from testsuite.gateway.gateway_api.hostname import DNSPolicyExposer
+from testsuite.gateway import CustomReference
 
 pytestmark = [pytest.mark.mgc]
 
@@ -58,15 +57,14 @@ def cluster_issuer(hub_openshift):
 
 
 @pytest.fixture(scope="module")
-def exposer(base_domain, hub_gateway) -> Exposer:
-    """DNSPolicyExposer setup with expected TLS certificate"""
+def gateway(gateway, exposer, hub_gateway):
+    """Only at this step we have TLS secret created and GW fully reconciled"""
     root_cert = resources.files("testsuite.resources").joinpath("letsencrypt-stg-root-x1.pem").read_text()
     old_cert = hub_gateway.get_tls_cert()
-    return DNSPolicyExposer(base_domain, tls_cert=dataclasses.replace(old_cert, chain=old_cert.certificate + root_cert))
+    exposer.verify = dataclasses.replace(old_cert, chain=old_cert.certificate + root_cert)
+    return gateway
 
 
-# Reduce scope of the base_domain fixture so the test only runs on aws-mz ManagedZone
-@pytest.mark.parametrize("base_domain", ["aws-mz"], indirect=True)
 def test_smoke_letsencrypt(client):
     """
     Tests whether the backend, exposed using the HTTPRoute and Gateway, was exposed correctly,

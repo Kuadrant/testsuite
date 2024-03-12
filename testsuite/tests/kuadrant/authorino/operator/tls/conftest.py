@@ -8,7 +8,7 @@ from testsuite.certificates import Certificate, CertInfo
 from testsuite.openshift import Selector
 from testsuite.gateway import Exposer
 from testsuite.gateway.envoy.tls import TLSEnvoy
-from testsuite.gateway.gateway_api.hostname import OpenShiftExposer
+from testsuite.gateway.exposers import OpenShiftExposer
 from testsuite.openshift.secret import TLSSecret
 from testsuite.utils import cert_builder
 
@@ -78,7 +78,7 @@ def create_secret(blame, request, openshift):
 @pytest.fixture(scope="module")
 def authorino_domain(openshift):
     """
-    Hostname of the upstream certificate sent to be validated by APIcast
+    Hostname of the upstream certificate sent to be validated by Envoy
     May be overwritten to configure different test cases
     """
     return f"*.{openshift.project}.svc.cluster.local"
@@ -181,9 +181,10 @@ def gateway(
 
 
 @pytest.fixture(scope="module")
-def exposer(request) -> Exposer:
+def exposer(request, hub_openshift) -> Exposer:
     """Exposer object instance with TLS passthrough"""
-    exposer = OpenShiftExposer(passthrough=True)
+    exposer = OpenShiftExposer(hub_openshift)
+    exposer.passthrough = True
     request.addfinalizer(exposer.delete)
     exposer.commit()
     return exposer

@@ -19,7 +19,6 @@ from testsuite.oidc.rhsso import RHSSO
 from testsuite.gateway.envoy import Envoy
 from testsuite.gateway.envoy.route import EnvoyVirtualRoute
 from testsuite.gateway.gateway_api.gateway import KuadrantGateway
-from testsuite.gateway.gateway_api.hostname import OpenShiftExposer
 from testsuite.gateway.gateway_api.route import HTTPRoute
 from testsuite.utils import randomize, _whoami
 
@@ -127,12 +126,18 @@ def testconfig():
 
 
 @pytest.fixture(scope="module")
-def openshift(testconfig):
+def hub_openshift(testconfig):
     """OpenShift client for the primary namespace"""
     client = testconfig["service_protection"]["project"]
     if not client.connected:
         pytest.fail("You are not logged into Openshift or the namespace doesn't exist")
     return client
+
+
+@pytest.fixture(scope="module")
+def openshift(hub_openshift):
+    """OpenShift client for the primary namespace"""
+    return hub_openshift
 
 
 @pytest.fixture(scope="module")
@@ -302,9 +307,9 @@ def route(request, kuadrant, gateway, blame, hostname, backend, module_label) ->
 
 
 @pytest.fixture(scope="module")
-def exposer(request) -> Exposer:
+def exposer(request, testconfig, hub_openshift) -> Exposer:
     """Exposer object instance"""
-    exposer = OpenShiftExposer()
+    exposer = testconfig["default_exposer"](hub_openshift)
     request.addfinalizer(exposer.delete)
     exposer.commit()
     return exposer
@@ -318,11 +323,17 @@ def hostname(gateway, exposer, blame) -> Hostname:
 
 
 @pytest.fixture(scope="module")
-def wildcard_domain(openshift):
+def base_domain(exposer):
+    """Returns preconfigured base domain"""
+    return exposer.base_domain
+
+
+@pytest.fixture(scope="module")
+def wildcard_domain(base_domain):
     """
     Wildcard domain of openshift cluster
     """
-    return f"*.{openshift.apps_url}"
+    return f"*.{base_domain}"
 
 
 @pytest.fixture(scope="module")
