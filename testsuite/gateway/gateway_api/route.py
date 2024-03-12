@@ -11,7 +11,7 @@ from testsuite.openshift import OpenShiftObject, modify
 from testsuite.utils import asdict
 
 if typing.TYPE_CHECKING:
-    from testsuite.openshift.httpbin import Httpbin
+    from testsuite.backend import Backend
 
 
 class HTTPRoute(OpenShiftObject, GatewayRoute):
@@ -74,9 +74,9 @@ class HTTPRoute(OpenShiftObject, GatewayRoute):
         self.model.spec.hostnames = []
 
     @modify
-    def add_rule(self, backend: "Httpbin", *route_matches: RouteMatch):
+    def add_rule(self, backend: "Backend", *route_matches: RouteMatch):
         """Adds rule to the Route"""
-        rules = {"backendRefs": [backend.reference]}
+        rules: dict[str, typing.Any] = {"backendRefs": [backend.reference]}
         matches = list(route_matches)
         if len(matches) == 0:
             matches.append(RouteMatch(path=PathMatch(type=MatchType.PATH_PREFIX, value="/")))
@@ -90,7 +90,7 @@ class HTTPRoute(OpenShiftObject, GatewayRoute):
         self.model.spec.rules = []
 
     @modify
-    def add_backend(self, backend: "Httpbin", prefix="/"):
+    def add_backend(self, backend: "Backend", prefix="/"):
         self.model.spec.rules.append(
             {"backendRefs": [backend.reference], "matches": [{"path": {"value": prefix, "type": "PathPrefix"}}]}
         )

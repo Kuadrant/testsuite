@@ -3,7 +3,8 @@
 import pytest
 
 from testsuite.openshift.secret import Secret
-from testsuite.mockserver import Mockserver, MockserverBackend
+from testsuite.mockserver import Mockserver
+from testsuite.backend.mockserver import MockserverBackend
 from testsuite.policy.dns_policy import HealthCheck, AdditionalHeadersRef
 
 pytestmark = [pytest.mark.mgc]
