@@ -23,6 +23,31 @@ def fetch_route(name, force_http=False):
     return _fetcher
 
 
+def fetch_service(name, protocol: str = None, port: int = None):
+    """Fetches the local URL of existing service with specific name"""
+
+    def _fetcher(settings, _):
+        openshift = settings["tools"]
+        try:
+            if not openshift.service_exists(name):
+                logger.warning("Unable to fetch service %s from tools, service does not exists", name)
+                return None
+        except AttributeError:
+            logger.warning("Unable to fetch service %s from tools, tools project might be missing", name)
+            return None
+
+        service_url = f"{name}.{openshift.project}.svc.cluster.local"
+
+        if protocol:
+            service_url = f"{protocol}://{service_url}"
+        if port:
+            service_url = f"{service_url}:{port}"
+
+        return service_url
+
+    return _fetcher
+
+
 def fetch_secret(name, key):
     """Fetches the key out of a secret with specific name"""
 

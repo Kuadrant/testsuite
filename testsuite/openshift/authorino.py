@@ -1,13 +1,24 @@
 """Authorino CR object"""
 
 import abc
-from typing import Any, Dict, List
+from typing import Any, Optional, Dict, List
+from dataclasses import dataclass
 
 from openshift_client import selector, timeout
 
 from testsuite.openshift.client import OpenShiftClient
 from testsuite.openshift import OpenShiftObject
 from testsuite.lifecycle import LifecycleObject
+from testsuite.utils import asdict
+
+
+@dataclass
+class TracingOptions:
+    """Dataclass containing authorino tracing specification"""
+
+    endpoint: str
+    tags: Optional[dict[str, str]] = None
+    insecure: Optional[bool] = None
 
 
 class Authorino(LifecycleObject):
@@ -45,6 +56,7 @@ class AuthorinoCR(OpenShiftObject, Authorino):
         cluster_wide=False,
         label_selectors: List[str] = None,
         listener_certificate_secret=None,
+        tracing: TracingOptions = None,
         log_level=None,
     ):
         """Creates base instance"""
@@ -67,6 +79,9 @@ class AuthorinoCR(OpenShiftObject, Authorino):
 
         if listener_certificate_secret:
             model["spec"]["listener"]["tls"] = {"enabled": True, "certSecretRef": {"name": listener_certificate_secret}}
+
+        if tracing:
+            model["spec"]["tracing"] = asdict(tracing)
 
         with openshift.context:
             return cls(model)

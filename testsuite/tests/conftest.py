@@ -10,7 +10,9 @@ from keycloak import KeycloakAuthenticationError
 from testsuite.capabilities import has_kuadrant, has_mgc
 from testsuite.certificates import CFSSLClient
 from testsuite.config import settings
+from testsuite.httpx import KuadrantClient
 from testsuite.mockserver import Mockserver
+from testsuite.tracing import TracingClient
 from testsuite.gateway import Gateway, GatewayRoute, Hostname, Exposer
 from testsuite.oidc import OIDCProvider
 from testsuite.oidc.auth0 import Auth0Provider
@@ -200,6 +202,20 @@ def mockserver(testconfig, skip_or_fail):
         return Mockserver(testconfig["mockserver"]["url"])
     except (KeyError, ValidationError) as exc:
         return skip_or_fail(f"Mockserver configuration item is missing: {exc}")
+
+
+@pytest.fixture(scope="module")
+def tracing(testconfig, skip_or_fail):
+    """Returns tracing client for tracing tests"""
+    try:
+        testconfig.validators.validate(only=["tracing"])
+        return TracingClient(
+            testconfig["tracing"]["collector_url"],
+            testconfig["tracing"]["query_url"],
+            KuadrantClient(verify=False),
+        )
+    except (KeyError, ValidationError) as exc:
+        return skip_or_fail(f"Tracing configuration item is missing: {exc}")
 
 
 @pytest.fixture(scope="session")
