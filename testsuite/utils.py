@@ -124,6 +124,11 @@ def extract_response(response, header="Simple", key="data"):
     :param response: http response
     :return: Extracted value
     """
+
+    # Returning None for non-200 responses because the content of such responses might not be a valid JSON
+    if response.status_code != 200:
+        return weakget(None)
+
     return weakget(json.loads(response.json()["headers"][header]))[key]
 
 
