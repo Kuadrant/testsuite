@@ -7,7 +7,7 @@ from testsuite.gateway import RouteMatch, PathMatch
 pytestmark = [pytest.mark.kuadrant_only]
 
 
-def test_matches(client, backend, route, resilient_request):
+def test_matches(client, backend, route):
     """
     Tests that HTTPRoute spec.routes.matches changes are reconciled when changed
       * Test that /get works
@@ -21,7 +21,7 @@ def test_matches(client, backend, route, resilient_request):
     route.remove_all_rules()
     route.add_rule(backend, RouteMatch(path=PathMatch(value="/anything")))
 
-    response = resilient_request("/get", expected_status=404)
+    response = client.get("/get")
     assert response.status_code == 404, "Matches were not reconciled"
 
     response = client.get("/anything/get")

@@ -6,7 +6,7 @@ pytestmark = [pytest.mark.kuadrant_only]
 
 
 @pytest.mark.issue("https://github.com/Kuadrant/kuadrant-operator/issues/124")
-def test_delete(client, route, authorization, resilient_request):
+def test_delete(client, route, authorization):
     """
     Tests that after deleting HTTPRoute, status.conditions shows it missing:
       * Test that that client works
@@ -21,7 +21,7 @@ def test_delete(client, route, authorization, resilient_request):
 
     route.delete()
 
-    response = resilient_request("/get", http_client=client, expected_status=404)
+    response = client.get("/get")
     assert response.status_code == 404, "Removing HTTPRoute was not reconciled"
 
     authorization.refresh()

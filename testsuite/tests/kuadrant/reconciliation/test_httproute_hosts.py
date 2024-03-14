@@ -19,7 +19,7 @@ def client2(second_hostname):
     client.close()
 
 
-def test_add_host(client, client2, second_hostname, route, resilient_request):
+def test_add_host(client, client2, second_hostname, route):
     """
     Tests that HTTPRoute spec.hostnames changes are reconciled when changed:
       * Test that both hostnames work
@@ -38,10 +38,10 @@ def test_add_host(client, client2, second_hostname, route, resilient_request):
 
     route.remove_hostname(second_hostname.hostname)
 
-    response = resilient_request("/get", http_client=client2, expected_status=404)
+    response = client2.get("/get")
     assert response.status_code == 404, "Removing host was not reconciled"
 
     route.add_hostname(second_hostname.hostname)
 
-    response = resilient_request("/get", http_client=client2)
+    response = client2.get("/get")
     assert response.status_code == 200, "Adding host was not reconciled"
