@@ -11,7 +11,7 @@ pytestmark = [pytest.mark.authorino]
 def mockserver_expectation(request, mockserver, module_label):
     """Creates Mockserver Expectation which returns non-empty response on hit"""
     request.addfinalizer(lambda: mockserver.clear_expectation(module_label))
-    return mockserver.create_expectation(module_label, "response")
+    return mockserver.create_response_expectation(module_label, "response")
 
 
 @pytest.fixture(scope="module")

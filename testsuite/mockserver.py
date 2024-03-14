@@ -44,7 +44,7 @@ class Mockserver:
         }
         return self._expectation(expectation_id, json_data)
 
-    def create_expectation(
+    def create_response_expectation(
         self,
         expectation_id,
         body,

@@ -15,7 +15,7 @@ def header():
 def opa_policy_expectation(request, mockserver, module_label, header):
     """Creates Mockserver Expectation that returns Rego query and returns its endpoint"""
     request.addfinalizer(lambda: mockserver.clear_expectation(module_label))
-    return mockserver.create_expectation(module_label, rego_allow_header(*header))
+    return mockserver.create_response_expectation(module_label, rego_allow_header(*header))
 
 
 @pytest.fixture(scope="module")

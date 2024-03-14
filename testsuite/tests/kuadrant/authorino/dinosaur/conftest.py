@@ -41,7 +41,7 @@ def terms_and_conditions(request, mockserver, module_label):
     """Creates Mockserver Expectation that returns whether terms are required and returns its endpoint"""
 
     def _terms_and_conditions(value):
-        return mockserver.create_expectation(
+        return mockserver.create_response_expectation(
             f"{module_label}-terms",
             {"terms_required": value},
             ContentType.APPLICATION_JSON,
@@ -56,7 +56,7 @@ def cluster_info(request, mockserver, module_label):
     """Creates Mockserver Expectation that returns client ID and returns its endpoint"""
 
     def _cluster_info(value):
-        return mockserver.create_expectation(
+        return mockserver.create_response_expectation(
             f"{module_label}-cluster", {"client_id": value}, ContentType.APPLICATION_JSON
         )
 
@@ -69,7 +69,7 @@ def resource_info(request, mockserver, module_label):
     """Creates Mockserver Expectation that returns info about resource and returns its endpoint"""
 
     def _resource_info(org_id, owner):
-        return mockserver.create_expectation(
+        return mockserver.create_response_expectation(
             f"{module_label}-resource",
             {"org_id": org_id, "owner": owner},
             ContentType.APPLICATION_JSON,

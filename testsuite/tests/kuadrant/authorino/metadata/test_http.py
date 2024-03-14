@@ -26,7 +26,7 @@ country_code == object.get(input.auth.metadata.mock, "countryCode", "")}
 def country_mock_expectation(request, mockserver, module_label):
     """Creates Mockserver Expectation which returns simple JSON that contains `allowed_countries`"""
     request.addfinalizer(lambda: mockserver.clear_expectation(module_label))
-    return mockserver.create_expectation(module_label, ALLOWED_COUNTRY, ContentType.APPLICATION_JSON)
+    return mockserver.create_response_expectation(module_label, ALLOWED_COUNTRY, ContentType.APPLICATION_JSON)
 
 
 @pytest.fixture(scope="module")
