@@ -16,7 +16,7 @@ MULTI_ELEMENT_JSON = '{"foo": "bar"}\n{"blah": "bleh"}'
 def json_mock_expectation(request, mockserver, module_label):
     """Creates Mockserver Expectation which returns multi-element JSON."""
     request.addfinalizer(lambda: mockserver.clear_expectation(module_label))
-    return mockserver.create_expectation(module_label, MULTI_ELEMENT_JSON, ContentType.APPLICATION_JSON)
+    return mockserver.create_response_expectation(module_label, MULTI_ELEMENT_JSON, ContentType.APPLICATION_JSON)
 
 
 @pytest.fixture(scope="module")
