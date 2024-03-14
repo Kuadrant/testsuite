@@ -40,7 +40,7 @@ def generate_tail(tail=5):
 
 
 def randomize(name, tail=5):
-    "To avoid conflicts returns modified name with random sufffix"
+    "To avoid conflicts returns modified name with random suffix"
     return f"{name}-{generate_tail(tail)}"
 
 
@@ -125,8 +125,8 @@ def extract_response(response, header="Simple", key="data"):
     :return: Extracted value
     """
 
-    # Returning None for non-200 responses because the content of such responses might not be a valid JSON
-    if response.status_code != 200:
+    # Returning None if content is empty, this typically happens for non-200 responses
+    if len(response.content) == 0:
         return weakget(None)
 
     return weakget(json.loads(response.json()["headers"][header]))[key]
