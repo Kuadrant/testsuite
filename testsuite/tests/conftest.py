@@ -286,7 +286,7 @@ def backend(request, openshift, blame, label):
 
 @pytest.fixture(scope="session")
 def gateway(request, kuadrant, openshift, blame, label, testconfig, wildcard_domain) -> Gateway:
-    """Deploys Envoy that wire up the Backend behind the reverse-proxy and Authorino instance"""
+    """Deploys Gateway that wires up the Backend behind the reverse-proxy and Authorino instance"""
     if kuadrant:
         gw = KuadrantGateway.create_instance(openshift, blame("gw"), wildcard_domain, {"app": label})
     else:
