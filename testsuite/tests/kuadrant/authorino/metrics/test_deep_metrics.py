@@ -34,8 +34,11 @@ def authorization(authorization, mockserver_expectation):
 
 
 @pytest.fixture(scope="module")
-def deep_metrics(authorino, prometheus):
-    """Return all evaluator(deep) metrics"""
+def deep_metrics(authorino, prometheus, client, auth):
+    """Send a simple get request so that a few metrics can appear and return all scraped evaluator(deep) metrics"""
+    response = client.get("/get", auth=auth)
+    assert response.status_code == 200
+
     prometheus.wait_for_scrape(authorino.metrics_service.name(), "/server-metrics")
 
     return prometheus.get_metrics("auth_server_evaluator_total", labels={"service": authorino.metrics_service.name()})
@@ -44,10 +47,10 @@ def deep_metrics(authorino, prometheus):
 @pytest.mark.parametrize(
     "metric_name, metric_type",
     [
-        ("opa", "AUTHORIZATION_OPA"),
-        ("anonymous", "IDENTITY_NOOP"),
-        ("http", "METADATA_GENERIC_HTTP"),
-        ("json", "RESPONSE_JSON"),
+        pytest.param("opa", "AUTHORIZATION_OPA", id="authorization"),
+        pytest.param("anonymous", "IDENTITY_NOOP", id="identity"),
+        pytest.param("http", "METADATA_GENERIC_HTTP", id="metadata"),
+        pytest.param("json", "RESPONSE_JSON", id="response"),
     ],
 )
 def test_deep_metrics(metric_name, metric_type, deep_metrics):
@@ -56,5 +59,5 @@ def test_deep_metrics(metric_name, metric_type, deep_metrics):
         lambda x: x["metric"]["evaluator_name"] == metric_name and x["metric"]["evaluator_type"] == metric_type
     )
 
-    assert metrics
+    assert len(metrics.metrics) == 1
     assert metrics.values[0] == 1

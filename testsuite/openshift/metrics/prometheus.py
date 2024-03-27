@@ -3,9 +3,10 @@
 from typing import Callable
 from datetime import datetime
 
-import httpx
 import backoff
 from apyproxy import ApyProxy
+
+from testsuite.httpx import KuadrantClient
 
 
 def _params(key: str = "", labels: dict[str, str] = None) -> dict[str, str]:
@@ -48,7 +49,7 @@ class Prometheus:
         self.headers = {"Authorization": f"Bearer {self.token}"}
         self.namespace = namespace
 
-        self._client = httpx.Client(headers=self.headers, verify=False)
+        self._client = KuadrantClient(headers=self.headers, verify=False)
         self.client = ApyProxy(url, self._client).api.v1
 
     def get_targets(self) -> dict:
@@ -73,7 +74,7 @@ class Prometheus:
         """Wait before next metrics scrape on service is finished"""
         call_time = datetime.utcnow()
 
-        @backoff.on_predicate(backoff.constant, interval=10, jitter=None, max_tries=10)
+        @backoff.on_predicate(backoff.constant, interval=10, jitter=None, max_tries=20)
         def _wait_for_scrape():
             """Wait for new scrape after the function call time"""
             for target in self.get_targets():
@@ -85,7 +86,7 @@ class Prometheus:
                     return call_time < datetime.fromisoformat(target["lastScrape"][:26])
             return False
 
-        _wait_for_scrape()
+        assert _wait_for_scrape()
 
     def close(self):
         """Close httpx client connection"""

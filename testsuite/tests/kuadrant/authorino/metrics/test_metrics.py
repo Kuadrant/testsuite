@@ -39,8 +39,14 @@ SERVER_METRICS_HISTOGRAM = [
 
 
 @pytest.fixture(scope="module")
-def metrics_keys(authorino, prometheus):
-    """Return all metrics defined for the Authorino metrics service"""
+def metrics_keys(authorino, prometheus, client, auth):
+    """
+    Send a simple get request so that a few metrics can appear and
+    return all metrics defined for the Authorino metrics service
+    """
+    response = client.get("/get", auth=auth)
+    assert response.status_code == 200
+
     prometheus.wait_for_scrape(authorino.metrics_service.name(), "/metrics")
     prometheus.wait_for_scrape(authorino.metrics_service.name(), "/server-metrics")
 
