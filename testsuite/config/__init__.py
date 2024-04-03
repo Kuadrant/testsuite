@@ -45,6 +45,7 @@ settings = Dynaconf(
         DefaultValueValidator("rhsso.url", default=fetch_route("no-ssl-sso")),
         DefaultValueValidator("rhsso.password", default=fetch_secret("credential-sso", "ADMIN_PASSWORD")),
         DefaultValueValidator("mockserver.url", default=fetch_route("mockserver", force_http=True)),
+        DefaultValueValidator("hyperfoil.url", default=fetch_route("hyperfoil", force_http=True)),
     ],
     validate_only=["authorino", "kuadrant"],
     loaders=["dynaconf.loaders.env_loader", "testsuite.config.openshift_loader"],
