@@ -2,24 +2,24 @@
 
 import pytest
 
+from testsuite.gateway.gateway_api.gateway import KuadrantGateway
 from testsuite.httpx.auth import HttpxOidcClientAuth
-from testsuite.policy.authorization.auth_policy import AuthPolicy
 
 
 @pytest.fixture(scope="module")
-def gateway_ready(gateway):
+def gateway(request, openshift, blame, wildcard_domain, module_label):
     """Returns ready gateway"""
-    gateway.wait_for_ready()
-    return gateway
+    gw = KuadrantGateway.create_instance(openshift, blame("gw"), wildcard_domain, {"app": module_label})
+    request.addfinalizer(gw.delete)
+    gw.commit()
+    gw.wait_for_ready(timeout=10 * 60)
+    return gw
 
 
 @pytest.fixture(scope="module")
-def authorization(gateway_ready, route, oidc_provider, authorization_name, openshift, module_label):
+def authorization(authorization, oidc_provider):
     # pylint: disable=unused-argument
     """Create AuthPolicy attached to gateway"""
-    authorization = AuthPolicy.create_instance(
-        openshift, authorization_name, gateway_ready, labels={"testRun": module_label}
-    )
     authorization.identity.add_oidc("rhsso", oidc_provider.well_known["issuer"])
     return authorization
 

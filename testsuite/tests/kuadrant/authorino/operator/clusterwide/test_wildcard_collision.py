@@ -20,18 +20,18 @@ def route(route, wildcard_domain, hostname):
 
 # pylint: disable = unused-argument
 @pytest.fixture(scope="module")
-def authorization(authorino, blame, route, openshift, module_label, gateway):
+def authorization(authorino, blame, route, openshift, label, gateway):
     """Create AuthConfig with host set to wildcard_domain"""
-    auth = AuthConfig.create_instance(openshift, blame("ac"), route, labels={"testRun": module_label})
+    auth = AuthConfig.create_instance(openshift, blame("ac"), route, labels={"testRun": label})
     auth.responses.add_success_header("header", JsonResponse({"anything": Value("one")}))
     return auth
 
 
 # pylint: disable = unused-argument
 @pytest.fixture(scope="module")
-def authorization2(authorino, blame, route, openshift2, module_label, gateway):
+def authorization2(authorino, blame, route, openshift2, label, gateway):
     """Create AuthConfig with host set to wildcard_domain in another project"""
-    auth = AuthConfig.create_instance(openshift2, blame("ac"), route, labels={"testRun": module_label})
+    auth = AuthConfig.create_instance(openshift2, blame("ac"), route, labels={"testRun": label})
     auth.responses.add_success_header("header", JsonResponse({"anything": Value("two")}))
     return auth
 

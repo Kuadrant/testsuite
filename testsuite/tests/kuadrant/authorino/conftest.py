@@ -9,40 +9,28 @@ from testsuite.policy.authorization.auth_config import AuthConfig
 from testsuite.openshift.authorino import AuthorinoCR, Authorino, PreexistingAuthorino
 
 
-@pytest.fixture(scope="module")
-def authorino_parameters():
-    """Optional parameters for Authorino creation, passed to the __init__"""
-    return {}
-
-
-@pytest.fixture(scope="module")
-def authorino(authorino, openshift, blame, request, testconfig, module_label, authorino_parameters) -> Authorino:
+@pytest.fixture(scope="session")
+def authorino(authorino, openshift, blame, request, testconfig, label) -> Authorino:
     """Authorino instance"""
     if authorino:
         return authorino
 
     authorino_config = testconfig["service_protection"]["authorino"]
     if not authorino_config["deploy"]:
-        if len(authorino_parameters) > 0:
-            return pytest.skip("Can't change parameters of already deployed Authorino")
         return PreexistingAuthorino(
             authorino_config["auth_url"],
             authorino_config["oidc_url"],
             authorino_config["metrics_service_name"],
         )
 
-    labels = authorino_parameters.setdefault("label_selectors", [])
-    labels.append(f"testRun={module_label}")
-
-    authorino_parameters.setdefault("name", blame("authorino"))
-
     authorino = AuthorinoCR.create_instance(
         openshift,
         image=authorino_config.get("image"),
         log_level=authorino_config.get("log_level"),
-        **authorino_parameters,
+        name=blame("authorino"),
+        label_selectors=[f"testRun={label}"],
     )
-    request.addfinalizer(lambda: authorino.delete(ignore_not_found=True))
+    request.addfinalizer(authorino.delete)
     authorino.commit()
     authorino.wait_for_ready()
     return authorino
@@ -50,14 +38,10 @@ def authorino(authorino, openshift, blame, request, testconfig, module_label, au
 
 # pylint: disable=unused-argument
 @pytest.fixture(scope="module")
-def authorization(
-    authorization, oidc_provider, authorino, route, authorization_name, openshift, module_label
-) -> AuthConfig:
-    """In case of Authorino, AuthConfig used for authorization"""
+def authorization(authorization, oidc_provider, route, authorization_name, openshift, label) -> AuthConfig:
+    """In case of Authorino, AuthC onfig used for authorization"""
     if authorization is None:
-        authorization = AuthConfig.create_instance(
-            openshift, authorization_name, route, labels={"testRun": module_label}
-        )
+        authorization = AuthConfig.create_instance(openshift, authorization_name, route, labels={"testRun": label})
     authorization.identity.add_oidc("rhsso", oidc_provider.well_known["issuer"])
     return authorization
 

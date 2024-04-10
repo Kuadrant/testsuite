@@ -46,7 +46,7 @@ def setup_route(request, blame, backend, module_label):
 
 # pylint: disable=unused-argument
 @pytest.fixture(scope="module")
-def setup_authorization(request, blame, openshift, module_label):
+def setup_authorization(request, blame, openshift, label):
     """Factory method for creating AuthConfigs in the test run"""
 
     def _authorization(route, sharding_label=None):
@@ -54,7 +54,7 @@ def setup_authorization(request, blame, openshift, module_label):
             openshift,
             blame("ac"),
             route,
-            labels={"testRun": module_label, "sharding": sharding_label},
+            labels={"testRun": label, "sharding": sharding_label},
         )
         auth.responses.add_success_header("header", JsonResponse({"anything": Value(sharding_label)}))
         request.addfinalizer(auth.delete)

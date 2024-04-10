@@ -107,6 +107,17 @@ class EnvoyConfig(ConfigMap):
             labels,
         )
 
+    def has_backend(self, backend: Backend, prefix: str) -> bool:
+        """Returns True, if backend & prefix combination is already setup"""
+        config = yaml.safe_load(self["envoy.yaml"])
+        virtual_hosts = config["static_resources"]["listeners"][0]["filter_chains"][0]["filters"][0]["typed_config"][
+            "route_config"
+        ]["virtual_hosts"][0]["routes"]
+        for host in virtual_hosts:
+            if host["match"]["prefix"] == prefix and host["route"]["cluster"] == backend.url:
+                return True
+        return False
+
     @modify
     def add_backend(self, backend: Backend, prefix: str):
         """Adds backend to the EnvoyConfig"""

@@ -128,7 +128,7 @@ def testconfig():
     return settings
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def openshift(testconfig):
     """OpenShift client for the primary namespace"""
     client = testconfig["service_protection"]["project"]
@@ -137,7 +137,7 @@ def openshift(testconfig):
     return client
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def openshift2(testconfig, skip_or_fail):
     """OpenShift client for the secondary namespace located on the same cluster as primary Openshift"""
     client = testconfig["service_protection"]["project2"]
@@ -265,7 +265,7 @@ def module_label(label):
     return randomize(label)
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def kuadrant(request):
     """Returns Kuadrant instance if exists, or None"""
     if request.config.getoption("--standalone"):
@@ -275,7 +275,7 @@ def kuadrant(request):
     return True
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def backend(request, openshift, blame, label):
     """Deploys Httpbin backend"""
     httpbin = Httpbin(openshift, blame("httpbin"), label)
@@ -284,11 +284,11 @@ def backend(request, openshift, blame, label):
     return httpbin
 
 
-@pytest.fixture(scope="module")
-def gateway(request, kuadrant, openshift, blame, backend, module_label, testconfig, wildcard_domain) -> Gateway:
-    """Deploys Envoy that wire up the Backend behind the reverse-proxy and Authorino instance"""
+@pytest.fixture(scope="session")
+def gateway(request, kuadrant, openshift, blame, label, testconfig, wildcard_domain) -> Gateway:
+    """Deploys Gateway that wires up the Backend behind the reverse-proxy and Authorino instance"""
     if kuadrant:
-        gw = KuadrantGateway.create_instance(openshift, blame("gw"), wildcard_domain, {"app": module_label})
+        gw = KuadrantGateway.create_instance(openshift, blame("gw"), wildcard_domain, {"app": label})
     else:
         authorino = request.getfixturevalue("authorino")
         gw = Envoy(
@@ -296,10 +296,11 @@ def gateway(request, kuadrant, openshift, blame, backend, module_label, testconf
             blame("gw"),
             authorino,
             testconfig["service_protection"]["envoy"]["image"],
-            labels={"app": module_label},
+            labels={"app": label},
         )
     request.addfinalizer(gw.delete)
     gw.commit()
+    gw.wait_for_ready(timeout=10 * 60)
     return gw
 
 
@@ -317,7 +318,7 @@ def route(request, kuadrant, gateway, blame, hostname, backend, module_label) ->
     return route
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def exposer(request) -> Exposer:
     """Exposer object instance"""
     exposer = OpenShiftExposer()
@@ -333,7 +334,7 @@ def hostname(gateway, exposer, blame) -> Hostname:
     return hostname
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def wildcard_domain(openshift):
     """
     Wildcard domain of openshift cluster

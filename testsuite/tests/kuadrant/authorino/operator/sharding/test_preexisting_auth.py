@@ -9,7 +9,7 @@ pytestmark = [pytest.mark.authorino, pytest.mark.standalone_only]
 
 
 @pytest.fixture(scope="module")
-def setup_authorino(openshift, blame, testconfig, module_label, request):
+def setup_authorino(openshift, blame, testconfig, label, request):
     """Authorino instance"""
 
     def _authorino(sharding_label):
@@ -17,7 +17,7 @@ def setup_authorino(openshift, blame, testconfig, module_label, request):
             openshift,
             blame("authorino"),
             image=weakget(testconfig)["authorino"]["image"] % None,
-            label_selectors=[f"sharding={sharding_label}", f"testRun={module_label}"],
+            label_selectors=[f"sharding={sharding_label}", f"testRun={label}"],
         )
         request.addfinalizer(authorino.delete)
         authorino.commit()
