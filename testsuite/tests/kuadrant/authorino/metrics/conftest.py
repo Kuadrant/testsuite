@@ -5,6 +5,7 @@ import yaml
 import pytest
 from openshift_client import selector
 
+from testsuite.gateway.envoy import Envoy
 from testsuite.openshift.config_map import ConfigMap
 from testsuite.openshift.metrics import ServiceMonitor, MetricsEndpoint, Prometheus
 
@@ -35,6 +36,22 @@ def prometheus(request, openshift):
         return prometheus
 
     return pytest.skip("Skipping metrics tests as query route is not properly configured")
+
+
+@pytest.fixture(scope="module")
+def gateway(request, authorino, openshift, blame, label, testconfig) -> Envoy:
+    """Deploys Envoy that wires up the Backend behind the reverse-proxy and Authorino instance"""
+    gw = Envoy(
+        openshift,
+        blame("gw"),
+        authorino,
+        testconfig["service_protection"]["envoy"]["image"],
+        labels={"app": label},
+    )
+    request.addfinalizer(gw.delete)
+    gw.commit()
+    gw.wait_for_ready(timeout=10 * 60)
+    return gw
 
 
 @pytest.fixture(scope="module")
