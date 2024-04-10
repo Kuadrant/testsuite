@@ -86,7 +86,7 @@ class Prometheus:
                     return call_time < datetime.fromisoformat(target["lastScrape"][:26])
             return False
 
-        assert _wait_for_scrape()
+        assert _wait_for_scrape(), "Prometheus didn't reconcile ServiceMonitor in time"
 
     def close(self):
         """Close httpx client connection"""
