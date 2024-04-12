@@ -110,3 +110,36 @@ class RHSSO(OIDCProvider, LifecycleObject):
             f"client_secret={self.oidc_client.client_secret_key}&username={self.test_username}&"
             f"password={self.test_password}"
         )
+
+    def delete_signing_rs256_jwks_key(self):
+        """Deletes signing RS256 key from JWKS"""
+
+        jwks = self.realm.admin.get_keys()["keys"]
+        assert jwks is not None
+
+        provider_id = None
+        for key in jwks:
+            if key["use"] == "SIG" and key["algorithm"] == "RS256" and key["status"] == "ACTIVE":
+                provider_id = key["providerId"]
+                break
+        assert provider_id is not None
+
+        self.realm.admin.delete_component(provider_id)
+
+    def create_signing_rs256_jwks_key(self):
+        """Creates a new signing RS256 key in JWKS"""
+
+        payload = {
+            "name": "rsa-generated",
+            "providerId": "rsa-generated",
+            "providerType": "org.keycloak.keys.KeyProvider",
+            "config": {
+                "keySize": ["2048"],
+                "active": ["true"],
+                "priority": ["100"],
+                "enabled": ["true"],
+                "algorithm": ["RS256"],
+            },
+        }
+
+        self.realm.admin.create_component(payload)
