@@ -188,8 +188,14 @@ class Hostname(ABC):
         """Returns full hostname in string form associated with this object"""
 
 
-class Exposer:
+class Exposer(LifecycleObject):
     """Exposes hostnames to be accessible from outside"""
+
+    def __init__(self, openshift):
+        super().__init__()
+        self.openshift = openshift
+        self.passthrough = False
+        self.verify = None
 
     @abstractmethod
     def expose_hostname(self, name, gateway: Gateway) -> Hostname:
@@ -197,3 +203,8 @@ class Exposer:
         Exposes hostname, so it is accessible from outside
         Actual hostname is generated from "name" and is returned in a form of a Hostname object
         """
+
+    @property
+    @abstractmethod
+    def base_domain(self) -> str:
+        """Returns base domains for all hostnames created by this exposer"""

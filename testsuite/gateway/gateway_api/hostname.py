@@ -1,42 +1,15 @@
 """Module containing implementation for Hostname related classes of Gateway API"""
 
+from functools import cached_property
+
 from httpx import Client
+from openshift_client import selector
 
 from testsuite.certificates import Certificate
+from testsuite.config import settings
 from testsuite.httpx import KuadrantClient
-from testsuite.lifecycle import LifecycleObject
 from testsuite.gateway import Gateway, Hostname, Exposer
-from testsuite.openshift.route import OpenshiftRoute
-
-
-class OpenShiftExposer(Exposer, LifecycleObject):
-    """Exposes hostnames through OpenShift Route objects"""
-
-    def __init__(self, passthrough=False) -> None:
-        super().__init__()
-        self.routes: list[OpenshiftRoute] = []
-        self.passthrough = passthrough
-
-    def expose_hostname(self, name, gateway: Gateway) -> Hostname:
-        tls = False
-        termination = "edge"
-        if self.passthrough:
-            tls = True
-            termination = "passthrough"
-        route = OpenshiftRoute.create_instance(
-            gateway.openshift, name, gateway.service_name, "api", tls=tls, termination=termination
-        )
-        self.routes.append(route)
-        route.commit()
-        return route
-
-    def commit(self):
-        return
-
-    def delete(self):
-        for route in self.routes:
-            route.delete()
-        self.routes = []
+from testsuite.utils import generate_tail
 
 
 class StaticHostname(Hostname):
@@ -62,12 +35,19 @@ class StaticHostname(Hostname):
 class DNSPolicyExposer(Exposer):
     """Exposing is done as part of DNSPolicy, so no work needs to be done here"""
 
-    def __init__(self, base_domain, tls_cert: Certificate = None):
-        super().__init__()
-        self.base_domain = base_domain
-        self.tls_cert = tls_cert
+    @cached_property
+    def base_domain(self) -> str:
+        mz_name = settings["control_plane"]["managedzone"]
+        zone = selector(f"managedzone/{mz_name}", static_context=self.openshift.context).object()
+        return f'{generate_tail(5)}.{zone.model["spec"]["domainName"]}'
 
     def expose_hostname(self, name, gateway: Gateway) -> Hostname:
         return StaticHostname(
-            f"{name}.{self.base_domain}", gateway.get_tls_cert() if self.tls_cert is None else self.tls_cert
+            f"{name}.{self.base_domain}", gateway.get_tls_cert() if self.verify is None else self.verify
         )
+
+    def commit(self):
+        pass
+
+    def delete(self):
+        pass
