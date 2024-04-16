@@ -4,6 +4,7 @@ import pytest
 from openshift_client import selector
 from weakget import weakget
 
+from testsuite.backend.httpbin import Httpbin
 from testsuite.gateway import CustomReference, GatewayRoute, Exposer
 from testsuite.policy.dns_policy import DNSPolicy
 from testsuite.gateway.gateway_api.gateway import MGCGateway
@@ -131,3 +132,15 @@ def hub_policies_commit(request, hub_gateway, dns_policy, tls_policy):
         if component is not None:
             request.addfinalizer(component.delete)
             component.commit()
+
+
+# Descope fixtures
+
+
+@pytest.fixture(scope="module")
+def backend(request, openshift, blame, label):
+    """Deploys Httpbin backend"""
+    httpbin = Httpbin(openshift, blame("httpbin"), label)
+    request.addfinalizer(httpbin.delete)
+    httpbin.commit()
+    return httpbin
