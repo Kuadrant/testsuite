@@ -1,4 +1,4 @@
-.PHONY: commit-acceptance pylint mypy black reformat test performance authorino poetry poetry-no-dev container-image polish-junit reportportal authorino-standalone limitador kuadrant kuadrant-only
+.PHONY: commit-acceptance pylint mypy black reformat test performance authorino poetry poetry-no-dev mgc container-image polish-junit reportportal authorino-standalone limitador kuadrant kuadrant-only
 
 TB ?= short
 LOGLEVEL ?= INFO
@@ -61,7 +61,7 @@ kuadrant: poetry-no-dev
 
 kuadrant-only: ## Run Kuadrant-only tests
 kuadrant-only: poetry-no-dev
-	$(PYTEST) -n4 -m 'kuadrant_only' --dist loadfile --enforce $(flags) testsuite
+	$(PYTEST) -n4 -m 'kuadrant_only and not standalone_only' --dist loadfile --enforce $(flags) testsuite
 
 performance: ## Run performance tests
 performance: poetry-no-dev

@@ -8,7 +8,6 @@ from testsuite.certificates import Certificate
 from testsuite.gateway import Gateway
 from testsuite.openshift.client import OpenShiftClient
 from testsuite.openshift import OpenShiftObject
-from testsuite.openshift.service import Service
 
 
 class KuadrantGateway(OpenShiftObject, Gateway):

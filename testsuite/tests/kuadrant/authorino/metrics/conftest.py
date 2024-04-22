@@ -61,6 +61,7 @@ def authorino(authorino, module_label):
     return authorino
 
 
+# pylint: disable=unused-argument
 @pytest.fixture(scope="module")
 def service_monitor(openshift, prometheus, blame, module_label):
     """Create ServiceMonitor object to follow Authorino /metrics and /server-metrics endpoints"""

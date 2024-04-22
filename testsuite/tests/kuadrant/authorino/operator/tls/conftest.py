@@ -8,7 +8,7 @@ from testsuite.certificates import Certificate, CertInfo
 from testsuite.openshift import Selector
 from testsuite.gateway import Exposer
 from testsuite.gateway.envoy.tls import TLSEnvoy
-from testsuite.gateway.exposers import OpenShiftExposer, KindExposer
+from testsuite.gateway.exposers import KindExposer
 from testsuite.openshift.secret import TLSSecret
 from testsuite.utils import cert_builder
 

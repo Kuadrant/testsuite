@@ -55,6 +55,7 @@ class Service(OpenShiftObject):
 
     @property
     def external_ip(self):
+        """Returns LoadBalancer IP for this service"""
         if self.model.spec.type != "LoadBalancer":
             raise AttributeError("External IP can be only used with LoadBalancer services")
         return self.model.status.loadBalancer.ingress[0].ip
