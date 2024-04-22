@@ -47,6 +47,9 @@ class Envoy(Gateway):  # pylint: disable=too-many-instance-attributes
     def service_name(self) -> str:
         return self.name
 
+    def external_ip(self) -> str:
+        return f"{self.service.external_ip}:{self.service.get_port('api').port}"  # type: ignore
+
     def rollout(self):
         """Restarts Envoy to apply newest config changes"""
         self.openshift.do_action("rollout", ["restart", f"deployment/{self.name}"])

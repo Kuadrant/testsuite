@@ -8,7 +8,7 @@ from testsuite.certificates import Certificate, CertInfo
 from testsuite.openshift import Selector
 from testsuite.gateway import Exposer
 from testsuite.gateway.envoy.tls import TLSEnvoy
-from testsuite.gateway.exposers import OpenShiftExposer
+from testsuite.gateway.exposers import OpenShiftExposer, KindExposer
 from testsuite.openshift.secret import TLSSecret
 from testsuite.utils import cert_builder
 
@@ -181,12 +181,11 @@ def gateway(
 
 
 @pytest.fixture(scope="session")
-def exposer(request, hub_openshift) -> Exposer:
+def exposer(exposer) -> Exposer:
     """Exposer object instance with TLS passthrough"""
-    exposer = OpenShiftExposer(hub_openshift)
+    if isinstance(exposer, KindExposer):
+        pytest.skip("TLS tests dont work with Kind")
     exposer.passthrough = True
-    request.addfinalizer(exposer.delete)
-    exposer.commit()
     return exposer
 
 

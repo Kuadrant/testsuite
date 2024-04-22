@@ -1,6 +1,10 @@
 """General exposers, not tied to Envoy or Gateway API"""
 
+from httpx import Client
+
+from testsuite.certificates import Certificate
 from testsuite.gateway import Exposer, Gateway, Hostname
+from testsuite.httpx import KuadrantClient
 from testsuite.openshift.route import OpenshiftRoute
 
 
@@ -36,3 +40,41 @@ class OpenShiftExposer(Exposer):
         for route in self.routes:
             route.delete()
         self.routes = []
+
+
+class StaticLocalHostname(Hostname):
+    def __init__(self, hostname, ip_getter, verify: Certificate = None, force_https: bool = False):
+        self._hostname = hostname
+        self.verify = verify
+        self.ip_getter = ip_getter
+        self.force_https = force_https
+
+    def client(self, **kwargs) -> Client:
+        headers = kwargs.setdefault("headers", {})
+        headers["Host"] = self.hostname
+        protocol = "http"
+        if self.verify or self.force_https:
+            protocol = "https"
+            kwargs.setdefault("verify", self.verify)
+        return KuadrantClient(base_url=f"{protocol}://{self.ip_getter()}", **kwargs)
+
+    @property
+    def hostname(self):
+        return self._hostname
+
+
+class KindExposer(Exposer):
+    def expose_hostname(self, name, gateway: Gateway) -> Hostname:
+        return StaticLocalHostname(
+            f"{name}.{self.base_domain}", gateway.external_ip, gateway.get_tls_cert(), force_https=self.passthrough
+        )
+
+    @property
+    def base_domain(self) -> str:
+        return "test.com"
+
+    def commit(self):
+        pass
+
+    def delete(self):
+        pass

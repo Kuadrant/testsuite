@@ -127,6 +127,10 @@ class Gateway(LifecycleObject, Referencable):
         """Service name for this gateway"""
 
     @abstractmethod
+    def external_ip(self) -> str:
+        """Returns loadBalanced IP and port to access this Gateway"""
+
+    @abstractmethod
     def wait_for_ready(self, timeout: int = 90):
         """Waits until the gateway is ready"""
 

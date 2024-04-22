@@ -8,6 +8,7 @@ from testsuite.certificates import Certificate
 from testsuite.gateway import Gateway
 from testsuite.openshift.client import OpenShiftClient
 from testsuite.openshift import OpenShiftObject
+from testsuite.openshift.service import Service
 
 
 class KuadrantGateway(OpenShiftObject, Gateway):
@@ -55,6 +56,10 @@ class KuadrantGateway(OpenShiftObject, Gateway):
     @property
     def service_name(self) -> str:
         return f"{self.name()}-istio"
+
+    def external_ip(self) -> str:
+        with self.context:
+            return f"{self.refresh().model.status.addresses[0].value}:80"
 
     @property
     def openshift(self):
