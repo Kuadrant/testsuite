@@ -92,6 +92,7 @@ class Envoy(Gateway):  # pylint: disable=too-many-instance-attributes
             self.name,
             selector={"deployment": self.name, **self.labels},
             ports=[ServicePort(name="api", port=8080, targetPort="api")],
+            service_type="LoadBalancer",
         )
         self.service.commit()
 
