@@ -62,7 +62,7 @@ def authorino(authorino, module_label):
 
 
 @pytest.fixture(scope="module")
-def service_monitor(openshift, blame, module_label):
+def service_monitor(openshift, prometheus, blame, module_label):
     """Create ServiceMonitor object to follow Authorino /metrics and /server-metrics endpoints"""
     endpoints = [MetricsEndpoint("/metrics", "http"), MetricsEndpoint("/server-metrics", "http")]
     return ServiceMonitor.create_instance(openshift, blame("sm"), endpoints, match_labels={"app": module_label})
