@@ -3,8 +3,15 @@ Test for complex AuthConfig
 """
 
 import pytest
+from openshift_client import OpenShiftPythonException
 
-pytestmark = [pytest.mark.authorino]
+pytestmark = [
+    pytest.mark.authorino,
+    pytest.mark.xfail(
+        reason="AuthPolicy max limit - https://github.com/Kuadrant/testsuite/issues/378",
+        raises=OpenShiftPythonException,
+    ),
+]
 
 ERROR_MESSAGE = {
     "kind": "Error",
