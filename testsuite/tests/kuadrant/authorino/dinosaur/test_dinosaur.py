@@ -8,9 +8,10 @@ from openshift_client import OpenShiftPythonException
 pytestmark = [
     pytest.mark.authorino,
     pytest.mark.xfail(
-        reason="AuthPolicy max limit - https://github.com/Kuadrant/testsuite/issues/378",
+        reason="AuthPolicy max limit",
         raises=OpenShiftPythonException,
     ),
+    pytest.mark.issue("https://github.com/Kuadrant/kuadrant-operator/issues/566"),
 ]
 
 ERROR_MESSAGE = {
