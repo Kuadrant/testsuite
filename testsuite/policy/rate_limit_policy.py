@@ -1,13 +1,12 @@
 """RateLimitPolicy related objects"""
 
 from dataclasses import dataclass
-from time import sleep
 from typing import Iterable, Literal, Optional, List
 
 import openshift_client as oc
 
 from testsuite.policy.authorization import Rule
-from testsuite.utils import asdict
+from testsuite.utils import asdict, has_condition
 from testsuite.gateway import Referencable, RouteMatch
 from testsuite.openshift.client import OpenShiftClient
 from testsuite.openshift import OpenShiftObject, modify
@@ -82,11 +81,7 @@ class RateLimitPolicy(OpenShiftObject):
         """Wait for RLP to be actually applied, conditions itself is not enough, sleep is needed"""
         with oc.timeout(90):
             success, _, _ = self.self_selector().until_all(
-                success_func=lambda obj: "conditions" in obj.model.status
-                and obj.model.status.conditions[0].status == "True",
+                success_func=has_condition("Enforced", "True"),
                 tolerate_failures=5,
             )
             assert success, f"{self.kind()} did not get ready in time"
-
-        # https://github.com/Kuadrant/kuadrant-operator/issues/140
-        sleep(90)

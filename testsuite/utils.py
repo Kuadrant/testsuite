@@ -168,3 +168,15 @@ def _asdict_recurse(obj):
         else:
             result[field.name] = deepcopy(value)
     return result
+
+
+def has_condition(condition_type, value="True"):
+    """Returns function, that returns True if the Kubernetes object has a specific value"""
+
+    def _check(obj):
+        for condition in obj.model.status.conditions:
+            if condition.type == condition_type and condition.status == value:
+                return True
+        return False
+
+    return _check
