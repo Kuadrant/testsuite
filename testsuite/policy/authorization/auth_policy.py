@@ -2,7 +2,9 @@
 
 from typing import Dict, TYPE_CHECKING
 
-from testsuite.utils import asdict
+import openshift_client as oc
+
+from testsuite.utils import asdict, has_condition
 from testsuite.gateway import Referencable
 from testsuite.openshift.client import OpenShiftClient
 from testsuite.openshift import modify
@@ -45,3 +47,13 @@ class AuthPolicy(AuthConfig):
         """Add rule for the skip of entire AuthPolicy"""
         self.model.spec.setdefault("when", [])
         self.model.spec["when"].extend([asdict(x) for x in when])
+
+    def wait_for_ready(self):
+        """Waits until AuthPolicy object reports ready status"""
+        with oc.timeout(90):
+            success, _, _ = self.self_selector().until_all(
+                success_func=has_condition("Enforced", "True"),
+                tolerate_failures=5,
+            )
+            assert success, f"{self.kind()} did not get ready in time"
+            self.refresh()
