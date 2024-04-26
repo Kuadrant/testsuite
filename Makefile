@@ -1,4 +1,4 @@
-.PHONY: commit-acceptance pylint mypy black reformat test performance authorino poetry poetry-no-dev mgc container-image polish-junit reportportal authorino-standalone limitador kuadrant kuadrant-only
+.PHONY: commit-acceptance pylint mypy black reformat test performance authorino poetry poetry-no-dev container-image polish-junit reportportal authorino-standalone limitador kuadrant kuadrant-only
 
 TB ?= short
 LOGLEVEL ?= INFO
@@ -41,8 +41,7 @@ testsuite/%: FORCE poetry-no-dev
 	$(PYTEST) --performance -v $(flags) $@
 
 test: ## Run all non mgc tests
-test pytest tests: poetry-no-dev
-	$(PYTEST) -n4 -m 'not mgc' --dist loadfile --enforce $(flags) testsuite
+test pytest tests: kuadrant
 
 authorino: ## Run only authorino related tests
 authorino: poetry-no-dev
@@ -63,10 +62,6 @@ kuadrant: poetry-no-dev
 kuadrant-only: ## Run Kuadrant-only tests
 kuadrant-only: poetry-no-dev
 	$(PYTEST) -n4 -m 'kuadrant_only' --dist loadfile --enforce $(flags) testsuite
-
-mgc: ## Run mgc tests
-mgc: poetry-no-dev
-	$(PYTEST) -m "mgc" --enforce $(flags) testsuite
 
 performance: ## Run performance tests
 performance: poetry-no-dev

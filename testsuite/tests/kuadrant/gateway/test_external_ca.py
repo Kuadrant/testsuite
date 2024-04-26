@@ -31,6 +31,7 @@ spec:
 """
 
 import dataclasses
+import time
 from importlib import resources
 
 import pytest
@@ -39,7 +40,7 @@ from openshift_client.model import OpenShiftPythonException
 
 from testsuite.gateway import CustomReference
 
-pytestmark = [pytest.mark.mgc]
+pytestmark = [pytest.mark.kuadrant_only]
 
 
 @pytest.fixture(scope="module")
@@ -57,21 +58,24 @@ def cluster_issuer(hub_openshift):
 
 
 @pytest.fixture(scope="module")
-def gateway(gateway, exposer, hub_gateway):
-    """Only at this step we have TLS secret created and GW fully reconciled"""
+def client(commit, hostname, gateway):  # pylint: disable=unused-argument
+    """Returns httpx client to be used for requests, it also commits AuthConfig"""
+    time.sleep(180)  # it takes a bit for the lets encrypt secret to be actually created
     root_cert = resources.files("testsuite.resources").joinpath("letsencrypt-stg-root-x1.pem").read_text()
-    old_cert = hub_gateway.get_tls_cert()
-    exposer.verify = dataclasses.replace(old_cert, chain=old_cert.certificate + root_cert)
-    return gateway
+    old_cert = gateway.get_tls_cert()
+    cert = dataclasses.replace(old_cert, chain=old_cert.certificate + root_cert)
+    client = hostname.client(verify=cert)
+    yield client
+    client.close()
 
 
-def test_smoke_letsencrypt(client):
+def test_smoke_letsencrypt(client, auth):
     """
     Tests whether the backend, exposed using the HTTPRoute and Gateway, was exposed correctly,
     having a tls secured endpoint with a hostname managed by MGC
     """
 
-    result = client.get("/get")
+    result = client.get("/get", auth=auth)
     assert not result.has_dns_error()
     assert not result.has_cert_verify_error()
     assert result.status_code == 200

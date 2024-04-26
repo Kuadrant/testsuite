@@ -7,7 +7,7 @@ import pytest
 from dynaconf import ValidationError
 from keycloak import KeycloakAuthenticationError
 
-from testsuite.capabilities import has_kuadrant, has_mgc
+from testsuite.capabilities import has_kuadrant
 from testsuite.certificates import CFSSLClient
 from testsuite.config import settings
 from testsuite.httpx import KuadrantClient
@@ -49,8 +49,6 @@ def pytest_runtest_setup(item):
     skip_or_fail = pytest.fail if item.config.getoption("--enforce") else pytest.skip
     standalone = item.config.getoption("--standalone")
     if standalone:
-        if "mgc" in marks:
-            skip_or_fail("Unable to run MGC test: Standalone mode is enabled")
         if "kuadrant_only" in marks:
             skip_or_fail("Unable to run Kuadrant Only tests: Standalone mode is enabled")
     else:
@@ -58,10 +56,6 @@ def pytest_runtest_setup(item):
             skip_or_fail(
                 "Unable to run Standalone only test: Standalone mode is disabled, please use --standalone flag"
             )
-        if "mgc" in marks:
-            mgc, error = has_mgc()
-            if not mgc:
-                skip_or_fail(f"Unable to locate MGC installation: {error}")
         kuadrant, error = has_kuadrant()
         if not kuadrant:
             skip_or_fail(f"Unable to locate Kuadrant installation: {error}")

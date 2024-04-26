@@ -170,12 +170,17 @@ def _asdict_recurse(obj):
     return result
 
 
-def has_condition(condition_type, value="True"):
+def has_condition(condition_type, status="True", reason=None, message=None):
     """Returns function, that returns True if the Kubernetes object has a specific value"""
 
     def _check(obj):
         for condition in obj.model.status.conditions:
-            if condition.type == condition_type and condition.status == value:
+            if (  # pylint: disable=too-many-boolean-expressions
+                condition.type == condition_type
+                and condition.status == status
+                and (message is None or message in condition.message)
+                and (reason is None or reason == condition.reason)
+            ):
                 return True
         return False
 
