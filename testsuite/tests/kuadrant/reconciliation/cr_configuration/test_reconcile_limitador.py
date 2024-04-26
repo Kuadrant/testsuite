@@ -5,39 +5,59 @@ import pytest
 pytestmark = [pytest.mark.kuadrant_only]
 
 
-REPLICAS_1 = {"replicas": 1}
-REPLICAS_2 = {"replicas": 2}
+@pytest.fixture()
+def commit():
+    """Omitting authorization and rate limiting as it is not needed"""
 
 
-@pytest.fixture(scope="module", autouse=True)
+@pytest.fixture(autouse=True)
 def kuadrant_clean_up(request, kuadrant):
-    """Return the number of replicas for Limitador back to 1"""
-    request.addfinalizer(lambda: kuadrant.update_limitador(REPLICAS_1))
+    """
+    Return fields to default values.
+    This can be simplified once https://github.com/Kuadrant/kuadrant-operator/issues/617 is fixed.
+    """
+
+    def _finalize():
+        kuadrant.limitador = {"replicas": 1, "resourceRequirements": {"requests": {"cpu": "250m", "memory": "32Mi"}}}
+
+    request.addfinalizer(_finalize)
 
 
-def test_spec_config(kuadrant):
+@pytest.mark.parametrize(
+    "field, value",
+    [
+        pytest.param("replicas", 2, id="replicas"),
+        pytest.param(
+            "resourceRequirements", {"requests": {"cpu": "300m", "memory": "40Mi"}}, id="resourceRequirements"
+        ),
+    ],
+)
+def test_fields_to_reconcile(kuadrant, field, value):
     """
     Test:
-        - assert that Limitador deployment replicas is equal to 1
-        - change replicas field to 2 in Kuadrant CR
-        - assert that Kuadrant CR Limitador replicas is equal to 2
-        - assert that Limitador deployment replicas is equal to 2
+        - change specific `field` to `value` in Kuadrant CR
+        - assert that `field` in Kuadrant CR Limitador is equal to `value`
+        - assert that `field` in Limitador deployment is equal to `value`
     """
-    assert kuadrant.limitador["replicas"] == 1, "The number of Limitador replicas in KuadrantCR should be 1 "
-    assert kuadrant.limitador_deployment.model.spec.replicas == 1, "Limitador deployment should use 1 replica"
+    kuadrant.limitador = {field: value}
 
-    kuadrant.update_limitador(REPLICAS_2)
-
-    assert kuadrant.limitador["replicas"] == 2
-    assert kuadrant.limitador_deployment.model.spec.replicas == 2
+    assert value == kuadrant.limitador[field]
+    assert str(value) in str(kuadrant.limitador_deployment.model.spec)
 
 
-def test_unsupported_spec_field(kuadrant):
+@pytest.mark.xfail
+@pytest.mark.issue("https://github.com/Kuadrant/kuadrant-operator/issues/617")
+def test_blank_fields_wont_reconcile(kuadrant):
     """
-    Tests that unsupported field is not reconciled
+    Test:
+        - setup limitador with replicas and resourceRequirements != default
+        - change replicas to 3
+        - assert replicas field is 3 for limitador deployment
+        - assert blank field resourceRequirements is returned to default for limitador deployment
     """
-    kuadrant.update_limitador({"test": "test"})
-    kuadrant.refresh()
+    kuadrant.limitador = {"replicas": 2, "resourceRequirements": {"requests": {"cpu": "300m", "memory": "40Mi"}}}
 
-    assert "test" not in kuadrant.limitador
-    assert "test" not in kuadrant.limitador_deployment.model.spec
+    kuadrant.limitador = {"replicas": 3}
+
+    assert kuadrant.limitador_deployment.model.spec.replicas == 3
+    assert "'cpu': '250m', 'memory': '32Mi'" in str(kuadrant.limitador_deployment.model.spec)
