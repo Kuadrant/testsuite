@@ -2,19 +2,18 @@
 
 from typing import Dict, TYPE_CHECKING
 
-import openshift_client as oc
-
-from testsuite.utils import asdict, has_condition
 from testsuite.gateway import Referencable
-from testsuite.openshift.client import OpenShiftClient
 from testsuite.openshift import modify
+from testsuite.openshift.client import OpenShiftClient
+from testsuite.utils import asdict
 from .auth_config import AuthConfig
+from .. import Policy
 
 if TYPE_CHECKING:
     from . import Rule
 
 
-class AuthPolicy(AuthConfig):
+class AuthPolicy(AuthConfig, Policy):
     """AuthPolicy object, it serves as Kuadrants AuthConfig"""
 
     @property
@@ -47,13 +46,3 @@ class AuthPolicy(AuthConfig):
         """Add rule for the skip of entire AuthPolicy"""
         self.model.spec.setdefault("when", [])
         self.model.spec["when"].extend([asdict(x) for x in when])
-
-    def wait_for_ready(self):
-        """Waits until AuthPolicy object reports ready status"""
-        with oc.timeout(90):
-            success, _, _ = self.self_selector().until_all(
-                success_func=has_condition("Enforced", "True"),
-                tolerate_failures=5,
-            )
-            assert success, f"{self.kind()} did not get ready in time"
-            self.refresh()

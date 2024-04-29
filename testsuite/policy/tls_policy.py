@@ -4,11 +4,11 @@ import openshift_client as oc
 
 from testsuite.gateway import Referencable
 from testsuite.openshift.client import OpenShiftClient
-from testsuite.openshift import OpenShiftObject
+from testsuite.policy import Policy
 from testsuite.utils import has_condition
 
 
-class TLSPolicy(OpenShiftObject):
+class TLSPolicy(Policy):
     """TLSPolicy object"""
 
     @classmethod
