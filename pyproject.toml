@@ -59,6 +59,7 @@ log_level = "INFO"
 junit_logging = "all"
 junit_family = "xunit2"
 asyncio_mode = "auto"
+xfail_strict = true
 
 # Pylint:
 [tool.pylint.FORMAT]
