@@ -44,16 +44,18 @@ pytestmark = [pytest.mark.kuadrant_only]
 
 
 @pytest.fixture(scope="module")
-def cluster_issuer(hub_openshift):
+def cluster_issuer(testconfig, hub_openshift):
     """Reference to cluster Let's Encrypt certificate issuer"""
+    testconfig.validators.validate(only="letsencrypt")
+    name = testconfig["letsencrypt"]["clusterissuer"]
     try:
-        selector("clusterissuer/letsencrypt-staging", static_context=hub_openshift.context).object()
+        selector(f"clusterissuer/{name}", static_context=hub_openshift.context).object()
     except OpenShiftPythonException as exc:
-        pytest.skip(f"letsencrypt-staging ClusterIssuer is not present on the cluster: {exc}")
+        pytest.skip(f"{name} ClusterIssuer is not present on the cluster: {exc}")
     return CustomReference(
         group="cert-manager.io",
         kind="ClusterIssuer",
-        name="letsencrypt-staging",
+        name=name,
     )
 
 

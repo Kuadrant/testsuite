@@ -50,6 +50,8 @@ settings = Dynaconf(
             messages={"condition": "{value} is not valid exposer"},
         ),
         Validator("control_plane.managedzone", must_exist=True, ne=None),
+        Validator("control_plane.clusterissuer", must_exist=True, ne=None),
+        Validator("letsencrypt.clusterissuer", must_exist=True, ne=None),
         DefaultValueValidator("rhsso.url", default=fetch_route("no-ssl-sso")),
         DefaultValueValidator("rhsso.password", default=fetch_secret("credential-sso", "ADMIN_PASSWORD")),
         DefaultValueValidator("mockserver.url", default=fetch_route("mockserver", force_http=True)),
