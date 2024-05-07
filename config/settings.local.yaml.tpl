@@ -1,5 +1,4 @@
 #default:
-#  skip_cleanup: false
 #  tester: "someuser"                          # Optional: name of the user, who is running the tests, defaults to whoami/uid
 #  cluster:                                    # Workload cluster where tests should run, will get overriden if run on Multicluster
 #    project: "kuadrant"                       # Optional: Default namespace for this cluster

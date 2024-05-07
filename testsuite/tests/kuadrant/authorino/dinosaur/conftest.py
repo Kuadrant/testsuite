@@ -11,7 +11,7 @@ from testsuite.policy.authorization import Pattern, PatternRef, Value, ValueFrom
 
 
 @pytest.fixture(scope="session")
-def admin_rhsso(request, testconfig, blame, rhsso):
+def admin_rhsso(blame, rhsso):
     """RHSSO OIDC Provider fixture"""
 
     info = RHSSO(
@@ -24,8 +24,6 @@ def admin_rhsso(request, testconfig, blame, rhsso):
         rhsso.test_password,
     )
 
-    if not testconfig["skip_cleanup"]:
-        request.addfinalizer(info.delete)
     info.commit()
     return info
 

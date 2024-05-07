@@ -169,9 +169,6 @@ def rhsso(request, testconfig, blame, skip_or_fail):
             cnf["test_user"]["password"],
         )
 
-        if not testconfig["skip_cleanup"]:
-            request.addfinalizer(info.delete)
-
         info.commit()
         return info
     except KeycloakAuthenticationError:
