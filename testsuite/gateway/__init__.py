@@ -8,6 +8,7 @@ from typing import Any, Optional, TYPE_CHECKING, Literal, List
 from httpx import Client
 
 from testsuite.certificates import Certificate
+from testsuite.httpx import KuadrantClient
 from testsuite.lifecycle import LifecycleObject
 from testsuite.utils import asdict
 
@@ -179,7 +180,7 @@ class Hostname(ABC):
     """
 
     @abstractmethod
-    def client(self, **kwargs) -> Client:
+    def client(self, **kwargs) -> KuadrantClient:
         """Return Httpx client for the requests to this backend"""
 
     @property

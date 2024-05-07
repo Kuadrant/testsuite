@@ -1,16 +1,10 @@
 """
 This module contains the most basic happy path test for both DNSPolicy and TLSPolicy
-
-Prerequisites:
-* multi-cluster-gateways ns is created and set as openshift["project"]
-* managedclustersetbinding is created in openshift["project"]
-* gateway class "kuadrant-multi-cluster-gateway-instance-per-cluster" is created
-
 """
 
 import pytest
 
-pytestmark = [pytest.mark.mgc]
+pytestmark = [pytest.mark.kuadrant_only]
 
 
 def test_gateway_readiness(gateway):
@@ -18,13 +12,13 @@ def test_gateway_readiness(gateway):
     assert gateway.is_ready()
 
 
-def test_smoke(client):
+def test_smoke(client, auth):
     """
     Tests whether the backend, exposed using the HTTPRoute and Gateway, was exposed correctly,
-    having a tls secured endpoint with a hostname managed by MGC
+    having a tls secured endpoint with a hostname managed by Kuadrant
     """
 
-    result = client.get("/get")
+    result = client.get("/get", auth=auth)
     assert not result.has_dns_error()
     assert not result.has_cert_verify_error()
     assert result.status_code == 200

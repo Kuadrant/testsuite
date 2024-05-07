@@ -42,7 +42,6 @@ line-length = 120
 markers = [
     "issue: Reference to covered issue",
     "performance: Performance tests have unique needs",
-    "mgc: Test is using MGC specific features",
     "authorino: Test is using Authorino features",
     "standalone_only: Test is using features available only in standalone mode, without Kuadrant",
     "kuadrant_only: Test is using features available only in Kuadrant mode",

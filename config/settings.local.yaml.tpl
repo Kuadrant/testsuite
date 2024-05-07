@@ -46,15 +46,4 @@
 #      metrics_service_name: ""                    # controller metrics service name for already deployed Authorino
 #  default_exposer: "openshift"                    # Exposer type that should be used, options: 'openshift'
 #  control_plane:
-#    managedzone: aws-mz                           # Name of the ManagedZone resource residing on hub cluster
-#    hub:                                          # Hub cluster
-#      project: "multi-cluster-gateways"         # Optional: namespace where MGC resources are created and where the hub gateway will be created
-#      api_url: "https://api.openshift.com"      # Optional: OpenShift API URL, if None it will OpenShift that you are logged in
-#      token: "KUADRANT_RULEZ"                   # Optional: OpenShift Token, if None it will OpenShift that you are logged in
-#      kubeconfig_path: "~/.kube/config"         # Optional: Kubeconfig to use, if None the default one is used
-#    spokes:                                       # List of all spokes in the multi-cluster
-#      local-cluster:
-#        project: "kuadrant"                       # Optional: namespace for tests to run, if None uses current project
-#        api_url: "https://api.openshift.com"      # Optional: OpenShift API URL, if None it will OpenShift that you are logged in
-#        token: "KUADRANT_RULEZ"                   # Optional: OpenShift Token, if None it will OpenShift that you are logged in
-#        kubeconfig_path: "~/.kube/config"         # Optional: Kubeconfig to use, if None the default one is used
+#    managedzone: aws-mz                           # Name of the ManagedZone resource

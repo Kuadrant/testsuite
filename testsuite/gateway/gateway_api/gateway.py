@@ -1,8 +1,6 @@
 """Module containing all gateway classes"""
 
-# mypy: disable-error-code="override"
-import json
-from typing import Optional
+from typing import Any
 
 import openshift_client as oc
 
@@ -13,13 +11,13 @@ from testsuite.openshift import OpenShiftObject
 
 
 class KuadrantGateway(OpenShiftObject, Gateway):
-    """Gateway object for purposes of MGC"""
+    """Gateway object for Kuadrant"""
 
     @classmethod
-    def create_instance(cls, openshift: OpenShiftClient, name, hostname, labels):
+    def create_instance(cls, openshift: OpenShiftClient, name, hostname, labels, tls=False):
         """Creates new instance of Gateway"""
 
-        model = {
+        model: dict[Any, Any] = {
             "apiVersion": "gateway.networking.k8s.io/v1beta1",
             "kind": "Gateway",
             "metadata": {"name": name, "labels": labels},
@@ -36,6 +34,21 @@ class KuadrantGateway(OpenShiftObject, Gateway):
                 ],
             },
         }
+
+        if tls:
+            model["spec"]["listeners"] = [
+                {
+                    "name": "api",
+                    "port": 443,
+                    "protocol": "HTTPS",
+                    "hostname": hostname,
+                    "allowedRoutes": {"namespaces": {"from": "All"}},
+                    "tls": {
+                        "mode": "Terminate",
+                        "certificateRefs": [{"name": f"{name}-tls", "kind": "Secret"}],
+                    },
+                }
+            ]
 
         return cls(model, context=openshift.context)
 
@@ -58,65 +71,13 @@ class KuadrantGateway(OpenShiftObject, Gateway):
     def wait_for_ready(self, timeout: int = 180):
         """Waits for the gateway to be ready in the sense of is_ready(self)"""
         with oc.timeout(timeout):
-            success, _, _ = self.self_selector().until_all(success_func=lambda obj: MGCGateway(obj.model).is_ready())
+            success, _, _ = self.self_selector().until_all(
+                success_func=lambda obj: self.__class__(obj.model).is_ready()
+            )
             assert success, "Gateway didn't get ready in time"
             self.refresh()
 
     def get_tls_cert(self):
-        return None
-
-    @property
-    def reference(self):
-        return {
-            "group": "gateway.networking.k8s.io",
-            "kind": "Gateway",
-            "name": self.name(),
-            "namespace": self.namespace(),
-        }
-
-
-class MGCGateway(KuadrantGateway):
-    """Gateway object for purposes of MGC"""
-
-    @classmethod
-    def create_instance(
-        cls,
-        openshift: OpenShiftClient,
-        name: str,
-        gateway_class: str,
-        hostname: str,
-        labels: dict[str, str] = None,
-        tls: bool = True,
-        placement: str = None,
-    ):  # pylint: disable=arguments-renamed
-        """Creates new instance of Gateway"""
-        if labels is None:
-            labels = {}
-
-        if placement is not None:
-            labels["cluster.open-cluster-management.io/placement"] = placement
-
-        instance = super(MGCGateway, cls).create_instance(openshift, name, hostname, labels)
-        instance.model.spec.gatewayClassName = gateway_class
-        if tls:
-            instance.model.spec.listeners = [
-                {
-                    "name": "api",
-                    "port": 443,
-                    "protocol": "HTTPS",
-                    "hostname": hostname,
-                    "allowedRoutes": {"namespaces": {"from": "All"}},
-                    "tls": {
-                        "mode": "Terminate",
-                        "certificateRefs": [{"name": f"{name}-tls", "kind": "Secret"}],
-                    },
-                }
-            ]
-
-        return instance
-
-    def get_tls_cert(self) -> Optional[Certificate]:
-        """Returns TLS certificate used by the gateway"""
         if "tls" not in self.model.spec.listeners[0]:
             return None
 
@@ -129,25 +90,25 @@ class MGCGateway(KuadrantGateway):
         )
         return tls_cert
 
-    def delete_tls_secret(self):
-        """Deletes secret with TLS certificate used by the gateway"""
+    def delete(self, ignore_not_found=True, cmd_args=None):
+        res = super().delete(ignore_not_found, cmd_args)
         with self.openshift.context:
+            # TLSPolicy does not delete certificates it creates
             oc.selector(f"secret/{self.cert_secret_name}").delete(ignore_not_found=True)
-
-    def get_spoke_gateway(self, spokes: dict[str, OpenShiftClient]) -> "MGCGateway":
-        """
-        Returns spoke gateway on an arbitrary, and sometimes, random spoke cluster.
-        Works only for GW deployed on Hub
-        """
-        self.refresh()
-        cluster_name = json.loads(self.model.metadata.annotations["kuadrant.io/gateway-clusters"])[0]
-        spoke_client = spokes[cluster_name]
-        prefix = "kuadrant"
-        spoke_client = spoke_client.change_project(f"{prefix}-{self.namespace()}")
-        with spoke_client.context:
-            return oc.selector(f"gateway/{self.name()}").object(cls=self.__class__)
+            # Istio does not delete ServiceAccount
+            oc.selector(f"sa/{self.service_name}").delete(ignore_not_found=True)
+        return res
 
     @property
     def cert_secret_name(self):
         """Returns name of the secret with generated TLS certificate"""
         return self.model.spec.listeners[0].tls.certificateRefs[0].name
+
+    @property
+    def reference(self):
+        return {
+            "group": "gateway.networking.k8s.io",
+            "kind": "Gateway",
+            "name": self.name(),
+            "namespace": self.namespace(),
+        }

@@ -2,8 +2,6 @@
 
 from functools import cached_property
 
-from httpx import Client
-
 from testsuite.httpx import KuadrantClient
 from testsuite.gateway import Hostname
 from testsuite.openshift import OpenShiftObject
@@ -41,7 +39,7 @@ class OpenshiftRoute(OpenShiftObject, Hostname):
             model["spec"]["tls"] = {"termination": termination}  # type: ignore
         return cls(model, context=openshift.context)
 
-    def client(self, **kwargs) -> Client:
+    def client(self, **kwargs) -> KuadrantClient:
         protocol = "http"
         if "tls" in self.model.spec:
             protocol = "https"

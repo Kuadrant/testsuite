@@ -14,12 +14,11 @@ This repository contains end-to-end tests for Kuadrant project. It supports runn
 * Kuadrant Operator installed
 * Use `test` make target
 
-### Multi-cluster Gateway Controller tests (make mgc)
-* OpenShift 4.x cluster(s)
-* OCM setup with both hub and spokes (can be a single cluster)
-* Existing GatewayClass `kuadrant-multi-cluster-gateway-instance-per-cluster`
-* Existing ManagedZones `gcp-mz` and `aws-mz` for Google Cloud and AWS respectively
-* Use `mgc` make target
+### DNSPolicy tests
+* Existing ManagedZone, named `aws-mz` (name defined in `control_plane.managedzone`)
+
+### TLSPolicy tests
+* Existing ClusterIssuer, named `selfsigned-cluster-issuer`
 
 
 ## Configuration

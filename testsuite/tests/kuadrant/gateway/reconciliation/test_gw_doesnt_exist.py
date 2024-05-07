@@ -4,9 +4,16 @@ import pytest
 
 from testsuite.gateway import CustomReference
 from testsuite.policy.tls_policy import TLSPolicy
-from testsuite.tests.mgc.reconciliation import dns_policy
+from testsuite.utils import has_condition
+from . import dns_policy
 
-pytestmark = [pytest.mark.mgc]
+pytestmark = [pytest.mark.kuadrant_only]
+
+
+@pytest.fixture(scope="module")
+def commit():
+    """We do not need any other resource"""
+    return None
 
 
 @pytest.mark.parametrize(
@@ -15,17 +22,6 @@ pytestmark = [pytest.mark.mgc]
 @pytest.mark.issue("https://github.com/Kuadrant/multicluster-gateway-controller/issues/361")
 def test_no_gw(request, create_cr, hub_openshift, blame, module_label, cluster_issuer):
     """Tests that policy is rejected if the Gateway does not exist at all"""
-
-    def target_not_found(policy):
-        for condition in policy.model.status.conditions:
-            if (
-                condition.type == "Ready"
-                and condition.status == "False"
-                and 'Gateway.gateway.networking.k8s.io "does-not-exist" not found' in condition.message
-                and condition.reason == "TargetNotFound"
-            ):
-                return True
-        return False
 
     policy = create_cr(
         hub_openshift,
@@ -37,4 +33,6 @@ def test_no_gw(request, create_cr, hub_openshift, blame, module_label, cluster_i
     request.addfinalizer(policy.delete)
     policy.commit()
 
-    assert policy.wait_until(target_not_found), "Policy did not reach expected status"
+    assert policy.wait_until(
+        has_condition("Accepted", "False", "TargetNotFound", "target does-not-exist was not found"), timelimit=20
+    ), f"Policy did not reach expected status, instead it was: {policy.refresh().model.status.conditions}"

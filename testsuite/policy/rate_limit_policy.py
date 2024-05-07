@@ -78,7 +78,7 @@ class RateLimitPolicy(OpenShiftObject):
         self.model.spec.limits[name] = limit
 
     def wait_for_ready(self):
-        """Wait for RLP to be actually applied, conditions itself is not enough, sleep is needed"""
+        """Wait for RLP to be enforced"""
         with oc.timeout(90):
             success, _, _ = self.self_selector().until_all(
                 success_func=has_condition("Enforced", "True"),

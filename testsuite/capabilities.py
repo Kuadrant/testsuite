@@ -30,20 +30,3 @@ def has_kuadrant():
             return False, f"Kuadrant resource is not installed in project {project}"
 
     return True, None
-
-
-@functools.cache
-def has_mgc():
-    """Returns True, if MGC is configured and deployed"""
-    spokes = weakget(settings)["control_plane"]["spokes"] % {}
-
-    if len(spokes) == 0:
-        return False, "Spokes are not configured"
-
-    hub_openshift = settings["control_plane"]["hub"]
-    if not hub_openshift.connected:
-        return False, "Control Plane Hub Openshift is not connected"
-
-    if "managedzones" not in hub_openshift.do_action("api-resources", "--api-group=kuadrant.io").out():
-        return False, "MGC custom resources are missing on hub cluster"
-    return True, None
