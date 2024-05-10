@@ -202,7 +202,7 @@ def mockserver(testconfig, skip_or_fail):
         return skip_or_fail(f"Mockserver configuration item is missing: {exc}")
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def tracing(testconfig, skip_or_fail):
     """Returns tracing client for tracing tests"""
     try:

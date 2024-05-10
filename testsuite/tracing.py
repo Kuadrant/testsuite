@@ -1,6 +1,6 @@
 """Module with Tracing client for traces management"""
 
-from typing import Optional, Iterator
+from typing import Optional
 
 import backoff
 from apyproxy import ApyProxy
@@ -16,28 +16,17 @@ class TracingClient:
         self.client = client or KuadrantClient(verify=False)
         self.query = ApyProxy(query_url, session=self.client)
 
-    def _get_traces(self, operation: str) -> Iterator[dict]:
-        """Get traces from tracing client by operation name"""
-        params = {"service": "authorino", "operation": operation}
-        response = self.query.api.traces.get(params=params)
-        return reversed(response.json()["data"])
+    @backoff.on_predicate(backoff.fibo, lambda x: x == [], max_tries=7, jitter=None)
+    def _find_trace(self, request_id: str, tags=None):
+        if tags is None:
+            tags = {}
+        tags.update({"service.name": "authorino", "authorino.request_id": request_id})
+        return self.query.api.search.get(params=tags).json()["traces"]
 
-    @backoff.on_predicate(backoff.fibo, lambda x: x is None, max_tries=5, jitter=None)
-    def find_trace(self, operation: str, request_id: str) -> Optional[dict]:
-        """Find trace in tracing client by operation and authorino request id"""
-        for trace in self._get_traces(operation):  # pylint: disable=too-many-nested-blocks
-            for span in trace["spans"]:
-                if span["operationName"] == operation:
-                    for tag in span["tags"]:
-                        if tag["key"] == "authorino.request_id" and tag["value"] == request_id:
-                            return trace
-        return None
+    def find_trace(self, request_id: str) -> Optional[dict]:
+        """Find trace in tracing client by tag `authorino.request_id`"""
+        return self._find_trace(request_id)
 
-    def find_tagged_trace(self, operation: str, request_id: str, tag_key: str, tag_value: str) -> Optional[dict]:
-        """Find trace in tracing client by operation, authorino request id and tag key-value pair"""
-        if trace := self.find_trace(operation, request_id):
-            for process in trace["processes"]:
-                for proc_tag in trace["processes"][process]["tags"]:
-                    if proc_tag["key"] == tag_key and proc_tag["value"] == tag_value:
-                        return trace
-        return None
+    def find_tagged_trace(self, request_id: str, tag: dict) -> Optional[dict]:
+        """Find trace in tracing client by authorino request id and tag key-value pair"""
+        return self._find_trace(request_id, tag)
