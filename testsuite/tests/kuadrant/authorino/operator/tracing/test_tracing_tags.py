@@ -18,6 +18,7 @@ def authorino_parameters(authorino_parameters):
     return authorino_parameters
 
 
+@pytest.mark.issue("https://github.com/Kuadrant/authorino-operator/issues/171")
 def test_tracing_tags(client, auth, tracing):
     """Send request and check if it's trace with custom tags is saved into the tracing client"""
     response = client.get("/get", auth=auth)
@@ -26,5 +27,5 @@ def test_tracing_tags(client, auth, tracing):
     request_id = extract_response(response) % None
     assert request_id is not None
 
-    trace = tracing.find_tagged_trace(request_id, {TAG_KEY: TAG_VALUE})
+    trace = tracing.find_tagged_trace(request_id, "authorino", {TAG_KEY: TAG_VALUE})
     assert len(trace) == 1

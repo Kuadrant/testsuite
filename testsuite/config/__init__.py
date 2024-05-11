@@ -39,9 +39,9 @@ settings = Dynaconf(
             & Validator("service_protection.authorino.oidc_url", must_exist=True)
         ),
         DefaultValueValidator(
-            "tracing.collector_url", default=fetch_service("tempo-sample", protocol="rpc", port=4317)
+            "tracing.collector_url", default=fetch_service("jaeger-collector", protocol="rpc", port=4317)
         ),
-        DefaultValueValidator("tracing.query_url", default=fetch_route("tempo", force_http=True)),
+        DefaultValueValidator("tracing.query_url", default=fetch_route("jaeger-query", force_http=True)),
         Validator(
             "default_exposer",
             # If exposer was successfully converted, it will no longer be a string"""

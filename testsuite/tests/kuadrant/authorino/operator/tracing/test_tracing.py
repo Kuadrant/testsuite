@@ -15,5 +15,5 @@ def test_tracing(client, auth, tracing):
     request_id = extract_response(response) % None
     assert request_id is not None
 
-    trace = tracing.find_trace(request_id)
+    trace = tracing.find_trace(request_id, "authorino")
     assert len(trace) == 1
