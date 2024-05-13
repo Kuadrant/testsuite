@@ -44,12 +44,12 @@ def exposer(request, hub_openshift) -> Exposer:
 
 
 @pytest.fixture(scope="session")
-def cluster_issuer():
+def cluster_issuer(testconfig):
     """Reference to cluster self-signed certificate issuer"""
     return CustomReference(
         group="cert-manager.io",
         kind="ClusterIssuer",
-        name="selfsigned-cluster-issuer",
+        name=testconfig["control_plane"]["clusterissuer"],
     )
 
 
