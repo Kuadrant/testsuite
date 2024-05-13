@@ -1,5 +1,6 @@
 """RateLimitPolicy related objects"""
 
+import time
 from dataclasses import dataclass
 from typing import Iterable, Literal, Optional, List
 
@@ -85,3 +86,5 @@ class RateLimitPolicy(OpenShiftObject):
                 tolerate_failures=5,
             )
             assert success, f"{self.kind()} did not get ready in time"
+        # Even after enforced condition RLP requires a short sleep
+        time.sleep(5)
