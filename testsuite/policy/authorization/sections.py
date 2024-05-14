@@ -271,9 +271,9 @@ class AuthorizationSection(Section):
         self.add_auth_rules(name, [rule], **common_features)
 
     @modify
-    def add_opa_policy(self, name, inline_rego, **common_features):
+    def add_opa_policy(self, name, inline_rego, all_values: bool = False, **common_features):
         """Adds Opa (https://www.openpolicyagent.org/docs/latest/) policy to the AuthConfig"""
-        self.add_item(name, {"opa": {"rego": inline_rego}}, **common_features)
+        self.add_item(name, {"opa": {"allValues": all_values, "rego": inline_rego}}, **common_features)
 
     @modify
     def add_external_opa_policy(self, name, endpoint, ttl=0, **common_features):
