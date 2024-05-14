@@ -208,6 +208,7 @@ def tracing(testconfig, skip_or_fail):
     try:
         testconfig.validators.validate(only=["tracing"])
         return TracingClient(
+            testconfig["tracing"]["backend"] == "jaeger",
             testconfig["tracing"]["collector_url"],
             testconfig["tracing"]["query_url"],
             KuadrantClient(verify=False),
