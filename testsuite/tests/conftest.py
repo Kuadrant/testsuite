@@ -6,22 +6,24 @@ from urllib.parse import urlparse
 import pytest
 from dynaconf import ValidationError
 from keycloak import KeycloakAuthenticationError
+from openshift_client import selector, OpenShiftPythonException
 
+from testsuite.backend.httpbin import Httpbin
 from testsuite.capabilities import has_kuadrant
 from testsuite.certificates import CFSSLClient
 from testsuite.config import settings
-from testsuite.httpx import KuadrantClient
-from testsuite.mockserver import Mockserver
-from testsuite.tracing import TracingClient
 from testsuite.gateway import Gateway, GatewayRoute, Hostname, Exposer
-from testsuite.oidc import OIDCProvider
-from testsuite.oidc.auth0 import Auth0Provider
-from testsuite.backend.httpbin import Httpbin
-from testsuite.oidc.rhsso import RHSSO
 from testsuite.gateway.envoy import Envoy
 from testsuite.gateway.envoy.route import EnvoyVirtualRoute
 from testsuite.gateway.gateway_api.gateway import KuadrantGateway
 from testsuite.gateway.gateway_api.route import HTTPRoute
+from testsuite.httpx import KuadrantClient
+from testsuite.mockserver import Mockserver
+from testsuite.oidc import OIDCProvider
+from testsuite.oidc.auth0 import Auth0Provider
+from testsuite.oidc.rhsso import RHSSO
+from testsuite.openshift.kuadrant import KuadrantCR
+from testsuite.tracing import TracingClient
 from testsuite.utils import randomize, _whoami
 
 
@@ -262,13 +264,23 @@ def module_label(label):
 
 
 @pytest.fixture(scope="session")
-def kuadrant(request):
+def kuadrant(request, testconfig):
     """Returns Kuadrant instance if exists, or None"""
     if request.config.getoption("--standalone"):
         return None
 
-    # TODO: Return actual Kuadrant object
-    return True
+    ocp = settings["service_protection"]["project"]
+    project = settings["service_protection"]["system_project"]
+    kuadrant_openshift = ocp.change_project(project)
+
+    try:
+        with kuadrant_openshift.context:
+            kuadrant = selector("kuadrant").object(cls=KuadrantCR)
+            kuadrant.committed = True
+    except OpenShiftPythonException:
+        pytest.fail("Running Kuadrant tests, but Kuadrant resource was not found")
+
+    return kuadrant
 
 
 @pytest.fixture(scope="session")
