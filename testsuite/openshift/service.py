@@ -3,7 +3,7 @@
 from dataclasses import dataclass, asdict
 from typing import Literal
 
-from openshift_client import timeout, APIObject
+from openshift_client import timeout
 
 from testsuite.openshift import OpenShiftObject
 
