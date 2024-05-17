@@ -1,5 +1,4 @@
 default:
-  skip_cleanup: false
   dynaconf_merge: true
   cluster: {}
   tools:
