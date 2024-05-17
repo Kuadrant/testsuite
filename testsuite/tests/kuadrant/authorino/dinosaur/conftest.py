@@ -231,30 +231,31 @@ allow { method == "DELETE"; roles[_] == "admin-full" }
 @pytest.fixture(scope="module")
 def user_with_valid_org_id(keycloak, blame):
     """
-    Creates new user with valid middle name.
-    Middle name is mapped to org ID in auth config.
+    Creates new user with valid last name.
+    last name is mapped to org ID in auth config.
     """
-    user = keycloak.realm.create_user(blame("someuser"), blame("password"))
-    user.assign_attribute({"middleName": "123"})
+    user = keycloak.realm.create_user(blame("someuser"), blame("password"), lastName="123")
     return HttpxOidcClientAuth.from_user(keycloak.get_token, user=user)
 
 
-@pytest.fixture(scope="module", params=["321", None])
-def user_with_invalid_org_id(keycloak, blame, request):
+# https://github.com/Kuadrant/testsuite/issues/396
+# @pytest.fixture(scope="module", params=["321", None])
+@pytest.fixture(scope="module")
+def user_with_invalid_org_id(keycloak, blame):
     """
-    Creates new user with valid middle name.
-    Middle name is mapped to org ID in auth config.
+    Creates new user with valid last name.
+    last name is mapped to org ID in auth config.
     """
-    user = keycloak.realm.create_user(blame("someuser"), blame("password"))
-    user.assign_attribute({"middleName": request.param})
+    user = keycloak.realm.create_user(blame("someuser"), blame("password"), lastName="321")
     return HttpxOidcClientAuth.from_user(keycloak.get_token, user=user)
 
 
 @pytest.fixture(scope="module")
 def user_with_invalid_email(keycloak, blame):
     """Creates new user with invalid email"""
-    user = keycloak.realm.create_user(blame("someuser"), blame("password"), email="denied-test-user1@example.com")
-    user.assign_attribute({"middleName": "123"})
+    user = keycloak.realm.create_user(
+        blame("someuser"), blame("password"), email="denied-test-user1@example.com", lastName="123"
+    )
     return HttpxOidcClientAuth.from_user(keycloak.get_token, user=user)
 
 
