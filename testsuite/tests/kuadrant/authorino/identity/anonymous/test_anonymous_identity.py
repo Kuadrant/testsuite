@@ -6,16 +6,16 @@ pytestmark = [pytest.mark.authorino]
 
 
 @pytest.fixture(scope="module")
-def authorization(authorization, rhsso):
-    """Add RHSSO identity"""
-    authorization.identity.add_oidc("rhsso", rhsso.well_known["issuer"])
+def authorization(authorization, keycloak):
+    """Add Keycloak identity"""
+    authorization.identity.add_oidc("keycloak", keycloak.well_known["issuer"])
     return authorization
 
 
 def test_anonymous_identity(client, auth, authorization):
     """
     Setup:
-        - Create AuthConfig with RHSSO identity
+        - Create AuthConfig with Keycloak identity
     Test:
         - Send request with authentication
         - Assert that response status code is 200

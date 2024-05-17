@@ -55,9 +55,9 @@ def benchmark(hyperfoil, name, template, agents, http, files):
 
 
 @pytest.fixture(scope="module")
-def rhsso_auth(rhsso):
-    """Returns RHSSO authentication object for HTTPX"""
-    return HttpxOidcClientAuth(rhsso.get_token)
+def keycloak_auth(keycloak):
+    """Returns Keycloak authentication object for HTTPX"""
+    return HttpxOidcClientAuth(keycloak.get_token)
 
 
 @pytest.fixture(scope="function")

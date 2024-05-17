@@ -91,9 +91,9 @@ podman run \
 	-v $HOME/.kube/config:/run/kubeconfig:z \
 	-e KUADRANT_SERVICE_PROTECTION__PROJECT=authorino \
 	-e KUADRANT_SERVICE_PROTECTION__PROJECT2=authorino2 \
-	-e KUADRANT_RHSSO__url="https://my-sso.net" \
-	-e KUADRANT_RHSSO__password="ADMIN_PASSWORD" \
-	-e KUADRANT_RHSSO__username="ADMIN_USERNAME" \
+	-e KUADRANT_KEYCLOAK__url="https://my-sso.net" \
+	-e KUADRANT_KEYCLOAK__password="ADMIN_PASSWORD" \
+	-e KUADRANT_KEYCLOAK__username="ADMIN_USERNAME" \
 	-e KUADRANT_AUTH0__url="AUTH0_URL" \
 	-e KUADRANT_AUTH0__client_id="AUTH0_CLIENT_ID" \
 	-e KUADRANT_AUTH0__client_secret="AUTH0_CLIENT_SECRET" \

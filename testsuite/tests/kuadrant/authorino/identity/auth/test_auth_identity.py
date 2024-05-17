@@ -1,32 +1,32 @@
-"""Tests basic authentication with RHSSO/Auth0 as identity provider"""
+"""Tests basic authentication with Keycloak/Auth0 as identity provider"""
 
 import pytest
 
 from testsuite.httpx.auth import HttpxOidcClientAuth
 from testsuite.oidc import OIDCProvider
-from testsuite.oidc.rhsso import RHSSO
+from testsuite.oidc.keycloak import Keycloak
 
 pytestmark = [pytest.mark.authorino]
 
 
 @pytest.fixture(scope="module")
 def authorization(authorization, oidc_provider):
-    """Add RHSSO identity to AuthConfig"""
-    authorization.identity.add_oidc("rhsso", oidc_provider.well_known["issuer"])
+    """Add Keycloak identity to AuthConfig"""
+    authorization.identity.add_oidc("default", oidc_provider.well_known["issuer"])
     return authorization
 
 
-@pytest.fixture(scope="module", params=("rhsso", "auth0"))
+@pytest.fixture(scope="module", params=("keycloak", "auth0"))
 def oidc_provider(request) -> OIDCProvider:
     """Fixture which enables switching out OIDC providers for individual modules"""
     return request.getfixturevalue(request.param)
 
 
 @pytest.fixture(scope="module")
-def wrong_auth(oidc_provider, auth0, rhsso):
+def wrong_auth(oidc_provider, auth0, keycloak):
     """Different (but valid) auth than was configured"""
-    token = rhsso.get_token
-    if isinstance(oidc_provider, RHSSO):
+    token = keycloak.get_token
+    if isinstance(oidc_provider, Keycloak):
         token = auth0.get_token
     return HttpxOidcClientAuth(token)
 

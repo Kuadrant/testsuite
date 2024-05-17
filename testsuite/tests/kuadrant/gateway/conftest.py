@@ -24,13 +24,13 @@ def gateway(request, openshift, blame, wildcard_domain, module_label):
 def authorization(authorization, oidc_provider):
     # pylint: disable=unused-argument
     """Create AuthPolicy attached to gateway"""
-    authorization.identity.add_oidc("rhsso", oidc_provider.well_known["issuer"])
+    authorization.identity.add_oidc("default", oidc_provider.well_known["issuer"])
     return authorization
 
 
 @pytest.fixture(scope="module")
 def auth(oidc_provider):
-    """Returns RHSSO authentication object for HTTPX"""
+    """Returns Authentication object for HTTPX"""
     return HttpxOidcClientAuth(oidc_provider.get_token, "authorization")
 
 

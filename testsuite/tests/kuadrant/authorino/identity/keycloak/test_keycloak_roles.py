@@ -7,11 +7,11 @@ pytestmark = [pytest.mark.authorino]
 
 
 @pytest.fixture(scope="function")
-def user_with_role(rhsso, realm_role, blame):
+def user_with_role(keycloak, realm_role, blame):
     """Creates new user and adds him into realm_role"""
     username = blame("someuser")
     password = blame("password")
-    user = rhsso.realm.create_user(username, password)
+    user = keycloak.realm.create_user(username, password)
     user.assign_realm_role(realm_role)
     return user
 
@@ -23,9 +23,9 @@ def authorization(authorization, realm_role, blame):
     return authorization
 
 
-def test_user_with_role(client, user_with_role, rhsso):
+def test_user_with_role(client, user_with_role, keycloak):
     """Test request when user does have required role using new user with assigned role"""
-    auth = HttpxOidcClientAuth.from_user(rhsso.get_token, user_with_role, "authorization")
+    auth = HttpxOidcClientAuth.from_user(keycloak.get_token, user_with_role, "authorization")
     response = client.get("/get", auth=auth)
     assert response.status_code == 200
 

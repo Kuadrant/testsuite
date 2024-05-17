@@ -11,7 +11,7 @@ def test_wristband_token_claims(oidc_provider, auth, wristband_token, wristband_
     wristband_decoded = jwt.decode(wristband_token, certificates["signing_ca"].certificate)
     assert wristband_decoded["exp"] - wristband_decoded["iat"] == 300
     assert wristband_decoded["iss"] == wristband_endpoint
-    # check differences in claims between rhsso token and acquired wristband token
+    # check differences in claims between Keycloak token and acquired wristband token
     access_token_decoded = jwt.decode(auth.token.access_token, oidc_provider.get_public_key(), audience="account")
     for claim in ["preferred_username", "email", "realm_access", "resource_access"]:
         assert claim in access_token_decoded

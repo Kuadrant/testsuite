@@ -30,7 +30,7 @@ def rate_limit(rate_limit):
 def authorization(authorization, oidc_provider):
     """Add oidc and anonymous identity with low priority to the AuthConfig"""
     authorization.identity.add_anonymous("anonymous", priority=1)
-    authorization.identity.add_oidc("rhsso", oidc_provider.well_known["issuer"])
+    authorization.identity.add_oidc("default", oidc_provider.well_known["issuer"])
 
     # curly brackets are added to response as it stringifies the anonymous output.
     authorization.responses.add_success_dynamic(
@@ -41,7 +41,7 @@ def authorization(authorization, oidc_provider):
 
 @pytest.fixture(scope="module")
 def auth(oidc_provider):
-    """Returns RHSSO authentication object for HTTPX"""
+    """Returns authentication object for HTTPX"""
     return HttpxOidcClientAuth(oidc_provider.get_token, "authorization")
 
 

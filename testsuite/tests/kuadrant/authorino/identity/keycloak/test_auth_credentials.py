@@ -1,4 +1,4 @@
-"""Test for RHSSO auth credentials"""
+"""Test for Keycloak auth credentials"""
 
 import pytest
 
@@ -14,9 +14,11 @@ def credentials(request):
 
 
 @pytest.fixture(scope="module")
-def authorization(authorization, rhsso, credentials):
-    """Add RHSSO identity to Authorization"""
-    authorization.identity.add_oidc("rhsso", rhsso.well_known["issuer"], credentials=Credentials(credentials, "Token"))
+def authorization(authorization, keycloak, credentials):
+    """Add Keycloak identity to Authorization"""
+    authorization.identity.add_oidc(
+        "keycloak", keycloak.well_known["issuer"], credentials=Credentials(credentials, "Token")
+    )
     return authorization
 
 

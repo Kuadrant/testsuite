@@ -1,4 +1,4 @@
-"""Objects for RHSSO"""
+"""Keycloak OIDCProvider"""
 
 from functools import cached_property
 from urllib.parse import urlparse
@@ -11,9 +11,9 @@ from .objects import Realm, Client, User
 
 
 # pylint: disable=too-many-instance-attributes
-class RHSSO(OIDCProvider, LifecycleObject):
+class Keycloak(OIDCProvider, LifecycleObject):
     """
-    OIDCProvider implementation for RHSSO. It creates Realm, client and user.
+    OIDCProvider implementation using Keycloak. It creates Realm, Client and single User.
     """
 
     def __init__(
@@ -37,7 +37,7 @@ class RHSSO(OIDCProvider, LifecycleObject):
         self.client = None
 
         try:
-            self.master = KeycloakAdmin(
+            self.master_realm = KeycloakAdmin(
                 server_url=server_url,
                 username=username,
                 password=password,
@@ -49,7 +49,7 @@ class RHSSO(OIDCProvider, LifecycleObject):
             # Older Keycloaks versions (and RHSSO) needs requires url to be pointed at auth/ endpoint
             # pylint: disable=protected-access
             self.server_url = urlparse(server_url)._replace(path="auth/").geturl()
-            self.master = KeycloakAdmin(
+            self.master_realm = KeycloakAdmin(
                 server_url=self.server_url,
                 username=username,
                 password=password,
@@ -59,8 +59,8 @@ class RHSSO(OIDCProvider, LifecycleObject):
 
     def create_realm(self, name: str, **kwargs) -> Realm:
         """Creates new realm"""
-        self.master.create_realm(payload={"realm": name, "enabled": True, "sslRequired": "None", **kwargs})
-        return Realm(self.master, name)
+        self.master_realm.create_realm(payload={"realm": name, "enabled": True, "sslRequired": "None", **kwargs})
+        return Realm(self.master_realm, name)
 
     def commit(self):
         self.realm: Realm = self.create_realm(self.realm_name, accessTokenLifespan=24 * 60 * 60)

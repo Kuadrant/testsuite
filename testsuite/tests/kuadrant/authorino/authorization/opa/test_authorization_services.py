@@ -19,8 +19,9 @@ from testsuite.policy.authorization import JsonResponse, ValueFrom, Pattern
 pytestmark = [pytest.mark.authorino]
 
 
+# pylint: disable=line-too-long
 @pytest.fixture(scope="module")
-def rego_policy(rhsso):
+def rego_policy(keycloak):
     """
     Complex OPA REGO policy that implements the UMA authorization flow.
     See https://www.keycloak.org/docs/latest/authorization_services/index.html#_service_uma_authorization_process
@@ -29,12 +30,12 @@ def rego_policy(rhsso):
     under the used scope (HTTP GET) this REGO policy authorizes the request.
     """
     return f"""\
-pat := http.send({{"url":"{rhsso.server_url}realms/{rhsso.realm.name}/protocol/openid-connect/token",\
+pat := http.send({{"url":"{keycloak.server_url}realms/{keycloak.realm.name}/protocol/openid-connect/token",\
 "method": "post","headers":{{"Content-Type":"application/x-www-form-urlencoded"}},\
-"raw_body":"grant_type=client_credentials&client_id={rhsso.client_name}&client_secret={rhsso.client.secret}"}})\
+"raw_body":"grant_type=client_credentials&client_id={keycloak.client_name}&client_secret={keycloak.client.secret}"}})\
 .body.access_token
 
-resource_id := http.send({{"url":concat("",["{rhsso.server_url}realms/{rhsso.realm.name}/authz/protection/\
+resource_id := http.send({{"url":concat("",["{keycloak.server_url}realms/{keycloak.realm.name}/authz/protection/\
 resource_set?uri=",input.context.request.http.path]),"method":"get", "headers":\
 {{"Authorization":concat(" ",["Bearer ",pat])}}}}).body[0]
 
@@ -44,12 +45,12 @@ default rpt = ""
 rpt = access_token {{ object.get(input.auth.identity, "authorization", {{}}).permissions }}
 else = rpt_str {{
 
-  ticket := http.send({{"url":"{rhsso.server_url}realms/{rhsso.realm.name}/authz/protection/permission",\
+  ticket := http.send({{"url":"{keycloak.server_url}realms/{keycloak.realm.name}/authz/protection/permission",\
 "method":"post","headers":{{"Authorization":concat(" ",["Bearer ",pat]),"Content-Type":"application/json"}},\
 "raw_body":concat("",["[{{\\"resource_id\\":\\"",resource_id,"\\",\\"resource_scopes\\":[\\"",scope,"\\"]}}]"\
 ])}}).body.ticket
 
-  rpt_str := object.get(http.send({{"url":"{rhsso.server_url}realms/{rhsso.realm.name}/protocol/openid-connect/token",\
+  rpt_str := object.get(http.send({{"url":"{keycloak.server_url}realms/{keycloak.realm.name}/protocol/openid-connect/token",\
 "method":"post","headers":{{"Authorization":concat(" ",\
 ["Bearer ",access_token]),"Content-Type":"application/x-www-form-urlencoded"}},"raw_body":concat("",\
 ["grant_type=urn:ietf:params:oauth:grant-type:uma-ticket&ticket=",ticket,"&submit_request=true"])}})\
@@ -84,34 +85,34 @@ def authorization(authorization, rego_policy):
 
 
 @pytest.fixture(scope="module")
-def resource_owner_auth(rhsso):
+def resource_owner_auth(keycloak):
     """
     Auth for user who owns the protected resource, a.k.a. "owner" user.
     The "uma_protection" client role is assigned to the user so that they are allowed to create protected resources.
     """
-    owner = rhsso.realm.create_user("owner", "owner")
-    role = rhsso.realm.admin.get_client_role(client_id=rhsso.client.client_id, role_name="uma_protection")
-    rhsso.realm.admin.assign_client_role(user_id=owner.user_id, client_id=rhsso.client.client_id, roles=[role])
-    return HttpxOidcClientAuth.from_user(rhsso.get_token(owner.username, owner.password), owner)
+    owner = keycloak.realm.create_user("owner", "owner")
+    role = keycloak.realm.admin.get_client_role(client_id=keycloak.client.client_id, role_name="uma_protection")
+    keycloak.realm.admin.assign_client_role(user_id=owner.user_id, client_id=keycloak.client.client_id, roles=[role])
+    return HttpxOidcClientAuth.from_user(keycloak.get_token(owner.username, owner.password), owner)
 
 
 @pytest.fixture(scope="module")
-def requester_auth(rhsso):
+def requester_auth(keycloak):
     """Auth for user who requests the access to the protected resource, a.k.a. "requester" user"""
-    requester = rhsso.realm.create_user("requester", "requester")
-    return HttpxOidcClientAuth.from_user(rhsso.get_token(requester.username, requester.password), requester)
+    requester = keycloak.realm.create_user("requester", "requester")
+    return HttpxOidcClientAuth.from_user(keycloak.get_token(requester.username, requester.password), requester)
 
 
 @pytest.fixture(scope="module")
-def owner_uma(rhsso, resource_owner_auth):
+def owner_uma(keycloak, resource_owner_auth):
     """UMA client used to create a protected resource and assign permissions for "requester" to access it."""
     keycloak_connection = KeycloakOpenIDConnection(
-        server_url=rhsso.server_url,
-        client_id=rhsso.client_name,
-        client_secret_key=rhsso.client.secret,
+        server_url=keycloak.server_url,
+        client_id=keycloak.client_name,
+        client_secret_key=keycloak.client.secret,
         username=resource_owner_auth.username,
         password=resource_owner_auth.password,
-        realm_name=rhsso.realm_name,
+        realm_name=keycloak.realm_name,
     )
     return KeycloakUMA(keycloak_connection)
 

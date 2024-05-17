@@ -21,7 +21,7 @@ from testsuite.httpx import KuadrantClient
 from testsuite.mockserver import Mockserver
 from testsuite.oidc import OIDCProvider
 from testsuite.oidc.auth0 import Auth0Provider
-from testsuite.oidc.rhsso import RHSSO
+from testsuite.oidc.keycloak import Keycloak
 from testsuite.openshift.kuadrant import KuadrantCR
 from testsuite.tracing import TracingClient
 from testsuite.utils import randomize, _whoami
@@ -150,17 +150,17 @@ def openshift2(testconfig, skip_or_fail):
 
 
 @pytest.fixture(scope="session")
-def rhsso(request, testconfig, blame, skip_or_fail):
-    """RHSSO OIDC Provider fixture"""
+def keycloak(request, testconfig, blame, skip_or_fail):
+    """Keycloak OIDC Provider fixture"""
     try:
-        testconfig.validators.validate(only="rhsso")
-        cnf = testconfig["rhsso"]
-        info = RHSSO(
+        testconfig.validators.validate(only="keycloak")
+        cnf = testconfig["keycloak"]
+        info = Keycloak(
             cnf["url"],
             cnf["username"],
             cnf["password"],
             blame("realm"),
-            blame("client"),
+            "base-client",
             cnf["test_user"]["username"],
             cnf["test_user"]["password"],
         )
@@ -217,9 +217,9 @@ def tracing(testconfig, skip_or_fail):
 
 
 @pytest.fixture(scope="session")
-def oidc_provider(rhsso) -> OIDCProvider:
+def oidc_provider(keycloak) -> OIDCProvider:
     """Fixture which enables switching out OIDC providers for individual modules"""
-    return rhsso
+    return keycloak
 
 
 @pytest.fixture(scope="session")

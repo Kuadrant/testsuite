@@ -39,16 +39,16 @@ def authorino(authorino, openshift, blame, request, testconfig, label) -> Author
 # pylint: disable=unused-argument
 @pytest.fixture(scope="module")
 def authorization(authorization, oidc_provider, route, authorization_name, openshift, label) -> AuthConfig:
-    """In case of Authorino, AuthC onfig used for authorization"""
+    """In case of Authorino, AuthConfig used for authorization"""
     if authorization is None:
         authorization = AuthConfig.create_instance(openshift, authorization_name, route, labels={"testRun": label})
-    authorization.identity.add_oidc("rhsso", oidc_provider.well_known["issuer"])
+    authorization.identity.add_oidc("default", oidc_provider.well_known["issuer"])
     return authorization
 
 
 @pytest.fixture(scope="module")
 def auth(oidc_provider):
-    """Returns RHSSO authentication object for HTTPX"""
+    """Returns authentication object for HTTPX"""
     return HttpxOidcClientAuth(oidc_provider.get_token, "authorization")
 
 

@@ -7,10 +7,10 @@
 #    kubeconfig_path: "~/.kube/config"         # Optional: Kubeconfig to use, if None the default one is used
 #  tools:
 #    project: "tools"                          # Optional: OpenShift project, where external tools are located
-#  rhsso:
-#    url: "SSO_URL"
-#    username: "SSO_ADMIN_USERNAME"
-#    password: "SSO_ADMIN_PASSWORD"
+#  keycloak:
+#    url: "KEYCLOAK_URL"
+#    username: "KEYCLOAK_ADMIN_USERNAME"
+#    password: "KEYCLOAK_ADMIN_PASSWORD"
 #    test_user:
 #      username: "testUser"
 #      password: "testPassword"

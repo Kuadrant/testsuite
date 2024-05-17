@@ -12,9 +12,9 @@ from testsuite.utils import cert_builder
 
 
 @pytest.fixture(scope="session")
-def oidc_provider(rhsso):
+def oidc_provider(keycloak):
     """Fixture which enables switching out OIDC providers for individual modules"""
-    return rhsso
+    return keycloak
 
 
 @pytest.fixture(scope="module")
@@ -115,7 +115,7 @@ def wristband_authorization(
         labels={"testRun": label},
     )
 
-    authorization.identity.add_oidc("rhsso", oidc_provider.well_known["issuer"])
+    authorization.identity.add_oidc("default", oidc_provider.well_known["issuer"])
     authorization.responses.add_success_dynamic(
         "wristband",
         WristbandResponse(issuer=wristband_endpoint, signingKeyRefs=[WristbandSigningKeyRef(wristband_secret)]),
