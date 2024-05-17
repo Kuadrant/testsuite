@@ -11,4 +11,4 @@ def load(obj, env=None, silent=True, key=None, filename=None):
     try:
         obj["default_exposer"] = EXPOSERS[obj["default_exposer"]]
     except KeyError:
-        return
+        pass
