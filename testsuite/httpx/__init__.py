@@ -3,7 +3,7 @@
 # I change return type of HTTPX client to Kuadrant Result
 # mypy: disable-error-code="override, return-value"
 from tempfile import NamedTemporaryFile
-from typing import Union
+from typing import Union, Iterable
 
 import backoff
 from httpx import Client, RequestError
@@ -84,9 +84,16 @@ class ResultList(list):
 class KuadrantClient(Client):
     """Httpx client which retries unstable requests"""
 
-    def __init__(self, *, verify: Union[Certificate, bool] = True, cert: Certificate = None, **kwargs):
+    def __init__(
+        self,
+        *,
+        verify: Union[Certificate, bool] = True,
+        cert: Certificate = None,
+        retry_codes: Iterable[int] = None,
+        **kwargs,
+    ):
         self.files = []
-        self.retry_codes = {503}
+        self.retry_codes = retry_codes or {503}
         _verify = None
         if isinstance(verify, Certificate):
             verify_file = create_tmp_file(verify.chain)
