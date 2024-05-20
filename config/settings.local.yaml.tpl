@@ -46,3 +46,10 @@
 #  default_exposer: "openshift"                    # Exposer type that should be used, options: 'openshift'
 #  control_plane:
 #    managedzone: aws-mz                           # Name of the ManagedZone resource
+#    issuer:                                       # Issuer object for testing TLSPolicy
+#      name: "selfsigned-cluster-issuer"           # Name of Issuer CR
+#      kind: "ClusterIssuer"                       # Kind of Issuer, can be "Issuer" or "ClusterIssuer"
+#  letsencrypt:
+#    issuer:                                       # Issuer object for testing TLSPolicy
+#      name: "letsencrypt-staging-issuer"          # Name of Issuer CR
+#      kind: "Issuer"                              # Kind of Issuer, can be "Issuer" or "ClusterIssuer"

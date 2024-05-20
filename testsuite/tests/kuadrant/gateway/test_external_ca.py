@@ -1,17 +1,17 @@
 """
 This module contains the most basic happy path test for both DNSPolicy and TLSPolicy
-for a cluster with Let's Encrypt ClusterIssuer
+for a cluster with Let's Encrypt Issuer
 
 Prerequisites:
 * multi-cluster-gateways ns is created and set as openshift["project"]
 * managedclustersetbinding is created in openshift["project"]
 * gateway class "kuadrant-multi-cluster-gateway-instance-per-cluster" is created
 * cert-manager Operator installed
-* Let's Encrypt ClusterIssuer object configured on the cluster matching the template:
+* Let's Encrypt Issuer object configured on the cluster matching the template:
 apiVersion: cert-manager.io/v1
-kind: ClusterIssuer
+kind: ClusterIssuer | Issuer
 metadata:
-  name: letsencrypt-staging
+  name: letsencrypt-staging-issuer
 spec:
   acme:
     email: <email_address>
@@ -47,14 +47,15 @@ pytestmark = [pytest.mark.kuadrant_only]
 def cluster_issuer(testconfig, hub_openshift):
     """Reference to cluster Let's Encrypt certificate issuer"""
     testconfig.validators.validate(only="letsencrypt")
-    name = testconfig["letsencrypt"]["clusterissuer"]
+    name = testconfig["letsencrypt"]["issuer"]["name"]
+    kind = testconfig["letsencrypt"]["issuer"]["kind"]
     try:
-        selector(f"clusterissuer/{name}", static_context=hub_openshift.context).object()
+        selector(f"{kind}/{name}", static_context=hub_openshift.context).object()
     except OpenShiftPythonException as exc:
-        pytest.skip(f"{name} ClusterIssuer is not present on the cluster: {exc}")
+        pytest.skip(f"{name} {kind} is not present on the cluster: {exc}")
     return CustomReference(
         group="cert-manager.io",
-        kind="ClusterIssuer",
+        kind=kind,
         name=name,
     )
 

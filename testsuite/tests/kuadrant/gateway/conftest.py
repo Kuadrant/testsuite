@@ -48,8 +48,8 @@ def cluster_issuer(testconfig):
     """Reference to cluster self-signed certificate issuer"""
     return CustomReference(
         group="cert-manager.io",
-        kind="ClusterIssuer",
-        name=testconfig["control_plane"]["clusterissuer"],
+        kind=testconfig["control_plane"]["issuer"]["kind"],
+        name=testconfig["control_plane"]["issuer"]["name"],
     )
 
 
