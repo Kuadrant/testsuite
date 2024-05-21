@@ -49,7 +49,7 @@ authorino: poetry-no-dev
 
 authorino-standalone: ## Run only test capable of running with standalone Authorino
 authorino-standalone: poetry-no-dev
-	$(PYTEST) -n4 -m 'authorino and not kuadrant_only' --runxfail --dist loadfile --enforce --standalone $(flags) testsuite/tests/kuadrant/authorino
+	$(PYTEST) -n4 -m 'authorino and not kuadrant_only' --dist loadfile --enforce --standalone $(flags) testsuite/tests/kuadrant/authorino
 
 limitador: ## Run only Limitador related tests
 limitador: poetry-no-dev

@@ -3,6 +3,7 @@ Conftest for dinosaur test
 """
 
 import pytest
+from openshift_client import OpenShiftPythonException
 
 from testsuite.httpx.auth import HttpxOidcClientAuth
 from testsuite.oidc.keycloak import Keycloak
@@ -26,6 +27,22 @@ def admin_rhsso(blame, keycloak):
 
     info.commit()
     return info
+
+
+@pytest.fixture(scope="module", autouse=True)
+def commit(request, authorization):
+    """
+    xFails tests if the commit fails with Too many branches exception
+    https://github.com/Kuadrant/kuadrant-operator/issues/566
+    This should happen only when using Kuadrant. The test should pass on AuthConfig
+    """
+    request.addfinalizer(authorization.delete)
+    try:
+        authorization.commit()
+        authorization.wait_for_ready()
+    except OpenShiftPythonException as exc:
+        if "Too many" in exc.result.err():
+            pytest.xfail("AuthPolicy max limit")
 
 
 @pytest.fixture()
@@ -116,7 +133,7 @@ def authorization(authorization, keycloak, terms_and_conditions, cluster_info, a
         "user-sso",
         keycloak.well_known["issuer"],
         ttl=3600,
-        defaults_properties={"org_id": ValueFrom("auth.identity.middle_name")},
+        defaults_properties={"org_id": ValueFrom("auth.identity.family_name")},
     )
     authorization.identity.add_oidc(
         "admin-sso", admin_rhsso.well_known["issuer"], ttl=3600, when=[PatternRef("admin-route")]
