@@ -2,6 +2,10 @@
 
 import logging
 
+from openshift_client import selector
+
+from testsuite.openshift.service import Service
+
 logger = logging.getLogger(__name__)
 
 
@@ -44,6 +48,23 @@ def fetch_service(name, protocol: str = None, port: int = None):
             service_url = f"{service_url}:{port}"
 
         return service_url
+
+    return _fetcher
+
+
+def fetch_service_ip(name, port, force_http=False):
+    """Fetched load balanced ip for LoadBalancer service"""
+
+    def _fetcher(settings, _):
+        try:
+            openshift = settings["tools"]
+            with openshift.context:
+                ip = selector(f"service/{name}").object(cls=Service).external_ip
+                return f"http://{ip}:{port}" if force_http else f"https://{ip}:{port}"
+        # pylint: disable=broad-except
+        except Exception:
+            logger.warning("Unable to fetch route %s from tools", name)
+            return None
 
     return _fetcher
 

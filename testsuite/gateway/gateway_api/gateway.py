@@ -56,6 +56,10 @@ class KuadrantGateway(OpenShiftObject, Gateway):
     def service_name(self) -> str:
         return f"{self.name()}-istio"
 
+    def external_ip(self) -> str:
+        with self.context:
+            return f"{self.refresh().model.status.addresses[0].value}:80"
+
     @property
     def openshift(self):
         """Hostname of the first listener"""
