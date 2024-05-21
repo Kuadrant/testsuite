@@ -21,8 +21,8 @@ def rate_limit(rate_limit):
 
 @pytest.fixture(scope="module")
 def authorization(authorization, oidc_provider):
-    """Adds rhsso identity and JSON injection, that wraps the response as Envoy Dynamic Metadata for rate limit"""
-    authorization.identity.add_oidc("rhsso", oidc_provider.well_known["issuer"])
+    """Adds keycloak identity and JSON injection, that wraps the response as Envoy Dynamic Metadata for rate limit"""
+    authorization.identity.add_oidc("default", oidc_provider.well_known["issuer"])
     authorization.responses.add_success_dynamic(
         "identity", JsonResponse({"user": ValueFrom("auth.identity.preferred_username")})
     )
@@ -31,16 +31,16 @@ def authorization(authorization, oidc_provider):
 
 @pytest.fixture(scope="module")
 def auth(oidc_provider):
-    """Returns RHSSO authentication object for HTTPX"""
+    """Returns authentication object for HTTPX"""
     return HttpxOidcClientAuth(oidc_provider.get_token, "authorization")
 
 
 @pytest.fixture(scope="module")
-def auth2(rhsso, blame):
-    """Creates new RHSSO user and returns its authentication object for HTTPX"""
-    name = rhsso.user.username + "-test2"
-    user = rhsso.realm.create_user(name, "password", email=f"{blame('test')}@test.com")
-    return HttpxOidcClientAuth.from_user(rhsso.get_token, user=user)
+def auth2(keycloak, blame):
+    """Creates new Keycloak user and returns its authentication object for HTTPX"""
+    name = keycloak.user.username + "-test2"
+    user = keycloak.realm.create_user(name, "password", email=f"{blame('test')}@test.com")
+    return HttpxOidcClientAuth.from_user(keycloak.get_token, user=user)
 
 
 @pytest.mark.parametrize("rate_limit", ["route", "gateway"], indirect=True)

@@ -5,7 +5,7 @@ from typing import Generator, Callable, Union
 
 from httpx import Auth, Request, URL, Response
 
-from testsuite.oidc.rhsso import User
+from testsuite.oidc.keycloak import User
 from testsuite.oidc import Token
 
 TokenType = Union[Token, Callable[[], Token]]
@@ -22,7 +22,7 @@ class HttpxOidcClientAuth(Auth):
 
     @classmethod
     def from_user(cls, token: TokenType, user: User, location="authorization"):
-        """Creates Auth from RHSSO User object"""
+        """Creates Auth from Keycloak User object"""
         return cls(token, location, user.username, user.password)
 
     @cached_property

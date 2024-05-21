@@ -1,5 +1,5 @@
 """
-Tests for multiple auth identities (RHSSO + Auth0)
+Tests for multiple auth identities (Keycloak + Auth0)
 """
 
 import pytest
@@ -16,22 +16,22 @@ def auth0_auth(auth0):
 
 
 @pytest.fixture(scope="module")
-def rhsso_auth(rhsso):
-    """Returns RHSSO authentication object for HTTPX"""
-    return HttpxOidcClientAuth(rhsso.get_token)
+def keycloak_auth(keycloak):
+    """Returns Keycloak authentication object for HTTPX"""
+    return HttpxOidcClientAuth(keycloak.get_token)
 
 
 @pytest.fixture(scope="module")
-def authorization(authorization, auth0, rhsso):
-    """Add both RHSSO and Auth0 identities"""
-    authorization.identity.add_oidc("rhsso", rhsso.well_known["issuer"])
+def authorization(authorization, auth0, keycloak):
+    """Add both Keycloak and Auth0 identities"""
+    authorization.identity.add_oidc("Keycloak", keycloak.well_known["issuer"])
     authorization.identity.add_oidc("auth0", auth0.well_known["issuer"])
     return authorization
 
 
-def test_correct_auth(client, rhsso_auth, auth0_auth):
+def test_correct_auth(client, keycloak_auth, auth0_auth):
     """Tests correct auth"""
-    response = client.get("/get", auth=rhsso_auth)
+    response = client.get("/get", auth=keycloak_auth)
     assert response.status_code == 200
 
     response = client.get("/get", auth=auth0_auth)

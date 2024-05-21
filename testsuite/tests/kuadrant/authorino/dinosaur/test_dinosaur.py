@@ -208,7 +208,7 @@ def test_instance_types(client, user_with_valid_org_id, user_with_invalid_org_id
     assert response.json() == ERROR_MESSAGE
 
 
-def test_agent_clusters(client, user_with_valid_org_id, rhsso, cluster_info):
+def test_agent_clusters(client, user_with_valid_org_id, keycloak, cluster_info):
     """
     Test:
         - send request to agent clusters endpoint with valid cluster info
@@ -216,7 +216,7 @@ def test_agent_clusters(client, user_with_valid_org_id, rhsso, cluster_info):
         - send request to agent clusters endpoint with invalid cluster info
         - assert that response status code is 403
     """
-    cluster_info(rhsso.client_name)
+    cluster_info(keycloak.client_name)
     response = client.get("/anything/dinosaurs_mgmt/v1/agent-clusters", auth=user_with_valid_org_id)
     assert response.status_code == 200
 
@@ -226,14 +226,14 @@ def test_agent_clusters(client, user_with_valid_org_id, rhsso, cluster_info):
     assert response.json() == ERROR_MESSAGE
 
 
-def test_resource_is_owner(client, user_with_valid_org_id, resource_info, rhsso):
+def test_resource_is_owner(client, user_with_valid_org_id, resource_info, keycloak):
     """
     Test:
         - set resource info to valid middle name
         - send requests (GET, DELETE and POST) to dinosaur resource using user with valid midlle name
         - assert that response status code is 200
     """
-    resource_info("123", rhsso.client_name)
+    resource_info("123", keycloak.client_name)
 
     response = client.get("/anything/dinosaurs_mgmt/v1/dinosaurs/123", auth=user_with_valid_org_id)
     assert response.status_code == 200
@@ -245,14 +245,14 @@ def test_resource_is_owner(client, user_with_valid_org_id, resource_info, rhsso)
     assert response.status_code == 200
 
 
-def test_resource_is_not_owner_client_denied(client, user_with_invalid_email, resource_info, rhsso):
+def test_resource_is_not_owner_client_denied(client, user_with_invalid_email, resource_info, keycloak):
     """
     Test:
         - set resource info to valid middle name
         - send requests (GET, DELETE and POST) to dinosaur resource using user with invalid midlle name
         - assert that response status code is 403
     """
-    resource_info("123", rhsso.client_name)
+    resource_info("123", keycloak.client_name)
 
     response = client.get("/anything/dinosaurs_mgmt/v1/dinosaurs/123", auth=user_with_invalid_email)
     assert response.status_code == 403
@@ -267,14 +267,14 @@ def test_resource_is_not_owner_client_denied(client, user_with_invalid_email, re
     assert response.json() == ERROR_MESSAGE
 
 
-def test_resource_is_not_owner_resource_denied(client, user_with_valid_org_id, resource_info, rhsso):
+def test_resource_is_not_owner_resource_denied(client, user_with_valid_org_id, resource_info, keycloak):
     """
     Test:
         - set resource info to invalid middle name
         - send requests (GET, DELETE and POST) to dinosaur resource using user with valid midlle name
         - assert that response status code is 403
     """
-    resource_info("321", rhsso.client_name)
+    resource_info("321", keycloak.client_name)
 
     response = client.get("/anything/dinosaurs_mgmt/v1/dinosaurs/123", auth=user_with_valid_org_id)
     assert response.status_code == 403

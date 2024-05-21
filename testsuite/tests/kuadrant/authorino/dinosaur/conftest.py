@@ -5,23 +5,23 @@ Conftest for dinosaur test
 import pytest
 
 from testsuite.httpx.auth import HttpxOidcClientAuth
-from testsuite.oidc.rhsso import RHSSO
+from testsuite.oidc.keycloak import Keycloak
 from testsuite.utils import ContentType
 from testsuite.policy.authorization import Pattern, PatternRef, Value, ValueFrom, DenyResponse
 
 
 @pytest.fixture(scope="session")
-def admin_rhsso(blame, rhsso):
-    """RHSSO OIDC Provider fixture"""
+def admin_rhsso(blame, keycloak):
+    """Keycloak Admin realm"""
 
-    info = RHSSO(
-        rhsso.server_url,
-        rhsso.username,
-        rhsso.password,
+    info = Keycloak(
+        keycloak.server_url,
+        keycloak.username,
+        keycloak.password,
         blame("admin"),
         blame("client"),
-        rhsso.test_username,
-        rhsso.test_password,
+        keycloak.test_username,
+        keycloak.test_password,
     )
 
     info.commit()
@@ -30,7 +30,7 @@ def admin_rhsso(blame, rhsso):
 
 @pytest.fixture()
 def admin_auth(admin_rhsso):
-    """Returns RHSSO authentication object for HTTPX"""
+    """Returns Keycloak authentication object for HTTPX"""
     return HttpxOidcClientAuth(admin_rhsso.get_token, "authorization")
 
 
@@ -78,7 +78,7 @@ def resource_info(request, mockserver, module_label):
 
 
 @pytest.fixture(scope="module")
-def authorization(authorization, rhsso, terms_and_conditions, cluster_info, admin_rhsso, resource_info):
+def authorization(authorization, keycloak, terms_and_conditions, cluster_info, admin_rhsso, resource_info):
     """Creates complex Authorization Config."""
     path_fourth_element = 'context.request.http.path.@extract:{"sep":"/","pos":4}'
     path_third_element = 'context.request.http.path.@extract:{"sep":"/","pos":3}'
@@ -104,7 +104,7 @@ def authorization(authorization, rhsso, terms_and_conditions, cluster_info, admi
                 Pattern(path_fourth_element, "neq", "agent-clusters"),
                 Pattern(path_fourth_element, "neq", "admin"),
             ],
-            "user-sso": [Pattern("auth.identity.iss", "eq", rhsso.well_known["issuer"])],
+            "user-sso": [Pattern("auth.identity.iss", "eq", keycloak.well_known["issuer"])],
             "admin-sso": [Pattern("auth.identity.iss", "eq", admin_rhsso.well_known["issuer"])],
             "require-org-id": [Pattern("auth.identity.org_id", "neq", "")],
         }
@@ -114,7 +114,7 @@ def authorization(authorization, rhsso, terms_and_conditions, cluster_info, admi
     authorization.identity.clear_all()
     authorization.identity.add_oidc(
         "user-sso",
-        rhsso.well_known["issuer"],
+        keycloak.well_known["issuer"],
         ttl=3600,
         defaults_properties={"org_id": ValueFrom("auth.identity.middle_name")},
     )
@@ -126,10 +126,10 @@ def authorization(authorization, rhsso, terms_and_conditions, cluster_info, admi
         "terms-and-conditions", terms_and_conditions("false"), "GET", when=[PatternRef("create-dinosaur-route")]
     )
     authorization.metadata.add_http(
-        "cluster-info", cluster_info(rhsso.client_name), "GET", when=[PatternRef("agent-clusters-route")]
+        "cluster-info", cluster_info(keycloak.client_name), "GET", when=[PatternRef("agent-clusters-route")]
     )
     authorization.metadata.add_http(
-        "resource-info", resource_info("123", rhsso.client_name), "GET", when=[PatternRef("dinosaur-resource-route")]
+        "resource-info", resource_info("123", keycloak.client_name), "GET", when=[PatternRef("dinosaur-resource-route")]
     )
 
     authorization.authorization.add_auth_rules("bearer-token", [Pattern("auth.identity.typ", "eq", "Bearer")])
@@ -229,33 +229,33 @@ allow { method == "DELETE"; roles[_] == "admin-full" }
 
 
 @pytest.fixture(scope="module")
-def user_with_valid_org_id(rhsso, blame):
+def user_with_valid_org_id(keycloak, blame):
     """
     Creates new user with valid middle name.
     Middle name is mapped to org ID in auth config.
     """
-    user = rhsso.realm.create_user(blame("someuser"), blame("password"))
+    user = keycloak.realm.create_user(blame("someuser"), blame("password"))
     user.assign_attribute({"middleName": "123"})
-    return HttpxOidcClientAuth.from_user(rhsso.get_token, user=user)
+    return HttpxOidcClientAuth.from_user(keycloak.get_token, user=user)
 
 
 @pytest.fixture(scope="module", params=["321", None])
-def user_with_invalid_org_id(rhsso, blame, request):
+def user_with_invalid_org_id(keycloak, blame, request):
     """
     Creates new user with valid middle name.
     Middle name is mapped to org ID in auth config.
     """
-    user = rhsso.realm.create_user(blame("someuser"), blame("password"))
+    user = keycloak.realm.create_user(blame("someuser"), blame("password"))
     user.assign_attribute({"middleName": request.param})
-    return HttpxOidcClientAuth.from_user(rhsso.get_token, user=user)
+    return HttpxOidcClientAuth.from_user(keycloak.get_token, user=user)
 
 
 @pytest.fixture(scope="module")
-def user_with_invalid_email(rhsso, blame):
+def user_with_invalid_email(keycloak, blame):
     """Creates new user with invalid email"""
-    user = rhsso.realm.create_user(blame("someuser"), blame("password"), email="denied-test-user1@example.com")
+    user = keycloak.realm.create_user(blame("someuser"), blame("password"), email="denied-test-user1@example.com")
     user.assign_attribute({"middleName": "123"})
-    return HttpxOidcClientAuth.from_user(rhsso.get_token, user=user)
+    return HttpxOidcClientAuth.from_user(keycloak.get_token, user=user)
 
 
 @pytest.fixture(scope="module")

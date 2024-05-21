@@ -1,4 +1,4 @@
-"""Object wrappers of RHSSO resources"""
+"""Object wrappers for Keycloak resources"""
 
 from functools import cached_property
 from typing import List
@@ -7,7 +7,7 @@ from keycloak import KeycloakOpenID, KeycloakAdmin
 
 
 class Realm:
-    """Helper class for RHSSO realm manipulation"""
+    """Helper class for Keycloak realm manipulation"""
 
     def __init__(self, master: KeycloakAdmin, name) -> None:
         self.admin = KeycloakAdmin(
@@ -63,7 +63,7 @@ class Realm:
 
 
 class Client:
-    """Helper class for RHSSO client manipulation"""
+    """Helper class for Keycloak client manipulation"""
 
     def __init__(self, realm: Realm, client_id) -> None:
         self.admin = realm.admin
@@ -79,7 +79,7 @@ class Client:
 
     @cached_property
     def auth_id(self):
-        """Note This is different clientId (clientId) than self.client_id (Id), because RHSSO"""
+        """Note This is different clientId (clientId) than self.client_id (Id), because Keycloak"""
         return self.admin.get_client(self.client_id)["clientId"]
 
     @property
@@ -105,7 +105,7 @@ class Client:
 
 
 class User:
-    """Wrapper object for User object in RHSSO"""
+    """Wrapper object for User object in Keycloak"""
 
     def __init__(self, realm: Realm, user_id, username, password) -> None:
         super().__init__()

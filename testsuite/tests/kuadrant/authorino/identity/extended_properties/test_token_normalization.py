@@ -20,26 +20,26 @@ def auth_api_key(api_key):
 
 
 @pytest.fixture(scope="module")
-def auth_oidc_admin(rhsso, blame):
+def auth_oidc_admin(keycloak, blame):
     """Creates new user with new 'admin' role and return auth for it."""
-    realm_role = rhsso.realm.create_realm_role("admin")
-    user = rhsso.realm.create_user(blame("someuser"), blame("password"))
+    realm_role = keycloak.realm.create_realm_role("admin")
+    user = keycloak.realm.create_user(blame("someuser"), blame("password"))
     user.assign_realm_role(realm_role)
-    return HttpxOidcClientAuth.from_user(rhsso.get_token, user, "authorization")
+    return HttpxOidcClientAuth.from_user(keycloak.get_token, user, "authorization")
 
 
 @pytest.fixture(scope="module")
-def authorization(authorization, rhsso, api_key):
+def authorization(authorization, keycloak, api_key):
     """
-    Add rhsso identity provider with extended property "roles" which is dynamically mapped to
+    Add Keycloak identity provider with extended property "roles" which is dynamically mapped to
     list of granted realm roles 'auth.identity.realm_access.roles'
     Add api_key identity with extended property "roles" which is static list of one role 'admin'.
 
     Add authorization rule allowing DELETE method only to users with role 'admin' in 'auth.identity.roles'
     """
     authorization.identity.add_oidc(
-        "rhsso",
-        rhsso.well_known["issuer"],
+        "keycloak",
+        keycloak.well_known["issuer"],
         overrides_properties={"roles": ValueFrom("auth.identity.realm_access.roles")},
     )
     authorization.identity.add_api_key(

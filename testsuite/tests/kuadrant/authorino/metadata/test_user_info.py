@@ -12,20 +12,20 @@ pytestmark = [pytest.mark.authorino]
 
 
 @pytest.fixture(scope="module")
-def user2(rhsso, blame):
+def user2(keycloak, blame):
     """Second User which has incorrect email"""
-    return rhsso.realm.create_user("user2", "password", email=f"{blame('test')}@test.com")
+    return keycloak.realm.create_user("user2", "password", email=f"{blame('test')}@test.com")
 
 
 @pytest.fixture(scope="module")
-def authorization(authorization, rhsso):
+def authorization(authorization, keycloak):
     """
     Adds auth metadata OIDC UserInfo which fetches OIDC UserInfo in request-time.
-    Adds a simple rule that accepts only when fetched UserInfo contains the email address of the default RHSSO user.
+    Adds a simple rule that accepts only when fetched UserInfo contains the email address of the default Keycloak user.
     """
-    authorization.metadata.add_user_info("user-info", "rhsso")
+    authorization.metadata.add_user_info("user-info", "default")
     authorization.authorization.add_auth_rules(
-        "rule", [Pattern("auth.metadata.user-info.email", "eq", rhsso.user.properties["email"])]
+        "rule", [Pattern("auth.metadata.user-info.email", "eq", keycloak.user.properties["email"])]
     )
     return authorization
 
@@ -36,8 +36,8 @@ def test_correct_auth(client, auth):
     assert response.status_code == 200
 
 
-def test_incorrect_auth(client, rhsso, user2):
-    """Updates RHSSO user email address and tests incorrect auth"""
-    auth = HttpxOidcClientAuth.from_user(rhsso.get_token, user2, "authorization")
+def test_incorrect_auth(client, keycloak, user2):
+    """Updates Keycloak user email address and tests incorrect auth"""
+    auth = HttpxOidcClientAuth.from_user(keycloak.get_token, user2, "authorization")
     response = client.get("get", auth=auth)
     assert response.status_code == 403

@@ -4,8 +4,8 @@ https://github.com/Kuadrant/authorino/blob/main/docs/features.md#user-managed-ac
 Test setup consists of:
     1. Add metadata UMA feature to the AuthConfig
     2. Add OPA policy that handles resource-level authorization
-    3. Create 2 resources on RHSSO. One (`/anything/1`) owned by default RHSSO user
-    4. Create new RHSSO user that should not have access to the `/anything/1` resource
+    3. Create 2 resources in Keycloak. One (`/anything/1`) owned by default Keycloak user
+    4. Create new Keycloak user that should not have access to the `/anything/1` resource
 """
 
 import pytest
@@ -30,40 +30,40 @@ allow {
 
 
 @pytest.fixture(scope="module", autouse=True)
-def client_secret(create_client_secret, rhsso):
+def client_secret(create_client_secret, keycloak):
     """Creates a required secret, used by Authorino to start the authentication with the UMA registry."""
-    return create_client_secret("uma-client-secret", rhsso.client.auth_id, rhsso.client.secret)
+    return create_client_secret("uma-client-secret", keycloak.client.auth_id, keycloak.client.secret)
 
 
 @pytest.fixture(scope="module")
-def auth2(rhsso):
-    """Creates new RHSSO User and returns his authentication object for HTTPX"""
-    user = rhsso.realm.create_user("newTestUser", "p")
-    return HttpxOidcClientAuth.from_user(rhsso.get_token, user=user)
+def auth2(keycloak):
+    """Creates new Keycloak User and returns his authentication object for HTTPX"""
+    user = keycloak.realm.create_user("newTestUser", "p")
+    return HttpxOidcClientAuth.from_user(keycloak.get_token, user=user)
 
 
 @pytest.fixture(scope="module")
-def authorization(client_secret, authorization, rhsso, client):
+def authorization(client_secret, authorization, keycloak, client):
     # pylint: disable=unused-argument
     """
     Adds UMA resource-level authorization metadata feature and OPA policy that authorize user access to the resource.
-    Creates two client resources on RHSSO client:
+    Creates two client resources on Keycloak client:
         1. `/anything` - accessed by anyone, not enforcing UMA
-        2. `/anything/1` - accessed only by default RHSSO user (username = `rhsso.test_username`).
+        2. `/anything/1` - accessed only by default Keycloak user (username = `keycloak.test_username`).
     """
-    rhsso.client.create_uma_resource("get1", ["/anything"])
-    rhsso.client.create_uma_resource("get2", ["/anything/1"], rhsso.test_username)
-    # Sometimes RHSSO does not instantly propagate new resources.
+    keycloak.client.create_uma_resource("get1", ["/anything"])
+    keycloak.client.create_uma_resource("get2", ["/anything/1"], keycloak.test_username)
+    # Sometimes Keycloak does not instantly propagate new resources.
     # To prevent the flakiness of these tests, we are adding a new retry code: 404
     client.add_retry_code(404)
 
-    authorization.metadata.add_uma("resource-data", rhsso.well_known["issuer"], "uma-client-secret")
+    authorization.metadata.add_uma("resource-data", keycloak.well_known["issuer"], "uma-client-secret")
     authorization.authorization.add_opa_policy("opa", VALIDATE_RESOURCE_OWNER)
     return authorization
 
 
 def test_uma_resource_authorized(client, auth):
-    """Test correct auth for default RHSSO user for both endpoints"""
+    """Test correct auth for default Keycloak user for both endpoints"""
     response = client.get("/anything", auth=auth)
     assert response.status_code == 200
     response = client.get("/anything/1", auth=auth)

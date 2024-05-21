@@ -34,37 +34,37 @@ def template():
 
 
 @pytest.fixture(scope="module")
-def http(rhsso, client):
-    """Configures host for the gateway and RHSSO"""
+def http(keycloak, client):
+    """Configures host for the gateway and Keycloak"""
     return {
         "http": [
-            {"host": add_port(rhsso.server_url), "sharedConnections": 100},
+            {"host": add_port(keycloak.server_url), "sharedConnections": 100},
             {"host": add_port(str(client.base_url)), "sharedConnections": 20},
         ]
     }
 
 
 @pytest.fixture(scope="module")
-def files(rhsso, client):
-    """Adds Message and RHSSO CSV to the files"""
-    token_url_obj = add_port(rhsso.well_known["token_endpoint"], return_netloc=False)
+def files(keycloak, client):
+    """Adds Message and Keycloak CSV to the files"""
+    token_url_obj = add_port(keycloak.well_known["token_endpoint"], return_netloc=False)
     client_url = add_port(str(client.base_url))
     with MESSAGE_1KB.open("r", encoding="UTF-8") as file:
         yield {
             "message_1kb.txt": file,
-            "rhsso_auth.csv": create_csv_file(
-                [[client_url, token_url_obj.netloc, token_url_obj.path, rhsso.token_params()]]
+            "keycloak_auth.csv": create_csv_file(
+                [[client_url, token_url_obj.netloc, token_url_obj.path, keycloak.token_params()]]
             ),
         }
 
 
-def test_basic_perf_rhsso(generate_report, client, benchmark, rhsso_auth, blame):
+def test_basic_perf_rhsso(generate_report, client, benchmark, keycloak_auth, blame):
     """
     Test checks that authorino is set up correctly.
     Runs the created benchmark.
     Asserts it was successful.
     """
-    assert client.get("/get", auth=rhsso_auth).status_code == 200
+    assert client.get("/get", auth=keycloak_auth).status_code == 200
     run = benchmark.start(blame("run"))
 
     obj = run.wait(MAX_RUN_TIME)

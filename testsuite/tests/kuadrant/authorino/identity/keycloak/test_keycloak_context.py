@@ -1,4 +1,4 @@
-"""Test for RHSSO identity context"""
+"""Test for Keycloak identity context"""
 
 import json
 import time
@@ -26,16 +26,16 @@ def authorization(authorization):
 
 
 @pytest.fixture(scope="module")
-def realm_role(rhsso, realm_role):
-    """Add realm role to rhsso user"""
-    rhsso.user.assign_realm_role(realm_role)
+def realm_role(keycloak, realm_role):
+    """Add realm role to Keycloak user"""
+    keycloak.user.assign_realm_role(realm_role)
     return realm_role
 
 
-def tests_rhsso_context(client, auth, rhsso, realm_role):
+def test_keycloak_context(client, auth, keycloak, realm_role):
     """
     Test:
-        - Make request with RHSSO authentication
+        - Make request with Keycloak authentication
         - Assert that response has the right information in context
     """
     response = client.get("get", auth=auth)
@@ -43,10 +43,10 @@ def tests_rhsso_context(client, auth, rhsso, realm_role):
     auth_json = json.loads(response.json()["headers"]["Auth-Json"])
     identity = auth_json["auth"]
     now = time.time()
-    assert rhsso.well_known["issuer"] == identity["iss"]
-    assert identity["azp"] == rhsso.client_name
+    assert keycloak.well_known["issuer"] == identity["iss"]
+    assert identity["azp"] == keycloak.client_name
     assert float(identity["exp"]) > now
     assert float(identity["iat"]) <= now
     assert auth_json["context"] == f"Bearer {auth.token.access_token}"
     assert realm_role["name"] in identity["realm_access"]["roles"]
-    assert identity["email"] == rhsso.user.properties["email"]
+    assert identity["email"] == keycloak.user.properties["email"]

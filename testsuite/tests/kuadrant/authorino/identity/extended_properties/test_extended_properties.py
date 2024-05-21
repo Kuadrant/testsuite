@@ -9,7 +9,7 @@ pytestmark = [pytest.mark.authorino]
 
 
 @pytest.fixture(scope="module")
-def authorization(authorization, rhsso):
+def authorization(authorization, keycloak):
     """
     Add new identity with list of extended properties. This list contains:
         - Static `value` and dynamic `jsonPath` properties
@@ -17,8 +17,8 @@ def authorization(authorization, rhsso):
     Add simple response to inspect 'auth.identity' part of authJson where the properties will be created.
     """
     authorization.identity.add_oidc(
-        "rhsso",
-        rhsso.well_known["issuer"],
+        "keycloak",
+        keycloak.well_known["issuer"],
         defaults_properties={
             "property_static": Value("static"),
             "property_dynamic": ValueFrom("context.request.http.path"),

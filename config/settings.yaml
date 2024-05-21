@@ -4,7 +4,7 @@ default:
   tools:
     project: "tools"
   cfssl: "cfssl"
-  rhsso:
+  keycloak:
     username: "admin"
     test_user:
       username: "testUser"

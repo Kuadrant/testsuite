@@ -9,7 +9,7 @@ phases:
         scenario:
           - loadCsv: &loadCsv
             - randomCsvRow:
-                file: 'rhsso_auth.csv'
+                file: 'keycloak_auth.csv'
                 skipComments: true
                 removeQuotes: true
                 columns:
