@@ -1,7 +1,7 @@
 """Simple client for the OpenShift metrics"""
 
 from typing import Callable
-from datetime import datetime
+from datetime import datetime, timezone
 
 import backoff
 from apyproxy import ApyProxy
@@ -72,7 +72,7 @@ class Prometheus:
 
     def wait_for_scrape(self, target_service: str, metrics_path: str = "/metrics"):
         """Wait before next metrics scrape on service is finished"""
-        call_time = datetime.utcnow()
+        call_time = datetime.now(timezone.utc)
 
         @backoff.on_predicate(backoff.constant, interval=10, jitter=None, max_tries=20)
         def _wait_for_scrape():
@@ -83,7 +83,7 @@ class Prometheus:
                     and target["labels"]["service"] == target_service
                     and target["discoveredLabels"]["__metrics_path__"] == metrics_path
                 ):
-                    return call_time < datetime.fromisoformat(target["lastScrape"][:26])
+                    return call_time < datetime.fromisoformat(target["lastScrape"][:26]).replace(tzinfo=timezone.utc)
             return False
 
         assert _wait_for_scrape(), "Prometheus didn't reconcile ServiceMonitor in time"
