@@ -27,6 +27,10 @@ default:
   default_exposer: "openshift"
   control_plane:
     managedzone: "aws-mz"
-    clusterissuer: "selfsigned-cluster-issuer"
+    issuer:
+      name: "selfsigned-issuer"
+      kind: "ClusterIssuer"
   letsencrypt:
-    clusterissuer: "letsencrypt-staging"
+    issuer:
+      name: "letsencrypt-staging-issuer"
+      kind: "Issuer"

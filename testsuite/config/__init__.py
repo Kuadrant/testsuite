@@ -50,8 +50,14 @@ settings = Dynaconf(
             messages={"condition": "{value} is not valid exposer"},
         ),
         Validator("control_plane.managedzone", must_exist=True, ne=None),
-        Validator("control_plane.clusterissuer", must_exist=True, ne=None),
-        Validator("letsencrypt.clusterissuer", must_exist=True, ne=None),
+        (
+            Validator("control_plane.issuer.name", must_exist=True, ne=None)
+            & Validator("control_plane.issuer.kind", must_exist=True, is_in={"Issuer", "ClusterIssuer"})
+        ),
+        (
+            Validator("letsencrypt.issuer.name", must_exist=True, ne=None)
+            & Validator("letsencrypt.issuer.kind", must_exist=True, is_in={"Issuer", "ClusterIssuer"})
+        ),
         DefaultValueValidator("keycloak.url", default=fetch_service_ip("keycloak", force_http=True, port=8080)),
         DefaultValueValidator("keycloak.password", default=fetch_secret("credential-sso", "ADMIN_PASSWORD")),
         DefaultValueValidator("mockserver.url", default=fetch_service_ip("mockserver", force_http=True, port=1080)),

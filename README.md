@@ -18,8 +18,8 @@ This repository contains end-to-end tests for Kuadrant project. It supports runn
 * Existing ManagedZone, named `aws-mz` (name defined in `control_plane.managedzone`)
 
 ### TLSPolicy tests
-* Existing self-signed ClusterIssuer, named `selfsigned-cluster-issuer` (name defined in `control_plane.clusterissuer`)
-* (Optional) Existing lets-encrypt ClusterIssuer, named `letsencrypt-staging` (name defined in `letsencrypt.clusterissuer`)
+* Existing self-signed ClusterIssuer or Issuer, named `selfsigned-issuer` (name defined in `control_plane.issuer.name`)
+* (Optional) Existing lets-encrypt ClusterIssuer or Issuer, named `letsencrypt-staging-issuer` (name defined in `letsencrypt.issuer.name`)
 
 ## Configuration
 
