@@ -16,7 +16,7 @@ def gateway(request, openshift, blame, wildcard_domain, module_label):
     gw = KuadrantGateway.create_instance(openshift, blame("gw"), wildcard_domain, {"app": module_label}, tls=True)
     request.addfinalizer(gw.delete)
     gw.commit()
-    gw.wait_for_ready(timeout=10 * 60)
+    gw.wait_for_ready()
     return gw
 
 
