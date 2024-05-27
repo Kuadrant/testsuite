@@ -18,5 +18,6 @@ def test_removing_host(client, client2, auth, route, second_hostname):
     response = client.get("/get", auth=auth)
     assert response.status_code == 200
 
-    response = client2.get("/get", auth=auth)
-    assert response.status_code == 404
+    with second_hostname.client(retry_codes={200}) as failing_client:
+        response = failing_client.get("/get", auth=auth)
+        assert response.status_code == 404

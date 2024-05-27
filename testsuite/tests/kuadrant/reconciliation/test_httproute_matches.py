@@ -25,5 +25,6 @@ def test_matches(client, backend, route, hostname):
         response = failing_client.get("/get")
         assert response.status_code == 404, "Matches were not reconciled"
 
-    response = client.get("/anything/get")
-    assert response.status_code == 200
+    with hostname.client(retry_codes={404, 503}) as new_client:
+        response = new_client.get("/anything/get")
+        assert response.status_code == 200
