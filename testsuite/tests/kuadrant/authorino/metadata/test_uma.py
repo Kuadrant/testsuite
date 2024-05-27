@@ -37,7 +37,7 @@ def client_secret(create_client_secret, keycloak, blame):
 
 @pytest.fixture(scope="module")
 def auth2(keycloak, blame):
-    """Creates new RHSSO User and returns his authentication object for HTTPX"""
+    """Creates new Keycloak User and returns his authentication object for HTTPX"""
     user = keycloak.realm.create_user(blame("newTestUser"), "p")
     return HttpxOidcClientAuth.from_user(keycloak.get_token, user=user)
 
