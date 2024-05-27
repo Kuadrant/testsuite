@@ -56,7 +56,7 @@ class Envoy(Gateway):  # pylint: disable=too-many-instance-attributes
         self.wait_for_ready()
         time.sleep(3)  # or some reason wait_for_ready is not enough, needs more investigation
 
-    def wait_for_ready(self, timeout: int = 180):
+    def wait_for_ready(self, timeout: int = 10 * 60):
         with oc.timeout(timeout):
             assert self.openshift.do_action(
                 "rollout", ["status", f"deployment/{self.name}"]

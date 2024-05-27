@@ -50,7 +50,7 @@ def gateway(request, authorino, openshift, blame, label, testconfig) -> Envoy:
     )
     request.addfinalizer(gw.delete)
     gw.commit()
-    gw.wait_for_ready(timeout=10 * 60)
+    gw.wait_for_ready()
     return gw
 
 

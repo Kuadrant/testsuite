@@ -72,7 +72,7 @@ class KuadrantGateway(OpenShiftObject, Gateway):
                 return True
         return False
 
-    def wait_for_ready(self, timeout: int = 180):
+    def wait_for_ready(self, timeout: int = 10 * 60):
         """Waits for the gateway to be ready in the sense of is_ready(self)"""
         with oc.timeout(timeout):
             success, _, _ = self.self_selector().until_all(
