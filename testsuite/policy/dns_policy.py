@@ -1,14 +1,11 @@
 """Module for DNSPolicy related classes"""
 
-import openshift_client as oc
-
 from testsuite.gateway import Referencable
-from testsuite.openshift import OpenShiftObject
 from testsuite.openshift.client import OpenShiftClient
-from testsuite.utils import has_condition
+from testsuite.policy import Policy
 
 
-class DNSPolicy(OpenShiftObject):
+class DNSPolicy(Policy):
     """DNSPolicy object"""
 
     @classmethod
@@ -29,12 +26,3 @@ class DNSPolicy(OpenShiftObject):
         }
 
         return cls(model, context=openshift.context)
-
-    def wait_for_ready(self):
-        """Wait for DNSPolicy to be Enforced"""
-        with oc.timeout(90):
-            success, _, _ = self.self_selector().until_all(
-                success_func=has_condition("Enforced", "True"),
-                tolerate_failures=5,
-            )
-            assert success, f"{self.kind()} did not get ready in time"

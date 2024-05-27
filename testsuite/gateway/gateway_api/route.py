@@ -8,7 +8,8 @@ from testsuite.httpx import KuadrantClient
 from testsuite.gateway import Gateway, GatewayRoute, PathMatch, MatchType, RouteMatch
 from testsuite.openshift.client import OpenShiftClient
 from testsuite.openshift import OpenShiftObject, modify
-from testsuite.utils import asdict
+from testsuite.policy import Policy
+from testsuite.utils import asdict, check_condition
 
 if typing.TYPE_CHECKING:
     from testsuite.backend import Backend
@@ -42,6 +43,21 @@ class HTTPRoute(OpenShiftObject, GatewayRoute):
         }
 
         return cls(model, context=openshift.context)
+
+    def is_affected_by(self, policy: Policy):
+        """Returns True, if affected by status is found within the object for the specific policy"""
+        for condition_set in self.model.status.parents:
+            if condition_set.controllerName == "kuadrant.io/policy-controller":
+                for condition in condition_set.conditions:
+                    if check_condition(
+                        condition,
+                        f"kuadrant.io/{policy.kind(lowercase=False)}Affected",
+                        "True",
+                        "Accepted",
+                        f"Object affected by {policy.kind(lowercase=False)} {policy.namespace()}/{policy.name()}",
+                    ):
+                        return True
+        return False
 
     @property
     def reference(self):

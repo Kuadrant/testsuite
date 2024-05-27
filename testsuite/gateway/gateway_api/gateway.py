@@ -8,6 +8,8 @@ from testsuite.certificates import Certificate
 from testsuite.gateway import Gateway
 from testsuite.openshift.client import OpenShiftClient
 from testsuite.openshift import OpenShiftObject
+from testsuite.policy import Policy
+from testsuite.utils import check_condition
 
 
 class KuadrantGateway(OpenShiftObject, Gateway):
@@ -80,6 +82,19 @@ class KuadrantGateway(OpenShiftObject, Gateway):
             )
             assert success, "Gateway didn't get ready in time"
             self.refresh()
+
+    def is_affected_by(self, policy: Policy) -> bool:
+        """Returns True, if affected by status is found within the object for the specific policy"""
+        for condition in self.model.status.conditions:
+            if check_condition(
+                condition,
+                f"kuadrant.io/{policy.kind(lowercase=False)}Affected",
+                "True",
+                "Accepted",
+                f"Object affected by {policy.kind(lowercase=False)} {policy.namespace()}/{policy.name()}",
+            ):
+                return True
+        return False
 
     def get_tls_cert(self):
         if "tls" not in self.model.spec.listeners[0]:
