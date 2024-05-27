@@ -8,7 +8,7 @@ from testsuite.certificates import Certificate, CertInfo
 from testsuite.openshift import Selector
 from testsuite.gateway import Exposer
 from testsuite.gateway.envoy.tls import TLSEnvoy
-from testsuite.gateway.exposers import KindExposer
+from testsuite.gateway.exposers import KindExposer, OpenShiftExposer
 from testsuite.openshift.secret import TLSSecret
 from testsuite.utils import cert_builder
 
@@ -180,13 +180,30 @@ def gateway(
     return envoy
 
 
-@pytest.fixture(scope="session")
-def exposer(exposer) -> Exposer:
+@pytest.fixture(scope="module")
+def exposer(request, testconfig, hub_openshift) -> Exposer:
     """Exposer object instance with TLS passthrough"""
-    if isinstance(exposer, KindExposer):
-        pytest.skip("TLS tests dont work with Kind")
+    if testconfig["default_exposer"] == KindExposer:
+        pytest.skip("TLS tests do not work on Kind")
+    exposer = OpenShiftExposer(hub_openshift)
+    request.addfinalizer(exposer.delete)
+    exposer.commit()
     exposer.passthrough = True
     return exposer
+
+
+@pytest.fixture(scope="module")
+def base_domain(exposer):
+    """Returns preconfigured base domain"""
+    return exposer.base_domain
+
+
+@pytest.fixture(scope="module")
+def wildcard_domain(base_domain):
+    """
+    Wildcard domain of openshift cluster
+    """
+    return f"*.{base_domain}"
 
 
 @pytest.fixture(scope="module")
