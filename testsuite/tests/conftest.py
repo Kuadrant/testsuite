@@ -202,12 +202,13 @@ def mockserver(testconfig, skip_or_fail):
         return skip_or_fail(f"Mockserver configuration item is missing: {exc}")
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def tracing(testconfig, skip_or_fail):
     """Returns tracing client for tracing tests"""
     try:
         testconfig.validators.validate(only=["tracing"])
         return TracingClient(
+            testconfig["tracing"]["backend"] == "jaeger",
             testconfig["tracing"]["collector_url"],
             testconfig["tracing"]["query_url"],
             KuadrantClient(verify=False),

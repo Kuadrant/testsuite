@@ -21,6 +21,7 @@
 #  mockserver:
 #    url: "MOCKSERVER_URL"
 #  tracing:
+#    backend: "jaeger"                          # Tracing backend
 #    collector_url: "rpc://jaeger-collector.com:4317"  # Tracing collector URL (may be internal)
 #    query_url: "http://jaeger-query.com"       # Tracing query URL
 #  cfssl: "cfssl"  # Path to the CFSSL library for TLS tests
