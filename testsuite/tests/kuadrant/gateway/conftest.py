@@ -35,6 +35,15 @@ def auth(oidc_provider):
 
 
 @pytest.fixture(scope="module")
+def rate_limit():
+    """
+    For these tests don't create any RateLimitPolicy
+    Parent rate_limit fixture calls some fixtures that result in extra Gateway created as a side effect
+    """
+    return None
+
+
+@pytest.fixture(scope="module")
 def exposer(request, hub_openshift) -> Exposer:
     """DNSPolicyExposer setup with expected TLS certificate"""
     exposer = DNSPolicyExposer(hub_openshift)
