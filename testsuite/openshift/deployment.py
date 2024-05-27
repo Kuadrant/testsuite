@@ -147,6 +147,7 @@ class Deployment(OpenShiftObject):
         """Waits until Deployment is marked as ready"""
         success = self.wait_until(lambda obj: "readyReplicas" in obj.model.status, timelimit=timeout)
         assert success, f"Deployment {self.name()} did not get ready in time"
+        # obj.model.status.replicas == obj.model.status.readyReplicas
 
     @property
     def template(self):
