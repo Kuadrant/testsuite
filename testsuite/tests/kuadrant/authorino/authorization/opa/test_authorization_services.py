@@ -30,12 +30,12 @@ def rego_policy(keycloak):
     under the used scope (HTTP GET) this REGO policy authorizes the request.
     """
     return f"""\
-pat := http.send({{"url":"{keycloak.server_url}realms/{keycloak.realm.name}/protocol/openid-connect/token",\
+pat := http.send({{"url":"{keycloak.well_known["issuer"]}/protocol/openid-connect/token",\
 "method": "post","headers":{{"Content-Type":"application/x-www-form-urlencoded"}},\
 "raw_body":"grant_type=client_credentials&client_id={keycloak.client_name}&client_secret={keycloak.client.secret}"}})\
 .body.access_token
 
-resource_id := http.send({{"url":concat("",["{keycloak.server_url}realms/{keycloak.realm.name}/authz/protection/\
+resource_id := http.send({{"url":concat("",["{keycloak.well_known["issuer"]}/authz/protection/\
 resource_set?uri=",input.context.request.http.path]),"method":"get", "headers":\
 {{"Authorization":concat(" ",["Bearer ",pat])}}}}).body[0]
 
@@ -45,12 +45,12 @@ default rpt = ""
 rpt = access_token {{ object.get(input.auth.identity, "authorization", {{}}).permissions }}
 else = rpt_str {{
 
-  ticket := http.send({{"url":"{keycloak.server_url}realms/{keycloak.realm.name}/authz/protection/permission",\
+  ticket := http.send({{"url":"{keycloak.well_known["issuer"]}/authz/protection/permission",\
 "method":"post","headers":{{"Authorization":concat(" ",["Bearer ",pat]),"Content-Type":"application/json"}},\
 "raw_body":concat("",["[{{\\"resource_id\\":\\"",resource_id,"\\",\\"resource_scopes\\":[\\"",scope,"\\"]}}]"\
 ])}}).body.ticket
 
-  rpt_str := object.get(http.send({{"url":"{keycloak.server_url}realms/{keycloak.realm.name}/protocol/openid-connect/token",\
+  rpt_str := object.get(http.send({{"url":"{keycloak.well_known["issuer"]}/protocol/openid-connect/token",\
 "method":"post","headers":{{"Authorization":concat(" ",\
 ["Bearer ",access_token]),"Content-Type":"application/x-www-form-urlencoded"}},"raw_body":concat("",\
 ["grant_type=urn:ietf:params:oauth:grant-type:uma-ticket&ticket=",ticket,"&submit_request=true"])}})\
