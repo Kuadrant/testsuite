@@ -4,6 +4,7 @@ import pytest
 
 from testsuite.gateway import CustomReference
 from testsuite.policy.tls_policy import TLSPolicy
+from testsuite.utils import has_condition
 from . import dns_policy
 
 pytestmark = [pytest.mark.kuadrant_only]
@@ -32,6 +33,6 @@ def test_no_gw(request, create_cr, hub_openshift, blame, module_label, cluster_i
     request.addfinalizer(policy.delete)
     policy.commit()
 
-    assert policy.wait_for_condition(
-        "Accepted", "False", "TargetNotFound", "target does-not-exist was not found", timelimit=20
+    assert policy.wait_until(
+        has_condition("Accepted", "False", "TargetNotFound", "target does-not-exist was not found"), timelimit=20
     ), f"Policy did not reach expected status, instead it was: {policy.refresh().model.status.conditions}"
