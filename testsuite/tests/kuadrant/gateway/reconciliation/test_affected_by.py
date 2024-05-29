@@ -2,7 +2,20 @@
 
 import pytest
 
+from testsuite.policy.rate_limit_policy import RateLimitPolicy, Limit
+
 pytestmark = [pytest.mark.kuadrant_only]
+
+
+@pytest.fixture(scope="module")
+def rate_limit(openshift, blame, module_label, route):
+    """
+    Rate limit object.
+    """
+
+    policy = RateLimitPolicy.create_instance(openshift, blame("limit"), route, labels={"testRun": module_label})
+    policy.add_limit("basic", [Limit(5, 10)])
+    return policy
 
 
 def test_route_status(route, rate_limit, authorization):
