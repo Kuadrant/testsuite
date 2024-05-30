@@ -62,7 +62,7 @@ class Service(OpenShiftObject):
 
     def delete(self, ignore_not_found=True, cmd_args=None):
         """Deletes Service, introduces bigger waiting times due to LoadBalancer type"""
-        with timeout(120):
+        with timeout(10 * 60):
             deleted = super(OpenShiftObject, self).delete(ignore_not_found, cmd_args)
             self.committed = False
             return deleted
