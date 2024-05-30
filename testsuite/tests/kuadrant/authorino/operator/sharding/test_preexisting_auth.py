@@ -42,12 +42,13 @@ def test_preexisting_auth(
         - Create AuthConfig B which will have specific host colliding with host A
         - Assert that AuthConfig B has the host ready and is completely reconciled
         - Make request to second envoy
-        - Assert that request was processed by right authorino and AuthConfig
+        - Assert that request was processed by right Authorino and AuthConfig
     """
     authorino = setup_authorino(sharding_label="A")
     gw = setup_gateway(authorino)
     route = setup_route(wildcard_domain, gw)
-    setup_authorization(route, "A")
+    auth = setup_authorization(route, "A")
+    auth.wait_for_ready()
 
     authorino.delete()
     gw.delete()
@@ -57,6 +58,7 @@ def test_preexisting_auth(
     hostname = exposer.expose_hostname(blame("hostname"), gw2)
     route2 = setup_route(hostname.hostname, gw2)
     auth = setup_authorization(route2, "B")
+    auth.wait_for_ready()
 
     assert hostname.hostname in auth.model.status.summary.hostsReady
     response = hostname.client().get("/get")
