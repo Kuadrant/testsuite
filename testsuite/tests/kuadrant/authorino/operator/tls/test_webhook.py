@@ -153,7 +153,8 @@ def validating_webhook(openshift, authorino_domain, certificates, blame):
     with openshift.context:
         webhook = oc.create(model)
     yield webhook
-    webhook.delete()
+    with openshift.context:
+        webhook.delete()
 
 
 # pylint: disable=unused-argument

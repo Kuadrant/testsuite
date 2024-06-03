@@ -113,6 +113,7 @@ RateLimitPolicy,$\
 DNSPolicy,$\
 TLSPolicy,$\
 Authorino,$\
+ValidatingWebhookConfiguration,$\
 WasmPlugin"
 
 clean: ## Clean all objects in Openshift created by running this testsuite
