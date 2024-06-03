@@ -35,6 +35,7 @@ class Result:
             self.has_dns_error()
             or (self.error is None and self.status_code in self.retry_codes)
             or self.has_error("Server disconnected without sending a response.")
+            or self.has_error("timed out")
         )
 
     def has_error(self, error_msg: str) -> bool:
