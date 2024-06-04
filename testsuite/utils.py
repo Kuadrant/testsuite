@@ -17,7 +17,6 @@ from urllib.parse import urlparse, ParseResult
 from weakget import weakget
 
 from testsuite.certificates import Certificate, CFSSLClient, CertInfo
-from testsuite.config import settings
 
 MESSAGE_1KB = resources.files("testsuite.resources.performance.files").joinpath("message_1kb.txt")
 
@@ -46,9 +45,6 @@ def randomize(name, tail=5):
 
 def _whoami():
     """Returns username"""
-    if "tester" in settings:
-        return settings["tester"]
-
     try:
         return getpass.getuser()
     # want to catch broad exception and fallback at any circumstance

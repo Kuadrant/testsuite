@@ -226,6 +226,10 @@ def oidc_provider(keycloak) -> OIDCProvider:
 @pytest.fixture(scope="session")
 def blame(request):
     """Returns function that will add random identifier to the name"""
+    if "tester" in settings:
+        user = settings["tester"]
+    else:
+        user = _whoami()
 
     def _blame(name: str, tail: int = 3) -> str:
         """Create 'scoped' name within given test
@@ -247,7 +251,7 @@ def blame(request):
         if "." in context:
             context = context.split(".")[0]
 
-        return randomize(f"{name[:8]}-{_whoami()[:8]}-{context[:9]}", tail=tail)
+        return randomize(f"{name[:8]}-{user[:8]}-{context[:9]}", tail=tail)
 
     return _blame
 
