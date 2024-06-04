@@ -6,6 +6,7 @@ from openshift_client import selector, OpenShiftPythonException
 
 from testsuite.config import settings
 from testsuite.openshift.authorino import AuthorinoCR
+from testsuite.openshift.limitador import LimitadorCR
 from testsuite.policy.authorization.auth_policy import AuthPolicy
 from testsuite.policy.rate_limit_policy import RateLimitPolicy
 
@@ -31,6 +32,19 @@ def authorino(system_openshift) -> AuthorinoCR:
     return authorino
 
 
+@pytest.fixture(scope="session")
+def limitador(system_openshift) -> LimitadorCR:
+    """Returns Limitador CR"""
+    try:
+        with system_openshift.context:
+            limitador = selector("limitador").object(cls=LimitadorCR)
+            limitador.committed = True
+    except OpenShiftPythonException:
+        pytest.fail("Running Kuadrant tests, but Limitador resource was not found")
+
+    return limitador
+
+
 @pytest.fixture(scope="module")
 def authorization_name(blame):
     """Name of the Authorization resource, can be overriden to include more dependencies"""
@@ -45,7 +59,6 @@ def authorization(kuadrant, route, authorization_name, openshift, label):
     return None
 
 
-# pylint: disable=unused-argument
 @pytest.fixture(scope="module")
 def rate_limit(kuadrant, openshift, blame, request, module_label, route, gateway):  # pylint: disable=unused-argument
     """

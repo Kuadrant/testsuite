@@ -3,6 +3,10 @@
 import os
 from time import sleep
 
+import pytest
+
+pytestmark = [pytest.mark.kuadrant_only]
+
 
 def test_tracing(client, auth, tracing):
     """
@@ -14,7 +18,7 @@ def test_tracing(client, auth, tracing):
     """
     trace_id = os.urandom(16).hex()
     client.get("/get", auth=auth, headers={"Traceparent": f"00-{trace_id}-{os.urandom(8).hex()}-01"})
-    sleep(5)  # Waits for tracing backend to collect all traces
+    sleep(5)  # Wait for tracing backend to collect all traces
 
     trace = tracing.get_trace(trace_id)
     assert len(trace) == 1, f"No trace was found in tracing backend with trace_id: {trace_id}"

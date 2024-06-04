@@ -1,12 +1,9 @@
 """Conftest for Kuadrant observability tests"""
 
 import pytest
-from openshift_client import OpenShiftPythonException
-from openshift_client import selector
 
 from testsuite.httpx.auth import HttpxOidcClientAuth
 from testsuite.openshift.authorino import TracingOptions
-from testsuite.openshift.limitador import LimitadorCR
 from testsuite.policy.rate_limit_policy import Limit
 
 
@@ -23,23 +20,14 @@ def rate_limit(rate_limit):
     return rate_limit
 
 
-@pytest.fixture(scope="session")
-def limitador(system_openshift) -> LimitadorCR:
-    """Returns Limitador CR"""
-    try:
-        with system_openshift.context:
-            limitador = selector("limitador").object(cls=LimitadorCR)
-            limitador.committed = True
-    except OpenShiftPythonException:
-        pytest.fail("Running Kuadrant tests, but Limitador resource was not found")
-
-    return limitador
-
-
 @pytest.fixture(scope="module", autouse=True)
 def enable_tracing(authorino, limitador, tracing):
     """Enable tracing for Authorino and Limitador"""
-    authorino.tracing = TracingOptions(tracing.collector_url, insecure=True)
-    limitador.tracing = TracingOptions(tracing.collector_url)
-    limitador.verbosity = 3
-    limitador.deployment.wait_for_ready()
+    authorino["tracing"] = TracingOptions(tracing.collector_url, insecure=True)
+    authorino.safe_apply()
+    authorino.wait_for_ready()
+
+    limitador.refresh()  # limitador is not up-to-date, as limit from RLP is added to LimitadorCR
+    limitador["tracing"] = TracingOptions(tracing.collector_url)
+    limitador.safe_apply()
+    limitador.wait_for_ready()
