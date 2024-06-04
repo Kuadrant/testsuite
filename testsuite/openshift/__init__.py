@@ -1,5 +1,6 @@
 """OpenShift common objects"""
 
+import dataclasses
 import functools
 from dataclasses import dataclass, field
 from typing import Optional, Literal
@@ -7,6 +8,7 @@ from typing import Optional, Literal
 from openshift_client import APIObject, timeout, OpenShiftPythonException
 
 from testsuite.lifecycle import LifecycleObject
+from testsuite.utils import asdict
 
 
 class OpenShiftObject(APIObject, LifecycleObject):
@@ -42,6 +44,28 @@ class OpenShiftObject(APIObject, LifecycleObject):
                 return success
         except OpenShiftPythonException:
             return False
+
+
+class CustomResource(OpenShiftObject):
+    """Custom APIObjects that implements methods that improves manipulation with CR objects"""
+
+    def safe_apply(self):
+        """
+        Modifies the model of the apiobj and asserts if a change was applied to a resource.
+        Uses modify_and_apply method from OpenshiftObject.
+        """
+        result, status = self.modify_and_apply(lambda _: True, retries=2)
+        assert status, f"Unable to apply changes for APIObject with result: {result}"
+        return result
+
+    def __getitem__(self, name):
+        return self.model.spec[name]
+
+    def __setitem__(self, name, value):
+        if dataclasses.is_dataclass(value):
+            self.model.spec[name] = asdict(value)
+        else:
+            self.model.spec[name] = value
 
 
 def modify(func):

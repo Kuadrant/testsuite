@@ -1,14 +1,14 @@
 """Authorino CR object"""
 
 import abc
-from typing import Any, Optional, Dict, List
 from dataclasses import dataclass
+from typing import Any, Optional, Dict, List
 
 from openshift_client import selector, timeout
 
-from testsuite.openshift.client import OpenShiftClient
-from testsuite.openshift import OpenShiftObject
 from testsuite.lifecycle import LifecycleObject
+from testsuite.openshift import CustomResource
+from testsuite.openshift.client import OpenShiftClient
 from testsuite.utils import asdict
 
 
@@ -44,7 +44,7 @@ class Authorino(LifecycleObject):
         """Authorino oidc url"""
 
 
-class AuthorinoCR(OpenShiftObject, Authorino):
+class AuthorinoCR(CustomResource, Authorino):
     """Represents Authorino CR objects from Authorino-operator"""
 
     @classmethod
