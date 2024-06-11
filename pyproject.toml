@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Tests for GLBC and Kuadrant projects"
 authors = ["Kuadrant QE <you@example.com>"]
 readme = "README.md"
-#packages = [{include = "kuadrant_testsuite"}]
+package-mode = false
 
 [tool.poetry.group.main.dependencies]
 python = "^3.11"
