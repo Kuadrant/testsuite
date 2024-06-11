@@ -1,8 +1,8 @@
 [tool.poetry]
 name = "kuadrant-testsuite"
 version = "0.1.0"
-description = "Tests for GLBC and Kuadrant projects"
-authors = ["Kuadrant QE <you@example.com>"]
+description = "Tests for Kuadrant project"
+authors = ["Kuadrant QE <kuadrantdev@gmail.com>"]
 readme = "README.md"
 package-mode = false
 
