@@ -44,7 +44,7 @@ class Result:
 
     def has_dns_error(self):
         """True, if the result failed due to DNS failure"""
-        return self.has_error("Name or service not known")
+        return self.has_error("Name or service not known") or self.has_error("No address associated with hostname")
 
     def has_cert_verify_error(self):
         """True, if the result failed due to TLS certificate verification failure"""
