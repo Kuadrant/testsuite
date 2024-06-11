@@ -36,7 +36,6 @@ def authorino(authorino, openshift, blame, request, testconfig, label) -> Author
     return authorino
 
 
-# pylint: disable=unused-argument
 @pytest.fixture(scope="module")
 def authorization(authorization, oidc_provider, route, authorization_name, openshift, label) -> AuthConfig:
     """In case of Authorino, AuthConfig used for authorization"""

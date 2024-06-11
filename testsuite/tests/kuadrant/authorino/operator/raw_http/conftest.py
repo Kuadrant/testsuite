@@ -9,9 +9,8 @@ from testsuite.policy.authorization.auth_config import AuthConfig
 from testsuite.openshift.route import OpenshiftRoute
 
 
-# pylint: disable=unused-argument
 @pytest.fixture(scope="module")
-def authorization(authorization, route, wildcard_domain, openshift, module_label) -> AuthConfig:
+def authorization(authorization, route, wildcard_domain) -> AuthConfig:
     """In case of Authorino, AuthConfig used for authorization"""
     authorization.remove_all_hosts()
     route.add_hostname(wildcard_domain)
@@ -20,7 +19,7 @@ def authorization(authorization, route, wildcard_domain, openshift, module_label
 
 
 @pytest.fixture(scope="module")
-def client(authorization, authorino_route):
+def client(authorino_route):
     """Returns httpx client to be used for requests, it also commits AuthConfig"""
     client = KuadrantClient(base_url=f"http://{authorino_route.model.spec.host}", verify=False)
     yield client

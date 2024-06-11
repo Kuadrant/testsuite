@@ -44,9 +44,8 @@ def client2(hostname2):
     client.close()
 
 
-# pylint: disable=unused-argument
 @pytest.fixture(scope="module", autouse=True)
-def commit(request, commit, authorization2):
+def commit(request, commit, authorization2):  # pylint: disable=unused-argument
     """Commits all important stuff before tests"""
     request.addfinalizer(authorization2.delete)
     authorization2.commit()
