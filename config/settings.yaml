@@ -23,7 +23,7 @@ default:
       deploy: true
       log_level: "debug"
   control_plane:
-    additional_clusters: {}
+    additional_clusters: []
     managedzone: "aws-mz"
     issuer:
       name: "selfsigned-issuer"

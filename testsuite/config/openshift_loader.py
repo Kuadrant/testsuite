@@ -26,10 +26,6 @@ def load(obj, env=None, silent=True, key=None, filename=None):
         tools = client.change_project(obj["tools"]["project"])
     obj["tools"] = tools
 
-    # service_protection = obj.setdefault("service_protection", {})
-    # inject_client(service_protection, client, "project")
-    # inject_client(service_protection, client, "project2")
-
     control_plane = obj.setdefault("control_plane", {})
     clients = []
     clusters = control_plane.setdefault("additional_clusters", [])
