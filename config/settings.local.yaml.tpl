@@ -43,6 +43,7 @@
 #      metrics_service_name: ""                    # controller metrics service name for already deployed Authorino
 #  default_exposer: "kubernetes"                   # Force Exposer typem options: 'openshift', 'kind', 'kubernetes'
 #  control_plane:
+#    additional_clusters: []                       # List of additional clusters for Multicluster testing, see 'cluster' option for more details
 #    managedzone: aws-mz                           # Name of the ManagedZone resource
 #    issuer:                                       # Issuer object for testing TLSPolicy
 #      name: "selfsigned-cluster-issuer"           # Name of Issuer CR

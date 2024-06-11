@@ -232,8 +232,7 @@ def module_label(label):
 @pytest.fixture(scope="session")
 def hub_openshift(testconfig):
     """OpenShift client for the primary namespace"""
-    client = testconfig["cluster"]
-    client.change_project(testconfig["service_protection"]["project"])
+    client = testconfig["cluster"].change_project(testconfig["service_protection"]["project"])
     if not client.connected:
         pytest.fail("You are not logged into Openshift or the namespace doesn't exist")
     return client
