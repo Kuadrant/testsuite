@@ -24,8 +24,7 @@ def openshift(hub_openshift):
 @pytest.fixture(scope="session")
 def openshift2(testconfig, skip_or_fail):
     """OpenShift client for the secondary namespace located on the same cluster as primary Openshift"""
-    client = testconfig["cluster"]
-    client.change_project(testconfig["service_protection"]["project"])
+    client = testconfig["cluster"].change_project(testconfig["service_protection"]["project2"])
     if client is None:
         skip_or_fail("Openshift2 required but second_project was not set")
     if not client.connected:
@@ -78,7 +77,7 @@ def kuadrant(request, testconfig):
     if request.config.getoption("--standalone"):
         return None
 
-    ocp = testconfig["service_protection"]["project"]
+    ocp = testconfig["cluster"]
     project = testconfig["service_protection"]["system_project"]
     kuadrant_openshift = ocp.change_project(project)
 
