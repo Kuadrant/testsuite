@@ -6,23 +6,16 @@ from urllib.parse import urlparse
 import pytest
 from dynaconf import ValidationError
 from keycloak import KeycloakAuthenticationError
-from openshift_client import selector, OpenShiftPythonException
 
-from testsuite.backend.httpbin import Httpbin
 from testsuite.capabilities import has_kuadrant
 from testsuite.certificates import CFSSLClient
 from testsuite.config import settings
-from testsuite.gateway import Gateway, GatewayRoute, Hostname, Exposer
-from testsuite.gateway.envoy import Envoy
-from testsuite.gateway.envoy.route import EnvoyVirtualRoute
-from testsuite.gateway.gateway_api.gateway import KuadrantGateway
-from testsuite.gateway.gateway_api.route import HTTPRoute
+from testsuite.gateway import Exposer, CustomReference
 from testsuite.httpx import KuadrantClient
 from testsuite.mockserver import Mockserver
 from testsuite.oidc import OIDCProvider
 from testsuite.oidc.auth0 import Auth0Provider
 from testsuite.oidc.keycloak import Keycloak
-from testsuite.openshift.kuadrant import KuadrantCR
 from testsuite.tracing import TracingClient
 from testsuite.utils import randomize, _whoami
 
@@ -115,32 +108,6 @@ def pytest_collection_modifyitems(session, config, items):  # pylint: disable=un
 def testconfig():
     """Testsuite settings"""
     return settings
-
-
-@pytest.fixture(scope="session")
-def hub_openshift(testconfig):
-    """OpenShift client for the primary namespace"""
-    client = testconfig["service_protection"]["project"]
-    if not client.connected:
-        pytest.fail("You are not logged into Openshift or the namespace doesn't exist")
-    return client
-
-
-@pytest.fixture(scope="session")
-def openshift(hub_openshift):
-    """OpenShift client for the primary namespace"""
-    return hub_openshift
-
-
-@pytest.fixture(scope="session")
-def openshift2(testconfig, skip_or_fail):
-    """OpenShift client for the secondary namespace located on the same cluster as primary Openshift"""
-    client = testconfig["service_protection"]["project2"]
-    if client is None:
-        skip_or_fail("Openshift2 required but second_project was not set")
-    if not client.connected:
-        pytest.fail("You are not logged into Openshift or the namespace for Openshift2 doesn't exist")
-    return client
 
 
 @pytest.fixture(scope="session")
@@ -263,65 +230,13 @@ def module_label(label):
 
 
 @pytest.fixture(scope="session")
-def kuadrant(request, testconfig):
-    """Returns Kuadrant instance if exists, or None"""
-    if request.config.getoption("--standalone"):
-        return None
-
-    ocp = testconfig["service_protection"]["project"]
-    project = testconfig["service_protection"]["system_project"]
-    kuadrant_openshift = ocp.change_project(project)
-
-    try:
-        with kuadrant_openshift.context:
-            kuadrant = selector("kuadrant").object(cls=KuadrantCR)
-    except OpenShiftPythonException:
-        pytest.fail("Running Kuadrant tests, but Kuadrant resource was not found")
-
-    return kuadrant
-
-
-@pytest.fixture(scope="session")
-def backend(request, openshift, blame, label):
-    """Deploys Httpbin backend"""
-    httpbin = Httpbin(openshift, blame("httpbin"), label)
-    request.addfinalizer(httpbin.delete)
-    httpbin.commit()
-    return httpbin
-
-
-@pytest.fixture(scope="session")
-def gateway(request, kuadrant, openshift, blame, label, testconfig, wildcard_domain) -> Gateway:
-    """Deploys Gateway that wires up the Backend behind the reverse-proxy and Authorino instance"""
-    if kuadrant:
-        gw = KuadrantGateway.create_instance(openshift, blame("gw"), wildcard_domain, {"app": label})
-    else:
-        authorino = request.getfixturevalue("authorino")
-        gw = Envoy(
-            openshift,
-            blame("gw"),
-            authorino,
-            testconfig["service_protection"]["envoy"]["image"],
-            labels={"app": label},
-        )
-    request.addfinalizer(gw.delete)
-    gw.commit()
-    gw.wait_for_ready()
-    return gw
-
-
-@pytest.fixture(scope="module")
-def route(request, kuadrant, gateway, blame, hostname, backend, module_label) -> GatewayRoute:
-    """Route object"""
-    if kuadrant:
-        route = HTTPRoute.create_instance(gateway.openshift, blame("route"), gateway, {"app": module_label})
-    else:
-        route = EnvoyVirtualRoute.create_instance(gateway.openshift, blame("route"), gateway)
-    route.add_hostname(hostname.hostname)
-    route.add_backend(backend)
-    request.addfinalizer(route.delete)
-    route.commit()
-    return route
+def hub_openshift(testconfig):
+    """OpenShift client for the primary namespace"""
+    client = testconfig["cluster"]
+    client.change_project(testconfig["service_protection"]["project"])
+    if not client.connected:
+        pytest.fail("You are not logged into Openshift or the namespace doesn't exist")
+    return client
 
 
 @pytest.fixture(scope="session")
@@ -333,13 +248,6 @@ def exposer(request, testconfig, hub_openshift) -> Exposer:
     return exposer
 
 
-@pytest.fixture(scope="module")
-def hostname(gateway, exposer, blame) -> Hostname:
-    """Exposed Hostname object"""
-    hostname = exposer.expose_hostname(blame("hostname"), gateway)
-    return hostname
-
-
 @pytest.fixture(scope="session")
 def base_domain(exposer):
     """Returns preconfigured base domain"""
@@ -348,15 +256,15 @@ def base_domain(exposer):
 
 @pytest.fixture(scope="session")
 def wildcard_domain(base_domain):
-    """
-    Wildcard domain of openshift cluster
-    """
+    """Wildcard domain"""
     return f"*.{base_domain}"
 
 
-@pytest.fixture(scope="module")
-def client(route, hostname):  # pylint: disable=unused-argument
-    """Returns httpx client to be used for requests, it also commits AuthConfig"""
-    client = hostname.client()
-    yield client
-    client.close()
+@pytest.fixture(scope="session")
+def cluster_issuer(testconfig):
+    """Reference to cluster self-signed certificate issuer"""
+    return CustomReference(
+        group="cert-manager.io",
+        kind=testconfig["control_plane"]["issuer"]["kind"],
+        name=testconfig["control_plane"]["issuer"]["name"],
+    )

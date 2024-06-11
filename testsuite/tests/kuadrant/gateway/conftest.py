@@ -2,7 +2,7 @@
 
 import pytest
 
-from testsuite.gateway import Exposer, CustomReference
+from testsuite.gateway import Exposer
 from testsuite.gateway.gateway_api.gateway import KuadrantGateway
 from testsuite.gateway.gateway_api.hostname import DNSPolicyExposer
 from testsuite.httpx.auth import HttpxOidcClientAuth
@@ -50,16 +50,6 @@ def exposer(request, hub_openshift) -> Exposer:
     request.addfinalizer(exposer.delete)
     exposer.commit()
     return exposer
-
-
-@pytest.fixture(scope="session")
-def cluster_issuer(testconfig):
-    """Reference to cluster self-signed certificate issuer"""
-    return CustomReference(
-        group="cert-manager.io",
-        kind=testconfig["control_plane"]["issuer"]["kind"],
-        name=testconfig["control_plane"]["issuer"]["name"],
-    )
 
 
 @pytest.fixture(scope="module")
