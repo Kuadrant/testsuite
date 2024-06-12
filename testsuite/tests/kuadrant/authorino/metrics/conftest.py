@@ -70,7 +70,8 @@ def service_monitor(openshift, prometheus, blame, module_label):
 
 
 @pytest.fixture(scope="module", autouse=True)
-def commit(commit, request, service_monitor):  # pylint: disable=unused-argument
+def commit(commit, prometheus, request, service_monitor):  # pylint: disable=unused-argument
     """Commit service monitor object"""
     request.addfinalizer(service_monitor.delete)
     service_monitor.commit()
+    assert prometheus.is_reconciled(service_monitor), "Service Monitor didn't get reconciled in time"

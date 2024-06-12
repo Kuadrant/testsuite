@@ -14,6 +14,7 @@ class MetricsEndpoint:
 
     path: str = "/metrics"
     port: str = "http"
+    interval: str = "30s"
 
 
 class ServiceMonitor(OpenShiftObject):
