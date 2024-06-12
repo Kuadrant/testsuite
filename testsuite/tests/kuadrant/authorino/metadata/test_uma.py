@@ -30,20 +30,20 @@ allow {
 
 
 @pytest.fixture(scope="module", autouse=True)
-def client_secret(create_client_secret, keycloak):
+def client_secret(create_client_secret, keycloak, blame):
     """Creates a required secret, used by Authorino to start the authentication with the UMA registry."""
-    return create_client_secret("uma-client-secret", keycloak.client.auth_id, keycloak.client.secret)
+    return create_client_secret(blame("uma-client-secret"), keycloak.client.auth_id, keycloak.client.secret)
 
 
 @pytest.fixture(scope="module")
-def auth2(keycloak):
+def auth2(keycloak, blame):
     """Creates new Keycloak User and returns his authentication object for HTTPX"""
-    user = keycloak.realm.create_user("newTestUser", "p")
+    user = keycloak.realm.create_user(blame("newTestUser"), "p")
     return HttpxOidcClientAuth.from_user(keycloak.get_token, user=user)
 
 
 @pytest.fixture(scope="module")
-def authorization(client_secret, authorization, keycloak, client):
+def authorization(client_secret, authorization, keycloak, client, blame):
     # pylint: disable=unused-argument
     """
     Adds UMA resource-level authorization metadata feature and OPA policy that authorize user access to the resource.
@@ -51,13 +51,13 @@ def authorization(client_secret, authorization, keycloak, client):
         1. `/anything` - accessed by anyone, not enforcing UMA
         2. `/anything/1` - accessed only by default Keycloak user (username = `keycloak.test_username`).
     """
-    keycloak.client.create_uma_resource("get1", ["/anything"])
-    keycloak.client.create_uma_resource("get2", ["/anything/1"], keycloak.test_username)
-    # Sometimes Keycloak does not instantly propagate new resources.
+    keycloak.client.create_uma_resource(blame("anything"), ["/anything"])
+    keycloak.client.create_uma_resource(blame("anything1"), ["/anything/1"], keycloak.test_username)
+    # Sometimes RHSSO does not instantly propagate new resources.
     # To prevent the flakiness of these tests, we are adding a new retry code: 404
     client.add_retry_code(404)
 
-    authorization.metadata.add_uma("resource-data", keycloak.well_known["issuer"], "uma-client-secret")
+    authorization.metadata.add_uma("resource-data", keycloak.well_known["issuer"], client_secret.name())
     authorization.authorization.add_opa_policy("opa", VALIDATE_RESOURCE_OWNER)
     return authorization
 

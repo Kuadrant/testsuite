@@ -20,21 +20,21 @@ pytestmark = [pytest.mark.authorino]
 
 
 @pytest.fixture(scope="module")
-def resource_owner_auth(keycloak):
+def resource_owner_auth(keycloak, blame):
     """
     Auth for user who owns the protected resource, a.k.a. "owner" user.
     The "uma_protection" client role is assigned to the user so that they are allowed to create protected resources.
     """
-    owner = keycloak.realm.create_user("owner", "owner")
+    owner = keycloak.realm.create_user(blame("owner"), "owner")
     role = keycloak.realm.admin.get_client_role(client_id=keycloak.client.client_id, role_name="uma_protection")
     keycloak.realm.admin.assign_client_role(user_id=owner.user_id, client_id=keycloak.client.client_id, roles=[role])
     return HttpxOidcClientAuth.from_user(keycloak.get_token(owner.username, owner.password), owner)
 
 
 @pytest.fixture(scope="module")
-def requester_auth(keycloak):
+def requester_auth(keycloak, blame):
     """Auth for user who requests the access to the protected resource, a.k.a. "requester" user"""
-    requester = keycloak.realm.create_user("requester", "requester")
+    requester = keycloak.realm.create_user(blame("requester"), "requester")
     return HttpxOidcClientAuth.from_user(keycloak.get_token(requester.username, requester.password), requester)
 
 
