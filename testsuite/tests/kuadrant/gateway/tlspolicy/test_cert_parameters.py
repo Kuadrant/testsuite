@@ -5,7 +5,7 @@ from datetime import timedelta
 import pytest
 from cryptography import x509
 
-pytestmark = [pytest.mark.kuadrant_only]
+pytestmark = [pytest.mark.kuadrant_only, pytest.mark.tlspolicy]
 
 
 @pytest.fixture(scope="module")

@@ -63,6 +63,10 @@ kuadrant-only: ## Run Kuadrant-only tests
 kuadrant-only: poetry-no-dev
 	$(PYTEST) -n4 -m 'kuadrant_only and not standalone_only' --dist loadfile --enforce $(flags) testsuite
 
+dnstls: ## Run DNS and TLS tests
+dnstls: poetry-no-dev
+	$(PYTEST) -n4 -m 'dnspolicy or tlspolicy' --dist loadfile --enforce $(flags) testsuite
+
 performance: ## Run performance tests
 performance: poetry-no-dev
 	$(PYTEST) --performance $(flags) testsuite/tests/kuadrant/authorino/performance

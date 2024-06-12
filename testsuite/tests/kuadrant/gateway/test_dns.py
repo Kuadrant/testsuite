@@ -4,7 +4,7 @@ This module contains the most basic happy path test for both DNSPolicy and TLSPo
 
 import pytest
 
-pytestmark = [pytest.mark.kuadrant_only]
+pytestmark = [pytest.mark.kuadrant_only, pytest.mark.dnspolicy, pytest.mark.tlspolicy]
 
 
 def test_gateway_readiness(gateway):

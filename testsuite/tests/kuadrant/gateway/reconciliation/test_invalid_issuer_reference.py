@@ -6,7 +6,7 @@ from testsuite.gateway import CustomReference
 from testsuite.policy.tls_policy import TLSPolicy
 from testsuite.utils import has_condition
 
-pytestmark = [pytest.mark.kuadrant_only]
+pytestmark = [pytest.mark.kuadrant_only, pytest.mark.tlspolicy]
 
 
 @pytest.fixture(scope="module")

@@ -10,7 +10,11 @@ pytestmark = [pytest.mark.kuadrant_only]
 
 
 @pytest.mark.parametrize(
-    "create_cr", [pytest.param(dns_policy, id="DNSPolicy"), pytest.param(TLSPolicy.create_instance, id="TLSPolicy")]
+    "create_cr",
+    [
+        pytest.param(dns_policy, id="DNSPolicy", marks=[pytest.mark.dnspolicy]),
+        pytest.param(TLSPolicy.create_instance, id="TLSPolicy", marks=[pytest.mark.tlspolicy]),
+    ],
 )
 def test_two_policies_one_gw(request, create_cr, gateway, client, blame, module_label, cluster_issuer, auth):
     """Tests that policy is rejected when the Gateway already has a DNSPolicy"""

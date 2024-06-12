@@ -31,6 +31,8 @@ def test_route_status(route, rate_limit, authorization):
     assert not route.wait_until(lambda obj: obj.is_affected_by(authorization))
 
 
+@pytest.mark.dnspolicy
+@pytest.mark.tlspolicy
 def test_gateway_status(gateway, dns_policy, tls_policy):
     """Tests affected by status for Gateway"""
     gateway.refresh()
