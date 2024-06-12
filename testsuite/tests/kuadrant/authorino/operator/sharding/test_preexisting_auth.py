@@ -60,7 +60,9 @@ def test_preexisting_auth(
     auth = setup_authorization(route2, "B")
     auth.wait_for_ready()
 
-    assert hostname.hostname in auth.model.status.summary.hostsReady
+    assert (
+        hostname.hostname in auth.model.status.summary.hostsReady
+    ), f"Host {hostname.hostname} not found, model: {auth.model}"
     response = hostname.client().get("/get")
     assert response.status_code == 200
     assert response.json()["headers"]["Header"] == '{"anything":"B"}'
