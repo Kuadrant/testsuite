@@ -163,7 +163,7 @@ def keycloak(testconfig, blame, skip_or_fail):
             cnf["test_user"]["username"],
             cnf["test_user"]["password"],
         )
-
+        request.addfinalizer(info.delete)
         info.commit()
         return info
     except KeycloakAuthenticationError:
