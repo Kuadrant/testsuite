@@ -7,7 +7,6 @@ from testsuite.policy.authorization.auth_policy import AuthPolicy
 from testsuite.policy.rate_limit_policy import RateLimitPolicy
 
 
-# pylint: disable=unused-argument
 @pytest.fixture(scope="session")
 def authorino(kuadrant):
     """Authorino instance when configured through Kuadrant"""
@@ -24,7 +23,7 @@ def authorization_name(blame):
 
 
 @pytest.fixture(scope="module")
-def authorization(kuadrant, oidc_provider, route, authorization_name, openshift, label):
+def authorization(kuadrant, route, authorization_name, openshift, label):
     """Authorization object (In case of Kuadrant AuthPolicy)"""
     if kuadrant:
         return AuthPolicy.create_instance(openshift, authorization_name, route, labels={"testRun": label})
@@ -32,7 +31,7 @@ def authorization(kuadrant, oidc_provider, route, authorization_name, openshift,
 
 
 @pytest.fixture(scope="module")
-def rate_limit(kuadrant, openshift, blame, request, module_label, route, gateway):
+def rate_limit(kuadrant, openshift, blame, request, module_label, route, gateway):  # pylint: disable=unused-argument
     """
     Rate limit object.
     Request is used for indirect parametrization, with two possible parameters:

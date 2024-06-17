@@ -44,9 +44,8 @@ def setup_route(request, blame, backend, module_label):
     return _route
 
 
-# pylint: disable=unused-argument
 @pytest.fixture(scope="module")
-def setup_authorization(request, blame, openshift, label):
+def setup_authorization(request, blame, openshift, label):  # pylint: disable=unused-argument
     """Factory method for creating AuthConfigs in the test run"""
 
     def _authorization(route, sharding_label=None):

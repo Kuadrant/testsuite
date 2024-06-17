@@ -26,8 +26,7 @@ class Auth0Provider(OIDCProvider):
         response = httpx.get(self.domain + "/.well-known/openid-configuration")
         return response.json()
 
-    # pylint: disable=unused-argument
-    def refresh_token(self, refresh_token):
+    def refresh_token(self, refresh_token):  # pylint: disable=unused-argument
         """Refresh tokens are not yet implemented for Auth0, will attempt to acquire new token instead"""
         return self.get_token()
 

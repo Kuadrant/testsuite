@@ -99,8 +99,7 @@ def term_handler():
     signal.signal(signal.SIGTERM, orig)
 
 
-# pylint: disable=unused-argument
-def pytest_collection_modifyitems(session, config, items):
+def pytest_collection_modifyitems(session, config, items):  # pylint: disable=unused-argument
     """
     Add user properties to testcases for xml output
 
@@ -150,7 +149,7 @@ def openshift2(testconfig, skip_or_fail):
 
 
 @pytest.fixture(scope="session")
-def keycloak(request, testconfig, blame, skip_or_fail):
+def keycloak(testconfig, blame, skip_or_fail):
     """Keycloak OIDC Provider fixture"""
     try:
         testconfig.validators.validate(only="keycloak")
@@ -274,8 +273,8 @@ def kuadrant(request, testconfig):
     if request.config.getoption("--standalone"):
         return None
 
-    ocp = settings["service_protection"]["project"]
-    project = settings["service_protection"]["system_project"]
+    ocp = testconfig["service_protection"]["project"]
+    project = testconfig["service_protection"]["system_project"]
     kuadrant_openshift = ocp.change_project(project)
 
     try:
@@ -362,7 +361,7 @@ def wildcard_domain(base_domain):
 
 
 @pytest.fixture(scope="module")
-def client(route, hostname):
+def client(route, hostname):  # pylint: disable=unused-argument
     """Returns httpx client to be used for requests, it also commits AuthConfig"""
     client = hostname.client()
     yield client

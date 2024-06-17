@@ -67,9 +67,8 @@ def authorino_parameters(authorino_parameters, specific_authorino_name):
     return authorino_parameters
 
 
-# pylint: disable=unused-argument
 @pytest.fixture(scope="module")
-def authorization(authorization, openshift, module_label, authorino_domain) -> AuthConfig:
+def authorization(authorization, openshift, authorino_domain) -> AuthConfig:
     """In case of Authorino, AuthConfig used for authorization"""
 
     # Authorino should have specific url so it is accessible by k8s webhook
@@ -116,7 +115,7 @@ def authorization(authorization, openshift, module_label, authorino_domain) -> A
     return authorization
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="module", autouse=True)
 def validating_webhook(openshift, authorino_domain, certificates, blame):
     """Create validating webhook."""
     name = blame("check-ingress") + ".authorino.kuadrant.io"
@@ -157,8 +156,7 @@ def validating_webhook(openshift, authorino_domain, certificates, blame):
         webhook.delete()
 
 
-# pylint: disable=unused-argument
-def test_authorized_via_http(authorization, openshift, authorino, authorino_domain, validating_webhook, blame):
+def test_authorized_via_http(openshift, blame):
     """Test raw http authorization via webhooks."""
     ingress = Ingress.create_instance(openshift, blame("minimal-ingress"), rules=[{}])
     ingress.commit()
@@ -166,8 +164,7 @@ def test_authorized_via_http(authorization, openshift, authorino, authorino_doma
     ingress.delete()
 
 
-# pylint: disable=unused-argument
-def test_unauthorized_via_http(authorization, openshift, authorino, authorino_domain, validating_webhook, blame):
+def test_unauthorized_via_http(openshift, blame):
     """Test raw http authorization via webhooks but for unauthorized object."""
     ingress = Ingress.create_instance(openshift, blame("minimal-ingress"), rules=[{}, {}])
     with pytest.raises(OpenShiftPythonException, match="Unauthorized"):
