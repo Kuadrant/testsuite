@@ -101,7 +101,12 @@ class KuadrantGateway(OpenShiftObject, Gateway):
             return None
 
         tls_cert_secret_name = self.cert_secret_name
-        tls_cert_secret = self.openshift.get_secret(tls_cert_secret_name)
+        try:
+            tls_cert_secret = self.openshift.get_secret(tls_cert_secret_name)
+        except oc.OpenShiftPythonException as e:
+            if "Expected a single object, but selected 0" in e.msg:
+                raise oc.OpenShiftPythonException("TLS secret was not created") from None
+            raise e
         tls_cert = Certificate(
             key=tls_cert_secret["tls.key"],
             certificate=tls_cert_secret["tls.crt"],
