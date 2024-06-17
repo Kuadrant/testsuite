@@ -2,7 +2,7 @@
 
 import dataclasses
 
-from openshift_client import selector, timeout
+from openshift_client import selector
 
 from testsuite.openshift import CustomResource
 from testsuite.openshift.deployment import Deployment
@@ -57,13 +57,3 @@ class KuadrantCR(CustomResource):
         """Returns Deployment object for this Authorino"""
         with self.context:
             return selector(f"deployment/{self.LIMITADOR}").object(cls=Deployment)
-
-    def wait_for_ready(self):
-        """Waits until Kuadrant CR reports ready status"""
-        with timeout(90):
-            success, _, _ = self.self_selector().until_all(
-                success_func=lambda obj: len(obj.model.status.conditions) > 0
-                and all(x.status == "True" for x in obj.model.status.conditions)
-            )
-            assert success, "Kuadrant did got get ready in time"
-            self.refresh()
