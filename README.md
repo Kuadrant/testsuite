@@ -7,7 +7,7 @@ This repository contains end-to-end tests for Kuadrant project. It supports runn
 ### Authorino standalone tests
 * OpenShift 4.x cluster
 * Authorino Operator installed
-* Use `authorino` make target
+* Use `authorino-standalone` make target
 
 ### Service Protection tests
 * OpenShift 4.x cluster
@@ -29,10 +29,9 @@ All the required and possible configuration options can be found in `config/sett
 ### OpenShift auto-fetching
 
 Some configuration options can be fetched from OpenShift if there are correctly deployed [tools](https://github.com/3scale-qe/tools).
-Tools can be deployed by using `overlays/kuadrant` overlay and deploying RHSSO with the provided script like this:
+Tools can be deployed by using `overlays/kuadrant` overlay like this:
 ```bash
 oc apply -k overlays/kuadrant/ --namespace tools
-NAMESPACE=tools ./base/rhsso/deploy-rhsso.sh
 ```
 
 ### Settings files
