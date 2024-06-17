@@ -1,6 +1,9 @@
 """Tests DNS/TLSPolicy across multiple clusters"""
 
 import dns.resolver
+import pytest
+
+pytestmark = [pytest.mark.multicluster]
 
 
 def test_gateway_readiness(gateways):
