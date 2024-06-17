@@ -1,7 +1,5 @@
 """Module for TLSPolicy related classes"""
 
-import openshift_client as oc
-
 from testsuite.gateway import Referencable
 from testsuite.openshift.client import OpenShiftClient
 from testsuite.policy import Policy
@@ -55,9 +53,5 @@ class TLSPolicy(Policy):
     def wait_for_ready(self):
         """TLSPolicy does not have Enforced
         https://github.com/Kuadrant/kuadrant-operator/issues/572"""
-        with oc.timeout(90):
-            success, _, _ = self.self_selector().until_all(
-                success_func=has_condition("Accepted", "True"),
-                tolerate_failures=5,
-            )
-            assert success, f"{self.kind()} did not get ready in time"
+        success = self.wait_until(has_condition("Accepted", "True"))
+        assert success, f"{self.kind()} did not get ready in time"

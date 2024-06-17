@@ -4,14 +4,12 @@ import time
 from dataclasses import dataclass
 from typing import Iterable, Literal, Optional, List
 
-from openshift_client import timeout
-
 from testsuite.gateway import Referencable, RouteMatch
 from testsuite.openshift import modify
 from testsuite.openshift.client import OpenShiftClient
 from testsuite.policy import Policy
 from testsuite.policy.authorization import Rule
-from testsuite.utils import asdict, has_condition
+from testsuite.utils import asdict
 
 
 @dataclass
@@ -81,11 +79,6 @@ class RateLimitPolicy(Policy):
 
     def wait_for_ready(self):
         """Wait for RLP to be enforced"""
-        with timeout(90):
-            success, _, _ = self.self_selector().until_all(
-                success_func=has_condition("Enforced", "True"),
-                tolerate_failures=5,
-            )
-            assert success, f"{self.kind()} did not get ready in time"
+        super().wait_for_ready()
         # Even after enforced condition RLP requires a short sleep
         time.sleep(5)

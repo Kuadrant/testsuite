@@ -34,7 +34,7 @@ class OpenShiftObject(APIObject, LifecycleObject):
             self.committed = False
             return deleted
 
-    def wait_until(self, test_function, timelimit=90):
+    def wait_until(self, test_function, timelimit=60):
         """Waits until the test function succeeds for this object"""
         try:
             with timeout(timelimit):
@@ -42,8 +42,10 @@ class OpenShiftObject(APIObject, LifecycleObject):
                     success_func=lambda obj: test_function(self.__class__(obj.model))
                 )
                 return success
-        except OpenShiftPythonException:
-            return False
+        except OpenShiftPythonException as e:
+            if "Timeout" in e.msg:
+                return False
+            raise e
 
 
 class CustomResource(OpenShiftObject):
@@ -60,13 +62,11 @@ class CustomResource(OpenShiftObject):
 
     def wait_for_ready(self):
         """Waits until CR reports ready status"""
-        with timeout(90):
-            success, _, _ = self.self_selector().until_all(
-                success_func=lambda obj: len(obj.model.status.conditions) > 0
-                and all(x.status == "True" for x in obj.model.status.conditions)
-            )
-            assert success, f"{self.kind()} did got get ready in time"
-            self.refresh()
+        success = self.wait_until(
+            lambda obj: len(obj.model.status.conditions) > 0
+            and all(x.status == "True" for x in obj.model.status.conditions)
+        )
+        assert success, f"{self.kind()} did got get ready in time"
 
     def __getitem__(self, name):
         return self.model.spec[name]
