@@ -45,11 +45,13 @@ class KuadrantCR(CustomResource):
     @property
     def authorino(self) -> KuadrantSection:
         """Returns spec.authorino from Kuadrant object"""
+        self.model.spec.setdefault("authorino", {})
         return KuadrantSection(self, "authorino")
 
     @property
     def limitador(self) -> KuadrantSection:
         """Returns spec.limitador from Kuadrant object"""
+        self.model.spec.setdefault("limitador", {})
         return KuadrantSection(self, "limitador")
 
     @property
