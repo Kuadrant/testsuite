@@ -26,7 +26,10 @@ def admin_rhsso(blame, keycloak):
     )
 
     info.commit()
-    return info
+    yield info
+
+    # Realm cleanup
+    info.delete()
 
 
 @pytest.fixture(scope="module", autouse=True)
