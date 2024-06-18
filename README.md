@@ -5,12 +5,12 @@ This repository contains end-to-end tests for Kuadrant project. It supports runn
 ## Requirements
 
 ### Authorino standalone tests
-* OpenShift 4.x cluster
+* Kubernetes cluster
 * Authorino Operator installed
 * Use `authorino-standalone` make target
 
 ### Service Protection tests
-* OpenShift 4.x cluster
+* Kubernetes cluster
 * Kuadrant Operator installed
 * Use `test` make target
 
@@ -56,7 +56,7 @@ Requirements:
 * Python 3.11+
 * [poetry](https://python-poetry.org/)
 * [CFSSL](https://github.com/cloudflare/cfssl)
-* [OpenShift CLI tools](https://docs.openshift.com/container-platform/latest/cli_reference/openshift_cli/getting-started-cli.html) (oc)
+* [kubectl](https://kubernetes.io/docs/reference/kubectl/) (kubectl)
 
 If you have all of those, you can run ```make poetry``` to install virtual environment and all dependencies
 To run all tests you can then use ```make test```
