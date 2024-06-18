@@ -67,10 +67,18 @@ class Section:
         """The actual dict section which will be edited"""
         return self.obj.auth_section.setdefault(self.section_name, {})
 
-    def add_item(self, name: str, value: dict, **common_features):
+    def add_item(self, name: str, value: dict, *, defaults: bool = False, overrides: bool = False, **common_features):
         """Adds item to the section"""
         add_common_features(value, **common_features)
-        self.section.update({name: value})
+
+        if defaults:
+            section = self.obj.model.spec.setdefault("defaults", {}).setdefault("rules", {})
+        elif overrides:
+            section = self.obj.model.spec.setdefault("overrides", {}).setdefault("rules", {})
+        else:
+            section = self.obj.auth_section
+
+        section.setdefault(self.section_name, {}).update({name: value})
 
     @modify
     def clear_all(self):

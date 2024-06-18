@@ -35,7 +35,6 @@ class AuthPolicy(AuthConfig, Policy):
             "metadata": {"name": name, "namespace": openshift.project, "labels": labels},
             "spec": {
                 "targetRef": target.reference,
-                "rules": {},
             },
         }
 
