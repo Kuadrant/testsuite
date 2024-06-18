@@ -149,7 +149,7 @@ def openshift2(testconfig, skip_or_fail):
 
 
 @pytest.fixture(scope="session")
-def keycloak(testconfig, blame, skip_or_fail):
+def keycloak(request, testconfig, blame, skip_or_fail):
     """Keycloak OIDC Provider fixture"""
     try:
         testconfig.validators.validate(only="keycloak")
