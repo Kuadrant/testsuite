@@ -48,14 +48,12 @@ class OpenShiftClient:
     @property
     def api_url(self):
         """Returns real API url"""
-        with self.context:
-            return oc.whoami("--show-server=true")
+        return self.inspect_context(jsonpath="{.clusters[*].cluster.server}")
 
     @property
     def token(self):
         """Returns real OpenShift token"""
-        with self.context:
-            return oc.whoami("-t")
+        return self.inspect_context(jsonpath="{.users[*].user.token}", raw=True)
 
     @cached_property
     def apps_url(self):
@@ -105,6 +103,15 @@ class OpenShiftClient:
             if parse_output:
                 return oc.APIObject(string_to_model=result.out())
             return result
+
+    def inspect_context(self, jsonpath, raw=False):
+        """Returns jsonpath from the current context"""
+        return (
+            self.do_action("config", "view", f'--output=jsonpath="{jsonpath}"', f"--raw={raw}", "--minify=true")
+            .out()
+            .replace('"', "")
+            .strip()
+        )
 
     @property
     def project_exists(self):

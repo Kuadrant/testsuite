@@ -8,9 +8,9 @@ Bind a dir to /test-run-results to get reports "
 RUN useradd --no-log-init -u 1001 -g root -m testsuite
 RUN dnf install -y python3.11 python3.11-pip make git && dnf clean all
 
-RUN curl https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable/openshift-client-linux.tar.gz >/tmp/oc.tgz && \
-	tar xzf /tmp/oc.tgz -C /usr/local/bin && \
-	rm /tmp/oc.tgz
+RUN curl -LO "https://dl.k8s.io/release/v1.30.2/bin/linux/amd64/kubectl" && \
+    mv kubectl /usr/local/bin &&\
+    chmod +x /usr/local/bin/kubectl
 
 RUN curl -L https://github.com/cloudflare/cfssl/releases/download/v1.6.4/cfssl_1.6.4_linux_amd64 >/usr/bin/cfssl && \
     chmod +x /usr/bin/cfssl
