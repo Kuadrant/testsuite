@@ -176,15 +176,3 @@ def check_condition(condition, condition_type, status, reason=None, message=None
     ):
         return True
     return False
-
-
-def has_condition(condition_type, status="True", reason=None, message=None):
-    """Returns function, that returns True if the Kubernetes object has a specific value"""
-
-    def _check(obj):
-        for condition in obj.model.status.conditions:
-            if check_condition(condition, condition_type, status, reason, message):
-                return True
-        return False
-
-    return _check

@@ -1,7 +1,19 @@
 """Contains Base class for policies"""
 
 from testsuite.openshift import OpenShiftObject
-from testsuite.utils import has_condition
+from testsuite.utils import check_condition
+
+
+def has_condition(condition_type, status="True", reason=None, message=None):
+    """Returns function, that returns True if the Kubernetes object has a specific value"""
+
+    def _check(obj):
+        for condition in obj.model.status.conditions:
+            if check_condition(condition, condition_type, status, reason, message):
+                return True
+        return False
+
+    return _check
 
 
 class Policy(OpenShiftObject):
