@@ -16,7 +16,14 @@ class OpenShiftObject(APIObject, LifecycleObject):
 
     def __init__(self, dict_to_model=None, string_to_model=None, context=None):
         super().__init__(dict_to_model, string_to_model, context)
-        self.committed = False
+        self._committed = None
+
+    @property
+    def committed(self):
+        """Returns True, if the objects is already committed to the server"""
+        if self._committed is None:
+            self._committed, _ = self.exists()
+        return self._committed
 
     def commit(self):
         """
@@ -24,14 +31,14 @@ class OpenShiftObject(APIObject, LifecycleObject):
         It will be the same class but attributes might differ, due to server adding/rejecting some of them.
         """
         self.create(["--save-config=true"])
-        self.committed = True
+        self._committed = True
         return self.refresh()
 
     def delete(self, ignore_not_found=True, cmd_args=None):
         """Deletes the resource, by default ignored not found"""
         with timeout(30):
             deleted = super().delete(ignore_not_found, cmd_args)
-            self.committed = False
+            self._committed = False
             return deleted
 
     def wait_until(self, test_function, timelimit=60):

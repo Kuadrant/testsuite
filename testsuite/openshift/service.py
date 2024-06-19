@@ -64,5 +64,4 @@ class Service(OpenShiftObject):
         """Deletes Service, introduces bigger waiting times due to LoadBalancer type"""
         with timeout(10 * 60):
             deleted = super(OpenShiftObject, self).delete(ignore_not_found, cmd_args)
-            self.committed = False
             return deleted
