@@ -1,12 +1,26 @@
 """Common classes for Httpx"""
 
+import typing
+
 # I change return type of HTTPX client to Kuadrant Result
 # mypy: disable-error-code="override, return-value"
 from tempfile import NamedTemporaryFile
 from typing import Union, Iterable
 
 import backoff
-from httpx import Client, RequestError
+from httpx import Client, RequestError, USE_CLIENT_DEFAULT, Request
+from httpx._client import UseClientDefault
+from httpx._types import (
+    URLTypes,
+    RequestContent,
+    RequestData,
+    RequestFiles,
+    QueryParamTypes,
+    HeaderTypes,
+    CookieTypes,
+    TimeoutTypes,
+    RequestExtensions,
+)
 
 from testsuite.certificates import Certificate
 
@@ -171,3 +185,50 @@ class KuadrantClient(Client):
             responses.append(self.get(url, params=params, headers=headers, auth=auth))
 
         return responses
+
+
+class ForceSNIClient(KuadrantClient):
+    """Kuadrant client that forces SNI for each request"""
+
+    def __init__(
+        self,
+        *,
+        verify: Union[Certificate, bool] = True,
+        cert: Certificate = None,
+        retry_codes: Iterable[int] = None,
+        sni_hostname: str = None,
+        **kwargs,
+    ):
+        super().__init__(verify=verify, cert=cert, retry_codes=retry_codes, **kwargs)
+        self.sni_hostname = sni_hostname
+
+    def build_request(
+        self,
+        method: str,
+        url: URLTypes,
+        *,
+        content: RequestContent | None = None,
+        data: RequestData | None = None,
+        files: RequestFiles | None = None,
+        json: typing.Any | None = None,
+        params: QueryParamTypes | None = None,
+        headers: HeaderTypes | None = None,
+        cookies: CookieTypes | None = None,
+        timeout: TimeoutTypes | UseClientDefault = USE_CLIENT_DEFAULT,
+        extensions: RequestExtensions | None = None,
+    ) -> Request:
+        extensions = extensions or {}
+        extensions.setdefault("sni_hostname", self.sni_hostname)
+        return super().build_request(
+            method,
+            url,
+            content=content,
+            data=data,
+            files=files,
+            json=json,
+            params=params,
+            headers=headers,
+            cookies=cookies,
+            timeout=timeout,
+            extensions=extensions,
+        )
