@@ -63,8 +63,8 @@ class StaticLocalHostname(Hostname):
         return self._hostname
 
 
-class KindExposer(Exposer):
-    """Exposer using loadbalancer service for Gateway"""
+class LoadBalancerServiceExposer(Exposer):
+    """Exposer using Load Balancer service for Gateway"""
 
     def expose_hostname(self, name, gateway: Gateway) -> Hostname:
         return StaticLocalHostname(
