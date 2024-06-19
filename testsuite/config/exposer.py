@@ -2,7 +2,7 @@
 
 from testsuite.gateway.exposers import OpenShiftExposer, LoadBalancerServiceExposer
 
-EXPOSERS = {"openshift": OpenShiftExposer, "kind": LoadBalancerServiceExposer}
+EXPOSERS = {"openshift": OpenShiftExposer, "kind": LoadBalancerServiceExposer, "kubernetes": LoadBalancerServiceExposer}
 
 
 # pylint: disable=unused-argument
