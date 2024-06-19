@@ -3,8 +3,6 @@
 from functools import cached_property
 from typing import Dict
 
-import openshift_client as oc
-
 from testsuite.utils import asdict
 from testsuite.openshift import OpenShiftObject, modify
 from testsuite.openshift.client import OpenShiftClient
@@ -76,13 +74,12 @@ class AuthConfig(OpenShiftObject):
 
     def wait_for_ready(self):
         """Waits until authorization object reports ready status"""
-        with oc.timeout(90):
-            success, _, _ = self.self_selector().until_all(
-                success_func=lambda obj: len(obj.model.status.conditions) > 0
-                and all(x.status == "True" for x in obj.model.status.conditions)
-            )
-            assert success, f"{self.kind()} did not get ready in time"
-            self.refresh()
+        success = self.wait_until(
+            lambda obj: len(obj.model.status.conditions) > 0
+            and all(x.status == "True" for x in obj.model.status.conditions)
+        )
+        assert success, f"{self.kind()} did not get ready in time"
+        self.refresh()
 
     @modify
     def add_rule(self, when: list[Rule]):

@@ -3,8 +3,6 @@
 from dataclasses import dataclass
 from typing import Any, Optional
 
-import openshift_client as oc
-
 from testsuite.openshift import OpenShiftObject, Selector, modify
 from testsuite.utils import asdict
 
@@ -148,9 +146,8 @@ class Deployment(OpenShiftObject):
 
     def wait_for_ready(self, timeout=90):
         """Waits until Deployment is marked as ready"""
-        with oc.timeout(timeout):
-            success, _, _ = self.self_selector().until_all(success_func=lambda obj: "readyReplicas" in obj.model.status)
-            assert success, f"Deployment {self.name()} did not get ready in time"
+        success = self.wait_until(lambda obj: "readyReplicas" in obj.model.status, timelimit=timeout)
+        assert success, f"Deployment {self.name()} did not get ready in time"
 
     @property
     def template(self):
