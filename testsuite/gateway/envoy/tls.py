@@ -70,9 +70,9 @@ class TLSEnvoy(Envoy):
 
     def create_deployment(self) -> Deployment:
         deployment = super().create_deployment()
-        deployment.add_volume(SecretVolume(secret_name=self.authorino_ca_secret, name="authorino-ca", readOnly=True))
-        deployment.add_volume(SecretVolume(secret_name=self.backend_ca_secret, name="envoy-ca", readOnly=True))
-        deployment.add_volume(SecretVolume(secret_name=self.envoy_cert_secret, name="envoy-cert", readOnly=True))
+        deployment.add_volume(SecretVolume(secret_name=self.authorino_ca_secret, name="authorino-ca"))
+        deployment.add_volume(SecretVolume(secret_name=self.backend_ca_secret, name="envoy-ca"))
+        deployment.add_volume(SecretVolume(secret_name=self.envoy_cert_secret, name="envoy-cert"))
 
         deployment.add_mount(VolumeMount(mountPath="/etc/ssl/certs/authorino-ca", name="authorino-ca"))
         deployment.add_mount(VolumeMount(mountPath="/etc/ssl/certs/envoy-ca", name="envoy-ca"))
