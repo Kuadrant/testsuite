@@ -4,7 +4,7 @@ import pytest
 
 from testsuite.gateway import CustomReference
 from testsuite.policy.tls_policy import TLSPolicy
-from testsuite.utils import has_condition
+from testsuite.policy import has_condition
 
 pytestmark = [pytest.mark.kuadrant_only, pytest.mark.tlspolicy]
 

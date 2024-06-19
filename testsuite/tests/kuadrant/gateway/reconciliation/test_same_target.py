@@ -3,7 +3,7 @@
 import pytest
 
 from testsuite.policy.tls_policy import TLSPolicy
-from testsuite.utils import has_condition
+from testsuite.policy import has_condition
 from . import dns_policy
 
 pytestmark = [pytest.mark.kuadrant_only]
