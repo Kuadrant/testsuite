@@ -40,7 +40,7 @@ from openshift_client.model import OpenShiftPythonException
 
 from testsuite.gateway import CustomReference
 
-pytestmark = [pytest.mark.kuadrant_only]
+pytestmark = [pytest.mark.kuadrant_only, pytest.mark.dnspolicy, pytest.mark.tlspolicy]
 
 
 @pytest.fixture(scope="module")

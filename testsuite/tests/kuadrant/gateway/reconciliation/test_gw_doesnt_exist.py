@@ -17,7 +17,11 @@ def commit():
 
 
 @pytest.mark.parametrize(
-    "create_cr", [pytest.param(dns_policy, id="DNSPolicy"), pytest.param(TLSPolicy.create_instance, id="TLSPolicy")]
+    "create_cr",
+    [
+        pytest.param(dns_policy, id="DNSPolicy", marks=[pytest.mark.dnspolicy]),
+        pytest.param(TLSPolicy.create_instance, id="TLSPolicy", marks=[pytest.mark.tlspolicy]),
+    ],
 )
 @pytest.mark.issue("https://github.com/Kuadrant/multicluster-gateway-controller/issues/361")
 def test_no_gw(request, create_cr, hub_openshift, blame, module_label, cluster_issuer):
