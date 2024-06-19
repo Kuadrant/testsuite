@@ -64,11 +64,10 @@ class SecretVolume:
 
     secret_name: str
     name: str
-    readOnly: bool = True
 
     def asdict(self):
         """Custom asdict because of needing to put location as parent dict key for inner dict"""
-        return {"secret": {"readOnly": self.readOnly, "secretName": self.secret_name}, "name": self.name}
+        return {"secret": {"secretName": self.secret_name}, "name": self.name}
 
 
 Volume = SecretVolume | ConfigMapVolume
