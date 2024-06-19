@@ -3,7 +3,6 @@
 from testsuite.gateway import Referencable
 from testsuite.openshift.client import OpenShiftClient
 from testsuite.policy import Policy
-from testsuite.utils import has_condition
 
 
 class TLSPolicy(Policy):
@@ -49,9 +48,3 @@ class TLSPolicy(Policy):
 
     def __getitem__(self, key):
         return self.model.spec[key]
-
-    def wait_for_ready(self):
-        """TLSPolicy does not have Enforced
-        https://github.com/Kuadrant/kuadrant-operator/issues/572"""
-        success = self.wait_until(has_condition("Accepted", "True"))
-        assert success, f"{self.kind()} did not get ready in time"
