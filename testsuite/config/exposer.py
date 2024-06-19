@@ -8,7 +8,11 @@ EXPOSERS = {"openshift": OpenShiftExposer, "kind": LoadBalancerServiceExposer, "
 # pylint: disable=unused-argument
 def load(obj, env=None, silent=True, key=None, filename=None):
     """Selects proper Exposes class"""
-    try:
+    if "default_exposer" not in obj or not obj["default_exposer"]:
+        client = obj["cluster"]
+        if "route.openshift.io/v1" in client.do_action("api-versions").out():
+            obj["default_exposer"] = EXPOSERS["openshift"]
+        else:
+            obj["default_exposer"] = EXPOSERS["kubernetes"]
+    else:
         obj["default_exposer"] = EXPOSERS[obj["default_exposer"]]
-    except KeyError:
-        pass
