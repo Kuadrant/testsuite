@@ -2,7 +2,7 @@
 
 from testsuite.certificates import Certificate
 from testsuite.gateway import Exposer, Gateway, Hostname
-from testsuite.httpx import KuadrantClient
+from testsuite.httpx import KuadrantClient, ForceSNIClient
 from testsuite.openshift.route import OpenshiftRoute
 
 
@@ -56,7 +56,7 @@ class StaticLocalHostname(Hostname):
         if self.verify or self.force_https:
             protocol = "https"
             kwargs.setdefault("verify", self.verify)
-        return KuadrantClient(base_url=f"{protocol}://{self.ip_getter()}", **kwargs)
+        return ForceSNIClient(base_url=f"{protocol}://{self.ip_getter()}", sni_hostname=self.hostname, **kwargs)
 
     @property
     def hostname(self):
