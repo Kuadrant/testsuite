@@ -103,28 +103,32 @@ reportportal: polish-junit
 help: ## Print this help
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
-CR_NAMES = "$\
-Gateway,$\
-HTTPRoute,$\
-Deployment,$\
-Service,$\
-Route,$\
-ServiceAccount,$\
-Secret,$\
-AuthConfig,$\
-AuthPolicy,$\
-RateLimitPolicy,$\
-DNSPolicy,$\
-TLSPolicy,$\
-Authorino,$\
-ValidatingWebhookConfiguration,$\
-WasmPlugin"
+CR_NAMES = $\
+authorinos.operator.authorino.kuadrant.io,$\
+gateways.networking.istio.io,$\
+httproutes.gateway.networking.k8s.io,$\
+deployments.apps,$\
+services,$\
+serviceaccounts,$\
+secrets,$\
+authconfigs.authorino.kuadrant.io,$\
+authpolicies.kuadrant.io,$\
+ratelimitpolicies.kuadrant.io,$\
+dnspolicies.kuadrant.io,$\
+tlspolicies.kuadrant.io,$\
+validatingwebhookconfigurations.admissionregistration.k8s.io,$\
+wasmplugins.extensions.istio.io
 
-clean: ## Clean all objects in Openshift created by running this testsuite
-	test -n "$(USER)"  # exit if $$USER is empty
-	oc get --chunk-size=0 -n kuadrant -o name $(CR_NAMES) \
+clean: ## Clean all objects on cluster created by running this testsuite. Set the env variable USER to delete after someone else
+	@echo "Deleting objects for user: $(USER)"
+	@test -n "$(USER)"  # exit if $$USER is empty
+	@if kubectl api-resources -o name | grep "routes.route.openshift.io" > /dev/null; then \
+	CR="$(CR_NAMES),routes.route.openshift.io"; \
+	else \
+	CR="$(CR_NAMES)"; \
+	fi; \
+	kubectl get --chunk-size=0 -n kuadrant -o name "$$CR" \
 	| grep "$(USER)" \
-	| xargs --no-run-if-empty -P 20 -n 1 oc delete --ignore-not-found -n kuadrant
-
+	| xargs --no-run-if-empty -P 20 -n 1 kubectl delete --ignore-not-found -n kuadrant
 # this ensures dependent target is run everytime
 FORCE:
