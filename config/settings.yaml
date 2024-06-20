@@ -24,7 +24,6 @@ default:
   hyperfoil:
     generate_reports: True
     reports_dir: "reports"
-  default_exposer: "openshift"
   control_plane:
     managedzone: "aws-mz"
     issuer:
