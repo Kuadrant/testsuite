@@ -9,6 +9,7 @@ from openshift_client import selector
 from testsuite.lifecycle import LifecycleObject
 from testsuite.openshift import CustomResource
 from testsuite.openshift.client import OpenShiftClient
+from testsuite.openshift.deployment import Deployment
 from testsuite.utils import asdict
 
 
@@ -90,7 +91,7 @@ class AuthorinoCR(CustomResource, Authorino):
     def deployment(self):
         """Returns Deployment object for this Authorino"""
         with self.context:
-            return selector(f"deployment/{self.name()}").object()
+            return selector(f"deployment/{self.name()}").object(cls=Deployment)
 
     @property
     def metrics_service(self):

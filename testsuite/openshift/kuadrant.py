@@ -21,6 +21,12 @@ class KuadrantSection:
         self.kuadrant_cr = kuadrant_cr
         self.spec_name = spec_name
 
+    @property
+    def deployment(self):
+        """Returns Deployment object for CR"""
+        with self.context:
+            return selector("deployment", labels={"app": self.spec_name}).object(cls=Deployment)
+
     def __getitem__(self, name):
         return self.kuadrant_cr.model.spec[self.spec_name][name]
 
@@ -40,8 +46,6 @@ class KuadrantSection:
 class KuadrantCR(CustomResource):
     """Represents Kuadrant CR objects"""
 
-    LIMITADOR = "limitador-limitador"
-
     @property
     def authorino(self) -> KuadrantSection:
         """Returns spec.authorino from Kuadrant object"""
@@ -53,9 +57,3 @@ class KuadrantCR(CustomResource):
         """Returns spec.limitador from Kuadrant object"""
         self.model.spec.setdefault("limitador", {})
         return KuadrantSection(self, "limitador")
-
-    @property
-    def limitador_deployment(self):
-        """Returns Deployment object for this Authorino"""
-        with self.context:
-            return selector(f"deployment/{self.LIMITADOR}").object(cls=Deployment)

@@ -40,7 +40,7 @@ def test_replicas_field_to_reconcile(kuadrant):
     kuadrant.wait_for_ready()
 
     assert kuadrant.limitador["replicas"] == 2
-    assert kuadrant.limitador_deployment.model.spec["replicas"] == 2
+    assert kuadrant.limitador.deployment.model.spec["replicas"] == 2
 
 
 def test_resource_requirements_field_to_reconcile(kuadrant):
@@ -57,7 +57,7 @@ def test_resource_requirements_field_to_reconcile(kuadrant):
     kuadrant.wait_for_ready()
 
     assert kuadrant.limitador["resourceRequirements"] == asdict(value)
-    assert kuadrant.limitador_deployment.model.spec.template.spec.containers[0]["resources"] == asdict(value)
+    assert kuadrant.limitador.deployment.model.spec.template.spec.containers[0]["resources"] == asdict(value)
 
 
 @pytest.mark.xfail
@@ -79,7 +79,7 @@ def test_blank_fields_wont_reconcile(kuadrant):
     kuadrant.safe_apply()
     kuadrant.wait_for_ready()
 
-    assert kuadrant.limitador_deployment.model.spec.replicas == 3
-    assert kuadrant.limitador_deployment.model.spec.template.spec.containers[0]["resources"] == asdict(
+    assert kuadrant.limitador.deployment.model.spec.replicas == 3
+    assert kuadrant.limitador.deployment.model.spec.template.spec.containers[0]["resources"] == asdict(
         ContainerResources(requests_cpu="250m", requests_memory="32Mi")
     )
