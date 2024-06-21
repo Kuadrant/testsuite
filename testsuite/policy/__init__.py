@@ -23,3 +23,8 @@ class Policy(OpenShiftObject):
         """Wait for a Policy to be Enforced"""
         success = self.wait_until(has_condition("Enforced", "True"))
         assert success, f"{self.kind()} did not get ready in time"
+
+    def wait_for_accepted(self):
+        """Wait for a Policy to be Accepted"""
+        success = self.wait_until(has_condition("Accepted", "True"))
+        assert success, f"{self.kind()} did not get accepted in time"
