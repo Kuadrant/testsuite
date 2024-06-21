@@ -90,7 +90,7 @@ def authorization(authorization, openshift, authorino_domain) -> AuthConfig:
     kube_attrs = {
         "namespace": {"value": openshift.project},
         "group": {"value": "networking.k8s.io"},
-        "resources": {"value": "Ingress"},
+        "resource": {"value": "Ingress"},
         "verb": {"value": "create"},
     }
     # add response for admission webhook for creating Ingress
@@ -105,7 +105,7 @@ def authorization(authorization, openshift, authorino_domain) -> AuthConfig:
     kube_attrs = {
         "namespace": {"value": openshift.project},
         "group": {"value": "networking.k8s.io"},
-        "resources": {"value": "Ingress"},
+        "resource": {"value": "Ingress"},
         "verb": {"value": "delete"},
     }
     # add response for admission webhook for deleting Ingress
