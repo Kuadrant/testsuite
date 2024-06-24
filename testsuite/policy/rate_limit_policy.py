@@ -77,8 +77,8 @@ class RateLimitPolicy(Policy):
             limit["routeSelectors"] = [asdict(rule) for rule in route_selectors]
         self.model.spec.limits[name] = limit
 
-    def wait_for_ready(self):
+    def wait_for_ready(self, timelimit=60):
         """Wait for RLP to be enforced"""
-        super().wait_for_ready()
+        super().wait_for_ready(timelimit=timelimit)
         # Even after enforced condition RLP requires a short sleep
         time.sleep(5)

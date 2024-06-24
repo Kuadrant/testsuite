@@ -48,3 +48,6 @@ class TLSPolicy(Policy):
 
     def __getitem__(self, key):
         return self.model.spec[key]
+
+    def wait_for_ready(self, timelimit=180):
+        super().wait_for_ready(timelimit=timelimit)

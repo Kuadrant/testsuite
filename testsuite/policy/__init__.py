@@ -19,9 +19,9 @@ def has_condition(condition_type, status="True", reason=None, message=None):
 class Policy(OpenShiftObject):
     """Base class with common functionality for all policies"""
 
-    def wait_for_ready(self):
+    def wait_for_ready(self, timelimit=60):
         """Wait for a Policy to be Enforced"""
-        success = self.wait_until(has_condition("Enforced", "True"))
+        success = self.wait_until(has_condition("Enforced", "True"), timelimit=timelimit)
         assert success, f"{self.kind()} did not get ready in time"
 
     def wait_for_accepted(self):
