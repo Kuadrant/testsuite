@@ -58,6 +58,7 @@ class CustomResource(OpenShiftObject):
         """
         result, status = self.modify_and_apply(lambda _: True, retries=2)
         assert status, f"Unable to apply changes for APIObject with result: {result}"
+        self.refresh()
         return result
 
     def wait_for_ready(self):
