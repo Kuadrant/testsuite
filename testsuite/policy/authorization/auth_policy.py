@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from . import Rule
 
 
-class AuthPolicy(AuthConfig, Policy):
+class AuthPolicy(Policy, AuthConfig):
     """AuthPolicy object, it serves as Kuadrants AuthConfig"""
 
     @property
