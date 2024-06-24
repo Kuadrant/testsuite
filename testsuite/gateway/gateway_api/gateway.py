@@ -78,7 +78,6 @@ class KuadrantGateway(OpenShiftObject, Gateway):
         """Waits for the gateway to be ready in the sense of is_ready(self)"""
         success = self.wait_until(lambda obj: self.__class__(obj.model).is_ready(), timelimit=timeout)
         assert success, "Gateway didn't get ready in time"
-        self.refresh()
 
     def is_affected_by(self, policy: Policy) -> bool:
         """Returns True, if affected by status is found within the object for the specific policy"""

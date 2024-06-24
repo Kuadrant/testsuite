@@ -41,6 +41,7 @@ class OpenShiftObject(APIObject, LifecycleObject):
                 success, _, _ = self.self_selector().until_all(
                     success_func=lambda obj: test_function(self.__class__(obj.model))
                 )
+                self.refresh()
                 return success
         except OpenShiftPythonException as e:
             if "Timeout" in e.msg:

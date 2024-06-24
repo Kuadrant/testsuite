@@ -79,7 +79,6 @@ class AuthConfig(OpenShiftObject):
             and all(x.status == "True" for x in obj.model.status.conditions)
         )
         assert success, f"{self.kind()} did not get ready in time"
-        self.refresh()
 
     @modify
     def add_rule(self, when: list[Rule]):
