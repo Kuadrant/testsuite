@@ -119,3 +119,11 @@ class OpenShiftClient:
             return True
         except oc.OpenShiftPythonException:
             return False
+
+    def apply_from_string(self, string, cls, cmd_args=None):
+        """Applies new object from the string to the server and returns it wrapped in the class"""
+        with self.context:
+            selector = oc.apply(string, cmd_args=cmd_args)
+            obj = selector.object(cls=cls)
+            obj.context = self.context
+        return obj

@@ -1,6 +1,7 @@
 default:
   dynaconf_merge: true
   cluster: {}
+  kuadrantctl: "kuadrantctl"
   tools:
     project: "tools"
   cfssl: "cfssl"
