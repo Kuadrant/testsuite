@@ -31,7 +31,6 @@ spec:
 """
 
 import dataclasses
-import time
 from importlib import resources
 
 import pytest
@@ -61,9 +60,8 @@ def cluster_issuer(testconfig, hub_openshift):
 
 
 @pytest.fixture(scope="module")
-def client(commit, hostname, gateway):  # pylint: disable=unused-argument
+def client(hostname, gateway):
     """Returns httpx client to be used for requests, it also commits AuthConfig"""
-    time.sleep(180)  # it takes a bit for the lets encrypt secret to be actually created
     root_cert = resources.files("testsuite.resources").joinpath("letsencrypt-stg-root-x1.pem").read_text()
     old_cert = gateway.get_tls_cert()
     cert = dataclasses.replace(old_cert, chain=old_cert.certificate + root_cert)

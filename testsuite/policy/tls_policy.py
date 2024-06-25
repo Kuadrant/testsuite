@@ -2,7 +2,7 @@
 
 from testsuite.gateway import Referencable
 from testsuite.openshift.client import OpenShiftClient
-from testsuite.policy import Policy
+from testsuite.policy import Policy, has_condition
 
 
 class TLSPolicy(Policy):
@@ -48,3 +48,8 @@ class TLSPolicy(Policy):
 
     def __getitem__(self, key):
         return self.model.spec[key]
+
+    def wait_for_ready(self):
+        """Increase timeout to account for letsEncrypt"""
+        success = self.wait_until(has_condition("Enforced", "True"), timelimit=180)
+        assert success, f"{self.kind()} did not get ready in time"
