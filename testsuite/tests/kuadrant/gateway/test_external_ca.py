@@ -70,7 +70,7 @@ def client(hostname, gateway):
     client.close()
 
 
-def test_smoke_letsencrypt(client, auth):
+def test_letsencrypt(client, auth):
     """
     Tests whether the backend, exposed using the HTTPRoute and Gateway, was exposed correctly,
     having a tls secured endpoint with a hostname managed by MGC
