@@ -13,9 +13,9 @@ pytestmark = [pytest.mark.kuadrant_only]
 
 
 @pytest.fixture(scope="class")
-def authorization2(request, route2, authorization_name2, openshift, label):
+def authorization2(request, route2, blame, openshift, label):
     """2nd Authorization object"""
-    auth_policy = AuthPolicy.create_instance(openshift, authorization_name2, route2, labels={"testRun": label})
+    auth_policy = AuthPolicy.create_instance(openshift, blame("authz2"), route2, labels={"testRun": label})
     auth_policy.authorization.add_opa_policy("rego", "allow = false")
     request.addfinalizer(auth_policy.delete)
     auth_policy.commit()
@@ -28,9 +28,9 @@ def test_identical_hostnames_auth_on_routes_rejected(client, authorization, auth
     Tests that 2nd AuthPolicy is rejected on 'route2' declaring identical hostname as 'route' with another
     AuthPolicy already successfully enforced on 'route'.
     Setup:
-        - Two HTTPRoutes declaring identical hostnames but different paths ('/' and '/anything/')
-        - Empty AuthPolicy enforced on the '/' HTTPRoute
-        - 'deny-all' AuthPolicy (created after Empty AuthPolicy) accepted on the '/anything/' HTTPRoute
+        - Two HTTPRoutes declaring identical hostnames but different paths: '/anything/route1' and '/anything/route2'
+        - Empty AuthPolicy enforced on the '/anything/route1' HTTPRoute
+        - 'deny-all' AuthPolicy (created after Empty AuthPolicy) accepted on the '/anything/route2' HTTPRoute
     Test:
         - Assert that 'deny-all' AuthPolicy reports an error
         - Send a request via 'route' and assert that response status code is 200
@@ -54,10 +54,10 @@ def test_identical_hostnames_auth_on_routes_rejected(client, authorization, auth
         f"instead it was: {authorization2.refresh().model.status.conditions}"
     )
 
-    response = client.get("/get")
+    response = client.get("/anything/route1/get")
     assert response.status_code == 200
 
-    response = client.get("/anything/get")
+    response = client.get("/anything/route2/get")
     assert response.status_code == 200
 
     # Deletion of Empty AuthPolicy should allow for 'deny-all' AuthPolicy to be enforced successfully.
@@ -71,9 +71,9 @@ def test_identical_hostnames_auth_on_routes_rejected(client, authorization, auth
     authorization2.wait_for_ready()
 
     # Access via 'route' is still allowed
-    response = client.get("/get")
+    response = client.get("/anything/route1/get")
     assert response.status_code == 200
 
     # Access via 'route2' is now not allowed due to 'deny-all' AuthPolicy being enforced on 'route2'
-    response = client.get("/anything/get")
+    response = client.get("/anything/route2/get")
     assert response.status_code == 403
