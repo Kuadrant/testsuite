@@ -22,7 +22,11 @@ def test_wrong_issuer_type(request, gateway, blame, module_label):
         gateway.openshift,
         blame("resource"),
         gateway,
-        gateway,
+        CustomReference(
+            group="gateway.networking.k8s.io",
+            kind="Gateway",
+            name=gateway.name(),
+        ),
         labels={"app": module_label},
     )
     request.addfinalizer(policy.delete)
