@@ -40,10 +40,6 @@
 #       name: "istio-ingressgateway"
 #    authorino:
 #      image: "quay.io/kuadrant/authorino:latest"  # If specified will override the authorino image
-#      deploy: false                               # If false, the testsuite will use already deployed authorino for testing
-#      auth_url: ""                                # authorization URL for already deployed Authorino
-#      oidc_url: ""                                # oidc URL for already deployed Authorino
-#      metrics_service_name: ""                    # controller metrics service name for already deployed Authorino
 #  default_exposer: "kubernetes"                   # Force Exposer typem options: 'openshift', 'kind', 'kubernetes'
 #  control_plane:
 #    managedzone: aws-mz                           # Name of the ManagedZone resource

@@ -32,18 +32,13 @@ def authorino_parameters():
 def authorino(openshift, blame, request, testconfig, label, authorino_parameters) -> Authorino:
     """Module scoped Authorino instance, with specific parameters"""
     authorino_config = testconfig["service_protection"]["authorino"]
-    if not authorino_config["deploy"]:
-        return pytest.skip("Can't change parameters of already deployed Authorino")
-
-    labels = authorino_parameters.setdefault("label_selectors", [])
-    labels.append(f"testRun={label}")
-
-    authorino_parameters.setdefault("name", blame("authorino"))
 
     authorino = AuthorinoCR.create_instance(
         openshift,
         image=authorino_config.get("image"),
         log_level=authorino_config.get("log_level"),
+        name=blame("authorino"),
+        label_selectors=[f"testRun={label}"],
         **authorino_parameters,
     )
     request.addfinalizer(authorino.delete)
