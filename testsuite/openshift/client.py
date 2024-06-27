@@ -1,12 +1,10 @@
 """This module implements an openshift interface with openshift oc client wrapper."""
 
-import os
 from functools import cached_property
-from typing import Dict
 from urllib.parse import urlparse
 
 import openshift_client as oc
-from openshift_client import Context, Selector, OpenShiftPythonException
+from openshift_client import Context, OpenShiftPythonException
 
 from .route import OpenshiftRoute
 from .secret import Secret
@@ -121,30 +119,3 @@ class OpenShiftClient:
             return True
         except oc.OpenShiftPythonException:
             return False
-
-    def new_app(self, source, params: Dict[str, str] = None):
-        """Create application based on source code.
-
-        Args:
-            :param source: The source of the template, it must be either an url or a path to a local file.
-            :param params: The parameters to be passed to the source when building it.
-        """
-        opt_args = []
-        if params:
-            opt_args.extend([f"--param={n}={v}" for n, v in params.items()])
-
-        if os.path.isfile(source):
-            source = f"--filename={source}"
-            opt_args.append("--local=true")
-        objects = self.do_action("process", source, opt_args).out()
-        with self.context:
-            created = oc.create(objects)
-        return created
-
-    def is_ready(self, selector: Selector):
-        """
-        Returns true, if the selector pointing to Deployments or DeploymentConfigs are ready
-        Requires to be run inside context
-        """
-        success, _, _ = selector.until_all(success_func=lambda obj: "readyReplicas" in obj.model.status)
-        return success
