@@ -6,22 +6,22 @@ from testsuite.httpx.auth import HttpxOidcClientAuth
 from testsuite.openshift.client import OpenShiftClient
 from testsuite.openshift.api_key import APIKey
 from testsuite.policy.authorization.auth_config import AuthConfig
-from testsuite.openshift.authorino import AuthorinoCR, Authorino, PreexistingAuthorino
+from testsuite.openshift.authorino import AuthorinoCR, Authorino
+
+
+@pytest.fixture(scope="module")
+def authorino_parameters():
+    """Optional parameters for Authorino creation, passed to the __init__"""
+    return {}
 
 
 @pytest.fixture(scope="session")
-def authorino(authorino, openshift, blame, request, testconfig, label) -> Authorino:
+def authorino(authorino, openshift, blame, request, testconfig, label, authorino_parameters) -> Authorino:
     """Authorino instance"""
     if authorino:
         return authorino
 
     authorino_config = testconfig["service_protection"]["authorino"]
-    if not authorino_config["deploy"]:
-        return PreexistingAuthorino(
-            authorino_config["auth_url"],
-            authorino_config["oidc_url"],
-            authorino_config["metrics_service_name"],
-        )
 
     authorino = AuthorinoCR.create_instance(
         openshift,
@@ -29,6 +29,7 @@ def authorino(authorino, openshift, blame, request, testconfig, label) -> Author
         log_level=authorino_config.get("log_level"),
         name=blame("authorino"),
         label_selectors=[f"testRun={label}"],
+        **authorino_parameters,
     )
     request.addfinalizer(authorino.delete)
     authorino.commit()
