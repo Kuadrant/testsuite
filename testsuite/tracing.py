@@ -15,7 +15,7 @@ class TracingClient:
         self.client = client or KuadrantClient(verify=False)
         self.query = ApyProxy(query_url, session=self.client)
 
-    @backoff.on_predicate(backoff.fibo, lambda x: x == [], max_tries=7, jitter=None)
+    @backoff.on_predicate(backoff.fibo, lambda x: x == [], max_tries=5, jitter=None)
     def _get_trace(
         self,
         request_id: str,
@@ -40,3 +40,11 @@ class TracingClient:
     def find_tagged_trace(self, request_id: str, service: str, tag: dict) -> list:
         """Find trace in tracing client by tags service name, authorino request id and tag key-value pair"""
         return self._get_trace(request_id, service, tag)
+
+    @backoff.on_predicate(backoff.fibo, lambda x: x == [], max_tries=7, jitter=None)
+    def get_trace(self, trace_id):
+        """Finds trace by ID"""
+        if self.jaeger_backend:
+            return self.query.api.traces._(trace_id).get().json()["data"]
+
+        return self.query.api.traces._(trace_id).get().json()["traces"]
