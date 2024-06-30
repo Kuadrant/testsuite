@@ -10,11 +10,8 @@ from testsuite.openshift.authorino import AuthorinoCR, Authorino, PreexistingAut
 
 
 @pytest.fixture(scope="session")
-def authorino(authorino, openshift, blame, request, testconfig, label) -> Authorino:
+def authorino(openshift, blame, request, testconfig, label) -> Authorino:
     """Authorino instance"""
-    if authorino:
-        return authorino
-
     authorino_config = testconfig["service_protection"]["authorino"]
     if not authorino_config["deploy"]:
         return PreexistingAuthorino(
