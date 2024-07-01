@@ -5,7 +5,7 @@ import pytest
 from testsuite.openshift.deployment import ContainerResources
 from testsuite.utils import asdict
 
-pytestmark = [pytest.mark.kuadrant_only]
+pytestmark = [pytest.mark.kuadrant_only, pytest.mark.disruptive]
 
 
 @pytest.fixture()

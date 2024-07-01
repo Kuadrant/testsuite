@@ -47,7 +47,8 @@ markers = [
     "kuadrant_only: Test is using features available only in Kuadrant mode",
     "limitador: Test is using Limitador features",
     "tlspolicy: Test is using TLSPolicy",
-    "dnspolicy: Test is using DNSPolicy"
+    "dnspolicy: Test is using DNSPolicy",
+    "disruptive: Test is disruptive",
 ]
 filterwarnings = [
     "ignore: WARNING the new order is not taken into account:UserWarning",
