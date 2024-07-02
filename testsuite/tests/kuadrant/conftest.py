@@ -7,15 +7,6 @@ from testsuite.policy.authorization.auth_policy import AuthPolicy
 from testsuite.policy.rate_limit_policy import RateLimitPolicy
 
 
-@pytest.fixture(scope="session")
-def authorino(kuadrant):
-    """Authorino instance when configured through Kuadrant"""
-    if kuadrant:
-        # No available modification
-        return True
-    return None
-
-
 @pytest.fixture(scope="module")
 def authorization_name(blame):
     """Name of the Authorization resource, can be overriden to include more dependencies"""
