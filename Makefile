@@ -1,4 +1,4 @@
-.PHONY: commit-acceptance pylint mypy black reformat test authorino poetry poetry-no-dev mgc container-image polish-junit reportportal authorino-standalone limitador kuadrant kuadrant-only disruptive kuadrantctl
+.PHONY: commit-acceptance pylint mypy black reformat test authorino poetry poetry-no-dev mgc container-image polish-junit reportportal authorino-standalone limitador kuadrant kuadrant-only disruptive kuadrantctl multicluster
 
 TB ?= short
 LOGLEVEL ?= INFO
@@ -45,7 +45,7 @@ test pytest tests: kuadrant
 
 authorino: ## Run only authorino related tests
 authorino: poetry-no-dev
-	$(PYTEST) -n4 -m 'authorino' --dist loadfile --enforce $(flags) testsuite/tests/kuadrant
+	$(PYTEST) -n4 -m 'authorino and not multicluster' --dist loadfile --enforce $(flags) testsuite/tests/kuadrant
 
 authorino-standalone: ## Run only test capable of running with standalone Authorino
 authorino-standalone: poetry-no-dev
@@ -53,15 +53,19 @@ authorino-standalone: poetry-no-dev
 
 limitador: ## Run only Limitador related tests
 limitador: poetry-no-dev
-	$(PYTEST) -n4 -m 'limitador' --dist loadfile --enforce $(flags) testsuite/tests/kuadrant
+	$(PYTEST) -n4 -m 'limitador and not multicluster' --dist loadfile --enforce $(flags) testsuite/tests/kuadrant
 
 kuadrant: ## Run all tests available on Kuadrant
 kuadrant: poetry-no-dev
-	$(PYTEST) -n4 -m 'not standalone_only and not disruptive' --dist loadfile --enforce $(flags) testsuite/tests/kuadrant
+	$(PYTEST) -n4 -m 'not standalone_only and not multicluster and not disruptive' --dist loadfile --enforce $(flags) testsuite/tests/kuadrant
 
 kuadrant-only: ## Run Kuadrant-only tests
 kuadrant-only: poetry-no-dev
-	$(PYTEST) -n4 -m 'kuadrant_only and not standalone_only and not disruptive' --dist loadfile --enforce $(flags) testsuite/tests/kuadrant
+	$(PYTEST) -n4 -m 'kuadrant_only and not standalone_only and not disruptive and not multicluster' --dist loadfile --enforce $(flags) testsuite/tests/kuadrant
+
+multicluster: ## Run Multicluster only tests
+multicluster: poetry-no-dev
+	$(PYTEST) -m 'multicluster' --dist loadfile --enforce $(flags) testsuite
 
 dnstls: ## Run DNS and TLS tests
 dnstls: poetry-no-dev
