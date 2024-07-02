@@ -275,7 +275,6 @@ def kuadrant(request, testconfig):
     try:
         with kuadrant_openshift.context:
             kuadrant = selector("kuadrant").object(cls=KuadrantCR)
-            kuadrant.committed = True
     except OpenShiftPythonException:
         pytest.fail("Running Kuadrant tests, but Kuadrant resource was not found")
 
