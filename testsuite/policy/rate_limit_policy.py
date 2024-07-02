@@ -50,7 +50,6 @@ class RateLimitPolicy(Policy):
             "metadata": {"name": name, "labels": labels},
             "spec": {
                 "targetRef": target.reference,
-                "limits": {},
             },
         }
 
@@ -64,6 +63,8 @@ class RateLimitPolicy(Policy):
         when: Iterable[Rule] = None,
         counters: list[str] = None,
         route_selectors: Iterable[RouteSelector] = None,
+        defaults: bool = False,
+        overrides: bool = False,
     ):
         """Add another limit"""
         limit: dict = {
@@ -75,7 +76,15 @@ class RateLimitPolicy(Policy):
             limit["counters"] = counters
         if route_selectors:
             limit["routeSelectors"] = [asdict(rule) for rule in route_selectors]
-        self.model.spec.limits[name] = limit
+
+        if defaults:
+            section = self.model.spec.setdefault("defaults", {})
+        elif overrides:
+            section = self.model.spec.setdefault("overrides", {})
+        else:
+            section = self.model.spec
+
+        section.setdefault("limits", {})[name] = limit
 
     def wait_for_ready(self):
         """Wait for RLP to be enforced"""
