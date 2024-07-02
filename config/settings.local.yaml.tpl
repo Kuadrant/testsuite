@@ -25,10 +25,6 @@
 #    collector_url: "rpc://jaeger-collector.com:4317"  # Tracing collector URL (may be internal)
 #    query_url: "http://jaeger-query.com"       # Tracing query URL
 #  cfssl: "cfssl"  # Path to the CFSSL library for TLS tests
-#  hyperfoil:
-#    url: "HYPERFOIL_URL"
-#    generate_reports: True                      # True, if each test should generate a report
-#    report_dir: "reports"                       # Directory, to which the reports should be saved
 #  service_protection:
 #    system_project: "kuadrant-system"           # Namespace where Kuadrant resource resides
 #    project: "kuadrant"                         # Namespace where tests will run

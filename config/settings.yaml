@@ -21,9 +21,6 @@ default:
     authorino:
       deploy: true
       log_level: "debug"
-  hyperfoil:
-    generate_reports: True
-    reports_dir: "reports"
   control_plane:
     managedzone: "aws-mz"
     issuer:
