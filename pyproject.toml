@@ -14,6 +14,7 @@ pytest = "*"
 pytest-asyncio = ">=0.23.4"
 pytest-html = "*"
 dynaconf = "*"
+dnspython = "*"
 python-keycloak = ">=3.6"
 python-jose = "*"
 lxml = "*"
@@ -48,6 +49,7 @@ markers = [
     "tlspolicy: Test is using TLSPolicy",
     "dnspolicy: Test is using DNSPolicy",
     "disruptive: Test is disruptive",
+    "multicluster: Test is specifc to Multicluster deployment",
 ]
 filterwarnings = [
     "ignore: WARNING the new order is not taken into account:UserWarning",
