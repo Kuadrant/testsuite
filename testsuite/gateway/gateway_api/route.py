@@ -114,3 +114,15 @@ class HTTPRoute(OpenShiftObject, GatewayRoute):
     @modify
     def remove_all_backend(self):
         self.model.spec.rules.clear()
+
+    def wait_for_ready(self):
+        """Waits until HTTPRoute is reconcilled by GatewayProvider"""
+
+        def _ready(obj):
+            for condition_set in obj.model.status.parents:
+                if condition_set.controllerName == "istio.io/gateway-controller":
+                    return (all(x.status == "True" for x in condition_set.conditions),)
+            return False
+
+        success = self.wait_until(_ready, timelimit=10)
+        assert success, f"{self.kind()} did got get ready in time"
