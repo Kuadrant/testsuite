@@ -30,9 +30,6 @@ from testsuite.utils import randomize, _whoami
 def pytest_addoption(parser):
     """Add options to include various kinds of tests in testrun"""
     parser.addoption(
-        "--performance", action="store_true", default=False, help="Run also performance tests (default: False)"
-    )
-    parser.addoption(
         "--enforce", action="store_true", default=False, help="Fails tests instead of skip, if capabilities are missing"
     )
     parser.addoption("--standalone", action="store_true", default=False, help="Runs testsuite in standalone mode")
@@ -46,8 +43,6 @@ def pytest_runtest_setup(item):
     In this function we skip or fail the tests that were selected but their capabilities are not available
     """
     marks = [i.name for i in item.iter_markers()]
-    if "performance" in marks and not item.config.getoption("--performance"):
-        pytest.skip("Excluding performance tests")
     skip_or_fail = pytest.fail if item.config.getoption("--enforce") else pytest.skip
     standalone = item.config.getoption("--standalone")
     if standalone:

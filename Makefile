@@ -1,4 +1,4 @@
-.PHONY: commit-acceptance pylint mypy black reformat test performance authorino poetry poetry-no-dev mgc container-image polish-junit reportportal authorino-standalone limitador kuadrant kuadrant-only disruptive
+.PHONY: commit-acceptance pylint mypy black reformat test authorino poetry poetry-no-dev mgc container-image polish-junit reportportal authorino-standalone limitador kuadrant kuadrant-only disruptive
 
 TB ?= short
 LOGLEVEL ?= INFO
@@ -38,7 +38,7 @@ all-is-package:
 
 # pattern to run individual testfile or all testfiles in directory
 testsuite/%: FORCE poetry-no-dev
-	$(PYTEST) --performance -v $(flags) $@
+	$(PYTEST) -v $(flags) $@
 
 test: ## Run all non mgc tests
 test pytest tests: kuadrant
@@ -66,10 +66,6 @@ kuadrant-only: poetry-no-dev
 dnstls: ## Run DNS and TLS tests
 dnstls: poetry-no-dev
 	$(PYTEST) -n4 -m 'dnspolicy or tlspolicy' --dist loadfile --enforce $(flags) testsuite
-
-performance: ## Run performance tests
-performance: poetry-no-dev
-	$(PYTEST) --performance $(flags) testsuite/tests/kuadrant/authorino/performance
 
 disruptive: ## Run disruptive tests
 disruptive: poetry-no-dev
