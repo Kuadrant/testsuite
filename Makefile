@@ -1,4 +1,4 @@
-.PHONY: commit-acceptance pylint mypy black reformat test performance authorino poetry poetry-no-dev mgc container-image polish-junit reportportal authorino-standalone limitador kuadrant kuadrant-only
+.PHONY: commit-acceptance pylint mypy black reformat test performance authorino poetry poetry-no-dev mgc container-image polish-junit reportportal authorino-standalone limitador kuadrant kuadrant-only disruptive
 
 TB ?= short
 LOGLEVEL ?= INFO
@@ -57,11 +57,11 @@ limitador: poetry-no-dev
 
 kuadrant: ## Run all tests available on Kuadrant
 kuadrant: poetry-no-dev
-	$(PYTEST) -n4 -m 'not standalone_only' --dist loadfile --enforce $(flags) testsuite
+	$(PYTEST) -n4 -m 'not standalone_only and not disruptive' --dist loadfile --enforce $(flags) testsuite
 
 kuadrant-only: ## Run Kuadrant-only tests
 kuadrant-only: poetry-no-dev
-	$(PYTEST) -n4 -m 'kuadrant_only and not standalone_only' --dist loadfile --enforce $(flags) testsuite
+	$(PYTEST) -n4 -m 'kuadrant_only and not standalone_only and not disruptive' --dist loadfile --enforce $(flags) testsuite
 
 dnstls: ## Run DNS and TLS tests
 dnstls: poetry-no-dev
@@ -70,6 +70,10 @@ dnstls: poetry-no-dev
 performance: ## Run performance tests
 performance: poetry-no-dev
 	$(PYTEST) --performance $(flags) testsuite/tests/kuadrant/authorino/performance
+
+disruptive: ## Run disruptive tests
+disruptive: poetry-no-dev
+	$(PYTEST) -m 'disruptive' $(flags) testsuite
 
 poetry.lock: pyproject.toml
 	poetry lock
