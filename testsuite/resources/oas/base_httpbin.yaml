@@ -1,0 +1,35 @@
+---
+openapi: 3.1.0
+info:
+  title: Httpbin
+  version: 0.0.51
+paths:
+  "/get":
+    get:
+      operationId: get_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: string
+  "/anything":
+    get:
+      operationId: get_anything
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: string
+    put:
+      operationId: put_anything
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: string
