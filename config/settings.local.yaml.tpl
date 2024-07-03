@@ -1,7 +1,6 @@
 #default:
 #  tester: "someuser"                          # Optional: name of the user, who is running the tests, defaults to whoami/uid
 #  cluster:                                    # Workload cluster where tests should run, will get overriden if run on Multicluster
-#    project: "kuadrant"                       # Optional: Default namespace for this cluster
 #    api_url: "https://api.openshift.com"      # Optional: OpenShift API URL, if None it will OpenShift that you are logged in
 #    token: "KUADRANT_RULEZ"                   # Optional: OpenShift Token, if None it will OpenShift that you are logged in
 #    kubeconfig_path: "~/.kube/config"         # Optional: Kubeconfig to use, if None the default one is used
@@ -43,6 +42,7 @@
 #      metrics_service_name: ""                    # controller metrics service name for already deployed Authorino
 #  default_exposer: "kubernetes"                   # Force Exposer typem options: 'openshift', 'kind', 'kubernetes'
 #  control_plane:
+#    additional_clusters: []                       # List of additional clusters for Multicluster testing, see 'cluster' option for more details
 #    managedzone: aws-mz                           # Name of the ManagedZone resource
 #    issuer:                                       # Issuer object for testing TLSPolicy
 #      name: "selfsigned-cluster-issuer"           # Name of Issuer CR

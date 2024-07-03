@@ -26,20 +26,14 @@ def load(obj, env=None, silent=True, key=None, filename=None):
         tools = client.change_project(obj["tools"]["project"])
     obj["tools"] = tools
 
-    service_protection = obj.setdefault("service_protection", {})
-    inject_client(service_protection, client, "project")
-    inject_client(service_protection, client, "project2")
-
     control_plane = obj.setdefault("control_plane", {})
-    hub = control_plane.get("hub", {})
-    hub_client = OpenShiftClient(hub.get("project"), hub.get("api_url"), hub.get("token"), hub.get("kubeconfig_path"))
-    obj["control_plane"]["hub"] = hub_client
-
-    clients = {}
-    spokes = control_plane.setdefault("spokes", {})
-    for name, value in spokes.items():
-        clients[name] = OpenShiftClient(
-            value.get("project"), value.get("api_url"), value.get("token"), value.get("kubeconfig_path")
+    clients = []
+    clusters = control_plane.setdefault("additional_clusters", [])
+    for value in clusters:
+        clients.append(
+            OpenShiftClient(
+                value.get("project"), value.get("api_url"), value.get("token"), value.get("kubeconfig_path")
+            )
         )
     if len(clients) > 0:
-        control_plane["spokes"] = clients
+        control_plane["additional_clusters"] = clients
