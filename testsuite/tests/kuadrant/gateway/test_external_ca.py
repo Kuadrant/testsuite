@@ -3,9 +3,6 @@ This module contains the most basic happy path test for both DNSPolicy and TLSPo
 for a cluster with Let's Encrypt Issuer
 
 Prerequisites:
-* multi-cluster-gateways ns is created and set as openshift["project"]
-* managedclustersetbinding is created in openshift["project"]
-* gateway class "kuadrant-multi-cluster-gateway-instance-per-cluster" is created
 * cert-manager Operator installed
 * Let's Encrypt Issuer object configured on the cluster matching the template:
 apiVersion: cert-manager.io/v1
