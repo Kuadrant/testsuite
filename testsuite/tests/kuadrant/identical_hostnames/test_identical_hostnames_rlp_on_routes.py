@@ -39,7 +39,7 @@ def test_identical_hostnames_rlp_on_routes_ignored(client, rate_limit, rate_limi
         - '2rp10m' RateLimitPolicy (created after '1rp10m' RateLimitPolicy) enforced on the '/anything/route2' HTTPRoute
     Test:
         - Send a request via 'route' and assert that no 429s (Too Many Requests) are returned
-        - Send a request via 'route2' and assert that no 429s (Too Many Requests)are returned
+        - Send a request via 'route2' and assert that no 429s (Too Many Requests) are returned
         - Delete the Empty RateLimitPolicy
         - Send a request via both routes
         - Assert that on both routes the 429s are returned after single 200 (OK)

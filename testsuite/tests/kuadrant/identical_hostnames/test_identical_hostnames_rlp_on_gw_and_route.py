@@ -22,7 +22,7 @@ def rate_limit2(request, gateway, blame, cluster, label):
     return rlp
 
 
-def test_identical_hostnames_rlp_on_gw_and_route_ignored(client, rate_limit, rate_limit2, hostname):
+def test_identical_hostnames_rlp_on_gw_and_route_ignored(client, rate_limit, rate_limit2):
     """
     Tests that Gateway-attached RateLimitPolicy is ignored on 'route2' if both 'route' and 'route2' declare
     identical hostname and there is another RateLimitPolicy already successfully enforced on 'route'.
@@ -38,26 +38,25 @@ def test_identical_hostnames_rlp_on_gw_and_route_ignored(client, rate_limit, rat
         - Assert that on both routes the 429s are returned after single 200 (OK)
     """
 
-    # Verify that the Empty RLP is still enforced despite '1rp10m' RLP being enforced too now
+    # Verify that the Empty RLP is still enforced despite '1rp10m' RLP being partially enforced now
     rate_limit.wait_for_ready()
 
     # Access via 'route' is not limited due to Empty RateLimitPolicy
     responses = client.get_many("/anything/route1/get", 2)
     responses.assert_all(status_code=200)
 
-    # Access via 'route2' is limited due to '1rp10m' Gateway RateLimitPolicy ( it is partially enforced)
+    # Access via 'route2' is limited due to '1rp10m' Gateway RateLimitPolicy (it is partially enforced)
     response = client.get("/anything/route2/get")
     assert response.status_code == 200
     responses = client.get_many("/anything/route2/get", 2)
     responses.assert_all(status_code=429)
 
-    # Deletion of Empty RateLimitPolicy should make the '1rp10m' Gateway RateLimitPolicy effectively enforced on both
-    # routes. It might take some time hence the use of retry client.
+    # Deletion of Empty RateLimitPolicy should make the '1rp10m' Gateway RateLimitPolicy fully enforced on both routes
     rate_limit.delete()
     rate_limit2.wait_for_ready()
-    with hostname.client(retry_codes={200}) as retry_client:
-        response = retry_client.get("/anything/route1/get")
-        assert response.status_code == 429
+
+    response = client.get("/anything/route1/get")
+    assert response.status_code == 429
 
     response = client.get("/anything/route2/get")
     assert response.status_code == 429
