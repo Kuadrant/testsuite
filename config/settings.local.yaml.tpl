@@ -1,12 +1,12 @@
 #default:
 #  tester: "someuser"                          # Optional: name of the user, who is running the tests, defaults to whoami/uid
-#  cluster:                                    # Workload cluster where tests should run, will get overriden if run on Multicluster
-#    api_url: "https://api.openshift.com"      # Optional: OpenShift API URL, if None it will OpenShift that you are logged in
-#    token: "KUADRANT_RULEZ"                   # Optional: OpenShift Token, if None it will OpenShift that you are logged in
+#  cluster:                                    # Primary cluster where tests should run
+#    api_url: "https://api.kubernetes.com"     # Optional: Kubernetes API URL, if None it will use Kubernetes that you are logged in
+#    token: "KUADRANT_RULEZ"                   # Optional: Kubernetes Token, if None it will Kubernetes that you are logged in
 #    kubeconfig_path: "~/.kube/config"         # Optional: Kubeconfig to use, if None the default one is used
 #  kuadrantctl: kuadrantctl
 #  tools:
-#    project: "tools"                          # Optional: OpenShift project, where external tools are located
+#    project: "tools"                          # Optional: Kubernetes project, where external tools are located
 #  keycloak:
 #    url: "KEYCLOAK_URL"
 #    username: "KEYCLOAK_ADMIN_USERNAME"

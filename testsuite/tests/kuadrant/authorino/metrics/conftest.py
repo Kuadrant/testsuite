@@ -13,7 +13,7 @@ from testsuite.kubernetes.metrics import ServiceMonitor, MetricsEndpoint, Promet
 @pytest.fixture(scope="module")
 def prometheus(request, cluster):
     """
-    Return an instance of OpenShift metrics client
+    Return an instance of Thanos metrics client
     Skip tests if query route is not properly configured
     """
     openshift_monitoring = cluster.change_project("openshift-monitoring")

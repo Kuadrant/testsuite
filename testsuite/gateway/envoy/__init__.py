@@ -83,7 +83,7 @@ class Envoy(Gateway):  # pylint: disable=too-many-instance-attributes
         )
 
     def commit(self):
-        """Deploy all required objects into OpenShift"""
+        """Deploy all required objects into cluster"""
         self.config.commit()
 
         self.deployment = self.create_deployment()

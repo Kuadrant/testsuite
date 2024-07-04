@@ -1,4 +1,4 @@
-"""This module implements an openshift interface with openshift oc client wrapper."""
+"""This module implements an KubernetesCLI interface using oc/kubectl binary commands."""
 
 from functools import cached_property
 from urllib.parse import urlparse
@@ -11,8 +11,7 @@ from .secret import Secret
 
 
 class KubernetesClient:
-    """OpenShiftClient is an interface to the official OpenShift python
-    client."""
+    """KubernetesClient is a helper class for invoking kubectl commands"""
 
     # pylint: disable=too-many-public-methods
 
@@ -24,11 +23,11 @@ class KubernetesClient:
 
     @classmethod
     def from_context(cls, context: Context) -> "KubernetesClient":
-        """Creates OpenShiftClient from the context"""
+        """Creates self from the context"""
         return cls(context.get_project(), context.get_api_url(), context.get_token(), context.get_kubeconfig_path())
 
     def change_project(self, project) -> "KubernetesClient":
-        """Return new OpenShiftClient with a different project"""
+        """Return new self with a different project"""
         return KubernetesClient(project, self._api_url, self._token, self._kubeconfig_path)
 
     @cached_property
@@ -50,7 +49,7 @@ class KubernetesClient:
 
     @property
     def token(self):
-        """Returns real OpenShift token"""
+        """Returns real Kubernetes token"""
         return self.inspect_context(jsonpath="{.users[*].user.token}", raw=True)
 
     @cached_property
@@ -61,7 +60,7 @@ class KubernetesClient:
 
     @property
     def project(self):
-        """Returns real OpenShift project name"""
+        """Returns real Kubernetes namespace name"""
         with self.context:
             return oc.get_project_name()
 

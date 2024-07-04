@@ -62,7 +62,7 @@ class CustomResource(KubernetesObject):
     def safe_apply(self):
         """
         Modifies the model of the apiobj and asserts if a change was applied to a resource.
-        Uses modify_and_apply method from OpenshiftObject.
+        Uses modify_and_apply method from KubernetesObject.
         """
         result, status = self.modify_and_apply(lambda _: True, retries=2)
         assert status, f"Unable to apply changes for APIObject with result: {result}"
@@ -88,7 +88,7 @@ class CustomResource(KubernetesObject):
 
 
 def modify(func):
-    """Wraps method of a subclass of OpenShiftObject to use modify_and_apply when the object
+    """Wraps method of a subclass of KubernetesObject to use modify_and_apply when the object
     is already committed to the server, or run it normally if it isn't.
     All methods modifying the target object in any way should be decorated by this"""
 

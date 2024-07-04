@@ -91,6 +91,6 @@ def base_domain(exposer):
 @pytest.fixture(scope="module")
 def wildcard_domain(base_domain):
     """
-    Wildcard domain of openshift cluster
+    Wildcard domain for the exposer
     """
     return f"*.{base_domain}"
