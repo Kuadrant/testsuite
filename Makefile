@@ -40,23 +40,23 @@ test pytest tests: kuadrant
 
 authorino: ## Run only authorino related tests
 authorino: poetry-no-dev
-	$(PYTEST) -n4 -m 'authorino and not multicluster' --dist loadfile --enforce $(flags) testsuite/tests/kuadrant
+	$(PYTEST) -n4 -m 'authorino and not multicluster' --dist loadfile --enforce $(flags) testsuite/tests/singlecluster
 
 authorino-standalone: ## Run only test capable of running with standalone Authorino
 authorino-standalone: poetry-no-dev
-	$(PYTEST) -n4 -m 'authorino and not kuadrant_only' --dist loadfile --enforce --standalone $(flags) testsuite/tests/kuadrant/authorino
+	$(PYTEST) -n4 -m 'authorino and not kuadrant_only' --dist loadfile --enforce --standalone $(flags) testsuite/tests/singlecluster/authorino
 
 limitador: ## Run only Limitador related tests
 limitador: poetry-no-dev
-	$(PYTEST) -n4 -m 'limitador and not multicluster' --dist loadfile --enforce $(flags) testsuite/tests/kuadrant
+	$(PYTEST) -n4 -m 'limitador and not multicluster' --dist loadfile --enforce $(flags) testsuite/tests/singlecluster
 
 kuadrant: ## Run all tests available on Kuadrant
 kuadrant: poetry-no-dev
-	$(PYTEST) -n4 -m 'not standalone_only and not multicluster and not disruptive' --dist loadfile --enforce $(flags) testsuite/tests/kuadrant
+	$(PYTEST) -n4 -m 'not standalone_only and not multicluster and not disruptive' --dist loadfile --enforce $(flags) testsuite/tests/singlecluster
 
 kuadrant-only: ## Run Kuadrant-only tests
 kuadrant-only: poetry-no-dev
-	$(PYTEST) -n4 -m 'kuadrant_only and not standalone_only and not disruptive and not multicluster' --dist loadfile --enforce $(flags) testsuite/tests/kuadrant
+	$(PYTEST) -n4 -m 'kuadrant_only and not standalone_only and not disruptive and not multicluster' --dist loadfile --enforce $(flags) testsuite/tests/singlecluster
 
 multicluster: ## Run Multicluster only tests
 multicluster: poetry-no-dev
