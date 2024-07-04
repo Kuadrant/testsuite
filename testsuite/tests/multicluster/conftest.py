@@ -1,6 +1,5 @@
 """Conftest for Multicluster tests"""
 
-import time
 from importlib import resources
 from typing import TypeVar
 
@@ -164,7 +163,6 @@ def tls_policies(clusters, tls_policy) -> dict[KubernetesClient, TLSPolicy]:
 @pytest.fixture(scope="module")
 def client(hostname, gateways):  # pylint: disable=unused-argument
     """Returns httpx client to be used for requests"""
-    time.sleep(180)  # it takes a bit for the lets encrypt secret to be actually created
     root_cert = resources.files("testsuite.resources").joinpath("letsencrypt-stg-root-x1.pem").read_text()
     client = hostname.client(verify=Certificate(certificate=root_cert, chain=root_cert, key=""))
     yield client
