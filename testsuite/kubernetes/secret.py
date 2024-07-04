@@ -4,10 +4,10 @@ import base64
 from typing import Literal
 
 from testsuite.certificates import Certificate
-from testsuite.kubernetes import OpenShiftObject
+from testsuite.kubernetes import KubernetesObject
 
 
-class Secret(OpenShiftObject):
+class Secret(KubernetesObject):
     """Kubernetes Secret object"""
 
     @classmethod

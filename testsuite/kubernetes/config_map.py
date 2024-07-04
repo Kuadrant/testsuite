@@ -1,9 +1,9 @@
 """Config map"""
 
-from testsuite.kubernetes import OpenShiftObject
+from testsuite.kubernetes import KubernetesObject
 
 
-class ConfigMap(OpenShiftObject):
+class ConfigMap(KubernetesObject):
     """Kubernetes ConfigMap object"""
 
     @classmethod

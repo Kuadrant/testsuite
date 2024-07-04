@@ -7,7 +7,7 @@ from httpx import Client
 from testsuite.httpx import KuadrantClient
 from testsuite.gateway import Gateway, GatewayRoute, PathMatch, MatchType, RouteMatch
 from testsuite.kubernetes.client import OpenShiftClient
-from testsuite.kubernetes import OpenShiftObject, modify
+from testsuite.kubernetes import KubernetesObject, modify
 from testsuite.policy import Policy
 from testsuite.utils import asdict, check_condition
 
@@ -15,7 +15,7 @@ if typing.TYPE_CHECKING:
     from testsuite.backend import Backend
 
 
-class HTTPRoute(OpenShiftObject, GatewayRoute):
+class HTTPRoute(KubernetesObject, GatewayRoute):
     """HTTPRoute object, serves as replacement for Routes and Ingresses"""
 
     def client(self, **kwargs) -> Client:

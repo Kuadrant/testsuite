@@ -2,14 +2,14 @@
 
 from typing import Any, Dict, List, Optional, TYPE_CHECKING
 
-from testsuite.kubernetes import OpenShiftObject
+from testsuite.kubernetes import KubernetesObject
 
 if TYPE_CHECKING:
     # pylint: disable=cyclic-import
     from testsuite.kubernetes.client import OpenShiftClient
 
 
-class Ingress(OpenShiftObject):
+class Ingress(KubernetesObject):
     """Represents Kubernetes Ingress object"""
 
     @classmethod

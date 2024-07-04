@@ -5,7 +5,7 @@ from typing import Literal
 
 from openshift_client import timeout
 
-from testsuite.kubernetes import OpenShiftObject
+from testsuite.kubernetes import KubernetesObject
 
 
 @dataclass
@@ -17,7 +17,7 @@ class ServicePort:
     targetPort: int | str  # pylint: disable=invalid-name
 
 
-class Service(OpenShiftObject):
+class Service(KubernetesObject):
     """Kubernetes Service object"""
 
     @classmethod
@@ -63,5 +63,5 @@ class Service(OpenShiftObject):
     def delete(self, ignore_not_found=True, cmd_args=None):
         """Deletes Service, introduces bigger waiting times due to LoadBalancer type"""
         with timeout(10 * 60):
-            deleted = super(OpenShiftObject, self).delete(ignore_not_found, cmd_args)
+            deleted = super(KubernetesObject, self).delete(ignore_not_found, cmd_args)
             return deleted

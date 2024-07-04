@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from typing import Any, Optional
 
-from testsuite.kubernetes import OpenShiftObject, Selector, modify
+from testsuite.kubernetes import KubernetesObject, Selector, modify
 from testsuite.utils import asdict
 
 # pylint: disable=invalid-name
@@ -71,7 +71,7 @@ class SecretVolume:
 Volume = SecretVolume | ConfigMapVolume
 
 
-class Deployment(OpenShiftObject):
+class Deployment(KubernetesObject):
     """Kubernetes Deployment object"""
 
     @classmethod

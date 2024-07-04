@@ -7,12 +7,12 @@ import openshift_client as oc
 from testsuite.certificates import Certificate
 from testsuite.gateway import Gateway
 from testsuite.kubernetes.client import OpenShiftClient
-from testsuite.kubernetes import OpenShiftObject
+from testsuite.kubernetes import KubernetesObject
 from testsuite.policy import Policy
 from testsuite.utils import check_condition
 
 
-class KuadrantGateway(OpenShiftObject, Gateway):
+class KuadrantGateway(KubernetesObject, Gateway):
     """Gateway object for Kuadrant"""
 
     @classmethod

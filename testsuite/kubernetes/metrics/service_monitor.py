@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 from testsuite.utils import asdict
 from testsuite.kubernetes.client import OpenShiftClient
-from testsuite.kubernetes import OpenShiftObject
+from testsuite.kubernetes import KubernetesObject
 
 
 @dataclass
@@ -17,7 +17,7 @@ class MetricsEndpoint:
     interval: str = "30s"
 
 
-class ServiceMonitor(OpenShiftObject):
+class ServiceMonitor(KubernetesObject):
     """Represents Service Monitor object for OpenShift"""
 
     @classmethod

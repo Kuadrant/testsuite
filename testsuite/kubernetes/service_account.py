@@ -1,10 +1,10 @@
 """Service Account object for OpenShift"""
 
-from testsuite.kubernetes import OpenShiftObject
+from testsuite.kubernetes import KubernetesObject
 from testsuite.kubernetes.client import OpenShiftClient
 
 
-class ServiceAccount(OpenShiftObject):
+class ServiceAccount(KubernetesObject):
     """Service account object for OpenShift"""
 
     def __init__(self, openshift: OpenShiftClient, model: dict):

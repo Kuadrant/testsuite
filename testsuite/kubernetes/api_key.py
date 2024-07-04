@@ -4,10 +4,10 @@ import base64
 from functools import cached_property
 
 from testsuite.kubernetes.client import OpenShiftClient
-from testsuite.kubernetes import OpenShiftObject, modify, Selector
+from testsuite.kubernetes import KubernetesObject, modify, Selector
 
 
-class APIKey(OpenShiftObject):
+class APIKey(KubernetesObject):
     """Represents API Key Secret CR for Authorino"""
 
     def __init__(self, value, label, dict_to_model=None, string_to_model=None, context=None):

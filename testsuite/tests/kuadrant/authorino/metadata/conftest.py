@@ -2,7 +2,7 @@
 
 import pytest
 
-from testsuite.kubernetes import OpenShiftObject
+from testsuite.kubernetes import KubernetesObject
 
 
 @pytest.fixture(scope="module")
@@ -19,7 +19,7 @@ def create_client_secret(request, cluster):
             "stringData": {"clientID": client_id, "clientSecret": client_secret},
             "type": "Opaque",
         }
-        secret = OpenShiftObject(model, context=cluster.context)
+        secret = KubernetesObject(model, context=cluster.context)
         request.addfinalizer(lambda: secret.delete(ignore_not_found=True))
         secret.commit()
         return secret

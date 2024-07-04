@@ -4,13 +4,13 @@ from functools import cached_property
 from typing import Dict
 
 from testsuite.utils import asdict
-from testsuite.kubernetes import OpenShiftObject, modify
+from testsuite.kubernetes import KubernetesObject, modify
 from testsuite.kubernetes.client import OpenShiftClient
 from .sections import AuthorizationSection, IdentitySection, MetadataSection, ResponseSection
 from . import Rule, Pattern
 
 
-class AuthConfig(OpenShiftObject):
+class AuthConfig(KubernetesObject):
     """Represents AuthConfig CR from Authorino"""
 
     @property

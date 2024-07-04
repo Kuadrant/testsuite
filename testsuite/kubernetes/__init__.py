@@ -1,4 +1,4 @@
-"""OpenShift common objects"""
+"""Kubernetes common objects"""
 
 import dataclasses
 import functools
@@ -11,7 +11,7 @@ from testsuite.lifecycle import LifecycleObject
 from testsuite.utils import asdict
 
 
-class OpenShiftObject(APIObject, LifecycleObject):
+class KubernetesObject(APIObject, LifecycleObject):
     """Custom APIObjects which tracks if the object was already committed to the server or not"""
 
     def __init__(self, dict_to_model=None, string_to_model=None, context=None):
@@ -56,7 +56,7 @@ class OpenShiftObject(APIObject, LifecycleObject):
             raise e
 
 
-class CustomResource(OpenShiftObject):
+class CustomResource(KubernetesObject):
     """Custom APIObjects that implements methods that improves manipulation with CR objects"""
 
     def safe_apply(self):

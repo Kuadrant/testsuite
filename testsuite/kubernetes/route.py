@@ -4,10 +4,10 @@ from functools import cached_property
 
 from testsuite.httpx import KuadrantClient
 from testsuite.gateway import Hostname
-from testsuite.kubernetes import OpenShiftObject
+from testsuite.kubernetes import KubernetesObject
 
 
-class OpenshiftRoute(OpenShiftObject, Hostname):
+class OpenshiftRoute(KubernetesObject, Hostname):
     """Openshift Route object"""
 
     def __init__(self, dict_to_model=None, string_to_model=None, context=None):
