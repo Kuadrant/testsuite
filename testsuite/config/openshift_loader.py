@@ -1,6 +1,6 @@
 """Custom dynaconf loader for loading OpenShift settings and converting them to OpenshiftClients"""
 
-from testsuite.openshift.client import OpenShiftClient
+from testsuite.kubernetes.client import OpenShiftClient
 
 
 def inject_client(obj, base_client, path):

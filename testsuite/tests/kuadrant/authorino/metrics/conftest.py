@@ -6,8 +6,8 @@ import pytest
 from openshift_client import selector
 
 from testsuite.gateway.envoy import Envoy
-from testsuite.openshift.config_map import ConfigMap
-from testsuite.openshift.metrics import ServiceMonitor, MetricsEndpoint, Prometheus
+from testsuite.kubernetes.config_map import ConfigMap
+from testsuite.kubernetes.metrics import ServiceMonitor, MetricsEndpoint, Prometheus
 
 
 @pytest.fixture(scope="module")

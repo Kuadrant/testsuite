@@ -4,7 +4,7 @@ import base64
 from typing import Literal
 
 from testsuite.certificates import Certificate
-from testsuite.openshift import OpenShiftObject
+from testsuite.kubernetes import OpenShiftObject
 
 
 class Secret(OpenShiftObject):

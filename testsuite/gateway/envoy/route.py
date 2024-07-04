@@ -5,7 +5,7 @@ import typing
 from testsuite.gateway import Gateway, GatewayRoute
 
 if typing.TYPE_CHECKING:
-    from testsuite.openshift.client import OpenShiftClient
+    from testsuite.kubernetes.client import OpenShiftClient
     from testsuite.backend import Backend
     from testsuite.policy.authorization.auth_config import AuthConfig
 

@@ -7,7 +7,7 @@ from testsuite.policy.authorization import WristbandSigningKeyRef, WristbandResp
 from testsuite.policy.authorization.auth_config import AuthConfig
 from testsuite.gateway.envoy.route import EnvoyVirtualRoute
 from testsuite.gateway.envoy.wristband import WristbandEnvoy
-from testsuite.openshift.secret import TLSSecret
+from testsuite.kubernetes.secret import TLSSecret
 from testsuite.utils import cert_builder
 
 

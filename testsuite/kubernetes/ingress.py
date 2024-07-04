@@ -2,11 +2,11 @@
 
 from typing import Any, Dict, List, Optional, TYPE_CHECKING
 
-from testsuite.openshift import OpenShiftObject
+from testsuite.kubernetes import OpenShiftObject
 
 if TYPE_CHECKING:
     # pylint: disable=cyclic-import
-    from testsuite.openshift.client import OpenShiftClient
+    from testsuite.kubernetes.client import OpenShiftClient
 
 
 class Ingress(OpenShiftObject):

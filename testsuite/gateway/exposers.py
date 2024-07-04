@@ -3,7 +3,7 @@
 from testsuite.certificates import Certificate
 from testsuite.gateway import Exposer, Gateway, Hostname
 from testsuite.httpx import KuadrantClient, ForceSNIClient
-from testsuite.openshift.route import OpenshiftRoute
+from testsuite.kubernetes.route import OpenshiftRoute
 
 
 class OpenShiftExposer(Exposer):

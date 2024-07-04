@@ -1,7 +1,7 @@
 """Service Account object for OpenShift"""
 
-from testsuite.openshift import OpenShiftObject
-from testsuite.openshift.client import OpenShiftClient
+from testsuite.kubernetes import OpenShiftObject
+from testsuite.kubernetes.client import OpenShiftClient
 
 
 class ServiceAccount(OpenShiftObject):

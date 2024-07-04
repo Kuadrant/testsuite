@@ -2,7 +2,7 @@
 
 import pytest
 
-from testsuite.openshift import OpenShiftObject
+from testsuite.kubernetes import OpenShiftObject
 
 
 @pytest.fixture(scope="module")

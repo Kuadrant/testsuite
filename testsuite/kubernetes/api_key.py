@@ -3,8 +3,8 @@
 import base64
 from functools import cached_property
 
-from testsuite.openshift.client import OpenShiftClient
-from testsuite.openshift import OpenShiftObject, modify, Selector
+from testsuite.kubernetes.client import OpenShiftClient
+from testsuite.kubernetes import OpenShiftObject, modify, Selector
 
 
 class APIKey(OpenShiftObject):

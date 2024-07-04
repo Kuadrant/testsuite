@@ -3,10 +3,10 @@
 import pytest
 
 from testsuite.httpx.auth import HttpxOidcClientAuth
-from testsuite.openshift.client import OpenShiftClient
-from testsuite.openshift.api_key import APIKey
+from testsuite.kubernetes.client import OpenShiftClient
+from testsuite.kubernetes.api_key import APIKey
 from testsuite.policy.authorization.auth_config import AuthConfig
-from testsuite.openshift.authorino import AuthorinoCR, Authorino, PreexistingAuthorino
+from testsuite.kubernetes.authorino import AuthorinoCR, Authorino, PreexistingAuthorino
 
 
 @pytest.fixture(scope="session")

@@ -5,8 +5,8 @@ from dataclasses import dataclass
 from typing import Iterable, Literal, Optional, List
 
 from testsuite.gateway import Referencable, RouteMatch
-from testsuite.openshift import modify
-from testsuite.openshift.client import OpenShiftClient
+from testsuite.kubernetes import modify
+from testsuite.kubernetes.client import OpenShiftClient
 from testsuite.policy import Policy
 from testsuite.policy.authorization import Rule
 from testsuite.utils import asdict

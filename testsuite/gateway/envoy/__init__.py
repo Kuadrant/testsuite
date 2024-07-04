@@ -7,11 +7,11 @@ import openshift_client as oc
 
 from testsuite.certificates import Certificate
 from testsuite.gateway import Gateway
-from testsuite.openshift import Selector
-from testsuite.openshift.client import OpenShiftClient
+from testsuite.kubernetes import Selector
+from testsuite.kubernetes.client import OpenShiftClient
 from testsuite.gateway.envoy.config import EnvoyConfig
-from testsuite.openshift.deployment import Deployment, VolumeMount, ConfigMapVolume
-from testsuite.openshift.service import Service, ServicePort
+from testsuite.kubernetes.deployment import Deployment, VolumeMount, ConfigMapVolume
+from testsuite.kubernetes.service import Service, ServicePort
 
 
 class Envoy(Gateway):  # pylint: disable=too-many-instance-attributes

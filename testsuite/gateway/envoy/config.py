@@ -3,8 +3,8 @@
 import yaml
 
 from testsuite.backend import Backend
-from testsuite.openshift import modify
-from testsuite.openshift.config_map import ConfigMap
+from testsuite.kubernetes import modify
+from testsuite.kubernetes.config_map import ConfigMap
 
 
 BASE_CONFIG = """

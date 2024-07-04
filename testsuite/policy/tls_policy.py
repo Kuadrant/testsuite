@@ -1,7 +1,7 @@
 """Module for TLSPolicy related classes"""
 
 from testsuite.gateway import Referencable
-from testsuite.openshift.client import OpenShiftClient
+from testsuite.kubernetes.client import OpenShiftClient
 from testsuite.policy import Policy, has_condition
 
 

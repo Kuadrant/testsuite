@@ -3,8 +3,8 @@
 from typing import Dict, TYPE_CHECKING
 
 from testsuite.gateway import Referencable
-from testsuite.openshift import modify
-from testsuite.openshift.client import OpenShiftClient
+from testsuite.kubernetes import modify
+from testsuite.kubernetes.client import OpenShiftClient
 from testsuite.utils import asdict
 from .auth_config import AuthConfig
 from .. import Policy

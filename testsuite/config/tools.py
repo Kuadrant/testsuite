@@ -4,7 +4,7 @@ import logging
 
 from openshift_client import selector
 
-from testsuite.openshift.service import Service
+from testsuite.kubernetes.service import Service
 
 logger = logging.getLogger(__name__)
 

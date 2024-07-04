@@ -6,8 +6,8 @@ import openshift_client as oc
 
 from testsuite.certificates import Certificate
 from testsuite.gateway import Gateway
-from testsuite.openshift.client import OpenShiftClient
-from testsuite.openshift import OpenShiftObject
+from testsuite.kubernetes.client import OpenShiftClient
+from testsuite.kubernetes import OpenShiftObject
 from testsuite.policy import Policy
 from testsuite.utils import check_condition
 

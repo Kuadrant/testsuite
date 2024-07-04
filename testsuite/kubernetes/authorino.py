@@ -7,9 +7,9 @@ from typing import Any, Optional, Dict, List
 from openshift_client import selector
 
 from testsuite.lifecycle import LifecycleObject
-from testsuite.openshift import CustomResource
-from testsuite.openshift.client import OpenShiftClient
-from testsuite.openshift.deployment import Deployment
+from testsuite.kubernetes import CustomResource
+from testsuite.kubernetes.client import OpenShiftClient
+from testsuite.kubernetes.deployment import Deployment
 from testsuite.utils import asdict
 
 

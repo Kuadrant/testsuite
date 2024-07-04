@@ -3,8 +3,8 @@
 from dataclasses import dataclass
 
 from testsuite.utils import asdict
-from testsuite.openshift.client import OpenShiftClient
-from testsuite.openshift import OpenShiftObject
+from testsuite.kubernetes.client import OpenShiftClient
+from testsuite.kubernetes import OpenShiftObject
 
 
 @dataclass

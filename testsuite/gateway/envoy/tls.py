@@ -4,11 +4,11 @@ from typing import TYPE_CHECKING
 
 import yaml
 
-from testsuite.openshift.deployment import Deployment, SecretVolume, VolumeMount
+from testsuite.kubernetes.deployment import Deployment, SecretVolume, VolumeMount
 from . import Envoy, EnvoyConfig
 
 if TYPE_CHECKING:
-    from testsuite.openshift.client import OpenShiftClient
+    from testsuite.kubernetes.client import OpenShiftClient
 
 TLS_TRANSPORT = """
 name: envoy.transport_sockets.tls

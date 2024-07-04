@@ -13,7 +13,7 @@ from testsuite.policy.authorization import Pattern, ValueFrom
 from testsuite.certificates import CertInfo
 from testsuite.policy.authorization.auth_config import AuthConfig
 from testsuite.utils import cert_builder
-from testsuite.openshift.ingress import Ingress
+from testsuite.kubernetes.ingress import Ingress
 
 pytestmark = [pytest.mark.authorino, pytest.mark.standalone_only]
 

@@ -1,6 +1,6 @@
 """Contains Base class for policies"""
 
-from testsuite.openshift import OpenShiftObject
+from testsuite.kubernetes import OpenShiftObject
 from testsuite.utils import check_condition
 
 

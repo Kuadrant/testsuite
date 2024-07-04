@@ -3,7 +3,7 @@
 import pytest
 
 from testsuite.httpx.auth import HeaderApiKeyAuth
-from testsuite.openshift.service_account import ServiceAccount
+from testsuite.kubernetes.service_account import ServiceAccount
 
 
 @pytest.fixture(scope="module")

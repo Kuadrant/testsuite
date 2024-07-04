@@ -1,6 +1,6 @@
 """Config map"""
 
-from testsuite.openshift import OpenShiftObject
+from testsuite.kubernetes import OpenShiftObject
 
 
 class ConfigMap(OpenShiftObject):

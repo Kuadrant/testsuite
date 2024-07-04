@@ -13,7 +13,7 @@ from testsuite.gateway import Exposer, Gateway, CustomReference, Hostname
 from testsuite.gateway.gateway_api.gateway import KuadrantGateway
 from testsuite.gateway.gateway_api.hostname import DNSPolicyExposer
 from testsuite.gateway.gateway_api.route import HTTPRoute
-from testsuite.openshift.client import OpenShiftClient
+from testsuite.kubernetes.client import OpenShiftClient
 from testsuite.policy import Policy
 from testsuite.policy.dns_policy import DNSPolicy
 from testsuite.policy.tls_policy import TLSPolicy

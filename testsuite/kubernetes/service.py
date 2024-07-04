@@ -5,7 +5,7 @@ from typing import Literal
 
 from openshift_client import timeout
 
-from testsuite.openshift import OpenShiftObject
+from testsuite.kubernetes import OpenShiftObject
 
 
 @dataclass

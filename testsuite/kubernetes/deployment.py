@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from typing import Any, Optional
 
-from testsuite.openshift import OpenShiftObject, Selector, modify
+from testsuite.kubernetes import OpenShiftObject, Selector, modify
 from testsuite.utils import asdict
 
 # pylint: disable=invalid-name

@@ -1,10 +1,10 @@
 """Mockserver implementation as Backend"""
 
 from testsuite.backend import Backend
-from testsuite.openshift import Selector
-from testsuite.openshift.client import OpenShiftClient
-from testsuite.openshift.deployment import Deployment, ContainerResources
-from testsuite.openshift.service import Service, ServicePort
+from testsuite.kubernetes import Selector
+from testsuite.kubernetes.client import OpenShiftClient
+from testsuite.kubernetes.deployment import Deployment, ContainerResources
+from testsuite.kubernetes.service import Service, ServicePort
 
 
 class MockserverBackend(Backend):

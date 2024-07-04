@@ -13,7 +13,7 @@ from testsuite.lifecycle import LifecycleObject
 from testsuite.utils import asdict
 
 if TYPE_CHECKING:
-    from testsuite.openshift.client import OpenShiftClient
+    from testsuite.kubernetes.client import OpenShiftClient
     from testsuite.backend import Backend
 
 

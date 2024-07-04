@@ -4,8 +4,8 @@ from functools import cached_property
 from typing import Dict
 
 from testsuite.utils import asdict
-from testsuite.openshift import OpenShiftObject, modify
-from testsuite.openshift.client import OpenShiftClient
+from testsuite.kubernetes import OpenShiftObject, modify
+from testsuite.kubernetes.client import OpenShiftClient
 from .sections import AuthorizationSection, IdentitySection, MetadataSection, ResponseSection
 from . import Rule, Pattern
 

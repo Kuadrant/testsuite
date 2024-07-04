@@ -3,7 +3,7 @@
 import pytest
 
 from testsuite.gateway.envoy import Envoy
-from testsuite.openshift.authorino import AuthorinoCR, Authorino
+from testsuite.kubernetes.authorino import AuthorinoCR, Authorino
 
 
 @pytest.fixture(scope="module")

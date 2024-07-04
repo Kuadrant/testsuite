@@ -5,10 +5,10 @@ from typing import Optional, Dict
 import pytest
 
 from testsuite.certificates import Certificate, CertInfo
-from testsuite.openshift import Selector
+from testsuite.kubernetes import Selector
 from testsuite.gateway import Exposer
 from testsuite.gateway.envoy.tls import TLSEnvoy
-from testsuite.openshift.secret import TLSSecret
+from testsuite.kubernetes.secret import TLSSecret
 from testsuite.utils import cert_builder
 
 
