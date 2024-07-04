@@ -43,13 +43,13 @@ pytestmark = [pytest.mark.kuadrant_only, pytest.mark.dnspolicy, pytest.mark.tlsp
 
 
 @pytest.fixture(scope="module")
-def cluster_issuer(testconfig, hub_openshift):
+def cluster_issuer(testconfig, cluster):
     """Reference to cluster Let's Encrypt certificate issuer"""
     testconfig.validators.validate(only="letsencrypt")
     name = testconfig["letsencrypt"]["issuer"]["name"]
     kind = testconfig["letsencrypt"]["issuer"]["kind"]
     try:
-        selector(f"{kind}/{name}", static_context=hub_openshift.context).object()
+        selector(f"{kind}/{name}", static_context=cluster.context).object()
     except OpenShiftPythonException as exc:
         pytest.skip(f"{name} {kind} is not present on the cluster: {exc}")
     return CustomReference(

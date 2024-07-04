@@ -31,11 +31,11 @@ def oas():
 
 
 @pytest.fixture(scope="function")
-def route(request, kuadrantctl, oas, openshift):
+def route(request, kuadrantctl, oas, cluster):
     """Generates Route from OAS"""
     result = kuadrantctl.run("generate", "gatewayapi", "httproute", "--oas", "-", input=oas.as_yaml(), check=False)
     assert result.returncode == 0, f"Unable to create Route from OAS: {result.stderr}"
-    route = openshift.apply_from_string(result.stdout, HTTPRoute, cmd_args="--validate=false")
+    route = cluster.apply_from_string(result.stdout, HTTPRoute, cmd_args="--validate=false")
     request.addfinalizer(route.delete)
     return route
 

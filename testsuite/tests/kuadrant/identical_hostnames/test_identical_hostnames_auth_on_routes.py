@@ -13,9 +13,9 @@ pytestmark = [pytest.mark.kuadrant_only]
 
 
 @pytest.fixture(scope="class")
-def authorization2(request, route2, blame, openshift, label):
+def authorization2(request, route2, blame, cluster, label):
     """2nd Authorization object"""
-    auth_policy = AuthPolicy.create_instance(openshift, blame("authz2"), route2, labels={"testRun": label})
+    auth_policy = AuthPolicy.create_instance(cluster, blame("authz2"), route2, labels={"testRun": label})
     auth_policy.authorization.add_opa_policy("rego", "allow = false")
     request.addfinalizer(auth_policy.delete)
     auth_policy.commit()

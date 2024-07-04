@@ -38,7 +38,7 @@ def oas(oas, keycloak, blame, gateway, hostname, backend):
 
 @pytest.mark.parametrize("encoder", [pytest.param("as_json", id="JSON"), pytest.param("as_yaml", id="YAML")])
 @pytest.mark.parametrize("stdin", [pytest.param(True, id="STDIN"), pytest.param(False, id="File")])
-def test_generate_authpolicy(request, kuadrantctl, oas, encoder, openshift, client, stdin, auth):
+def test_generate_authpolicy(request, kuadrantctl, oas, encoder, cluster, client, stdin, auth):
     """Generates Policy from OAS and tests that it works as expected"""
     encoded = getattr(oas, encoder)()
 
@@ -48,7 +48,7 @@ def test_generate_authpolicy(request, kuadrantctl, oas, encoder, openshift, clie
         with as_tmp_file(encoded) as file_name:
             result = kuadrantctl.run("generate", "kuadrant", "authpolicy", "--oas", file_name)
 
-    policy = openshift.apply_from_string(result.stdout, AuthPolicy)
+    policy = cluster.apply_from_string(result.stdout, AuthPolicy)
     request.addfinalizer(policy.delete)
 
     policy.wait_for_ready()

@@ -61,12 +61,12 @@ def certificates(cfssl, authorino_domain, wildcard_domain, cert_attributes, cert
 
 
 @pytest.fixture(scope="module")
-def create_secret(blame, request, openshift):
+def create_secret(blame, request, cluster):
     """Creates TLS secret from Certificate"""
 
     def _create_secret(certificate: Certificate, name: str, labels: Optional[Dict[str, str]] = None):
         secret_name = blame(name)
-        secret = TLSSecret.create_instance(openshift, secret_name, certificate, labels=labels)
+        secret = TLSSecret.create_instance(cluster, secret_name, certificate, labels=labels)
         request.addfinalizer(secret.delete)
         secret.commit()
         return secret_name
@@ -75,12 +75,12 @@ def create_secret(blame, request, openshift):
 
 
 @pytest.fixture(scope="module")
-def authorino_domain(openshift):
+def authorino_domain(cluster):
     """
     Hostname of the upstream certificate sent to be validated by Envoy
     May be overwritten to configure different test cases
     """
-    return f"*.{openshift.project}.svc.cluster.local"
+    return f"*.{cluster.project}.svc.cluster.local"
 
 
 @pytest.fixture(scope="module")
@@ -149,7 +149,7 @@ def authorino_labels(selector) -> Dict[str, str]:
 def gateway(
     request,
     authorino,
-    openshift,
+    cluster,
     create_secret,
     blame,
     module_label,
@@ -165,7 +165,7 @@ def gateway(
     envoy_secret = create_secret(envoy_cert, "envoycert")
 
     envoy = TLSEnvoy(
-        openshift,
+        cluster,
         blame("gw"),
         authorino,
         testconfig["service_protection"]["envoy"]["image"],
@@ -180,9 +180,9 @@ def gateway(
 
 
 @pytest.fixture(scope="module")
-def exposer(request, testconfig, hub_openshift) -> Exposer:
+def exposer(request, testconfig, cluster) -> Exposer:
     """Exposer object instance with TLS passthrough"""
-    exposer = testconfig["default_exposer"](hub_openshift)
+    exposer = testconfig["default_exposer"](cluster)
     exposer.passthrough = True
     request.addfinalizer(exposer.delete)
     exposer.commit()

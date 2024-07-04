@@ -7,10 +7,10 @@ from testsuite.openshift.authorino import AuthorinoCR, Authorino
 
 
 @pytest.fixture(scope="module")
-def gateway(request, authorino, openshift, blame, label, testconfig) -> Envoy:
+def gateway(request, authorino, cluster, blame, label, testconfig) -> Envoy:
     """Deploys Envoy that wires up the Backend behind the reverse-proxy and Authorino instance"""
     gw = Envoy(
-        openshift,
+        cluster,
         blame("gw"),
         authorino,
         testconfig["service_protection"]["envoy"]["image"],
@@ -29,7 +29,7 @@ def authorino_parameters():
 
 
 @pytest.fixture(scope="module")
-def authorino(openshift, blame, request, testconfig, label, authorino_parameters) -> Authorino:
+def authorino(cluster, blame, request, testconfig, label, authorino_parameters) -> Authorino:
     """Module scoped Authorino instance, with specific parameters"""
     authorino_config = testconfig["service_protection"]["authorino"]
     if not authorino_config["deploy"]:
@@ -41,7 +41,7 @@ def authorino(openshift, blame, request, testconfig, label, authorino_parameters
     authorino_parameters.setdefault("name", blame("authorino"))
 
     authorino = AuthorinoCR.create_instance(
-        openshift,
+        cluster,
         image=authorino_config.get("image"),
         log_level=authorino_config.get("log_level"),
         **authorino_parameters,

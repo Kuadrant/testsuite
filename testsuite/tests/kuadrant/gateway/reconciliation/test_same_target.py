@@ -24,7 +24,7 @@ def test_two_policies_one_gw(request, create_cr, gateway, client, blame, module_
     assert response.status_code == 200, "Original DNSPolicy does not work"
 
     policy = create_cr(
-        gateway.openshift,
+        gateway.cluster,
         blame("dns2"),
         gateway,
         cluster_issuer,

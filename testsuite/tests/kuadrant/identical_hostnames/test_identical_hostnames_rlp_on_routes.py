@@ -19,9 +19,9 @@ def rate_limit(rate_limit):
 
 
 @pytest.fixture(scope="class")
-def rate_limit2(request, route2, blame, openshift, label):
+def rate_limit2(request, route2, blame, cluster, label):
     """2nd RateLimitPolicy allowing 2 requests per 10 minutes (a.k.a. '2rp10m' RateLimitPolicy)"""
-    rlp = RateLimitPolicy.create_instance(openshift, blame("2rp10m"), route2, labels={"testRun": label})
+    rlp = RateLimitPolicy.create_instance(cluster, blame("2rp10m"), route2, labels={"testRun": label})
     request.addfinalizer(rlp.delete)
     rlp.add_limit("2rp10m", [Limit(2, 10)])
     rlp.commit()

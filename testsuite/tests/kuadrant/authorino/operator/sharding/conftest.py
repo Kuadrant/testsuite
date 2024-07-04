@@ -9,12 +9,12 @@ from testsuite.gateway.envoy.route import EnvoyVirtualRoute
 
 
 @pytest.fixture(scope="module")
-def setup_gateway(request, openshift, blame, testconfig, module_label):
+def setup_gateway(request, cluster, blame, testconfig, module_label):
     """Factory method for creating Gateways in the test run"""
 
     def _envoy(auth):
         gw = Envoy(
-            openshift,
+            cluster,
             blame("gw"),
             auth,
             testconfig["service_protection"]["envoy"]["image"],
@@ -33,7 +33,7 @@ def setup_route(request, blame, backend, module_label):
 
     def _route(hostname, gateway):
         route = EnvoyVirtualRoute.create_instance(
-            gateway.openshift, blame("route"), gateway, labels={"app": module_label}
+            gateway.cluster, blame("route"), gateway, labels={"app": module_label}
         )
         route.add_hostname(hostname)
         route.add_backend(backend)
@@ -45,12 +45,12 @@ def setup_route(request, blame, backend, module_label):
 
 
 @pytest.fixture(scope="module")
-def setup_authorization(request, blame, openshift, label):  # pylint: disable=unused-argument
+def setup_authorization(request, blame, cluster, label):  # pylint: disable=unused-argument
     """Factory method for creating AuthConfigs in the test run"""
 
     def _authorization(route, sharding_label=None):
         auth = AuthConfig.create_instance(
-            openshift,
+            cluster,
             blame("ac"),
             route,
             labels={"testRun": label, "sharding": sharding_label},

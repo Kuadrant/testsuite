@@ -16,19 +16,14 @@ from testsuite.policy.rate_limit_policy import RateLimitPolicy
 
 
 @pytest.fixture(scope="session")
-def openshift(hub_openshift):
-    """OpenShift client for the primary namespace"""
-    return hub_openshift
-
-
-@pytest.fixture(scope="session")
-def openshift2(testconfig, skip_or_fail):
-    """OpenShift client for the secondary namespace located on the same cluster as primary Openshift"""
+def cluster2(testconfig, skip_or_fail):
+    """Kubernetes client for the secondary namespace located on the same cluster as primary cluster"""
+    project = testconfig["service_protection"]["project2"]
     client = testconfig["cluster"].change_project(testconfig["service_protection"]["project2"])
     if client is None:
-        skip_or_fail("Openshift2 required but second_project was not set")
+        skip_or_fail("Tests requires second_project but service_protection.project2 is not set")
     if not client.connected:
-        pytest.fail("You are not logged into Openshift or the namespace for Openshift2 doesn't exist")
+        pytest.fail(f"You are not logged into Kubernetes or the namespace for {project} doesn't exist")
     return client
 
 
@@ -39,15 +34,15 @@ def authorization_name(blame):
 
 
 @pytest.fixture(scope="module")
-def authorization(kuadrant, route, authorization_name, openshift, label):
+def authorization(kuadrant, route, authorization_name, cluster, label):
     """Authorization object (In case of Kuadrant AuthPolicy)"""
     if kuadrant:
-        return AuthPolicy.create_instance(openshift, authorization_name, route, labels={"testRun": label})
+        return AuthPolicy.create_instance(cluster, authorization_name, route, labels={"testRun": label})
     return None
 
 
 @pytest.fixture(scope="module")
-def rate_limit(kuadrant, openshift, blame, request, module_label, route, gateway):  # pylint: disable=unused-argument
+def rate_limit(kuadrant, cluster, blame, request, module_label, route, gateway):  # pylint: disable=unused-argument
     """
     Rate limit object.
     Request is used for indirect parametrization, with two possible parameters:
@@ -57,7 +52,7 @@ def rate_limit(kuadrant, openshift, blame, request, module_label, route, gateway
     target_ref = request.getfixturevalue(getattr(request, "param", "route"))
 
     if kuadrant:
-        return RateLimitPolicy.create_instance(openshift, blame("limit"), target_ref, labels={"testRun": module_label})
+        return RateLimitPolicy.create_instance(cluster, blame("limit"), target_ref, labels={"testRun": module_label})
     return None
 
 
@@ -92,23 +87,23 @@ def kuadrant(request, testconfig):
 
 
 @pytest.fixture(scope="session")
-def backend(request, openshift, blame, label):
+def backend(request, cluster, blame, label):
     """Deploys Httpbin backend"""
-    httpbin = Httpbin(openshift, blame("httpbin"), label)
+    httpbin = Httpbin(cluster, blame("httpbin"), label)
     request.addfinalizer(httpbin.delete)
     httpbin.commit()
     return httpbin
 
 
 @pytest.fixture(scope="session")
-def gateway(request, kuadrant, openshift, blame, label, testconfig, wildcard_domain) -> Gateway:
+def gateway(request, kuadrant, cluster, blame, label, testconfig, wildcard_domain) -> Gateway:
     """Deploys Gateway that wires up the Backend behind the reverse-proxy and Authorino instance"""
     if kuadrant:
-        gw = KuadrantGateway.create_instance(openshift, blame("gw"), wildcard_domain, {"app": label})
+        gw = KuadrantGateway.create_instance(cluster, blame("gw"), wildcard_domain, {"app": label})
     else:
         authorino = request.getfixturevalue("authorino")
         gw = Envoy(
-            openshift,
+            cluster,
             blame("gw"),
             authorino,
             testconfig["service_protection"]["envoy"]["image"],

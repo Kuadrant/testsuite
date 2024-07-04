@@ -8,12 +8,12 @@ pytestmark = [pytest.mark.kuadrant_only]
 
 
 @pytest.fixture(scope="module")
-def rate_limit(openshift, blame, module_label, route):
+def rate_limit(cluster, blame, module_label, route):
     """
     Rate limit object.
     """
 
-    policy = RateLimitPolicy.create_instance(openshift, blame("limit"), route, labels={"testRun": module_label})
+    policy = RateLimitPolicy.create_instance(cluster, blame("limit"), route, labels={"testRun": module_label})
     policy.add_limit("basic", [Limit(5, 10)])
     return policy
 

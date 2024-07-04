@@ -18,11 +18,11 @@ def oidc_provider(keycloak):
 
 
 @pytest.fixture(scope="module")
-def wristband_secret(blame, request, openshift, certificates) -> str:
+def wristband_secret(blame, request, cluster, certificates) -> str:
     """Create signing wristband secret"""
     wristband_secret_name = blame("wristband-signing-key")
     secret = TLSSecret.create_instance(
-        openshift, wristband_secret_name, certificates["signing_ca"], "cert.pem", "key.pem", "Opaque"
+        cluster, wristband_secret_name, certificates["signing_ca"], "cert.pem", "key.pem", "Opaque"
     )
     request.addfinalizer(secret.delete)
     secret.commit()
@@ -39,10 +39,10 @@ def certificates(cfssl, wildcard_domain):
 
 
 @pytest.fixture(scope="module")
-def gateway(request, authorino, openshift, blame, module_label, testconfig):
+def gateway(request, authorino, cluster, blame, module_label, testconfig):
     """Deploys Envoy with additional edge-route match"""
     envoy = WristbandEnvoy(
-        openshift,
+        cluster,
         blame("gw"),
         authorino,
         testconfig["service_protection"]["envoy"]["image"],
@@ -60,9 +60,9 @@ def wristband_name(blame):
 
 
 @pytest.fixture(scope="module")
-def wristband_endpoint(openshift, authorino, wristband_name):
+def wristband_endpoint(cluster, authorino, wristband_name):
     """Authorino oidc wristband endpoint"""
-    return f"http://{authorino.oidc_url}:8083/{openshift.project}/{wristband_name}/wristband"
+    return f"http://{authorino.oidc_url}:8083/{cluster.project}/{wristband_name}/wristband"
 
 
 @pytest.fixture(scope="module")

@@ -27,13 +27,13 @@ def client(authorino_route):
 
 
 @pytest.fixture(scope="module")
-def authorino_route(request, exposer, authorino, blame, openshift):
+def authorino_route(request, exposer, authorino, blame, cluster):
     """Add route for authorino http port to be able to access it."""
     if isinstance(exposer, LoadBalancerServiceExposer):
         pytest.skip("raw_http is not available on Kind")
 
     route = OpenshiftRoute.create_instance(
-        openshift, blame("route"), f"{authorino.name()}-authorino-authorization", target_port="http"
+        cluster, blame("route"), f"{authorino.name()}-authorino-authorization", target_port="http"
     )
     request.addfinalizer(route.delete)
     route.commit()

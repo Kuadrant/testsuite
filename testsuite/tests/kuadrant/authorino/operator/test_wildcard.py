@@ -18,9 +18,9 @@ def route(route, wildcard_domain, hostname):
 
 
 @pytest.fixture(scope="module")
-def authorization(blame, route, openshift, label):
+def authorization(blame, route, cluster, label):
     """In case of Authorino, AuthConfig used for authorization"""
-    return AuthConfig.create_instance(openshift, blame("ac"), route, labels={"testRun": label})
+    return AuthConfig.create_instance(cluster, blame("ac"), route, labels={"testRun": label})
 
 
 def test_wildcard(client):

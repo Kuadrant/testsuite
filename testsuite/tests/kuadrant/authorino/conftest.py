@@ -10,7 +10,7 @@ from testsuite.openshift.authorino import AuthorinoCR, Authorino, PreexistingAut
 
 
 @pytest.fixture(scope="session")
-def authorino(openshift, blame, request, testconfig, label) -> Authorino:
+def authorino(cluster, blame, request, testconfig, label) -> Authorino:
     """Authorino instance"""
     authorino_config = testconfig["service_protection"]["authorino"]
     if not authorino_config["deploy"]:
@@ -21,7 +21,7 @@ def authorino(openshift, blame, request, testconfig, label) -> Authorino:
         )
 
     authorino = AuthorinoCR.create_instance(
-        openshift,
+        cluster,
         image=authorino_config.get("image"),
         log_level=authorino_config.get("log_level"),
         name=blame("authorino"),
@@ -34,10 +34,10 @@ def authorino(openshift, blame, request, testconfig, label) -> Authorino:
 
 
 @pytest.fixture(scope="module")
-def authorization(authorization, oidc_provider, route, authorization_name, openshift, label) -> AuthConfig:
+def authorization(authorization, oidc_provider, route, authorization_name, cluster, label) -> AuthConfig:
     """In case of Authorino, AuthConfig used for authorization"""
     if authorization is None:
-        authorization = AuthConfig.create_instance(openshift, authorization_name, route, labels={"testRun": label})
+        authorization = AuthConfig.create_instance(cluster, authorization_name, route, labels={"testRun": label})
     authorization.identity.add_oidc("default", oidc_provider.well_known["issuer"])
     return authorization
 
@@ -49,10 +49,10 @@ def auth(oidc_provider):
 
 
 @pytest.fixture(scope="module")
-def create_api_key(blame, request, openshift):
+def create_api_key(blame, request, cluster):
     """Creates API key Secret"""
 
-    def _create_secret(name, label_selector, api_key, ocp: OpenShiftClient = openshift):
+    def _create_secret(name, label_selector, api_key, ocp: OpenShiftClient = cluster):
         secret_name = blame(name)
         secret = APIKey.create_instance(ocp, secret_name, label_selector, api_key)
         request.addfinalizer(lambda: secret.delete(ignore_not_found=True))
