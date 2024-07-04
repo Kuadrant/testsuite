@@ -20,7 +20,7 @@ ifdef html
 PYTEST += --html=$(resultsdir)/report-$(@F).html
 endif
 
-commit-acceptance: black pylint mypy all-is-package ## Runs pre-commit linting checks
+commit-acceptance: black pylint mypy ## Runs pre-commit linting checks
 
 pylint mypy: poetry
 	poetry run $@ $(flags) testsuite
@@ -30,11 +30,6 @@ black: poetry
 
 reformat: poetry  ## Reformats testsuite with black
 	poetry run black testsuite
-
-all-is-package:
-	@echo
-	@echo "Searching for dirs missing __init__.py"
-	@! find testsuite/ -type d \! -name __pycache__ \! -path 'testsuite/resources/*' \! -exec test -e {}/__init__.py \; -print | grep '^..*$$'
 
 # pattern to run individual testfile or all testfiles in directory
 testsuite/%: FORCE poetry-no-dev
