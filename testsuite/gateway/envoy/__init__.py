@@ -21,8 +21,8 @@ class Envoy(Gateway):  # pylint: disable=too-many-instance-attributes
     def reference(self) -> dict[str, str]:
         raise AttributeError("Not Supported for Envoy-only deployment")
 
-    def __init__(self, openshift: "KubernetesClient", name, authorino, image, labels: dict[str, str]) -> None:
-        self._openshift = openshift
+    def __init__(self, cluster: "KubernetesClient", name, authorino, image, labels: dict[str, str]) -> None:
+        self._cluster = cluster
         self.authorino = authorino
         self.name = name
         self.image = image
@@ -36,12 +36,12 @@ class Envoy(Gateway):  # pylint: disable=too-many-instance-attributes
     def config(self):
         """Returns EnvoyConfig instance"""
         if not self._config:
-            self._config = EnvoyConfig.create_instance(self.openshift, self.name, self.authorino, self.labels)
+            self._config = EnvoyConfig.create_instance(self.cluster, self.name, self.authorino, self.labels)
         return self._config
 
     @property
-    def openshift(self) -> "KubernetesClient":
-        return self._openshift
+    def cluster(self) -> "KubernetesClient":
+        return self._cluster
 
     @property
     def service_name(self) -> str:
@@ -52,20 +52,20 @@ class Envoy(Gateway):  # pylint: disable=too-many-instance-attributes
 
     def rollout(self):
         """Restarts Envoy to apply newest config changes"""
-        self.openshift.do_action("rollout", ["restart", f"deployment/{self.name}"])
+        self.cluster.do_action("rollout", ["restart", f"deployment/{self.name}"])
         self.wait_for_ready()
         time.sleep(3)  # or some reason wait_for_ready is not enough, needs more investigation
 
     def wait_for_ready(self, timeout: int = 10 * 60):
         with oc.timeout(timeout):
-            assert self.openshift.do_action(
+            assert self.cluster.do_action(
                 "rollout", ["status", f"deployment/{self.name}"]
             ), "Envoy wasn't ready in time"
 
     def create_deployment(self) -> Deployment:
         """Creates Deployment object for Envoy, which is then committed"""
         return Deployment.create_instance(
-            self.openshift,
+            self.cluster,
             self.name,
             container_name="envoy",
             image=self.image,
@@ -91,7 +91,7 @@ class Envoy(Gateway):  # pylint: disable=too-many-instance-attributes
         self.deployment.wait_for_ready()
 
         self.service = Service.create_instance(
-            self.openshift,
+            self.cluster,
             self.name,
             selector={"deployment": self.name, **self.labels},
             ports=[ServicePort(name="api", port=8080, targetPort="api")],
@@ -106,7 +106,7 @@ class Envoy(Gateway):  # pylint: disable=too-many-instance-attributes
         """Destroy all objects this instance created"""
         self.config.delete()
         self._config = None
-        with self.openshift.context:
+        with self.cluster.context:
             if self.deployment:
                 self.deployment.delete()
                 self.deployment = None

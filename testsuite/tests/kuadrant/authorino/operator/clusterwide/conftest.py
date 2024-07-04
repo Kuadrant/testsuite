@@ -21,7 +21,7 @@ def hostname2(exposer, gateway, blame):
 @pytest.fixture(scope="module")
 def route2(request, gateway, blame, hostname2):
     """Create virtual route for the second hostname"""
-    route = EnvoyVirtualRoute.create_instance(gateway.openshift, blame("route"), gateway)
+    route = EnvoyVirtualRoute.create_instance(gateway.cluster, blame("route"), gateway)
     route.add_hostname(hostname2.hostname)
     request.addfinalizer(route.delete)
     route.commit()

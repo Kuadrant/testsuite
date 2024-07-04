@@ -16,7 +16,7 @@ class KuadrantGateway(KubernetesObject, Gateway):
     """Gateway object for Kuadrant"""
 
     @classmethod
-    def create_instance(cls, openshift: KubernetesClient, name, hostname, labels, tls=False):
+    def create_instance(cls, cluster: KubernetesClient, name, hostname, labels, tls=False):
         """Creates new instance of Gateway"""
 
         model: dict[Any, Any] = {
@@ -52,7 +52,7 @@ class KuadrantGateway(KubernetesObject, Gateway):
                 }
             ]
 
-        return cls(model, context=openshift.context)
+        return cls(model, context=cluster.context)
 
     @property
     def service_name(self) -> str:
@@ -63,7 +63,7 @@ class KuadrantGateway(KubernetesObject, Gateway):
             return f"{self.refresh().model.status.addresses[0].value}:80"
 
     @property
-    def openshift(self):
+    def cluster(self):
         """Hostname of the first listener"""
         return KubernetesClient.from_context(self.context)
 
@@ -98,7 +98,7 @@ class KuadrantGateway(KubernetesObject, Gateway):
 
         tls_cert_secret_name = self.cert_secret_name
         try:
-            tls_cert_secret = self.openshift.get_secret(tls_cert_secret_name)
+            tls_cert_secret = self.cluster.get_secret(tls_cert_secret_name)
         except oc.OpenShiftPythonException as e:
             if "Expected a single object, but selected 0" in e.msg:
                 raise oc.OpenShiftPythonException("TLS secret was not created") from None
@@ -112,7 +112,7 @@ class KuadrantGateway(KubernetesObject, Gateway):
 
     def delete(self, ignore_not_found=True, cmd_args=None):
         res = super().delete(ignore_not_found, cmd_args)
-        with self.openshift.context:
+        with self.cluster.context:
             # TLSPolicy does not delete certificates it creates
             oc.selector(f"secret/{self.cert_secret_name}").delete(ignore_not_found=True)
             # Istio does not delete ServiceAccount

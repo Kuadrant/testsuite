@@ -25,7 +25,7 @@ class HTTPRoute(KubernetesObject, GatewayRoute):
     @classmethod
     def create_instance(
         cls,
-        openshift: "KubernetesClient",
+        cluster: "KubernetesClient",
         name,
         gateway: Gateway,
         labels: dict[str, str] = None,
@@ -34,7 +34,7 @@ class HTTPRoute(KubernetesObject, GatewayRoute):
         model = {
             "apiVersion": "gateway.networking.k8s.io/v1beta1",
             "kind": "HTTPRoute",
-            "metadata": {"name": name, "namespace": openshift.project, "labels": labels},
+            "metadata": {"name": name, "namespace": cluster.project, "labels": labels},
             "spec": {
                 "parentRefs": [gateway.reference],
                 "hostnames": [],
@@ -42,7 +42,7 @@ class HTTPRoute(KubernetesObject, GatewayRoute):
             },
         }
 
-        return cls(model, context=openshift.context)
+        return cls(model, context=cluster.context)
 
     def is_affected_by(self, policy: Policy):
         """Returns True, if affected by status is found within the object for the specific policy"""

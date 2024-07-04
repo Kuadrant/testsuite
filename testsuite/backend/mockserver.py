@@ -12,8 +12,8 @@ class MockserverBackend(Backend):
 
     PORT = 8080
 
-    def __init__(self, openshift: KubernetesClient, name: str, label: str):
-        self.openshift = openshift
+    def __init__(self, cluster: KubernetesClient, name: str, label: str):
+        self.cluster = cluster
         self.name = name
         self.label = label
 
@@ -27,17 +27,17 @@ class MockserverBackend(Backend):
             "kind": "Service",
             "port": self.PORT,
             "name": self.name,
-            "namespace": self.openshift.project,
+            "namespace": self.cluster.project,
         }
 
     @property
     def url(self):
-        return f"{self.name}.{self.openshift.project}.svc.cluster.local"
+        return f"{self.name}.{self.cluster.project}.svc.cluster.local"
 
     def commit(self):
         match_labels = {"app": self.label, "deployment": self.name}
         self.deployment = Deployment.create_instance(
-            self.openshift,
+            self.cluster,
             self.name,
             container_name="mockserver",
             image="quay.io/mganisin/mockserver:latest",
@@ -51,7 +51,7 @@ class MockserverBackend(Backend):
         self.deployment.wait_for_ready()
 
         self.service = Service.create_instance(
-            self.openshift,
+            self.cluster,
             self.name,
             selector=match_labels,
             ports=[ServicePort(name="1080-tcp", port=self.PORT, targetPort="api")],
@@ -60,7 +60,7 @@ class MockserverBackend(Backend):
         self.service.commit()
 
     def delete(self):
-        with self.openshift.context:
+        with self.cluster.context:
             if self.service:
                 self.service.delete()
                 self.service = None

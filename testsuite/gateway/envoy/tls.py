@@ -40,7 +40,7 @@ class TLSEnvoy(Envoy):
 
     def __init__(
         self,
-        openshift: "KubernetesClient",
+        cluster: "KubernetesClient",
         name,
         authorino,
         image,
@@ -49,7 +49,7 @@ class TLSEnvoy(Envoy):
         envoy_cert_secret,
         labels: dict[str, str],
     ) -> None:
-        super().__init__(openshift, name, authorino, image, labels)
+        super().__init__(cluster, name, authorino, image, labels)
         self.authorino_ca_secret = authorino_ca_secret
         self.backend_ca_secret = envoy_ca_secret
         self.envoy_cert_secret = envoy_cert_secret
@@ -57,7 +57,7 @@ class TLSEnvoy(Envoy):
     @property
     def config(self):
         if not self._config:
-            self._config = EnvoyConfig.create_instance(self.openshift, self.name, self.authorino, self.labels)
+            self._config = EnvoyConfig.create_instance(self.cluster, self.name, self.authorino, self.labels)
             config = yaml.safe_load(self._config["envoy.yaml"])
             config["static_resources"]["listeners"][0]["filter_chains"][0]["transport_socket"] = yaml.safe_load(
                 TLS_TRANSPORT

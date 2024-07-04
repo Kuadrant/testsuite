@@ -18,12 +18,12 @@ class EnvoyVirtualRoute(GatewayRoute):
         raise AttributeError("Not Supported for Envoy-only deployment")
 
     @classmethod
-    def create_instance(cls, openshift: "KubernetesClient", name, gateway: Gateway, labels: dict[str, str] = None):
-        return cls(openshift, gateway)
+    def create_instance(cls, cluster: "KubernetesClient", name, gateway: Gateway, labels: dict[str, str] = None):
+        return cls(cluster, gateway)
 
-    def __init__(self, openshift, gateway) -> None:
+    def __init__(self, cluster, gateway) -> None:
         super().__init__()
-        self.openshift = openshift
+        self.cluster = cluster
         self.gateway = gateway
         self.auth_configs: list["AuthConfig"] = []
         self.hostnames: list[str] = []

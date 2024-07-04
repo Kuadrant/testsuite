@@ -51,7 +51,7 @@ class AuthorinoCR(CustomResource, Authorino):
     @classmethod
     def create_instance(
         cls,
-        openshift: KubernetesClient,
+        cluster: KubernetesClient,
         name,
         image=None,
         cluster_wide=False,
@@ -64,7 +64,7 @@ class AuthorinoCR(CustomResource, Authorino):
         model: Dict[str, Any] = {
             "apiVersion": "operator.authorino.kuadrant.io/v1beta1",
             "kind": "Authorino",
-            "metadata": {"name": name, "namespace": openshift.project},
+            "metadata": {"name": name, "namespace": cluster.project},
             "spec": {
                 "clusterWide": cluster_wide,
                 "logLevel": log_level,
@@ -84,7 +84,7 @@ class AuthorinoCR(CustomResource, Authorino):
         if tracing:
             model["spec"]["tracing"] = asdict(tracing)
 
-        with openshift.context:
+        with cluster.context:
             return cls(model)
 
     @property

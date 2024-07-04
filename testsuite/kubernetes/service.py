@@ -23,7 +23,7 @@ class Service(KubernetesObject):
     @classmethod
     def create_instance(
         cls,
-        openshift,
+        cluster,
         name,
         selector: dict[str, str],
         ports: list[ServicePort],
@@ -44,7 +44,7 @@ class Service(KubernetesObject):
         if service_type is not None:
             model["spec"]["type"] = service_type
 
-        return cls(model, context=openshift.context)
+        return cls(model, context=cluster.context)
 
     def get_port(self, name):
         """Returns port definition for a port with said name"""

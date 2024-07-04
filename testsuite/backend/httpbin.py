@@ -12,9 +12,9 @@ from testsuite.kubernetes.service import Service, ServicePort
 class Httpbin(Backend):
     """Httpbin deployed in Kubernetes as Backend"""
 
-    def __init__(self, openshift: KubernetesClient, name, label, replicas=1) -> None:
+    def __init__(self, cluster: KubernetesClient, name, label, replicas=1) -> None:
         super().__init__()
-        self.openshift = openshift
+        self.cluster = cluster
         self.name = name
         self.label = label
         self.replicas = replicas
@@ -24,17 +24,17 @@ class Httpbin(Backend):
 
     @property
     def reference(self):
-        return {"group": "", "kind": "Service", "port": 8080, "name": self.name, "namespace": self.openshift.project}
+        return {"group": "", "kind": "Service", "port": 8080, "name": self.name, "namespace": self.cluster.project}
 
     @property
     def url(self):
         """URL for the httpbin service"""
-        return f"{self.name}.{self.openshift.project}.svc.cluster.local"
+        return f"{self.name}.{self.cluster.project}.svc.cluster.local"
 
     def commit(self):
         match_labels = {"app": self.label, "deployment": self.name}
         self.deployment = Deployment.create_instance(
-            self.openshift,
+            self.cluster,
             self.name,
             container_name="httpbin",
             image="quay.io/jsmadis/httpbin:latest",
@@ -46,7 +46,7 @@ class Httpbin(Backend):
         self.deployment.wait_for_ready()
 
         self.service = Service.create_instance(
-            self.openshift,
+            self.cluster,
             self.name,
             selector=match_labels,
             ports=[ServicePort(name="http", port=8080, targetPort="api")],
@@ -54,7 +54,7 @@ class Httpbin(Backend):
         self.service.commit()
 
     def delete(self):
-        with self.openshift.context:
+        with self.cluster.context:
             if self.service:
                 self.service.delete()
                 self.service = None

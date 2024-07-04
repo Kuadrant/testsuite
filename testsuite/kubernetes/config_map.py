@@ -9,7 +9,7 @@ class ConfigMap(KubernetesObject):
     @classmethod
     def create_instance(
         cls,
-        openshift,
+        cluster,
         name,
         data: dict[str, str],
         labels: dict[str, str] = None,
@@ -24,7 +24,7 @@ class ConfigMap(KubernetesObject):
             },
             "data": data,
         }
-        return cls(model, context=openshift.context)
+        return cls(model, context=cluster.context)
 
     def __getitem__(self, name):
         return self.model.data[name]

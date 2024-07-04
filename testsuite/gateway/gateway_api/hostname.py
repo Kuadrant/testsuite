@@ -44,10 +44,10 @@ class DNSPolicyExposer(Exposer):
     def base_domain(self) -> str:
         mz_name = settings["control_plane"]["managedzone"]
         try:
-            zone = selector(f"managedzone/{mz_name}", static_context=self.openshift.context).object()
+            zone = selector(f"managedzone/{mz_name}", static_context=self.cluster.context).object()
         except OpenShiftPythonException as exc:
             raise OpenShiftPythonException(
-                f"Unable to find managedzone/{mz_name} in namespace {self.openshift.project}"
+                f"Unable to find managedzone/{mz_name} in namespace {self.cluster.project}"
             ) from exc
         return f'{generate_tail(5)}.{zone.model["spec"]["domainName"]}'
 

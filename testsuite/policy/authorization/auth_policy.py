@@ -23,7 +23,7 @@ class AuthPolicy(Policy, AuthConfig):
     @classmethod
     def create_instance(
         cls,
-        openshift: KubernetesClient,
+        cluster: KubernetesClient,
         name,
         target: Referencable,
         labels: Dict[str, str] = None,
@@ -32,14 +32,14 @@ class AuthPolicy(Policy, AuthConfig):
         model: Dict = {
             "apiVersion": "kuadrant.io/v1beta2",
             "kind": "AuthPolicy",
-            "metadata": {"name": name, "namespace": openshift.project, "labels": labels},
+            "metadata": {"name": name, "namespace": cluster.project, "labels": labels},
             "spec": {
                 "targetRef": target.reference,
                 "rules": {},
             },
         }
 
-        return cls(model, context=openshift.context)
+        return cls(model, context=cluster.context)
 
     @modify
     def add_rule(self, when: list["Rule"]):

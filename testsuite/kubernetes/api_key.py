@@ -19,21 +19,21 @@ class APIKey(KubernetesObject):
         return base64.b64decode(self.model.data["api_key"]).decode("utf-8")
 
     @classmethod
-    def create_instance(cls, openshift: KubernetesClient, name, label, api_key):
+    def create_instance(cls, cluster: KubernetesClient, name, label, api_key):
         """Creates base instance"""
         model = {
             "apiVersion": "v1",
             "kind": "Secret",
             "metadata": {
                 "name": name,
-                "namespace": openshift.project,
+                "namespace": cluster.project,
                 "labels": {"authorino.kuadrant.io/managed-by": "authorino", "group": label},
             },
             "stringData": {"api_key": api_key},
             "type": "Opaque",
         }
 
-        return cls(api_key, label, dict_to_model=model, context=openshift.context)
+        return cls(api_key, label, dict_to_model=model, context=cluster.context)
 
     @cached_property
     def selector(self):

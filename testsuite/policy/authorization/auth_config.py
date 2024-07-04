@@ -41,7 +41,7 @@ class AuthConfig(KubernetesObject):
     @classmethod
     def create_instance(
         cls,
-        openshift: KubernetesClient,
+        cluster: KubernetesClient,
         name,
         target,
         labels: Dict[str, str] = None,
@@ -50,10 +50,10 @@ class AuthConfig(KubernetesObject):
         model: Dict = {
             "apiVersion": "authorino.kuadrant.io/v1beta2",
             "kind": "AuthConfig",
-            "metadata": {"name": name, "namespace": openshift.project, "labels": labels},
+            "metadata": {"name": name, "namespace": cluster.project, "labels": labels},
             "spec": {"hosts": []},
         }
-        obj = cls(model, context=openshift.context)
+        obj = cls(model, context=cluster.context)
         target.add_auth_config(obj)
         return obj
 

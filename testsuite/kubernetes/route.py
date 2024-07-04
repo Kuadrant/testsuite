@@ -17,7 +17,7 @@ class OpenshiftRoute(KubernetesObject, Hostname):
     @classmethod
     def create_instance(
         cls,
-        openshift,
+        cluster,
         name,
         service_name,
         target_port: int | str,
@@ -37,7 +37,7 @@ class OpenshiftRoute(KubernetesObject, Hostname):
         }
         if tls:
             model["spec"]["tls"] = {"termination": termination}  # type: ignore
-        return cls(model, context=openshift.context)
+        return cls(model, context=cluster.context)
 
     def client(self, **kwargs) -> KuadrantClient:
         protocol = "http"

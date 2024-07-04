@@ -102,14 +102,14 @@ def wristband_authorization(
     wristband_secret,
 ):
     """Second AuthConfig with authorino oidc endpoint for getting the wristband token"""
-    route = EnvoyVirtualRoute.create_instance(gateway.openshift, wristband_name, gateway)
+    route = EnvoyVirtualRoute.create_instance(gateway.cluster, wristband_name, gateway)
     route.add_hostname(wristband_hostname.hostname)
 
     request.addfinalizer(route.delete)
     route.commit()
 
     authorization = AuthConfig.create_instance(
-        gateway.openshift,
+        gateway.cluster,
         wristband_name,
         route,
         labels={"testRun": label},

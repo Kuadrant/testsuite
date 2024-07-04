@@ -77,7 +77,7 @@ class Deployment(KubernetesObject):
     @classmethod
     def create_instance(
         cls,
-        openshift,
+        cluster,
         name,
         container_name,
         image,
@@ -141,7 +141,7 @@ class Deployment(KubernetesObject):
         if lifecycle:
             container["lifecycle"] = lifecycle
 
-        return cls(model, context=openshift.context)
+        return cls(model, context=cluster.context)
 
     def wait_for_ready(self, timeout=90):
         """Waits until Deployment is marked as ready"""

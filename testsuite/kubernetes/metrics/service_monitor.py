@@ -23,7 +23,7 @@ class ServiceMonitor(KubernetesObject):
     @classmethod
     def create_instance(
         cls,
-        openshift: KubernetesClient,
+        cluster: KubernetesClient,
         name: str,
         endpoints: list[MetricsEndpoint],
         match_labels: dict[str, str],
@@ -45,4 +45,4 @@ class ServiceMonitor(KubernetesObject):
             },
         }
 
-        return cls(model, context=openshift.context)
+        return cls(model, context=cluster.context)

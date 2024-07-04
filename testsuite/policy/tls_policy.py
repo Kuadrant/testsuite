@@ -11,7 +11,7 @@ class TLSPolicy(Policy):
     @classmethod
     def create_instance(
         cls,
-        openshift: KubernetesClient,
+        cluster: KubernetesClient,
         name: str,
         parent: Referencable,
         issuer: Referencable,
@@ -41,7 +41,7 @@ class TLSPolicy(Policy):
             },
         }
 
-        return cls(model, context=openshift.context)
+        return cls(model, context=cluster.context)
 
     def __setitem__(self, key, value):
         self.model.spec[key] = value

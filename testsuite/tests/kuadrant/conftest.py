@@ -79,7 +79,6 @@ def kuadrant(request, testconfig):
     try:
         with kuadrant_openshift.context:
             kuadrant = selector("kuadrant").object(cls=KuadrantCR)
-            kuadrant.committed = True
     except OpenShiftPythonException:
         pytest.fail("Running Kuadrant tests, but Kuadrant resource was not found")
 
@@ -126,9 +125,9 @@ def hostname(gateway, exposer, blame) -> Hostname:
 def route(request, kuadrant, gateway, blame, hostname, backend, module_label) -> GatewayRoute:
     """Route object"""
     if kuadrant:
-        route = HTTPRoute.create_instance(gateway.openshift, blame("route"), gateway, {"app": module_label})
+        route = HTTPRoute.create_instance(gateway.cluster, blame("route"), gateway, {"app": module_label})
     else:
-        route = EnvoyVirtualRoute.create_instance(gateway.openshift, blame("route"), gateway)
+        route = EnvoyVirtualRoute.create_instance(gateway.cluster, blame("route"), gateway)
     route.add_hostname(hostname.hostname)
     route.add_backend(backend)
     request.addfinalizer(route.delete)

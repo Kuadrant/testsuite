@@ -90,7 +90,7 @@ def routes(request, gateways, blame, hostname, backends, module_label) -> dict[K
     routes = {}
     name = blame("route")
     for client, gateway in gateways.items():
-        route = HTTPRoute.create_instance(gateway.openshift, name, gateway, {"app": module_label})
+        route = HTTPRoute.create_instance(gateway.cluster, name, gateway, {"app": module_label})
         route.add_hostname(hostname.hostname)
         route.add_backend(backends[client])
         request.addfinalizer(route.delete)

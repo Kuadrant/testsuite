@@ -15,7 +15,7 @@ class Ingress(KubernetesObject):
     @classmethod
     def create_instance(
         cls,
-        openshift: "KubernetesClient",
+        cluster: "KubernetesClient",
         name,
         rules: Optional[List[Dict[str, Any]]] = None,
         tls: Optional[List[Dict[str, Any]]] = None,
@@ -30,16 +30,16 @@ class Ingress(KubernetesObject):
         model: Dict[str, Any] = {
             "apiVersion": "networking.k8s.io/v1",
             "kind": "Ingress",
-            "metadata": {"name": name, "namespace": openshift.project},
+            "metadata": {"name": name, "namespace": cluster.project},
             "spec": {"rules": rules, "tls": tls},
         }
 
-        with openshift.context:
+        with cluster.context:
             return cls(model)
 
     @classmethod
     def create_service_ingress(
-        cls, openshift: "KubernetesClient", name, service_name, port_number=80, path="/", path_type="Prefix", host=None
+        cls, cluster: "KubernetesClient", name, service_name, port_number=80, path="/", path_type="Prefix", host=None
     ):
         """
         Creates Ingress instance for service without tls configured
@@ -59,7 +59,7 @@ class Ingress(KubernetesObject):
         if host is not None:
             rule["host"] = host
 
-        return cls.create_instance(openshift, name, rules=[rule])
+        return cls.create_instance(cluster, name, rules=[rule])
 
     @property
     def rules(self):
