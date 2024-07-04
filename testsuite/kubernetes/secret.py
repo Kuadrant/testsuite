@@ -4,16 +4,16 @@ import base64
 from typing import Literal
 
 from testsuite.certificates import Certificate
-from testsuite.openshift import OpenShiftObject
+from testsuite.kubernetes import KubernetesObject
 
 
-class Secret(OpenShiftObject):
+class Secret(KubernetesObject):
     """Kubernetes Secret object"""
 
     @classmethod
     def create_instance(
         cls,
-        openshift,
+        cluster,
         name,
         data: dict[str, str],
         secret_type: Literal["kubernetes.io/tls", "Opaque"] = "Opaque",
@@ -30,7 +30,7 @@ class Secret(OpenShiftObject):
             "stringData": data,
             "type": secret_type,
         }
-        return cls(model, context=openshift.context)
+        return cls(model, context=cluster.context)
 
     def __getitem__(self, name):
         return base64.b64decode(self.model.data[name]).decode("utf-8")
@@ -49,7 +49,7 @@ class TLSSecret(Secret):
     @classmethod
     def create_instance(  # type: ignore[override]
         cls,
-        openshift,
+        cluster,
         name,
         certificate: Certificate,
         cert_name: str = "tls.crt",
@@ -58,7 +58,7 @@ class TLSSecret(Secret):
         labels: dict[str, str] = None,
     ):
         return super().create_instance(
-            openshift,
+            cluster,
             name,
             {
                 cert_name: certificate.chain,

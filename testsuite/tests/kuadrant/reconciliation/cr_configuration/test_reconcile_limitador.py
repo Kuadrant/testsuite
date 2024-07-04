@@ -2,7 +2,7 @@
 
 import pytest
 
-from testsuite.openshift.deployment import ContainerResources
+from testsuite.kubernetes.deployment import ContainerResources
 from testsuite.utils import asdict
 
 pytestmark = [pytest.mark.kuadrant_only, pytest.mark.disruptive]

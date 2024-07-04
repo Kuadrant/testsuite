@@ -3,8 +3,8 @@
 import yaml
 
 from testsuite.backend import Backend
-from testsuite.openshift import modify
-from testsuite.openshift.config_map import ConfigMap
+from testsuite.kubernetes import modify
+from testsuite.kubernetes.config_map import ConfigMap
 
 
 BASE_CONFIG = """
@@ -98,10 +98,10 @@ class EnvoyConfig(ConfigMap):
 
     @classmethod
     def create_instance(
-        cls, openshift, name, authorino, labels: dict[str, str] = None
+        cls, cluster, name, authorino, labels: dict[str, str] = None
     ):  # pylint: disable=arguments-renamed
         return super().create_instance(
-            openshift,
+            cluster,
             name,
             {"envoy.yaml": BASE_CONFIG.replace("${authorino_url}", authorino.authorization_url)},
             labels,

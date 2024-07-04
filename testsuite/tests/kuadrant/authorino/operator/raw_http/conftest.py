@@ -6,7 +6,7 @@ from testsuite.gateway.exposers import LoadBalancerServiceExposer
 from testsuite.policy.authorization import Value, JsonResponse
 from testsuite.httpx import KuadrantClient
 from testsuite.policy.authorization.auth_config import AuthConfig
-from testsuite.openshift.route import OpenshiftRoute
+from testsuite.kubernetes.route import OpenshiftRoute
 
 
 @pytest.fixture(scope="module")
@@ -27,13 +27,13 @@ def client(authorino_route):
 
 
 @pytest.fixture(scope="module")
-def authorino_route(request, exposer, authorino, blame, openshift):
+def authorino_route(request, exposer, authorino, blame, cluster):
     """Add route for authorino http port to be able to access it."""
     if isinstance(exposer, LoadBalancerServiceExposer):
         pytest.skip("raw_http is not available on Kind")
 
     route = OpenshiftRoute.create_instance(
-        openshift, blame("route"), f"{authorino.name()}-authorino-authorization", target_port="http"
+        cluster, blame("route"), f"{authorino.name()}-authorino-authorization", target_port="http"
     )
     request.addfinalizer(route.delete)
     route.commit()

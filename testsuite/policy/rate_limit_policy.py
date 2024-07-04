@@ -5,8 +5,8 @@ from dataclasses import dataclass
 from typing import Iterable, Literal, Optional, List
 
 from testsuite.gateway import Referencable, RouteMatch
-from testsuite.openshift import modify
-from testsuite.openshift.client import OpenShiftClient
+from testsuite.kubernetes import modify
+from testsuite.kubernetes.client import KubernetesClient
 from testsuite.policy import Policy
 from testsuite.policy.authorization import Rule
 from testsuite.utils import asdict
@@ -42,7 +42,7 @@ class RateLimitPolicy(Policy):
     """RateLimitPolicy (or RLP for short) object, used for applying rate limiting rules to a Gateway/HTTPRoute"""
 
     @classmethod
-    def create_instance(cls, openshift: OpenShiftClient, name, target: Referencable, labels: dict[str, str] = None):
+    def create_instance(cls, cluster: KubernetesClient, name, target: Referencable, labels: dict[str, str] = None):
         """Creates new instance of RateLimitPolicy"""
         model = {
             "apiVersion": "kuadrant.io/v1beta2",
@@ -54,7 +54,7 @@ class RateLimitPolicy(Policy):
             },
         }
 
-        return cls(model, context=openshift.context)
+        return cls(model, context=cluster.context)
 
     @modify
     def add_limit(

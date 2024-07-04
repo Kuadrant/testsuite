@@ -10,7 +10,7 @@ from testsuite.httpx import KuadrantClient
 
 class Mockserver:
     """
-    Mockserver deployed in Openshift (located in Tools or self-managed)
+    Mockserver deployed in Kubernetes (located in Tools or self-managed)
     """
 
     def __init__(self, url, client: KuadrantClient = None):

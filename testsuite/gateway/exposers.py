@@ -3,19 +3,19 @@
 from testsuite.certificates import Certificate
 from testsuite.gateway import Exposer, Gateway, Hostname
 from testsuite.httpx import KuadrantClient, ForceSNIClient
-from testsuite.openshift.route import OpenshiftRoute
+from testsuite.kubernetes.route import OpenshiftRoute
 
 
 class OpenShiftExposer(Exposer):
     """Exposes hostnames through OpenShift Route objects"""
 
-    def __init__(self, openshift) -> None:
-        super().__init__(openshift)
+    def __init__(self, cluster) -> None:
+        super().__init__(cluster)
         self.routes: list[OpenshiftRoute] = []
 
     @property
     def base_domain(self) -> str:
-        return self.openshift.apps_url
+        return self.cluster.apps_url
 
     def expose_hostname(self, name, gateway: Gateway) -> Hostname:
         tls = False
@@ -24,7 +24,7 @@ class OpenShiftExposer(Exposer):
             tls = True
             termination = "passthrough"
         route = OpenshiftRoute.create_instance(
-            gateway.openshift, name, gateway.service_name, "api", tls=tls, termination=termination
+            gateway.cluster, name, gateway.service_name, "api", tls=tls, termination=termination
         )
         route.verify = self.verify
         self.routes.append(route)

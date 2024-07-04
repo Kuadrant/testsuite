@@ -13,7 +13,7 @@ from testsuite.lifecycle import LifecycleObject
 from testsuite.utils import asdict
 
 if TYPE_CHECKING:
-    from testsuite.openshift.client import OpenShiftClient
+    from testsuite.kubernetes.client import KubernetesClient
     from testsuite.backend import Backend
 
 
@@ -118,8 +118,8 @@ class Gateway(LifecycleObject, Referencable):
 
     @property
     @abstractmethod
-    def openshift(self) -> "OpenShiftClient":
-        """Returns OpenShift client for this gateway"""
+    def cluster(self) -> "KubernetesClient":
+        """Returns KubernetesClient for this gateway"""
 
     @property
     @abstractmethod
@@ -128,7 +128,7 @@ class Gateway(LifecycleObject, Referencable):
 
     @abstractmethod
     def external_ip(self) -> str:
-        """Returns loadBalanced IP and port to access this Gateway"""
+        """Returns LoadBalanced IP and port to access this Gateway"""
 
     @abstractmethod
     def wait_for_ready(self, timeout: int = 90):
@@ -149,7 +149,7 @@ class GatewayRoute(LifecycleObject, Referencable):
     @abstractmethod
     def create_instance(
         cls,
-        openshift: "OpenShiftClient",
+        cluster: "KubernetesClient",
         name,
         gateway: Gateway,
         labels: dict[str, str] = None,
@@ -196,9 +196,9 @@ class Hostname(ABC):
 class Exposer(LifecycleObject):
     """Exposes hostnames to be accessible from outside"""
 
-    def __init__(self, openshift):
+    def __init__(self, cluster):
         super().__init__()
-        self.openshift = openshift
+        self.cluster = cluster
         self.passthrough = False
         self.verify = None
 

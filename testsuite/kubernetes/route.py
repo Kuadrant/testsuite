@@ -4,10 +4,10 @@ from functools import cached_property
 
 from testsuite.httpx import KuadrantClient
 from testsuite.gateway import Hostname
-from testsuite.openshift import OpenShiftObject
+from testsuite.kubernetes import KubernetesObject
 
 
-class OpenshiftRoute(OpenShiftObject, Hostname):
+class OpenshiftRoute(KubernetesObject, Hostname):
     """Openshift Route object"""
 
     def __init__(self, dict_to_model=None, string_to_model=None, context=None):
@@ -17,7 +17,7 @@ class OpenshiftRoute(OpenShiftObject, Hostname):
     @classmethod
     def create_instance(
         cls,
-        openshift,
+        cluster,
         name,
         service_name,
         target_port: int | str,
@@ -37,7 +37,7 @@ class OpenshiftRoute(OpenShiftObject, Hostname):
         }
         if tls:
             model["spec"]["tls"] = {"termination": termination}  # type: ignore
-        return cls(model, context=openshift.context)
+        return cls(model, context=cluster.context)
 
     def client(self, **kwargs) -> KuadrantClient:
         protocol = "http"

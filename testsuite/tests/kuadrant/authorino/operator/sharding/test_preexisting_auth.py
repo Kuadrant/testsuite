@@ -3,18 +3,18 @@
 import pytest
 from weakget import weakget
 
-from testsuite.openshift.authorino import AuthorinoCR
+from testsuite.kubernetes.authorino import AuthorinoCR
 
 pytestmark = [pytest.mark.authorino, pytest.mark.standalone_only]
 
 
 @pytest.fixture(scope="module")
-def setup_authorino(openshift, blame, testconfig, label, request):
+def setup_authorino(cluster, blame, testconfig, label, request):
     """Authorino instance"""
 
     def _authorino(sharding_label):
         authorino = AuthorinoCR.create_instance(
-            openshift,
+            cluster,
             blame("authorino"),
             image=weakget(testconfig)["authorino"]["image"] % None,
             label_selectors=[f"sharding={sharding_label}", f"testRun={label}"],

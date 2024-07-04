@@ -24,11 +24,11 @@ def commit():
     ],
 )
 @pytest.mark.issue("https://github.com/Kuadrant/multicluster-gateway-controller/issues/361")
-def test_no_gw(request, create_cr, hub_openshift, blame, module_label, cluster_issuer):
+def test_no_gw(request, create_cr, cluster, blame, module_label, cluster_issuer):
     """Tests that policy is rejected if the Gateway does not exist at all"""
 
     policy = create_cr(
-        hub_openshift,
+        cluster,
         blame("resource"),
         CustomReference(group="gateway.networking.k8s.io", kind="Gateway", name="does-not-exist"),
         cluster_issuer,

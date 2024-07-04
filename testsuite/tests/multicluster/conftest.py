@@ -13,7 +13,7 @@ from testsuite.gateway import Exposer, Gateway, CustomReference, Hostname
 from testsuite.gateway.gateway_api.gateway import KuadrantGateway
 from testsuite.gateway.gateway_api.hostname import DNSPolicyExposer
 from testsuite.gateway.gateway_api.route import HTTPRoute
-from testsuite.openshift.client import OpenShiftClient
+from testsuite.kubernetes.client import KubernetesClient
 from testsuite.policy import Policy
 from testsuite.policy.dns_policy import DNSPolicy
 from testsuite.policy.tls_policy import TLSPolicy
@@ -22,19 +22,19 @@ from testsuite.policy.tls_policy import TLSPolicy
 AnyPolicy = TypeVar("AnyPolicy", bound=Policy)
 
 
-def generate_policies(clusters: list[OpenShiftClient], policy: AnyPolicy) -> dict[OpenShiftClient, AnyPolicy]:
+def generate_policies(clusters: list[KubernetesClient], policy: AnyPolicy) -> dict[KubernetesClient, AnyPolicy]:
     """Copy policies for each cluster"""
     return {cluster: policy.__class__(policy.as_dict(), context=cluster.context) for cluster in clusters}
 
 
 @pytest.fixture(scope="module")
-def cluster_issuer(testconfig, hub_openshift, skip_or_fail):
+def cluster_issuer(testconfig, cluster, skip_or_fail):
     """Reference to cluster Let's Encrypt certificate issuer"""
     testconfig.validators.validate(only="letsencrypt")
     name = testconfig["letsencrypt"]["issuer"]["name"]
     kind = testconfig["letsencrypt"]["issuer"]["kind"]
     try:
-        selector(f"{kind}/{name}", static_context=hub_openshift.context).object()
+        selector(f"{kind}/{name}", static_context=cluster.context).object()
     except OpenShiftPythonException as exc:
         skip_or_fail(f"{kind}/{name} is not present on the cluster: {exc}")
     return CustomReference(
@@ -45,52 +45,52 @@ def cluster_issuer(testconfig, hub_openshift, skip_or_fail):
 
 
 @pytest.fixture(scope="session")
-def openshifts(testconfig, hub_openshift, skip_or_fail) -> list[OpenShiftClient]:
-    """Returns list of all OpenShifts on which to run Multicluster"""
+def clusters(testconfig, cluster, skip_or_fail) -> list[KubernetesClient]:
+    """Returns list of all clusters on which to run Multicluster tests"""
     additional_clusters = testconfig["control_plane"]["additional_clusters"]
     if len(additional_clusters) == 0:
         skip_or_fail("Only one cluster was provided for multi-cluster tests")
     return [
-        hub_openshift,
+        cluster,
         *(cluster.change_project(testconfig["service_protection"]["project"]) for cluster in additional_clusters),
     ]
 
 
 @pytest.fixture(scope="session")
-def backends(request, openshifts, blame, label) -> dict[OpenShiftClient, Httpbin]:
-    """Deploys Backend to each Openshift server"""
+def backends(request, clusters, blame, label) -> dict[KubernetesClient, Httpbin]:
+    """Deploys Backend to each Kubernetes cluster"""
     backends = {}
     name = blame("httpbin")
-    for openshift in openshifts:
-        httpbin = Httpbin(openshift, name, label)
+    for cluster in clusters:
+        httpbin = Httpbin(cluster, name, label)
         request.addfinalizer(httpbin.delete)
         httpbin.commit()
-        backends[openshift] = httpbin
+        backends[cluster] = httpbin
     return backends
 
 
 @pytest.fixture(scope="module")
-def gateways(request, openshifts, blame, label, wildcard_domain) -> dict[OpenShiftClient, Gateway]:
-    """Deploys Gateway to each Openshift server"""
+def gateways(request, clusters, blame, label, wildcard_domain) -> dict[KubernetesClient, Gateway]:
+    """Deploys Gateway to each Kubernetes cluster"""
     gateways = {}
     name = blame("gw")
-    for openshift in openshifts:
-        gw = KuadrantGateway.create_instance(openshift, name, wildcard_domain, {"app": label}, tls=True)
+    for cluster in clusters:
+        gw = KuadrantGateway.create_instance(cluster, name, wildcard_domain, {"app": label}, tls=True)
         request.addfinalizer(gw.delete)
         gw.commit()
-        gateways[openshift] = gw
+        gateways[cluster] = gw
     for gateway in gateways.values():
         gateway.wait_for_ready()
     return gateways
 
 
 @pytest.fixture(scope="module")
-def routes(request, gateways, blame, hostname, backends, module_label) -> dict[OpenShiftClient, HTTPRoute]:
-    """Deploys HttpRoute to each Openshift server"""
+def routes(request, gateways, blame, hostname, backends, module_label) -> dict[KubernetesClient, HTTPRoute]:
+    """Deploys HttpRoute to each Kubernetes cluster"""
     routes = {}
     name = blame("route")
     for client, gateway in gateways.items():
-        route = HTTPRoute.create_instance(gateway.openshift, name, gateway, {"app": module_label})
+        route = HTTPRoute.create_instance(gateway.cluster, name, gateway, {"app": module_label})
         route.add_hostname(hostname.hostname)
         route.add_backend(backends[client])
         request.addfinalizer(route.delete)
@@ -100,16 +100,16 @@ def routes(request, gateways, blame, hostname, backends, module_label) -> dict[O
 
 
 @pytest.fixture(scope="module")
-def hostname(gateways, hub_openshift, exposer, blame) -> Hostname:
+def hostname(gateways, cluster, exposer, blame) -> Hostname:
     """Exposed Hostname object"""
-    hostname = exposer.expose_hostname(blame("hostname"), gateways[hub_openshift])
+    hostname = exposer.expose_hostname(blame("hostname"), gateways[cluster])
     return hostname
 
 
 @pytest.fixture(scope="module")
-def exposer(request, hub_openshift) -> Exposer:
+def exposer(request, cluster) -> Exposer:
     """Expose using DNSPolicy"""
-    exposer = DNSPolicyExposer(hub_openshift)
+    exposer = DNSPolicyExposer(cluster)
     request.addfinalizer(exposer.delete)
     exposer.commit()
     return exposer
@@ -124,27 +124,25 @@ def base_domain(exposer):
 @pytest.fixture(scope="module")
 def wildcard_domain(base_domain):
     """
-    Wildcard domain of openshift cluster
+    Wildcard domain for the exposer
     """
     return f"*.{base_domain}"
 
 
 @pytest.fixture(scope="module")
-def dns_policy(blame, hub_openshift, gateways, module_label):
+def dns_policy(blame, cluster, gateways, module_label):
     """DNSPolicy fixture"""
-    policy = DNSPolicy.create_instance(
-        hub_openshift, blame("dns"), gateways[hub_openshift], labels={"app": module_label}
-    )
+    policy = DNSPolicy.create_instance(cluster, blame("dns"), gateways[cluster], labels={"app": module_label})
     return policy
 
 
 @pytest.fixture(scope="module")
-def tls_policy(blame, hub_openshift, gateways, module_label, cluster_issuer):
+def tls_policy(blame, cluster, gateways, module_label, cluster_issuer):
     """TLSPolicy fixture"""
     policy = TLSPolicy.create_instance(
-        hub_openshift,
+        cluster,
         blame("tls"),
-        parent=gateways[hub_openshift],
+        parent=gateways[cluster],
         issuer=cluster_issuer,
         labels={"app": module_label},
     )
@@ -152,15 +150,15 @@ def tls_policy(blame, hub_openshift, gateways, module_label, cluster_issuer):
 
 
 @pytest.fixture(scope="module")
-def dns_policies(openshifts, dns_policy) -> dict[OpenShiftClient, DNSPolicy]:
-    """Creates DNSPolicy for each Openshift server"""
-    return generate_policies(openshifts, dns_policy)
+def dns_policies(clusters, dns_policy) -> dict[KubernetesClient, DNSPolicy]:
+    """Creates DNSPolicy for each Kubernetes cluster"""
+    return generate_policies(clusters, dns_policy)
 
 
 @pytest.fixture(scope="module")
-def tls_policies(openshifts, tls_policy) -> dict[OpenShiftClient, TLSPolicy]:
-    """Creates TLSPolicy for each Openshift server"""
-    return generate_policies(openshifts, tls_policy)
+def tls_policies(clusters, tls_policy) -> dict[KubernetesClient, TLSPolicy]:
+    """Creates TLSPolicy for each Kubernetes cluster"""
+    return generate_policies(clusters, tls_policy)
 
 
 @pytest.fixture(scope="module")

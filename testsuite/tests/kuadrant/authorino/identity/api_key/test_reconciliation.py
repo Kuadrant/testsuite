@@ -3,7 +3,7 @@
 import pytest
 
 from testsuite.httpx.auth import HeaderApiKeyAuth
-from testsuite.openshift import Selector
+from testsuite.kubernetes import Selector
 
 pytestmark = [pytest.mark.authorino]
 

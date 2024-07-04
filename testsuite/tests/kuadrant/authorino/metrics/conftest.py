@@ -6,17 +6,17 @@ import pytest
 from openshift_client import selector
 
 from testsuite.gateway.envoy import Envoy
-from testsuite.openshift.config_map import ConfigMap
-from testsuite.openshift.metrics import ServiceMonitor, MetricsEndpoint, Prometheus
+from testsuite.kubernetes.config_map import ConfigMap
+from testsuite.kubernetes.metrics import ServiceMonitor, MetricsEndpoint, Prometheus
 
 
 @pytest.fixture(scope="module")
-def prometheus(request, openshift):
+def prometheus(request, cluster):
     """
-    Return an instance of OpenShift metrics client
+    Return an instance of Thanos metrics client
     Skip tests if query route is not properly configured
     """
-    openshift_monitoring = openshift.change_project("openshift-monitoring")
+    openshift_monitoring = cluster.change_project("openshift-monitoring")
     # Check if metrics are enabled
     try:
         with openshift_monitoring.context:
@@ -31,7 +31,7 @@ def prometheus(request, openshift):
     routes = openshift_monitoring.get_routes_for_service("thanos-querier")
     if len(routes) > 0:
         url = ("https://" if "tls" in routes[0].model.spec else "http://") + routes[0].model.spec.host
-        prometheus = Prometheus(url, openshift.token, openshift.project)
+        prometheus = Prometheus(url, cluster.token, cluster.project)
         request.addfinalizer(prometheus.close)
         return prometheus
 
@@ -39,10 +39,10 @@ def prometheus(request, openshift):
 
 
 @pytest.fixture(scope="module")
-def gateway(request, authorino, openshift, blame, label, testconfig) -> Envoy:
+def gateway(request, authorino, cluster, blame, label, testconfig) -> Envoy:
     """Deploys Envoy that wires up the Backend behind the reverse-proxy and Authorino instance"""
     gw = Envoy(
-        openshift,
+        cluster,
         blame("gw"),
         authorino,
         testconfig["service_protection"]["envoy"]["image"],
@@ -62,10 +62,10 @@ def authorino(authorino, module_label):
 
 
 @pytest.fixture(scope="module")
-def service_monitor(openshift, prometheus, blame, module_label):  # pylint: disable=unused-argument
+def service_monitor(cluster, prometheus, blame, module_label):  # pylint: disable=unused-argument
     """Create ServiceMonitor object to follow Authorino /metrics and /server-metrics endpoints"""
     endpoints = [MetricsEndpoint("/metrics", "http"), MetricsEndpoint("/server-metrics", "http")]
-    return ServiceMonitor.create_instance(openshift, blame("sm"), endpoints, match_labels={"app": module_label})
+    return ServiceMonitor.create_instance(cluster, blame("sm"), endpoints, match_labels={"app": module_label})
 
 
 @pytest.fixture(scope="module", autouse=True)

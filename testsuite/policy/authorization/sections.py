@@ -15,7 +15,7 @@ from testsuite.policy.authorization import (
     Cache,
 )
 from testsuite.utils import asdict
-from testsuite.openshift import modify, Selector
+from testsuite.kubernetes import modify, Selector
 
 if TYPE_CHECKING:
     from .auth_config import AuthConfig

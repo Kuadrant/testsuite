@@ -4,8 +4,8 @@ import dataclasses
 
 from openshift_client import selector
 
-from testsuite.openshift import CustomResource
-from testsuite.openshift.deployment import Deployment
+from testsuite.kubernetes import CustomResource
+from testsuite.kubernetes.deployment import Deployment
 from testsuite.utils import asdict
 
 

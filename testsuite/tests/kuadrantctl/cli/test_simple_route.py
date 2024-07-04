@@ -28,7 +28,7 @@ def oas(oas, blame, gateway, hostname, backend):
 
 @pytest.mark.parametrize("encoder", [pytest.param("as_json", id="JSON"), pytest.param("as_yaml", id="YAML")])
 @pytest.mark.parametrize("stdin", [pytest.param(True, id="STDIN"), pytest.param(False, id="File")])
-def test_generate_route(request, kuadrantctl, oas, encoder, openshift, client, stdin):
+def test_generate_route(request, kuadrantctl, oas, encoder, cluster, client, stdin):
     """Tests that Route can be generated and that is works as expected"""
     encoded = getattr(oas, encoder)()
 
@@ -39,7 +39,7 @@ def test_generate_route(request, kuadrantctl, oas, encoder, openshift, client, s
             result = kuadrantctl.run("generate", "gatewayapi", "httproute", "--oas", file_name)
 
     # https://github.com/Kuadrant/kuadrantctl/issues/91
-    route = openshift.apply_from_string(result.stdout, HTTPRoute, cmd_args="--validate=false")
+    route = cluster.apply_from_string(result.stdout, HTTPRoute, cmd_args="--validate=false")
     # route = openshift.apply_from_string(result.stdout, HTTPRoute)
     request.addfinalizer(route.delete)
     route.wait_for_ready()

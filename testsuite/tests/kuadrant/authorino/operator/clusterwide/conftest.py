@@ -21,7 +21,7 @@ def hostname2(exposer, gateway, blame):
 @pytest.fixture(scope="module")
 def route2(request, gateway, blame, hostname2):
     """Create virtual route for the second hostname"""
-    route = EnvoyVirtualRoute.create_instance(gateway.openshift, blame("route"), gateway)
+    route = EnvoyVirtualRoute.create_instance(gateway.cluster, blame("route"), gateway)
     route.add_hostname(hostname2.hostname)
     request.addfinalizer(route.delete)
     route.commit()
@@ -29,9 +29,9 @@ def route2(request, gateway, blame, hostname2):
 
 
 @pytest.fixture(scope="module")
-def authorization2(route2, blame, openshift2, label, oidc_provider):
+def authorization2(route2, blame, cluster2, label, oidc_provider):
     """Second valid hostname"""
-    auth = AuthConfig.create_instance(openshift2, blame("ac"), route2, labels={"testRun": label})
+    auth = AuthConfig.create_instance(cluster2, blame("ac"), route2, labels={"testRun": label})
     auth.identity.add_oidc("default", oidc_provider.well_known["issuer"])
     return auth
 

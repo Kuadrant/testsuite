@@ -12,9 +12,9 @@ pytestmark = [pytest.mark.kuadrant_only]
 
 
 @pytest.fixture(scope="class")
-def rate_limit2(request, gateway, blame, openshift, label):
+def rate_limit2(request, gateway, blame, cluster, label):
     """2nd RateLimitPolicy object allowing 1 request per 10 minutes (a.k.a. '1rp10m')"""
-    rlp = RateLimitPolicy.create_instance(openshift, blame("2rp10m"), gateway, labels={"testRun": label})
+    rlp = RateLimitPolicy.create_instance(cluster, blame("2rp10m"), gateway, labels={"testRun": label})
     request.addfinalizer(rlp.delete)
     rlp.add_limit("1rp10m", [Limit(1, 600)])
     rlp.commit()

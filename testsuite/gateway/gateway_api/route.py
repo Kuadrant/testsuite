@@ -6,8 +6,8 @@ from httpx import Client
 
 from testsuite.httpx import KuadrantClient
 from testsuite.gateway import Gateway, GatewayRoute, PathMatch, MatchType, RouteMatch
-from testsuite.openshift.client import OpenShiftClient
-from testsuite.openshift import OpenShiftObject, modify
+from testsuite.kubernetes.client import KubernetesClient
+from testsuite.kubernetes import KubernetesObject, modify
 from testsuite.policy import Policy
 from testsuite.utils import asdict, check_condition
 
@@ -15,7 +15,7 @@ if typing.TYPE_CHECKING:
     from testsuite.backend import Backend
 
 
-class HTTPRoute(OpenShiftObject, GatewayRoute):
+class HTTPRoute(KubernetesObject, GatewayRoute):
     """HTTPRoute object, serves as replacement for Routes and Ingresses"""
 
     def client(self, **kwargs) -> Client:
@@ -25,7 +25,7 @@ class HTTPRoute(OpenShiftObject, GatewayRoute):
     @classmethod
     def create_instance(
         cls,
-        openshift: "OpenShiftClient",
+        cluster: "KubernetesClient",
         name,
         gateway: Gateway,
         labels: dict[str, str] = None,
@@ -34,7 +34,7 @@ class HTTPRoute(OpenShiftObject, GatewayRoute):
         model = {
             "apiVersion": "gateway.networking.k8s.io/v1beta1",
             "kind": "HTTPRoute",
-            "metadata": {"name": name, "namespace": openshift.project, "labels": labels},
+            "metadata": {"name": name, "namespace": cluster.project, "labels": labels},
             "spec": {
                 "parentRefs": [gateway.reference],
                 "hostnames": [],
@@ -42,7 +42,7 @@ class HTTPRoute(OpenShiftObject, GatewayRoute):
             },
         }
 
-        return cls(model, context=openshift.context)
+        return cls(model, context=cluster.context)
 
     def is_affected_by(self, policy: Policy):
         """Returns True, if affected by status is found within the object for the specific policy"""

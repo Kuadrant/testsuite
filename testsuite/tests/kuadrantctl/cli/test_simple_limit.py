@@ -22,7 +22,7 @@ def oas(oas, blame, gateway, hostname, backend):
 
 @pytest.mark.parametrize("encoder", [pytest.param("as_json", id="JSON"), pytest.param("as_yaml", id="YAML")])
 @pytest.mark.parametrize("stdin", [pytest.param(True, id="STDIN"), pytest.param(False, id="File")])
-def test_generate_limit(request, kuadrantctl, oas, encoder, openshift, client, stdin):
+def test_generate_limit(request, kuadrantctl, oas, encoder, cluster, client, stdin):
     """Tests that RateLimitPolicy can be generated and that it is enforced as expected"""
     encoded = getattr(oas, encoder)()
 
@@ -32,7 +32,7 @@ def test_generate_limit(request, kuadrantctl, oas, encoder, openshift, client, s
         with as_tmp_file(encoded) as file_name:
             result = kuadrantctl.run("generate", "kuadrant", "ratelimitpolicy", "--oas", file_name)
 
-    policy = openshift.apply_from_string(result.stdout, RateLimitPolicy)
+    policy = cluster.apply_from_string(result.stdout, RateLimitPolicy)
     request.addfinalizer(policy.delete)
     policy.wait_for_ready()
 

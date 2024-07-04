@@ -1,15 +1,15 @@
-"""Module implements Service Monitor CR for OpenShift"""
+"""Module implements Service Monitor CR """
 
 from dataclasses import dataclass
 
 from testsuite.utils import asdict
-from testsuite.openshift.client import OpenShiftClient
-from testsuite.openshift import OpenShiftObject
+from testsuite.kubernetes.client import KubernetesClient
+from testsuite.kubernetes import KubernetesObject
 
 
 @dataclass
 class MetricsEndpoint:
-    """Dataclass for endpoint definition in Service Monitor OpenShift object.
+    """Dataclass for endpoint definition in ServiceMonitor Kubernetes object.
     It contains endpoint path and port to the exported metrics."""
 
     path: str = "/metrics"
@@ -17,13 +17,13 @@ class MetricsEndpoint:
     interval: str = "30s"
 
 
-class ServiceMonitor(OpenShiftObject):
-    """Represents Service Monitor object for OpenShift"""
+class ServiceMonitor(KubernetesObject):
+    """Kubernetes ServiceMonitor object"""
 
     @classmethod
     def create_instance(
         cls,
-        openshift: OpenShiftClient,
+        cluster: KubernetesClient,
         name: str,
         endpoints: list[MetricsEndpoint],
         match_labels: dict[str, str],
@@ -45,4 +45,4 @@ class ServiceMonitor(OpenShiftObject):
             },
         }
 
-        return cls(model, context=openshift.context)
+        return cls(model, context=cluster.context)

@@ -2,11 +2,11 @@
 
 import pytest
 
-from testsuite.openshift import OpenShiftObject
+from testsuite.kubernetes import KubernetesObject
 
 
 @pytest.fixture(scope="module")
-def create_client_secret(request, openshift):
+def create_client_secret(request, cluster):
     """Creates Client Secret, used by Authorino to start the authentication with the UMA registry"""
 
     def _create_secret(name, client_id, client_secret):
@@ -19,7 +19,7 @@ def create_client_secret(request, openshift):
             "stringData": {"clientID": client_id, "clientSecret": client_secret},
             "type": "Opaque",
         }
-        secret = OpenShiftObject(model, context=openshift.context)
+        secret = KubernetesObject(model, context=cluster.context)
         request.addfinalizer(lambda: secret.delete(ignore_not_found=True))
         secret.commit()
         return secret

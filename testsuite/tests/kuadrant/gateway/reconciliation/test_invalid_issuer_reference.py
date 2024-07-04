@@ -19,7 +19,7 @@ def test_wrong_issuer_type(request, gateway, blame, module_label):
     """Tests that TLSPolicy is rejected if issuer does not have a correct type"""
 
     policy = TLSPolicy.create_instance(
-        gateway.openshift,
+        gateway.cluster,
         blame("resource"),
         gateway,
         CustomReference(
@@ -43,11 +43,11 @@ def test_wrong_issuer_type(request, gateway, blame, module_label):
     ), f"Policy did not reach expected status, instead it was: {policy.refresh().model.status.conditions}"
 
 
-def test_non_existing_issuer(request, gateway, hub_openshift, blame, module_label):
+def test_non_existing_issuer(request, gateway, cluster, blame, module_label):
     """Tests that TLSPolicy is rejected if issuer does not exist"""
 
     policy = TLSPolicy.create_instance(
-        hub_openshift,
+        cluster,
         blame("resource"),
         gateway,
         CustomReference(

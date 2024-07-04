@@ -3,8 +3,8 @@
 from typing import Dict, TYPE_CHECKING
 
 from testsuite.gateway import Referencable
-from testsuite.openshift import modify
-from testsuite.openshift.client import OpenShiftClient
+from testsuite.kubernetes import modify
+from testsuite.kubernetes.client import KubernetesClient
 from testsuite.utils import asdict
 from .auth_config import AuthConfig
 from .. import Policy
@@ -23,7 +23,7 @@ class AuthPolicy(Policy, AuthConfig):
     @classmethod
     def create_instance(
         cls,
-        openshift: OpenShiftClient,
+        cluster: KubernetesClient,
         name,
         target: Referencable,
         labels: Dict[str, str] = None,
@@ -32,14 +32,14 @@ class AuthPolicy(Policy, AuthConfig):
         model: Dict = {
             "apiVersion": "kuadrant.io/v1beta2",
             "kind": "AuthPolicy",
-            "metadata": {"name": name, "namespace": openshift.project, "labels": labels},
+            "metadata": {"name": name, "namespace": cluster.project, "labels": labels},
             "spec": {
                 "targetRef": target.reference,
                 "rules": {},
             },
         }
 
-        return cls(model, context=openshift.context)
+        return cls(model, context=cluster.context)
 
     @modify
     def add_rule(self, when: list["Rule"]):

@@ -11,9 +11,9 @@ from testsuite.policy.tls_policy import TLSPolicy
 
 
 @pytest.fixture(scope="module")
-def gateway(request, openshift, blame, wildcard_domain, module_label):
+def gateway(request, cluster, blame, wildcard_domain, module_label):
     """Returns ready gateway"""
-    gw = KuadrantGateway.create_instance(openshift, blame("gw"), wildcard_domain, {"app": module_label}, tls=True)
+    gw = KuadrantGateway.create_instance(cluster, blame("gw"), wildcard_domain, {"app": module_label}, tls=True)
     request.addfinalizer(gw.delete)
     gw.commit()
     gw.wait_for_ready()
@@ -44,9 +44,9 @@ def rate_limit():
 
 
 @pytest.fixture(scope="module")
-def exposer(request, hub_openshift) -> Exposer:
+def exposer(request, cluster) -> Exposer:
     """DNSPolicyExposer setup with expected TLS certificate"""
-    exposer = DNSPolicyExposer(hub_openshift)
+    exposer = DNSPolicyExposer(cluster)
     request.addfinalizer(exposer.delete)
     exposer.commit()
     return exposer
@@ -55,7 +55,7 @@ def exposer(request, hub_openshift) -> Exposer:
 @pytest.fixture(scope="module")
 def dns_policy(blame, gateway, module_label):
     """DNSPolicy fixture"""
-    policy = DNSPolicy.create_instance(gateway.openshift, blame("dns"), gateway, labels={"app": module_label})
+    policy = DNSPolicy.create_instance(gateway.cluster, blame("dns"), gateway, labels={"app": module_label})
     return policy
 
 
@@ -63,7 +63,7 @@ def dns_policy(blame, gateway, module_label):
 def tls_policy(blame, gateway, module_label, cluster_issuer):
     """TLSPolicy fixture"""
     policy = TLSPolicy.create_instance(
-        gateway.openshift,
+        gateway.cluster,
         blame("tls"),
         parent=gateway,
         issuer=cluster_issuer,
@@ -91,6 +91,6 @@ def base_domain(exposer):
 @pytest.fixture(scope="module")
 def wildcard_domain(base_domain):
     """
-    Wildcard domain of openshift cluster
+    Wildcard domain for the exposer
     """
     return f"*.{base_domain}"

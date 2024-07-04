@@ -1,7 +1,7 @@
 """Module for DNSPolicy related classes"""
 
 from testsuite.gateway import Referencable
-from testsuite.openshift.client import OpenShiftClient
+from testsuite.kubernetes.client import KubernetesClient
 from testsuite.policy import Policy
 
 
@@ -11,7 +11,7 @@ class DNSPolicy(Policy):
     @classmethod
     def create_instance(
         cls,
-        openshift: OpenShiftClient,
+        cluster: KubernetesClient,
         name: str,
         parent: Referencable,
         labels: dict[str, str] = None,
@@ -25,4 +25,4 @@ class DNSPolicy(Policy):
             "spec": {"targetRef": parent.reference, "routingStrategy": "simple"},
         }
 
-        return cls(model, context=openshift.context)
+        return cls(model, context=cluster.context)

@@ -6,7 +6,7 @@ https://pkg.go.dev/k8s.io/apimachinery@v0.23.0/pkg/apis/meta/v1#LabelSelector
 
 import pytest
 
-from testsuite.openshift import Selector, MatchExpression
+from testsuite.kubernetes import Selector, MatchExpression
 
 
 pytestmark = [pytest.mark.authorino]

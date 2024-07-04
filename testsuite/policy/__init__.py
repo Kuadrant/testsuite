@@ -1,6 +1,6 @@
 """Contains Base class for policies"""
 
-from testsuite.openshift import OpenShiftObject
+from testsuite.kubernetes import KubernetesObject
 from testsuite.utils import check_condition
 
 
@@ -16,7 +16,7 @@ def has_condition(condition_type, status="True", reason=None, message=None):
     return _check
 
 
-class Policy(OpenShiftObject):
+class Policy(KubernetesObject):
     """Base class with common functionality for all policies"""
 
     def wait_for_ready(self):

@@ -1,4 +1,4 @@
-"""OpenShift common objects"""
+"""Kubernetes common objects"""
 
 import dataclasses
 import functools
@@ -11,7 +11,7 @@ from testsuite.lifecycle import LifecycleObject
 from testsuite.utils import asdict
 
 
-class OpenShiftObject(APIObject, LifecycleObject):
+class KubernetesObject(APIObject, LifecycleObject):
     """Custom APIObjects which tracks if the object was already committed to the server or not"""
 
     def __init__(self, dict_to_model=None, string_to_model=None, context=None):
@@ -56,13 +56,13 @@ class OpenShiftObject(APIObject, LifecycleObject):
             raise e
 
 
-class CustomResource(OpenShiftObject):
+class CustomResource(KubernetesObject):
     """Custom APIObjects that implements methods that improves manipulation with CR objects"""
 
     def safe_apply(self):
         """
         Modifies the model of the apiobj and asserts if a change was applied to a resource.
-        Uses modify_and_apply method from OpenshiftObject.
+        Uses modify_and_apply method from KubernetesObject.
         """
         result, status = self.modify_and_apply(lambda _: True, retries=2)
         assert status, f"Unable to apply changes for APIObject with result: {result}"
@@ -88,7 +88,7 @@ class CustomResource(OpenShiftObject):
 
 
 def modify(func):
-    """Wraps method of a subclass of OpenShiftObject to use modify_and_apply when the object
+    """Wraps method of a subclass of KubernetesObject to use modify_and_apply when the object
     is already committed to the server, or run it normally if it isn't.
     All methods modifying the target object in any way should be decorated by this"""
 

@@ -1,15 +1,15 @@
 """Config map"""
 
-from testsuite.openshift import OpenShiftObject
+from testsuite.kubernetes import KubernetesObject
 
 
-class ConfigMap(OpenShiftObject):
+class ConfigMap(KubernetesObject):
     """Kubernetes ConfigMap object"""
 
     @classmethod
     def create_instance(
         cls,
-        openshift,
+        cluster,
         name,
         data: dict[str, str],
         labels: dict[str, str] = None,
@@ -24,7 +24,7 @@ class ConfigMap(OpenShiftObject):
             },
             "data": data,
         }
-        return cls(model, context=openshift.context)
+        return cls(model, context=cluster.context)
 
     def __getitem__(self, name):
         return self.model.data[name]

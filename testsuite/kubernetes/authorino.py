@@ -7,9 +7,9 @@ from typing import Any, Optional, Dict, List
 from openshift_client import selector
 
 from testsuite.lifecycle import LifecycleObject
-from testsuite.openshift import CustomResource
-from testsuite.openshift.client import OpenShiftClient
-from testsuite.openshift.deployment import Deployment
+from testsuite.kubernetes import CustomResource
+from testsuite.kubernetes.client import KubernetesClient
+from testsuite.kubernetes.deployment import Deployment
 from testsuite.utils import asdict
 
 
@@ -51,7 +51,7 @@ class AuthorinoCR(CustomResource, Authorino):
     @classmethod
     def create_instance(
         cls,
-        openshift: OpenShiftClient,
+        cluster: KubernetesClient,
         name,
         image=None,
         cluster_wide=False,
@@ -64,7 +64,7 @@ class AuthorinoCR(CustomResource, Authorino):
         model: Dict[str, Any] = {
             "apiVersion": "operator.authorino.kuadrant.io/v1beta1",
             "kind": "Authorino",
-            "metadata": {"name": name, "namespace": openshift.project},
+            "metadata": {"name": name, "namespace": cluster.project},
             "spec": {
                 "clusterWide": cluster_wide,
                 "logLevel": log_level,
@@ -84,7 +84,7 @@ class AuthorinoCR(CustomResource, Authorino):
         if tracing:
             model["spec"]["tracing"] = asdict(tracing)
 
-        with openshift.context:
+        with cluster.context:
             return cls(model)
 
     @property

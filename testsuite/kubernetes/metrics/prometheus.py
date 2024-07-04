@@ -1,4 +1,4 @@
-"""Simple client for the OpenShift metrics"""
+"""Simple client for the Prometheus metrics"""
 
 from typing import Callable
 from datetime import datetime, timezone
@@ -19,7 +19,7 @@ def _params(key: str = "", labels: dict[str, str] = None) -> dict[str, str]:
 
 
 class Metrics:
-    """Interface to the returned OpenShift metrics"""
+    """Interface to the returned Prometheus metrics"""
 
     def __init__(self, metrics):
         self.metrics = metrics
@@ -43,7 +43,7 @@ class Metrics:
 
 
 class Prometheus:
-    """Interface to the OpenShift Prometheus client"""
+    """Interface to the Prometheus client"""
 
     def __init__(self, url: str, token: str, namespace: str = None):
         self.token = token

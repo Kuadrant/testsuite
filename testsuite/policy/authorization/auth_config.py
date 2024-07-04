@@ -4,13 +4,13 @@ from functools import cached_property
 from typing import Dict
 
 from testsuite.utils import asdict
-from testsuite.openshift import OpenShiftObject, modify
-from testsuite.openshift.client import OpenShiftClient
+from testsuite.kubernetes import KubernetesObject, modify
+from testsuite.kubernetes.client import KubernetesClient
 from .sections import AuthorizationSection, IdentitySection, MetadataSection, ResponseSection
 from . import Rule, Pattern
 
 
-class AuthConfig(OpenShiftObject):
+class AuthConfig(KubernetesObject):
     """Represents AuthConfig CR from Authorino"""
 
     @property
@@ -41,7 +41,7 @@ class AuthConfig(OpenShiftObject):
     @classmethod
     def create_instance(
         cls,
-        openshift: OpenShiftClient,
+        cluster: KubernetesClient,
         name,
         target,
         labels: Dict[str, str] = None,
@@ -50,10 +50,10 @@ class AuthConfig(OpenShiftObject):
         model: Dict = {
             "apiVersion": "authorino.kuadrant.io/v1beta2",
             "kind": "AuthConfig",
-            "metadata": {"name": name, "namespace": openshift.project, "labels": labels},
+            "metadata": {"name": name, "namespace": cluster.project, "labels": labels},
             "spec": {"hosts": []},
         }
-        obj = cls(model, context=openshift.context)
+        obj = cls(model, context=cluster.context)
         target.add_auth_config(obj)
         return obj
 

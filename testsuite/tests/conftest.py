@@ -230,18 +230,19 @@ def module_label(label):
 
 
 @pytest.fixture(scope="session")
-def hub_openshift(testconfig):
-    """OpenShift client for the primary namespace"""
+def cluster(testconfig):
+    """Kubernetes client for the primary namespace"""
+    project = testconfig["service_protection"]["project"]
     client = testconfig["cluster"].change_project(testconfig["service_protection"]["project"])
     if not client.connected:
-        pytest.fail("You are not logged into Openshift or the namespace doesn't exist")
+        pytest.fail(f"You are not logged into Kubernetes or the {project} namespace doesn't exist")
     return client
 
 
 @pytest.fixture(scope="session")
-def exposer(request, testconfig, hub_openshift) -> Exposer:
+def exposer(request, testconfig, cluster) -> Exposer:
     """Exposer object instance"""
-    exposer = testconfig["default_exposer"](hub_openshift)
+    exposer = testconfig["default_exposer"](cluster)
     request.addfinalizer(exposer.delete)
     exposer.commit()
     return exposer

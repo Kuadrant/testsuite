@@ -2,7 +2,7 @@
 
 import pytest
 
-from testsuite.openshift.authorino import TracingOptions
+from testsuite.kubernetes.authorino import TracingOptions
 
 
 @pytest.fixture(scope="module")

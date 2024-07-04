@@ -11,7 +11,7 @@ class WristbandEnvoy(Envoy):
     @property
     def config(self):
         if not self._config:
-            self._config = EnvoyConfig.create_instance(self.openshift, self.name, self.authorino, self.labels)
+            self._config = EnvoyConfig.create_instance(self.cluster, self.name, self.authorino, self.labels)
             config = yaml.safe_load(self._config["envoy.yaml"])
             config["static_resources"]["listeners"][0]["filter_chains"][0]["filters"][0]["typed_config"][
                 "route_config"

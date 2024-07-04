@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from typing import Any, Optional
 
-from testsuite.openshift import OpenShiftObject, Selector, modify
+from testsuite.kubernetes import KubernetesObject, Selector, modify
 from testsuite.utils import asdict
 
 # pylint: disable=invalid-name
@@ -71,13 +71,13 @@ class SecretVolume:
 Volume = SecretVolume | ConfigMapVolume
 
 
-class Deployment(OpenShiftObject):
+class Deployment(KubernetesObject):
     """Kubernetes Deployment object"""
 
     @classmethod
     def create_instance(
         cls,
-        openshift,
+        cluster,
         name,
         container_name,
         image,
@@ -141,7 +141,7 @@ class Deployment(OpenShiftObject):
         if lifecycle:
             container["lifecycle"] = lifecycle
 
-        return cls(model, context=openshift.context)
+        return cls(model, context=cluster.context)
 
     def wait_for_ready(self, timeout=90):
         """Waits until Deployment is marked as ready"""
