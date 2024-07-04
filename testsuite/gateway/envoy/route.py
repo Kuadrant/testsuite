@@ -5,7 +5,7 @@ import typing
 from testsuite.gateway import Gateway, GatewayRoute
 
 if typing.TYPE_CHECKING:
-    from testsuite.kubernetes.client import OpenShiftClient
+    from testsuite.kubernetes.client import KubernetesClient
     from testsuite.backend import Backend
     from testsuite.policy.authorization.auth_config import AuthConfig
 
@@ -18,7 +18,7 @@ class EnvoyVirtualRoute(GatewayRoute):
         raise AttributeError("Not Supported for Envoy-only deployment")
 
     @classmethod
-    def create_instance(cls, openshift: "OpenShiftClient", name, gateway: Gateway, labels: dict[str, str] = None):
+    def create_instance(cls, openshift: "KubernetesClient", name, gateway: Gateway, labels: dict[str, str] = None):
         return cls(openshift, gateway)
 
     def __init__(self, openshift, gateway) -> None:

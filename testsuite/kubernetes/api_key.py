@@ -3,7 +3,7 @@
 import base64
 from functools import cached_property
 
-from testsuite.kubernetes.client import OpenShiftClient
+from testsuite.kubernetes.client import KubernetesClient
 from testsuite.kubernetes import KubernetesObject, modify, Selector
 
 
@@ -19,7 +19,7 @@ class APIKey(KubernetesObject):
         return base64.b64decode(self.model.data["api_key"]).decode("utf-8")
 
     @classmethod
-    def create_instance(cls, openshift: OpenShiftClient, name, label, api_key):
+    def create_instance(cls, openshift: KubernetesClient, name, label, api_key):
         """Creates base instance"""
         model = {
             "apiVersion": "v1",

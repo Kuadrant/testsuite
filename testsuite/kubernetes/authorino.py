@@ -8,7 +8,7 @@ from openshift_client import selector
 
 from testsuite.lifecycle import LifecycleObject
 from testsuite.kubernetes import CustomResource
-from testsuite.kubernetes.client import OpenShiftClient
+from testsuite.kubernetes.client import KubernetesClient
 from testsuite.kubernetes.deployment import Deployment
 from testsuite.utils import asdict
 
@@ -51,7 +51,7 @@ class AuthorinoCR(CustomResource, Authorino):
     @classmethod
     def create_instance(
         cls,
-        openshift: OpenShiftClient,
+        openshift: KubernetesClient,
         name,
         image=None,
         cluster_wide=False,

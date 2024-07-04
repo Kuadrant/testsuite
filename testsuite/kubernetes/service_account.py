@@ -1,18 +1,18 @@
 """Service Account object for OpenShift"""
 
 from testsuite.kubernetes import KubernetesObject
-from testsuite.kubernetes.client import OpenShiftClient
+from testsuite.kubernetes.client import KubernetesClient
 
 
 class ServiceAccount(KubernetesObject):
     """Service account object for OpenShift"""
 
-    def __init__(self, openshift: OpenShiftClient, model: dict):
+    def __init__(self, openshift: KubernetesClient, model: dict):
         self.openshift = openshift
         super().__init__(model, context=openshift.context)
 
     @classmethod
-    def create_instance(cls, openshift: OpenShiftClient, name: str, labels: dict[str, str] = None):
+    def create_instance(cls, openshift: KubernetesClient, name: str, labels: dict[str, str] = None):
         """Creates new instance of service account"""
         model = {
             "kind": "ServiceAccount",

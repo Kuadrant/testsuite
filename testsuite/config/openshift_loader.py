@@ -1,6 +1,6 @@
 """Custom dynaconf loader for loading OpenShift settings and converting them to OpenshiftClients"""
 
-from testsuite.kubernetes.client import OpenShiftClient
+from testsuite.kubernetes.client import KubernetesClient
 
 
 def inject_client(obj, base_client, path):
@@ -16,7 +16,7 @@ def inject_client(obj, base_client, path):
 def load(obj, env=None, silent=True, key=None, filename=None):
     """Creates all OpenShift clients"""
     section = obj.setdefault("cluster", {})
-    client = OpenShiftClient(
+    client = KubernetesClient(
         section.get("project"), section.get("api_url"), section.get("token"), section.get("kubeconfig_path")
     )
     obj["cluster"] = client
@@ -31,7 +31,7 @@ def load(obj, env=None, silent=True, key=None, filename=None):
     clusters = control_plane.setdefault("additional_clusters", [])
     for value in clusters:
         clients.append(
-            OpenShiftClient(
+            KubernetesClient(
                 value.get("project"), value.get("api_url"), value.get("token"), value.get("kubeconfig_path")
             )
         )

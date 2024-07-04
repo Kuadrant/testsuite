@@ -13,7 +13,7 @@ from testsuite.lifecycle import LifecycleObject
 from testsuite.utils import asdict
 
 if TYPE_CHECKING:
-    from testsuite.kubernetes.client import OpenShiftClient
+    from testsuite.kubernetes.client import KubernetesClient
     from testsuite.backend import Backend
 
 
@@ -118,7 +118,7 @@ class Gateway(LifecycleObject, Referencable):
 
     @property
     @abstractmethod
-    def openshift(self) -> "OpenShiftClient":
+    def openshift(self) -> "KubernetesClient":
         """Returns OpenShift client for this gateway"""
 
     @property
@@ -149,7 +149,7 @@ class GatewayRoute(LifecycleObject, Referencable):
     @abstractmethod
     def create_instance(
         cls,
-        openshift: "OpenShiftClient",
+        openshift: "KubernetesClient",
         name,
         gateway: Gateway,
         labels: dict[str, str] = None,

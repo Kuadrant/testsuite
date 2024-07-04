@@ -5,7 +5,7 @@ from typing import Dict
 
 from testsuite.utils import asdict
 from testsuite.kubernetes import KubernetesObject, modify
-from testsuite.kubernetes.client import OpenShiftClient
+from testsuite.kubernetes.client import KubernetesClient
 from .sections import AuthorizationSection, IdentitySection, MetadataSection, ResponseSection
 from . import Rule, Pattern
 
@@ -41,7 +41,7 @@ class AuthConfig(KubernetesObject):
     @classmethod
     def create_instance(
         cls,
-        openshift: OpenShiftClient,
+        openshift: KubernetesClient,
         name,
         target,
         labels: Dict[str, str] = None,

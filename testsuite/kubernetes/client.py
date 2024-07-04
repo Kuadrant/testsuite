@@ -10,7 +10,7 @@ from .route import OpenshiftRoute
 from .secret import Secret
 
 
-class OpenShiftClient:
+class KubernetesClient:
     """OpenShiftClient is an interface to the official OpenShift python
     client."""
 
@@ -23,13 +23,13 @@ class OpenShiftClient:
         self._kubeconfig_path = kubeconfig_path
 
     @classmethod
-    def from_context(cls, context: Context) -> "OpenShiftClient":
+    def from_context(cls, context: Context) -> "KubernetesClient":
         """Creates OpenShiftClient from the context"""
         return cls(context.get_project(), context.get_api_url(), context.get_token(), context.get_kubeconfig_path())
 
-    def change_project(self, project) -> "OpenShiftClient":
+    def change_project(self, project) -> "KubernetesClient":
         """Return new OpenShiftClient with a different project"""
-        return OpenShiftClient(project, self._api_url, self._token, self._kubeconfig_path)
+        return KubernetesClient(project, self._api_url, self._token, self._kubeconfig_path)
 
     @cached_property
     def context(self):

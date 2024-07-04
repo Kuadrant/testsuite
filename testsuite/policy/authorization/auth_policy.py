@@ -4,7 +4,7 @@ from typing import Dict, TYPE_CHECKING
 
 from testsuite.gateway import Referencable
 from testsuite.kubernetes import modify
-from testsuite.kubernetes.client import OpenShiftClient
+from testsuite.kubernetes.client import KubernetesClient
 from testsuite.utils import asdict
 from .auth_config import AuthConfig
 from .. import Policy
@@ -23,7 +23,7 @@ class AuthPolicy(Policy, AuthConfig):
     @classmethod
     def create_instance(
         cls,
-        openshift: OpenShiftClient,
+        openshift: KubernetesClient,
         name,
         target: Referencable,
         labels: Dict[str, str] = None,

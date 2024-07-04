@@ -8,7 +8,7 @@ from testsuite.kubernetes.deployment import Deployment, SecretVolume, VolumeMoun
 from . import Envoy, EnvoyConfig
 
 if TYPE_CHECKING:
-    from testsuite.kubernetes.client import OpenShiftClient
+    from testsuite.kubernetes.client import KubernetesClient
 
 TLS_TRANSPORT = """
 name: envoy.transport_sockets.tls
@@ -40,7 +40,7 @@ class TLSEnvoy(Envoy):
 
     def __init__(
         self,
-        openshift: "OpenShiftClient",
+        openshift: "KubernetesClient",
         name,
         authorino,
         image,

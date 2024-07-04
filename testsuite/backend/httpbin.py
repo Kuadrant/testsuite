@@ -4,7 +4,7 @@ from functools import cached_property
 
 from testsuite.backend import Backend
 from testsuite.kubernetes import Selector
-from testsuite.kubernetes.client import OpenShiftClient
+from testsuite.kubernetes.client import KubernetesClient
 from testsuite.kubernetes.deployment import Deployment
 from testsuite.kubernetes.service import Service, ServicePort
 
@@ -12,7 +12,7 @@ from testsuite.kubernetes.service import Service, ServicePort
 class Httpbin(Backend):
     """Httpbin deployed in Kubernetes as Backend"""
 
-    def __init__(self, openshift: OpenShiftClient, name, label, replicas=1) -> None:
+    def __init__(self, openshift: KubernetesClient, name, label, replicas=1) -> None:
         super().__init__()
         self.openshift = openshift
         self.name = name

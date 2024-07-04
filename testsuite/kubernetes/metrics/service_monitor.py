@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 
 from testsuite.utils import asdict
-from testsuite.kubernetes.client import OpenShiftClient
+from testsuite.kubernetes.client import KubernetesClient
 from testsuite.kubernetes import KubernetesObject
 
 
@@ -23,7 +23,7 @@ class ServiceMonitor(KubernetesObject):
     @classmethod
     def create_instance(
         cls,
-        openshift: OpenShiftClient,
+        openshift: KubernetesClient,
         name: str,
         endpoints: list[MetricsEndpoint],
         match_labels: dict[str, str],

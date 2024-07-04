@@ -2,7 +2,7 @@
 
 from testsuite.backend import Backend
 from testsuite.kubernetes import Selector
-from testsuite.kubernetes.client import OpenShiftClient
+from testsuite.kubernetes.client import KubernetesClient
 from testsuite.kubernetes.deployment import Deployment, ContainerResources
 from testsuite.kubernetes.service import Service, ServicePort
 
@@ -12,7 +12,7 @@ class MockserverBackend(Backend):
 
     PORT = 8080
 
-    def __init__(self, openshift: OpenShiftClient, name: str, label: str):
+    def __init__(self, openshift: KubernetesClient, name: str, label: str):
         self.openshift = openshift
         self.name = name
         self.label = label

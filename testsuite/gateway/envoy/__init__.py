@@ -8,7 +8,7 @@ import openshift_client as oc
 from testsuite.certificates import Certificate
 from testsuite.gateway import Gateway
 from testsuite.kubernetes import Selector
-from testsuite.kubernetes.client import OpenShiftClient
+from testsuite.kubernetes.client import KubernetesClient
 from testsuite.gateway.envoy.config import EnvoyConfig
 from testsuite.kubernetes.deployment import Deployment, VolumeMount, ConfigMapVolume
 from testsuite.kubernetes.service import Service, ServicePort
@@ -21,7 +21,7 @@ class Envoy(Gateway):  # pylint: disable=too-many-instance-attributes
     def reference(self) -> dict[str, str]:
         raise AttributeError("Not Supported for Envoy-only deployment")
 
-    def __init__(self, openshift: "OpenShiftClient", name, authorino, image, labels: dict[str, str]) -> None:
+    def __init__(self, openshift: "KubernetesClient", name, authorino, image, labels: dict[str, str]) -> None:
         self._openshift = openshift
         self.authorino = authorino
         self.name = name
@@ -40,7 +40,7 @@ class Envoy(Gateway):  # pylint: disable=too-many-instance-attributes
         return self._config
 
     @property
-    def openshift(self) -> "OpenShiftClient":
+    def openshift(self) -> "KubernetesClient":
         return self._openshift
 
     @property

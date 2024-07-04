@@ -6,7 +6,7 @@ from testsuite.kubernetes import KubernetesObject
 
 if TYPE_CHECKING:
     # pylint: disable=cyclic-import
-    from testsuite.kubernetes.client import OpenShiftClient
+    from testsuite.kubernetes.client import KubernetesClient
 
 
 class Ingress(KubernetesObject):
@@ -15,7 +15,7 @@ class Ingress(KubernetesObject):
     @classmethod
     def create_instance(
         cls,
-        openshift: "OpenShiftClient",
+        openshift: "KubernetesClient",
         name,
         rules: Optional[List[Dict[str, Any]]] = None,
         tls: Optional[List[Dict[str, Any]]] = None,
@@ -39,7 +39,7 @@ class Ingress(KubernetesObject):
 
     @classmethod
     def create_service_ingress(
-        cls, openshift: "OpenShiftClient", name, service_name, port_number=80, path="/", path_type="Prefix", host=None
+        cls, openshift: "KubernetesClient", name, service_name, port_number=80, path="/", path_type="Prefix", host=None
     ):
         """
         Creates Ingress instance for service without tls configured

@@ -6,7 +6,7 @@ import openshift_client as oc
 
 from testsuite.certificates import Certificate
 from testsuite.gateway import Gateway
-from testsuite.kubernetes.client import OpenShiftClient
+from testsuite.kubernetes.client import KubernetesClient
 from testsuite.kubernetes import KubernetesObject
 from testsuite.policy import Policy
 from testsuite.utils import check_condition
@@ -16,7 +16,7 @@ class KuadrantGateway(KubernetesObject, Gateway):
     """Gateway object for Kuadrant"""
 
     @classmethod
-    def create_instance(cls, openshift: OpenShiftClient, name, hostname, labels, tls=False):
+    def create_instance(cls, openshift: KubernetesClient, name, hostname, labels, tls=False):
         """Creates new instance of Gateway"""
 
         model: dict[Any, Any] = {
@@ -65,7 +65,7 @@ class KuadrantGateway(KubernetesObject, Gateway):
     @property
     def openshift(self):
         """Hostname of the first listener"""
-        return OpenShiftClient.from_context(self.context)
+        return KubernetesClient.from_context(self.context)
 
     def is_ready(self):
         """Check the programmed status"""

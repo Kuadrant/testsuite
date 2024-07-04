@@ -13,7 +13,7 @@ from testsuite.gateway import Exposer, Gateway, CustomReference, Hostname
 from testsuite.gateway.gateway_api.gateway import KuadrantGateway
 from testsuite.gateway.gateway_api.hostname import DNSPolicyExposer
 from testsuite.gateway.gateway_api.route import HTTPRoute
-from testsuite.kubernetes.client import OpenShiftClient
+from testsuite.kubernetes.client import KubernetesClient
 from testsuite.policy import Policy
 from testsuite.policy.dns_policy import DNSPolicy
 from testsuite.policy.tls_policy import TLSPolicy
@@ -22,7 +22,7 @@ from testsuite.policy.tls_policy import TLSPolicy
 AnyPolicy = TypeVar("AnyPolicy", bound=Policy)
 
 
-def generate_policies(clusters: list[OpenShiftClient], policy: AnyPolicy) -> dict[OpenShiftClient, AnyPolicy]:
+def generate_policies(clusters: list[KubernetesClient], policy: AnyPolicy) -> dict[KubernetesClient, AnyPolicy]:
     """Copy policies for each cluster"""
     return {cluster: policy.__class__(policy.as_dict(), context=cluster.context) for cluster in clusters}
 
@@ -45,7 +45,7 @@ def cluster_issuer(testconfig, cluster, skip_or_fail):
 
 
 @pytest.fixture(scope="session")
-def clusters(testconfig, cluster, skip_or_fail) -> list[OpenShiftClient]:
+def clusters(testconfig, cluster, skip_or_fail) -> list[KubernetesClient]:
     """Returns list of all OpenShifts on which to run Multicluster"""
     additional_clusters = testconfig["control_plane"]["additional_clusters"]
     if len(additional_clusters) == 0:
@@ -57,7 +57,7 @@ def clusters(testconfig, cluster, skip_or_fail) -> list[OpenShiftClient]:
 
 
 @pytest.fixture(scope="session")
-def backends(request, clusters, blame, label) -> dict[OpenShiftClient, Httpbin]:
+def backends(request, clusters, blame, label) -> dict[KubernetesClient, Httpbin]:
     """Deploys Backend to each Openshift server"""
     backends = {}
     name = blame("httpbin")
@@ -70,7 +70,7 @@ def backends(request, clusters, blame, label) -> dict[OpenShiftClient, Httpbin]:
 
 
 @pytest.fixture(scope="module")
-def gateways(request, clusters, blame, label, wildcard_domain) -> dict[OpenShiftClient, Gateway]:
+def gateways(request, clusters, blame, label, wildcard_domain) -> dict[KubernetesClient, Gateway]:
     """Deploys Gateway to each Openshift server"""
     gateways = {}
     name = blame("gw")
@@ -85,7 +85,7 @@ def gateways(request, clusters, blame, label, wildcard_domain) -> dict[OpenShift
 
 
 @pytest.fixture(scope="module")
-def routes(request, gateways, blame, hostname, backends, module_label) -> dict[OpenShiftClient, HTTPRoute]:
+def routes(request, gateways, blame, hostname, backends, module_label) -> dict[KubernetesClient, HTTPRoute]:
     """Deploys HttpRoute to each Openshift server"""
     routes = {}
     name = blame("route")
@@ -150,13 +150,13 @@ def tls_policy(blame, cluster, gateways, module_label, cluster_issuer):
 
 
 @pytest.fixture(scope="module")
-def dns_policies(clusters, dns_policy) -> dict[OpenShiftClient, DNSPolicy]:
+def dns_policies(clusters, dns_policy) -> dict[KubernetesClient, DNSPolicy]:
     """Creates DNSPolicy for each Openshift server"""
     return generate_policies(clusters, dns_policy)
 
 
 @pytest.fixture(scope="module")
-def tls_policies(clusters, tls_policy) -> dict[OpenShiftClient, TLSPolicy]:
+def tls_policies(clusters, tls_policy) -> dict[KubernetesClient, TLSPolicy]:
     """Creates TLSPolicy for each Openshift server"""
     return generate_policies(clusters, tls_policy)
 

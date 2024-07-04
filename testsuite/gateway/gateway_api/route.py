@@ -6,7 +6,7 @@ from httpx import Client
 
 from testsuite.httpx import KuadrantClient
 from testsuite.gateway import Gateway, GatewayRoute, PathMatch, MatchType, RouteMatch
-from testsuite.kubernetes.client import OpenShiftClient
+from testsuite.kubernetes.client import KubernetesClient
 from testsuite.kubernetes import KubernetesObject, modify
 from testsuite.policy import Policy
 from testsuite.utils import asdict, check_condition
@@ -25,7 +25,7 @@ class HTTPRoute(KubernetesObject, GatewayRoute):
     @classmethod
     def create_instance(
         cls,
-        openshift: "OpenShiftClient",
+        openshift: "KubernetesClient",
         name,
         gateway: Gateway,
         labels: dict[str, str] = None,
