@@ -2,6 +2,7 @@
 
 import functools
 
+from openshift_client import selector
 from weakget import weakget
 
 from testsuite.config import settings
@@ -11,22 +12,16 @@ from testsuite.config import settings
 def has_kuadrant():
     """Returns True, if Kuadrant deployment is present and should be used"""
     project = settings["service_protection"]["system_project"]
-    if clusters := weakget(settings)["control_plane"]["additional_clusters"] % []:
-        for cluster in clusters:
-            name = cluster.api_url
-            # Try if Kuadrant is deployed
-            if not cluster.connected:
-                return False, f"Cluster {name} is not connected"
-            system_project = cluster.change_project(project)
-            kuadrants = system_project.do_action("get", "kuadrant", "-o", "json", parse_output=True)
-            if len(kuadrants.model["items"]) == 0:
-                return False, f"Cluster {name} does not have Kuadrant resource in project {project}"
-
-    else:
-        cluster = settings["cluster"]
+    clusters = weakget(settings)["control_plane"]["additional_clusters"] % []
+    clusters.append(settings["cluster"])
+    for cluster in clusters:
         system_project = cluster.change_project(project)
-        kuadrants = system_project.do_action("get", "kuadrant", "-o", "json", parse_output=True)
-        if len(kuadrants.model["items"]) == 0:
-            return False, f"Kuadrant resource is not installed in project {project}"
+        # Try if Kuadrant is deployed
+        if not system_project.connected:
+            return False, f"Cluster {cluster.api_url} is not connected, or namespace {project} does not exist"
+        system_project = cluster.change_project(project)
+        with system_project.context:
+            if selector("kuadrant").count_existing() == 0:
+                return False, f"Cluster {cluster.api_url} does not have Kuadrant resource in project {project}"
 
     return True, None
