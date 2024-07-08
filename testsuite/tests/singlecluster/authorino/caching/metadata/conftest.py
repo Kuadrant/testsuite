@@ -17,8 +17,7 @@ def uuid_expectation(request, mockserver, module_label):
 @pytest.fixture(scope="module")
 def expectation_path(mockserver, module_label):
     """Returns expectation path"""
-    # pylint: disable=protected-access
-    return f"{mockserver.client._url}/{module_label}"
+    return f"{mockserver.url}/{module_label}"
 
 
 @pytest.fixture(scope="module")

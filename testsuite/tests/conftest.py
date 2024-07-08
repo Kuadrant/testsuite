@@ -158,9 +158,11 @@ def mockserver(testconfig, skip_or_fail):
     """Returns mockserver"""
     try:
         testconfig.validators.validate(only=["mockserver"])
-        return Mockserver(testconfig["mockserver"]["url"])
     except (KeyError, ValidationError) as exc:
-        return skip_or_fail(f"Mockserver configuration item is missing: {exc}")
+        skip_or_fail(f"Mockserver configuration item is missing: {exc}")
+
+    with KuadrantClient(base_url=testconfig["mockserver"]["url"]) as client:
+        yield Mockserver(client)
 
 
 @pytest.fixture(scope="session")
