@@ -2,7 +2,7 @@
 
 import pytest
 
-from testsuite.policy.rate_limit_policy import RateLimitPolicy, Limit
+from testsuite.kuadrant.policy.rate_limit import RateLimitPolicy, Limit
 
 pytestmark = [pytest.mark.kuadrant_only]
 

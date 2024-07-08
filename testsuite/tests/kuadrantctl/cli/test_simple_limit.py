@@ -6,7 +6,7 @@ functionality
 import pytest
 
 from testsuite.oas import as_tmp_file
-from testsuite.policy.rate_limit_policy import Limit, RateLimitPolicy
+from testsuite.kuadrant.policy.rate_limit import Limit, RateLimitPolicy
 from testsuite.utils import asdict
 
 

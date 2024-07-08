@@ -8,7 +8,7 @@ from openshift_client import OpenShiftPythonException
 from testsuite.httpx.auth import HttpxOidcClientAuth
 from testsuite.oidc.keycloak import Keycloak
 from testsuite.utils import ContentType
-from testsuite.policy.authorization import Pattern, PatternRef, Value, ValueFrom, DenyResponse
+from testsuite.kuadrant.policy.authorization import Pattern, PatternRef, Value, ValueFrom, DenyResponse
 
 
 @pytest.fixture(scope="session")

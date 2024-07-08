@@ -3,7 +3,7 @@
 import pytest
 from weakget import weakget
 
-from testsuite.kubernetes.authorino import AuthorinoCR
+from testsuite.kuadrant.authorino import AuthorinoCR
 
 pytestmark = [pytest.mark.authorino, pytest.mark.standalone_only]
 

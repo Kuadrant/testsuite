@@ -8,7 +8,7 @@ from testsuite.httpx import KuadrantClient
 from testsuite.gateway import Gateway, GatewayRoute, PathMatch, MatchType, RouteMatch
 from testsuite.kubernetes.client import KubernetesClient
 from testsuite.kubernetes import KubernetesObject, modify
-from testsuite.policy import Policy
+from testsuite.kuadrant.policy import Policy
 from testsuite.utils import asdict, check_condition
 
 if typing.TYPE_CHECKING:

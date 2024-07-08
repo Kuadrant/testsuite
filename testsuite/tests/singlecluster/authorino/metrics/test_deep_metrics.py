@@ -2,7 +2,7 @@
 
 import pytest
 
-from testsuite.policy.authorization import Value, JsonResponse
+from testsuite.kuadrant.policy.authorization import Value, JsonResponse
 
 pytestmark = [pytest.mark.authorino, pytest.mark.standalone_only]
 

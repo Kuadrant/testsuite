@@ -7,7 +7,7 @@ considered to be desired behavior.
 
 import pytest
 
-from testsuite.policy.authorization.auth_policy import AuthPolicy
+from testsuite.kuadrant.policy.authorization.auth_policy import AuthPolicy
 
 pytestmark = [pytest.mark.kuadrant_only]
 

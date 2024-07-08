@@ -4,7 +4,7 @@ import pytest
 
 from testsuite.httpx.auth import HttpxOidcClientAuth
 from testsuite.oas import as_tmp_file
-from testsuite.policy.authorization.auth_policy import AuthPolicy
+from testsuite.kuadrant.policy.authorization.auth_policy import AuthPolicy
 
 
 @pytest.fixture(scope="module")

@@ -6,8 +6,8 @@ https://github.com/Kuadrant/kuadrant-operator/blob/main/doc/auth.md#limitation-m
 
 import pytest
 
-from testsuite.policy import has_condition
-from testsuite.policy.authorization.auth_policy import AuthPolicy
+from testsuite.kuadrant.policy import has_condition
+from testsuite.kuadrant.policy.authorization.auth_policy import AuthPolicy
 
 pytestmark = [pytest.mark.kuadrant_only]
 

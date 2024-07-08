@@ -4,7 +4,7 @@ Test for authorino redirect
 
 import pytest
 
-from testsuite.policy.authorization import ValueFrom, DenyResponse
+from testsuite.kuadrant.policy.authorization import ValueFrom, DenyResponse
 
 STATUS_CODE = 302
 REDIRECT_URL = "http://anything.inavlid?redirect_to="

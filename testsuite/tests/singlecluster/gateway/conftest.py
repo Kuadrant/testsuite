@@ -6,8 +6,8 @@ from testsuite.gateway import Exposer
 from testsuite.gateway.gateway_api.gateway import KuadrantGateway
 from testsuite.gateway.gateway_api.hostname import DNSPolicyExposer
 from testsuite.httpx.auth import HttpxOidcClientAuth
-from testsuite.policy.dns_policy import DNSPolicy
-from testsuite.policy.tls_policy import TLSPolicy
+from testsuite.kuadrant.policy.dns import DNSPolicy
+from testsuite.kuadrant.policy.tls import TLSPolicy
 
 
 @pytest.fixture(scope="module")

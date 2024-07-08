@@ -9,8 +9,8 @@ For RateLimitPolicy (RLP) the test should start passing once the policy-1 is eff
 
 import pytest
 
-from testsuite.policy.authorization.auth_policy import AuthPolicy
-from testsuite.policy.rate_limit_policy import Limit, RateLimitPolicy
+from testsuite.kuadrant.policy.authorization.auth_policy import AuthPolicy
+from testsuite.kuadrant.policy.rate_limit import Limit, RateLimitPolicy
 
 pytestmark = [pytest.mark.kuadrant_only]
 

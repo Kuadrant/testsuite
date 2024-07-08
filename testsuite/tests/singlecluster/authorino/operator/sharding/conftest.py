@@ -2,9 +2,9 @@
 
 import pytest
 
-from testsuite.policy.authorization import Value, JsonResponse
+from testsuite.kuadrant.policy.authorization import Value, JsonResponse
 from testsuite.gateway.envoy import Envoy
-from testsuite.policy.authorization.auth_config import AuthConfig
+from testsuite.kuadrant.policy.authorization.auth_config import AuthConfig
 from testsuite.gateway.envoy.route import EnvoyVirtualRoute
 
 

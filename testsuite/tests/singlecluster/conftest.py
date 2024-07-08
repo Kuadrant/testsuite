@@ -10,9 +10,9 @@ from testsuite.gateway.envoy import Envoy
 from testsuite.gateway.envoy.route import EnvoyVirtualRoute
 from testsuite.gateway.gateway_api.gateway import KuadrantGateway
 from testsuite.gateway.gateway_api.route import HTTPRoute
-from testsuite.kubernetes.kuadrant import KuadrantCR
-from testsuite.policy.authorization.auth_policy import AuthPolicy
-from testsuite.policy.rate_limit_policy import RateLimitPolicy
+from testsuite.kuadrant import KuadrantCR
+from testsuite.kuadrant.policy.authorization.auth_policy import AuthPolicy
+from testsuite.kuadrant.policy.rate_limit import RateLimitPolicy
 
 
 @pytest.fixture(scope="session")

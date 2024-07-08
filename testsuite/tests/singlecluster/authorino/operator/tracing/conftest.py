@@ -2,7 +2,7 @@
 
 import pytest
 
-from testsuite.kubernetes.authorino import TracingOptions
+from testsuite.kuadrant.authorino import TracingOptions
 
 
 @pytest.fixture(scope="module")

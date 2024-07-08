@@ -4,7 +4,7 @@ import pytest
 
 from testsuite.certificates import CertInfo
 from testsuite.utils import cert_builder
-from testsuite.policy.authorization import Pattern
+from testsuite.kuadrant.policy.authorization import Pattern
 
 
 @pytest.fixture(scope="module", autouse=True)

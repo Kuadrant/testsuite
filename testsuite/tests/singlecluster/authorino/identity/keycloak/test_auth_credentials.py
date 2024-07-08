@@ -2,7 +2,7 @@
 
 import pytest
 
-from testsuite.policy.authorization import Credentials
+from testsuite.kuadrant.policy.authorization import Credentials
 
 pytestmark = [pytest.mark.authorino]
 

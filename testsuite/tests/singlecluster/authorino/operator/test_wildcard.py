@@ -4,7 +4,7 @@ Test for wildcard host
 
 import pytest
 
-from testsuite.policy.authorization.auth_config import AuthConfig
+from testsuite.kuadrant.policy.authorization.auth_config import AuthConfig
 
 pytestmark = [pytest.mark.authorino, pytest.mark.standalone_only]
 

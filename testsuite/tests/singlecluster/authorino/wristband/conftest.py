@@ -3,8 +3,8 @@
 import pytest
 
 from testsuite.certificates import CertInfo
-from testsuite.policy.authorization import WristbandSigningKeyRef, WristbandResponse
-from testsuite.policy.authorization.auth_config import AuthConfig
+from testsuite.kuadrant.policy.authorization import WristbandSigningKeyRef, WristbandResponse
+from testsuite.kuadrant.policy.authorization.auth_config import AuthConfig
 from testsuite.gateway.envoy.route import EnvoyVirtualRoute
 from testsuite.gateway.envoy.wristband import WristbandEnvoy
 from testsuite.kubernetes.secret import TLSSecret
