@@ -8,7 +8,8 @@ from openshift_client import selector
 from testsuite.gateway.envoy import Envoy
 from testsuite.httpx import KuadrantClient
 from testsuite.kubernetes.config_map import ConfigMap
-from testsuite.kubernetes.metrics import ServiceMonitor, MetricsEndpoint, Prometheus
+from testsuite.kubernetes.service_monitor import ServiceMonitor, MetricsEndpoint
+from testsuite.prometheus import Prometheus
 
 
 @pytest.fixture(scope="module")

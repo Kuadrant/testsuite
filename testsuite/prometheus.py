@@ -7,7 +7,7 @@ import backoff
 from apyproxy import ApyProxy
 from httpx import Client
 
-from .service_monitor import ServiceMonitor
+from testsuite.kubernetes.service_monitor import ServiceMonitor
 
 
 def _params(key: str = "", labels: dict[str, str] = None) -> dict[str, str]:
