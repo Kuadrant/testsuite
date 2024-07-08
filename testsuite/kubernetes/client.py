@@ -45,12 +45,12 @@ class KubernetesClient:
     @property
     def api_url(self):
         """Returns real API url"""
-        return self.inspect_context(jsonpath="{.clusters[*].cluster.server}")
+        return self._api_url or self.inspect_context(jsonpath="{.clusters[*].cluster.server}")
 
     @property
     def token(self):
         """Returns real Kubernetes token"""
-        return self.inspect_context(jsonpath="{.users[*].user.token}", raw=True)
+        return self._token or self.inspect_context(jsonpath="{.users[*].user.token}", raw=True)
 
     @cached_property
     def apps_url(self):
