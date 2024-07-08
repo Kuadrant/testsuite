@@ -6,7 +6,7 @@ from urllib.parse import urlparse
 import openshift_client as oc
 from openshift_client import Context, OpenShiftPythonException
 
-from .route import OpenshiftRoute
+from testsuite.kubernetes.openshift.route import OpenshiftRoute
 from .secret import Secret
 
 
