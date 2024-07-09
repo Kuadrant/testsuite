@@ -2,7 +2,7 @@
  all methods are placeholders for now since we do not work with Kuadrant"""
 
 import pytest
-from openshift_client import OpenShiftPythonException, selector
+from openshift_client import selector
 
 from testsuite.backend.httpbin import Httpbin
 from testsuite.gateway import GatewayRoute, Gateway, Hostname
@@ -76,11 +76,8 @@ def kuadrant(request, testconfig):
     project = testconfig["service_protection"]["system_project"]
     kuadrant_openshift = ocp.change_project(project)
 
-    try:
-        with kuadrant_openshift.context:
-            kuadrant = selector("kuadrant").object(cls=KuadrantCR)
-    except OpenShiftPythonException:
-        pytest.fail("Running Kuadrant tests, but Kuadrant resource was not found")
+    with kuadrant_openshift.context:
+        kuadrant = selector("kuadrant").object(cls=KuadrantCR)
 
     return kuadrant
 
