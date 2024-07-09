@@ -3,17 +3,16 @@ Test raw http authorization used in Kubernetes Validating Webhooks.
 """
 
 import base64
-from typing import Any, Dict
-import pytest
 
 import openshift_client as oc
+import pytest
 from openshift_client import OpenShiftPythonException
 
-from testsuite.policy.authorization import Pattern, ValueFrom
 from testsuite.certificates import CertInfo
+from testsuite.kubernetes.ingress import Ingress
+from testsuite.policy.authorization import Pattern, ValueFrom
 from testsuite.policy.authorization.auth_config import AuthConfig
 from testsuite.utils import cert_builder
-from testsuite.kubernetes.ingress import Ingress
 
 pytestmark = [pytest.mark.authorino, pytest.mark.standalone_only]
 
@@ -122,7 +121,7 @@ def validating_webhook(cluster, authorino_domain, certificates, blame):
     service_name = authorino_domain.split(".")[0]
 
     cert_string = base64.b64encode(certificates["authorino_ca"].certificate.encode("ascii")).decode("ascii")
-    model: Dict[str, Any] = {
+    model = {
         "apiVersion": "admissionregistration.k8s.io/v1",
         "kind": "ValidatingWebhookConfiguration",
         "metadata": {"name": name, "namespace": cluster.project},
