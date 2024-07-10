@@ -42,7 +42,6 @@ class Keycloak(OIDCProvider, LifecycleObject):
                 username=username,
                 password=password,
                 realm_name="master",
-                verify=False,
             )
             self.server_url = server_url
         except KeycloakPostError:
@@ -54,7 +53,6 @@ class Keycloak(OIDCProvider, LifecycleObject):
                 username=username,
                 password=password,
                 realm_name="master",
-                verify=False,
             )
 
     def create_realm(self, name: str, **kwargs) -> Realm:
