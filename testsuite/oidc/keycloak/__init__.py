@@ -61,7 +61,7 @@ class Keycloak(OIDCProvider, LifecycleObject):
         return Realm(self.master_realm, name)
 
     def commit(self):
-        self.realm: Realm = self.create_realm(self.realm_name, accessTokenLifespan=24 * 60 * 60)
+        self.realm = self.create_realm(self.realm_name, accessTokenLifespan=24 * 60 * 60)
 
         self.client = self.realm.create_client(
             name=self.client_name,
