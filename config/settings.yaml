@@ -10,6 +10,8 @@ default:
     test_user:
       username: "testUser"
       password: "testPassword"
+  httpbin:
+    image: "quay.io/jsmadis/httpbin:latest"
   service_protection:
     system_project: "kuadrant-system"
     project: "kuadrant"

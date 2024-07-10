@@ -18,6 +18,8 @@
 #    client_id: "CLIENT_ID"
 #    client_secret: "CLIENT_SECRET"
 #    url: "AUTH0_URL"
+#  httpbin:
+#    image: "HTTPBIN_IMAGE"
 #  mockserver:
 #    url: "MOCKSERVER_URL"
 #  tracing:
