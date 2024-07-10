@@ -3,9 +3,9 @@
 from typing import Union
 
 from apyproxy import ApyProxy
+from httpx import Client
 
 from testsuite.utils import ContentType
-from testsuite.httpx import KuadrantClient
 
 
 class Mockserver:
@@ -13,8 +13,9 @@ class Mockserver:
     Mockserver deployed in Kubernetes (located in Tools or self-managed)
     """
 
-    def __init__(self, url, client: KuadrantClient = None):
-        self.client = ApyProxy(url, session=client or KuadrantClient(verify=False))
+    def __init__(self, client: Client):
+        self.url = str(client.base_url)
+        self.client = ApyProxy(self.url, session=client)
 
     def _expectation(self, expectation_id, json_data):
         """

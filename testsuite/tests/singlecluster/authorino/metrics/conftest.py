@@ -6,12 +6,13 @@ import pytest
 from openshift_client import selector
 
 from testsuite.gateway.envoy import Envoy
+from testsuite.httpx import KuadrantClient
 from testsuite.kubernetes.config_map import ConfigMap
 from testsuite.kubernetes.metrics import ServiceMonitor, MetricsEndpoint, Prometheus
 
 
 @pytest.fixture(scope="module")
-def prometheus(request, cluster):
+def prometheus(cluster):
     """
     Return an instance of Thanos metrics client
     Skip tests if query route is not properly configured
@@ -31,11 +32,10 @@ def prometheus(request, cluster):
     routes = openshift_monitoring.get_routes_for_service("thanos-querier")
     if len(routes) > 0:
         url = ("https://" if "tls" in routes[0].model.spec else "http://") + routes[0].model.spec.host
-        prometheus = Prometheus(url, cluster.token, cluster.project)
-        request.addfinalizer(prometheus.close)
-        return prometheus
+        with KuadrantClient(headers={"Authorization": f"Bearer {cluster.token}"}, base_url=url, verify=False) as client:
+            yield Prometheus(client, cluster.project)
 
-    return pytest.skip("Skipping metrics tests as query route is not properly configured")
+    pytest.skip("Skipping metrics tests as query route is not properly configured")
 
 
 @pytest.fixture(scope="module")

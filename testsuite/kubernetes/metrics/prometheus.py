@@ -1,12 +1,12 @@
 """Simple client for the Prometheus metrics"""
 
-from typing import Callable
 from datetime import datetime, timezone
+from typing import Callable
 
 import backoff
 from apyproxy import ApyProxy
+from httpx import Client
 
-from testsuite.httpx import KuadrantClient
 from .service_monitor import ServiceMonitor
 
 
@@ -45,14 +45,9 @@ class Metrics:
 class Prometheus:
     """Interface to the Prometheus client"""
 
-    def __init__(self, url: str, token: str, namespace: str = None):
-        self.token = token
-        self.url = url
-        self.headers = {"Authorization": f"Bearer {self.token}"}
+    def __init__(self, client: Client, namespace: str = None):
         self.namespace = namespace
-
-        self._client = KuadrantClient(headers=self.headers, verify=False)
-        self.client = ApyProxy(self.url, self._client).api.v1
+        self.client = ApyProxy(str(client.base_url), session=client).api.v1
 
     def get_active_targets(self) -> dict:
         """Get active metric targets information"""
@@ -98,7 +93,3 @@ class Prometheus:
             return False
 
         assert _wait_for_scrape(), "Scrape wasn't done in time"
-
-    def close(self):
-        """Close httpx client connection"""
-        self._client.close()
