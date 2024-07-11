@@ -16,7 +16,8 @@ from testsuite.mockserver import Mockserver
 from testsuite.oidc import OIDCProvider
 from testsuite.oidc.auth0 import Auth0Provider
 from testsuite.oidc.keycloak import Keycloak
-from testsuite.tracing import TracingClient
+from testsuite.tracing.jaeger import JaegerClient
+from testsuite.tracing.tempo import RemoteTempoClient
 from testsuite.utils import randomize, _whoami
 
 
@@ -170,14 +171,17 @@ def tracing(testconfig, skip_or_fail):
     """Returns tracing client for tracing tests"""
     try:
         testconfig.validators.validate(only=["tracing"])
-        return TracingClient(
-            testconfig["tracing"]["backend"] == "jaeger",
+    except (KeyError, ValidationError) as exc:
+        skip_or_fail(f"Tracing configuration item is missing: {exc}")
+
+    cls = JaegerClient if testconfig["tracing"]["backend"] == "jaeger" else RemoteTempoClient
+    # Authorino needs to have verify disabled because it doesn't trust local service URLs
+    with KuadrantClient(verify=False) as client:
+        yield cls(
             testconfig["tracing"]["collector_url"],
             testconfig["tracing"]["query_url"],
-            KuadrantClient(verify=False),
+            client,
         )
-    except (KeyError, ValidationError) as exc:
-        return skip_or_fail(f"Tracing configuration item is missing: {exc}")
 
 
 @pytest.fixture(scope="session")

@@ -8,8 +8,7 @@ from testsuite.kubernetes.authorino import TracingOptions
 @pytest.fixture(scope="module")
 def authorino_parameters(authorino_parameters, tracing):
     """Deploy authorino with tracing enabled"""
-    insecure_tracing = not tracing.client.verify
-    authorino_parameters["tracing"] = TracingOptions(endpoint=tracing.collector_url, insecure=insecure_tracing)
+    authorino_parameters["tracing"] = TracingOptions(endpoint=tracing.collector_url, insecure=tracing.insecure)
     return authorino_parameters
 
 
