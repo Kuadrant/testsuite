@@ -1,4 +1,4 @@
-"""Kuadrant CR object"""
+"""Kuadrant CR"""
 
 import dataclasses
 

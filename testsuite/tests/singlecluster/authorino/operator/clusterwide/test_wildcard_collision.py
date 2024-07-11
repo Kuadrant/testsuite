@@ -4,8 +4,8 @@ Test for wildcard collisions with clusterwide authorino
 
 import pytest
 
-from testsuite.policy.authorization import Value, JsonResponse
-from testsuite.policy.authorization.auth_config import AuthConfig
+from testsuite.kuadrant.policy.authorization import Value, JsonResponse
+from testsuite.kuadrant.policy.authorization.auth_config import AuthConfig
 
 pytestmark = [pytest.mark.authorino, pytest.mark.standalone_only]
 

@@ -2,7 +2,7 @@
 
 import pytest
 
-from testsuite.policy.authorization import Credentials
+from testsuite.kuadrant.policy.authorization import Credentials
 from testsuite.utils import extract_response
 
 pytestmark = [pytest.mark.authorino]

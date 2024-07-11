@@ -4,7 +4,7 @@ from time import sleep
 
 import pytest
 
-from testsuite.policy.authorization import ValueFrom, Cache
+from testsuite.kuadrant.policy.authorization import ValueFrom, Cache
 from testsuite.utils import extract_response
 
 pytestmark = [pytest.mark.authorino]

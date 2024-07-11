@@ -8,7 +8,7 @@ from testsuite.certificates import Certificate
 from testsuite.gateway import Gateway
 from testsuite.kubernetes.client import KubernetesClient
 from testsuite.kubernetes import KubernetesObject
-from testsuite.policy import Policy
+from testsuite.kuadrant.policy import Policy
 from testsuite.utils import check_condition
 
 

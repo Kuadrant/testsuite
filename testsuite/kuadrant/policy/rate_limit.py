@@ -7,8 +7,8 @@ from typing import Iterable, Literal, Optional, List
 from testsuite.gateway import Referencable, RouteMatch
 from testsuite.kubernetes import modify
 from testsuite.kubernetes.client import KubernetesClient
-from testsuite.policy import Policy
-from testsuite.policy.authorization import Rule
+from testsuite.kuadrant.policy import Policy
+from testsuite.kuadrant.policy.authorization import Rule
 from testsuite.utils import asdict
 
 

@@ -6,7 +6,7 @@ https://github.com/Kuadrant/authorino/blob/main/docs/features.md#oidc-userinfo-m
 import pytest
 
 from testsuite.httpx.auth import HttpxOidcClientAuth
-from testsuite.policy.authorization import Pattern
+from testsuite.kuadrant.policy.authorization import Pattern
 
 pytestmark = [pytest.mark.authorino]
 

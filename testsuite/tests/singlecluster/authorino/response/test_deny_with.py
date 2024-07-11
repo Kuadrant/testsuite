@@ -3,7 +3,7 @@
 from json import loads
 import pytest
 
-from testsuite.policy.authorization import Pattern, Value, ValueFrom, DenyResponse
+from testsuite.kuadrant.policy.authorization import Pattern, Value, ValueFrom, DenyResponse
 
 HEADERS = {
     "x-string-header": Value("abc"),

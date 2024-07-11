@@ -2,7 +2,7 @@
 
 import pytest
 
-from testsuite.policy.authorization import Pattern, Value, JsonResponse
+from testsuite.kuadrant.policy.authorization import Pattern, Value, JsonResponse
 from testsuite.utils import extract_response
 
 pytestmark = [pytest.mark.authorino]

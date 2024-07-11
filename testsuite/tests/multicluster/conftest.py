@@ -13,9 +13,9 @@ from testsuite.gateway.gateway_api.gateway import KuadrantGateway
 from testsuite.gateway.gateway_api.hostname import DNSPolicyExposer
 from testsuite.gateway.gateway_api.route import HTTPRoute
 from testsuite.kubernetes.client import KubernetesClient
-from testsuite.policy import Policy
-from testsuite.policy.dns_policy import DNSPolicy
-from testsuite.policy.tls_policy import TLSPolicy
+from testsuite.kuadrant.policy import Policy
+from testsuite.kuadrant.policy.dns import DNSPolicy
+from testsuite.kuadrant.policy.tls import TLSPolicy
 
 
 AnyPolicy = TypeVar("AnyPolicy", bound=Policy)

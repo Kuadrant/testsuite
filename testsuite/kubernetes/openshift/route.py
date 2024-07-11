@@ -1,4 +1,4 @@
-"""Module containing Route related stuff"""
+"""Module containing OpenShift Route"""
 
 from functools import cached_property
 

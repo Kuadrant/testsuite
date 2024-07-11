@@ -2,7 +2,7 @@
 
 import pytest
 
-from testsuite.policy.authorization import Pattern, PatternRef, AnyPattern, AllPattern
+from testsuite.kuadrant.policy.authorization import Pattern, PatternRef, AnyPattern, AllPattern
 
 pytestmark = [pytest.mark.authorino]
 

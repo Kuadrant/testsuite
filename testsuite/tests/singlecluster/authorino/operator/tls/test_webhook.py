@@ -10,8 +10,8 @@ from openshift_client import OpenShiftPythonException
 
 from testsuite.certificates import CertInfo
 from testsuite.kubernetes.ingress import Ingress
-from testsuite.policy.authorization import Pattern, ValueFrom
-from testsuite.policy.authorization.auth_config import AuthConfig
+from testsuite.kuadrant.policy.authorization import ValueFrom, Pattern
+from testsuite.kuadrant.policy.authorization.auth_config import AuthConfig
 from testsuite.utils import cert_builder
 
 pytestmark = [pytest.mark.authorino, pytest.mark.standalone_only]

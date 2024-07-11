@@ -14,7 +14,7 @@ import pytest
 from keycloak import KeycloakOpenIDConnection, KeycloakUMA
 
 from testsuite.httpx.auth import HttpxOidcClientAuth
-from testsuite.policy.authorization import JsonResponse, ValueFrom, Pattern
+from testsuite.kuadrant.policy.authorization import JsonResponse, ValueFrom, Pattern
 
 pytestmark = [pytest.mark.authorino]
 

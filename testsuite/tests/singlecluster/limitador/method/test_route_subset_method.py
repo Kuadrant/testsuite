@@ -3,7 +3,7 @@
 import pytest
 
 from testsuite.gateway import RouteMatch, PathMatch, MatchType, HTTPMethod
-from testsuite.policy.rate_limit_policy import Limit, RouteSelector
+from testsuite.kuadrant.policy.rate_limit import Limit, RouteSelector
 
 
 pytestmark = [pytest.mark.kuadrant_only, pytest.mark.limitador]

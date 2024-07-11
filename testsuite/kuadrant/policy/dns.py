@@ -2,7 +2,7 @@
 
 from testsuite.gateway import Referencable
 from testsuite.kubernetes.client import KubernetesClient
-from testsuite.policy import Policy
+from testsuite.kuadrant.policy import Policy
 
 
 class DNSPolicy(Policy):

@@ -3,7 +3,7 @@
 import pytest
 
 from testsuite.gateway.envoy.route import EnvoyVirtualRoute
-from testsuite.policy.authorization.auth_config import AuthConfig
+from testsuite.kuadrant.policy.authorization.auth_config import AuthConfig
 
 
 @pytest.fixture(scope="module")

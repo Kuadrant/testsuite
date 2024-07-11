@@ -2,7 +2,7 @@
 
 import pytest
 
-from testsuite.policy.authorization import Pattern
+from testsuite.kuadrant.policy.authorization import Pattern
 from testsuite.httpx.auth import HeaderApiKeyAuth
 
 pytestmark = [pytest.mark.authorino]

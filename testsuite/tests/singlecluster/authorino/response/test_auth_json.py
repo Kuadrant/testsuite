@@ -4,7 +4,7 @@ import json
 
 import pytest
 
-from testsuite.policy.authorization import ValueFrom, JsonResponse
+from testsuite.kuadrant.policy.authorization import ValueFrom, JsonResponse
 
 pytestmark = [pytest.mark.authorino]
 

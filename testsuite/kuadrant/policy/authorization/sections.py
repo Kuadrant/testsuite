@@ -2,7 +2,7 @@
 
 from typing import Literal, Iterable, TYPE_CHECKING, Union
 
-from testsuite.policy.authorization import (
+from testsuite.kuadrant.policy.authorization import (
     Credentials,
     Rule,
     Pattern,
