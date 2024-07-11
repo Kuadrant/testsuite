@@ -83,9 +83,10 @@ def kuadrant(request, testconfig):
 
 
 @pytest.fixture(scope="session")
-def backend(request, cluster, blame, label):
+def backend(request, cluster, blame, label, testconfig):
     """Deploys Httpbin backend"""
-    httpbin = Httpbin(cluster, blame("httpbin"), label)
+    image = testconfig["httpbin"]["image"]
+    httpbin = Httpbin(cluster, blame("httpbin"), label, image)
     request.addfinalizer(httpbin.delete)
     httpbin.commit()
     return httpbin

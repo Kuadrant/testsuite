@@ -56,12 +56,13 @@ def clusters(testconfig, cluster, skip_or_fail) -> list[KubernetesClient]:
 
 
 @pytest.fixture(scope="session")
-def backends(request, clusters, blame, label) -> dict[KubernetesClient, Httpbin]:
+def backends(request, clusters, blame, label, testconfig) -> dict[KubernetesClient, Httpbin]:
     """Deploys Backend to each Kubernetes cluster"""
     backends = {}
     name = blame("httpbin")
+    image = testconfig["httpbin"]["image"]
     for cluster in clusters:
-        httpbin = Httpbin(cluster, name, label)
+        httpbin = Httpbin(cluster, name, label, image)
         request.addfinalizer(httpbin.delete)
         httpbin.commit()
         backends[cluster] = httpbin
