@@ -34,10 +34,12 @@ def authorization_name(blame):
 
 
 @pytest.fixture(scope="module")
-def authorization(kuadrant, route, authorization_name, cluster, label):
+def authorization(request, kuadrant, route, gateway, blame, cluster, label):  # pylint: disable=unused-argument
     """Authorization object (In case of Kuadrant AuthPolicy)"""
+    target_ref = request.getfixturevalue(getattr(request, "param", "route"))
+
     if kuadrant:
-        return AuthPolicy.create_instance(cluster, authorization_name, route, labels={"testRun": label})
+        return AuthPolicy.create_instance(cluster, blame("authz"), target_ref, labels={"testRun": label})
     return None
 
 
