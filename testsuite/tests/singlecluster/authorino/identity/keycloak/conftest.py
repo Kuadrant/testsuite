@@ -14,7 +14,7 @@ def oidc_provider(keycloak):
 @pytest.fixture(scope="module")
 def authorization(authorization, keycloak, jwt_ttl):
     """Add Keycloak identity to AuthConfig"""
-    authorization.identity.add_oidc(
+    authorization.rules.identity.add_oidc(
         "keycloak",
         keycloak.well_known["issuer"],
         ttl=jwt_ttl,

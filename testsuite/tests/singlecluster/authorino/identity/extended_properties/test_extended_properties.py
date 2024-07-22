@@ -16,7 +16,7 @@ def authorization(authorization, keycloak):
         - Dynamic chaining properties which point to another extended property location before its created
     Add simple response to inspect 'auth.identity' part of authJson where the properties will be created.
     """
-    authorization.identity.add_oidc(
+    authorization.rules.identity.add_oidc(
         "keycloak",
         keycloak.well_known["issuer"],
         defaults_properties={
@@ -29,7 +29,7 @@ def authorization(authorization, keycloak):
             "property_chain_self": ValueFrom("auth.identity.property_chain_self"),
         },
     )
-    authorization.responses.add_simple("auth.identity")
+    authorization.rules.responses.add_simple("auth.identity")
     return authorization
 
 

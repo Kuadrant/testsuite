@@ -14,7 +14,7 @@ def authorization(authorization, route, wildcard_domain) -> AuthConfig:
     """In case of Authorino, AuthConfig used for authorization"""
     authorization.remove_all_hosts()
     route.add_hostname(wildcard_domain)
-    authorization.responses.add_success_header("x-ext-auth-other-json", JsonResponse({"propX": Value("valueX")}))
+    authorization.rules.responses.add_success_header("x-ext-auth-other-json", JsonResponse({"propX": Value("valueX")}))
     return authorization
 
 

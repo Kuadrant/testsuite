@@ -10,7 +10,7 @@ pytestmark = [pytest.mark.authorino]
 @pytest.fixture(scope="module")
 def authorization(authorization, module_label, expectation_path):
     """Adds simple Metadata to the AuthConfig"""
-    authorization.metadata.add_http(module_label, expectation_path, "GET")
+    authorization.rules.metadata.add_http(module_label, expectation_path, "GET")
     return authorization
 
 

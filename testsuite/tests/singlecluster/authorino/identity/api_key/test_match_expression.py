@@ -22,7 +22,7 @@ def valid_label_selectors(module_label):
 def authorization(authorization, valid_label_selectors):
     """Creates AuthConfig with API key identity"""
     selector = Selector(matchExpressions=[MatchExpression("In", valid_label_selectors)])
-    authorization.identity.add_api_key("api_key", selector=selector)
+    authorization.rules.identity.add_api_key("api_key", selector=selector)
     return authorization
 
 

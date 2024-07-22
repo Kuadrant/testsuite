@@ -12,7 +12,7 @@ pytestmark = [pytest.mark.authorino]
 @pytest.fixture(scope="module")
 def authorization(authorization, oidc_provider):
     """Add Keycloak identity to AuthConfig"""
-    authorization.identity.add_oidc("default", oidc_provider.well_known["issuer"])
+    authorization.rules.identity.add_oidc("default", oidc_provider.well_known["issuer"])
     return authorization
 
 

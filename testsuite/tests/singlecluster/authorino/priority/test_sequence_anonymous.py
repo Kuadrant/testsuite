@@ -13,7 +13,7 @@ pytestmark = [pytest.mark.authorino]
 @pytest.fixture(scope="module")
 def authorization(authorization):
     """Add anonymous identity with low priority to the AuthConfig"""
-    authorization.identity.add_anonymous("anonymous", priority=1)
+    authorization.rules.identity.add_anonymous("anonymous", priority=1)
     return authorization
 
 

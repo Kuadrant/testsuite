@@ -21,7 +21,7 @@ pytestmark = [pytest.mark.authorino]
 @pytest.fixture(scope="module")
 def authorization(authorization):
     """Set custom deny responses and auth rule with only allowed path '/allow'"""
-    authorization.responses.set_unauthenticated(
+    authorization.rules.responses.set_unauthenticated(
         DenyResponse(
             code=333,
             headers=HEADERS,
@@ -29,7 +29,7 @@ def authorization(authorization):
             body=Value("You are unauthenticated."),
         )
     )
-    authorization.responses.set_unauthorized(
+    authorization.rules.responses.set_unauthorized(
         DenyResponse(
             code=444,
             headers=HEADERS,
@@ -38,7 +38,9 @@ def authorization(authorization):
         )
     )
     # Authorize only when url path is "/allow"
-    authorization.authorization.add_auth_rules("Whitelist", [Pattern("context.request.http.path", "eq", "/allow")])
+    authorization.rules.authorization.add_auth_rules(
+        "Whitelist", [Pattern("context.request.http.path", "eq", "/allow")]
+    )
     return authorization
 
 

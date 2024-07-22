@@ -25,7 +25,7 @@ def limit(request):
 @pytest.fixture(scope="module")
 def rate_limit(rate_limit, limit):
     """Add limit to the policy"""
-    rate_limit.add_limit("basic", [limit])
+    rate_limit.limits.add_limit("basic", [limit])
     return rate_limit
 
 

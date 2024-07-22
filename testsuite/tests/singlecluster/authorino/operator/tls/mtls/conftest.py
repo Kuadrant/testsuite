@@ -10,10 +10,10 @@ from testsuite.kuadrant.policy.authorization import Pattern
 @pytest.fixture(scope="module", autouse=True)
 def authorization(authorization, blame, selector, cert_attributes):
     """Create AuthConfig with mtls identity and pattern matching rule"""
-    authorization.identity.add_mtls(blame("mtls"), selector=selector)
+    authorization.rules.identity.add_mtls(blame("mtls"), selector=selector)
 
     rule_organization = Pattern("auth.identity.Organization", "incl", cert_attributes["O"])
-    authorization.authorization.add_auth_rules(blame("redhat"), [rule_organization])
+    authorization.rules.authorization.add_auth_rules(blame("redhat"), [rule_organization])
 
     return authorization
 

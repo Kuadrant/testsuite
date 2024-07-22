@@ -15,7 +15,7 @@ pytestmark = [pytest.mark.kuadrant_only]
 def authorization2(request, gateway, blame, cluster, label):
     """2nd Authorization object"""
     auth_policy = AuthPolicy.create_instance(cluster, blame("authz2"), gateway, labels={"testRun": label})
-    auth_policy.authorization.add_opa_policy("rego", "allow = false")
+    auth_policy.rules.authorization.add_opa_policy("rego", "allow = false")
     request.addfinalizer(auth_policy.delete)
     auth_policy.commit()
     auth_policy.wait_for_ready()

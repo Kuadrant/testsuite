@@ -16,7 +16,7 @@ def credentials(request):
 @pytest.fixture(scope="module")
 def authorization(authorization, keycloak, credentials):
     """Add Keycloak identity to Authorization"""
-    authorization.identity.add_oidc(
+    authorization.rules.identity.add_oidc(
         "keycloak", keycloak.well_known["issuer"], credentials=Credentials(credentials, "Token")
     )
     return authorization

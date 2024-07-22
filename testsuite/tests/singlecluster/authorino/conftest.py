@@ -38,7 +38,7 @@ def authorization(authorization, oidc_provider, route, authorization_name, clust
     """In case of Authorino, AuthConfig used for authorization"""
     if authorization is None:
         authorization = AuthConfig.create_instance(cluster, authorization_name, route, labels={"testRun": label})
-    authorization.identity.add_oidc("default", oidc_provider.well_known["issuer"])
+    authorization.rules.identity.add_oidc("default", oidc_provider.well_known["issuer"])
     return authorization
 
 

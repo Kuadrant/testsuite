@@ -19,7 +19,7 @@ def user_with_role(keycloak, realm_role, blame):
 @pytest.fixture(scope="module")
 def authorization(authorization, realm_role, blame):
     """Adds rule, that requires user to be part of realm_role to be allowed access."""
-    authorization.authorization.add_role_rule(blame("rule"), realm_role["name"], "^/get")
+    authorization.rules.authorization.add_role_rule(blame("rule"), realm_role["name"], "^/get")
     return authorization
 
 

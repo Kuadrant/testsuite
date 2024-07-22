@@ -8,7 +8,7 @@ pytestmark = [pytest.mark.authorino]
 @pytest.fixture(scope="module")
 def authorization(authorization):
     """Add kubernetes token-review identity without any audiences"""
-    authorization.identity.add_kubernetes("token-review-host")
+    authorization.rules.identity.add_kubernetes("token-review-host")
     return authorization
 
 

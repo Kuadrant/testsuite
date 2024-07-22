@@ -15,5 +15,5 @@ def authorino_parameters(authorino_parameters, tracing):
 @pytest.fixture(scope="module")
 def authorization(authorization):
     """Add response with 'request.id' to found traced request with it"""
-    authorization.responses.add_simple("request.id")
+    authorization.rules.responses.add_simple("request.id")
     return authorization

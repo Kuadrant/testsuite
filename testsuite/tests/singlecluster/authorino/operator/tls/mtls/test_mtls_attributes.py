@@ -11,7 +11,7 @@ pytestmark = [pytest.mark.authorino, pytest.mark.standalone_only]
 def authorization(authorization, blame, cert_attributes):
     """Add second pattern matching rule to the AuthConfig"""
     rule_country = Pattern("auth.identity.Country", "incl", cert_attributes["C"])
-    authorization.authorization.add_auth_rules(blame("redhat"), [rule_country])
+    authorization.rules.authorization.add_auth_rules(blame("redhat"), [rule_country])
 
     return authorization
 

@@ -11,7 +11,7 @@ pytestmark = [pytest.mark.authorino]
 def authorization(authorization):
     """Add to the AuthConfig authorization with opa policy that will always reject POST requests"""
     when_post = [Pattern("context.request.http.method", "eq", "POST")]
-    authorization.authorization.add_opa_policy("opa", "allow { false }", when=when_post)
+    authorization.rules.authorization.add_opa_policy("opa", "allow { false }", when=when_post)
     return authorization
 
 

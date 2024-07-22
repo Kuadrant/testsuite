@@ -23,7 +23,7 @@ def auth(api_key):
 @pytest.fixture(scope="module")
 def authorization(authorization, module_label):
     """Creates AuthConfig with API key identity"""
-    authorization.identity.add_api_key("api_key", selector=Selector(matchLabels={"group": module_label}))
+    authorization.rules.identity.add_api_key("api_key", selector=Selector(matchLabels={"group": module_label}))
     return authorization
 
 

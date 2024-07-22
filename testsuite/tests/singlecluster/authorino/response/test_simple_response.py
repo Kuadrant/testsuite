@@ -12,7 +12,7 @@ pytestmark = [pytest.mark.authorino]
 @pytest.fixture(scope="module")
 def authorization(authorization):
     """Add response to Authorization"""
-    authorization.responses.add_success_header("header", JsonResponse({"anything": Value("one")}))
+    authorization.rules.responses.add_success_header("header", JsonResponse({"anything": Value("one")}))
     return authorization
 
 

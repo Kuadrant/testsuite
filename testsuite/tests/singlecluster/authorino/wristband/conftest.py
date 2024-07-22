@@ -68,8 +68,8 @@ def wristband_endpoint(cluster, authorino, wristband_name):
 @pytest.fixture(scope="module")
 def authorization(authorization, wristband_endpoint) -> AuthConfig:
     """Add wristband authentication to Authorization"""
-    authorization.identity.clear_all()
-    authorization.identity.add_oidc("edge-authenticated", wristband_endpoint)
+    authorization.rules.identity.clear_all()
+    authorization.rules.identity.add_oidc("edge-authenticated", wristband_endpoint)
     return authorization
 
 
@@ -115,8 +115,8 @@ def wristband_authorization(
         labels={"testRun": label},
     )
 
-    authorization.identity.add_oidc("default", oidc_provider.well_known["issuer"])
-    authorization.responses.add_success_dynamic(
+    authorization.rules.identity.add_oidc("default", oidc_provider.well_known["issuer"])
+    authorization.rules.responses.add_success_dynamic(
         "wristband",
         WristbandResponse(issuer=wristband_endpoint, signingKeyRefs=[WristbandSigningKeyRef(wristband_secret)]),
     )

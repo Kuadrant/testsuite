@@ -55,7 +55,7 @@ def setup_authorization(request, blame, cluster, label):  # pylint: disable=unus
             route,
             labels={"testRun": label, "sharding": sharding_label},
         )
-        auth.responses.add_success_header("header", JsonResponse({"anything": Value(sharding_label)}))
+        auth.rules.responses.add_success_header("header", JsonResponse({"anything": Value(sharding_label)}))
         request.addfinalizer(auth.delete)
         auth.commit()
         return auth

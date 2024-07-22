@@ -44,7 +44,7 @@ def invalid_auth(invalid_api_key):
 @pytest.fixture(scope="module")
 def authorization(authorization, api_key):
     """Creates AuthConfig with API key identity"""
-    authorization.identity.add_api_key("api_key", all_namespaces=True, selector=api_key.selector)
+    authorization.rules.identity.add_api_key("api_key", all_namespaces=True, selector=api_key.selector)
     return authorization
 
 

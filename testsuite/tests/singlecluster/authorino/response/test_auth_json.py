@@ -32,8 +32,8 @@ def authorization(authorization, path_and_value):
     """Add response to Authorization"""
     path, _ = path_and_value
 
-    authorization.responses.clear_all()  # delete previous responses due to the parametrization
-    authorization.responses.add_success_header("header", JsonResponse({"anything": ValueFrom(path)}))
+    authorization.rules.responses.clear_all()  # delete previous responses due to the parametrization
+    authorization.rules.responses.add_success_header("header", JsonResponse({"anything": ValueFrom(path)}))
     return authorization
 
 

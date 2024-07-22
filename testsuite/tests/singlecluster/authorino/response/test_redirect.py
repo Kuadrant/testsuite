@@ -15,7 +15,7 @@ pytestmark = [pytest.mark.authorino]
 @pytest.fixture(scope="module")
 def authorization(authorization):
     """In case of Authorino, AuthConfig used for authorization"""
-    authorization.responses.set_unauthenticated(
+    authorization.rules.responses.set_unauthenticated(
         DenyResponse(
             code=STATUS_CODE,
             headers={"Location": ValueFrom(REDIRECT_URL + "{context.request.http.path}")},

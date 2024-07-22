@@ -12,7 +12,7 @@ pytestmark = [pytest.mark.kuadrant_only, pytest.mark.limitador]
 @pytest.fixture(scope="module")
 def rate_limit(rate_limit):
     """Add limit to the policy only for anonymous users"""
-    rate_limit.add_limit(
+    rate_limit.limits.add_limit(
         "basic",
         [Limit(5, 10)],
         when=[
@@ -29,11 +29,11 @@ def rate_limit(rate_limit):
 @pytest.fixture(scope="module")
 def authorization(authorization, oidc_provider):
     """Add oidc and anonymous identity with low priority to the AuthConfig"""
-    authorization.identity.add_anonymous("anonymous", priority=1)
-    authorization.identity.add_oidc("default", oidc_provider.well_known["issuer"])
+    authorization.rules.identity.add_anonymous("anonymous", priority=1)
+    authorization.rules.identity.add_oidc("default", oidc_provider.well_known["issuer"])
 
     # curly brackets are added to response as it stringifies the anonymous output.
-    authorization.responses.add_success_dynamic(
+    authorization.rules.responses.add_success_dynamic(
         "identity", JsonResponse({"anonymous": ValueFrom("{auth.identity.anonymous}")})
     )
     return authorization

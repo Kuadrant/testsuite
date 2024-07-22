@@ -14,7 +14,7 @@ def authorization(authorization):
     Add plain authentication with defaults and overrides properties.
     Add simple response to expose `auth.identity` part of AuthJson
     """
-    authorization.identity.add_plain(
+    authorization.rules.identity.add_plain(
         "plain",
         "context.request.http.headers.x-user|@fromstr",
         defaults_properties={
@@ -26,7 +26,7 @@ def authorization(authorization):
             "expire": Value("1-12-1999"),
         },
     )
-    authorization.responses.add_simple("auth.identity")
+    authorization.rules.responses.add_simple("auth.identity")
 
     return authorization
 

@@ -37,12 +37,12 @@ def authorization(authorization, keycloak, api_key):
 
     Add authorization rule allowing DELETE method only to users with role 'admin' in 'auth.identity.roles'
     """
-    authorization.identity.add_oidc(
+    authorization.rules.identity.add_oidc(
         "keycloak",
         keycloak.well_known["issuer"],
         overrides_properties={"roles": ValueFrom("auth.identity.realm_access.roles")},
     )
-    authorization.identity.add_api_key(
+    authorization.rules.identity.add_api_key(
         "api_key",
         selector=api_key.selector,
         defaults_properties={"roles": Value(["admin"])},
@@ -50,7 +50,7 @@ def authorization(authorization, keycloak, api_key):
 
     rule = Pattern(selector="auth.identity.roles", operator="incl", value="admin")
     when = Pattern(selector="context.request.http.method", operator="eq", value="DELETE")
-    authorization.authorization.add_auth_rules("only-admins-can-delete", rules=[rule], when=[when])
+    authorization.rules.authorization.add_auth_rules("only-admins-can-delete", rules=[rule], when=[when])
     return authorization
 
 

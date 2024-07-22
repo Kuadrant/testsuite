@@ -34,7 +34,7 @@ def route(route, backend):
 def rate_limit(rate_limit, endpoint):
     """Add limit to the policy"""
     selector = RouteSelector(RouteMatch(path=PathMatch(value=endpoint, type=MatchType.EXACT), method=HTTPMethod.GET))
-    rate_limit.add_limit("basic", [Limit(5, 10)], route_selectors=[selector])
+    rate_limit.limits.add_limit("basic", [Limit(5, 10)], route_selectors=[selector])
     return rate_limit
 
 

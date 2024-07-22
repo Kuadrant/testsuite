@@ -32,7 +32,7 @@ def route2(request, gateway, blame, hostname2):
 def authorization2(route2, blame, cluster2, label, oidc_provider):
     """Second valid hostname"""
     auth = AuthConfig.create_instance(cluster2, blame("ac"), route2, labels={"testRun": label})
-    auth.identity.add_oidc("default", oidc_provider.well_known["issuer"])
+    auth.rules.identity.add_oidc("default", oidc_provider.well_known["issuer"])
     return auth
 
 
