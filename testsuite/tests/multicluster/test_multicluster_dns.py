@@ -25,9 +25,5 @@ def test_multicluster_dns(client, hostname, gateways):
     assert result.status_code == 200
 
     ips = {gateway.external_ip().split(":")[0] for gateway in gateways.values()}
-    dns_ips = set(())
-    for _ in range(len(ips)):
-        answer = dns.resolver.resolve(hostname.hostname)[0]
-        assert answer.address in ips, f"Got {answer.address} that is not expected in {ips}"
-        dns_ips.add(answer.address)
+    dns_ips = {ip.address for ip in dns.resolver.resolve(hostname.hostname)}
     assert ips == dns_ips, f"Expected IPs and actual IP mismatch, got {dns_ips}, expected {ips}"
