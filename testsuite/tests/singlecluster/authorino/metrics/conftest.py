@@ -12,7 +12,7 @@ from testsuite.kubernetes.service_monitor import ServiceMonitor, MetricsEndpoint
 from testsuite.prometheus import Prometheus
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="package")
 def prometheus(cluster):
     """
     Return an instance of Thanos metrics client
@@ -31,12 +31,12 @@ def prometheus(cluster):
     # this route allows to query metrics
 
     routes = openshift_monitoring.get_routes_for_service("thanos-querier")
-    if len(routes) > 0:
-        url = ("https://" if "tls" in routes[0].model.spec else "http://") + routes[0].model.spec.host
-        with KuadrantClient(headers={"Authorization": f"Bearer {cluster.token}"}, base_url=url, verify=False) as client:
-            yield Prometheus(client, cluster.project)
+    if len(routes) == 0:
+        pytest.skip("Skipping metrics tests as query route is not properly configured")
 
-    pytest.skip("Skipping metrics tests as query route is not properly configured")
+    url = ("https://" if "tls" in routes[0].model.spec else "http://") + routes[0].model.spec.host
+    with KuadrantClient(headers={"Authorization": f"Bearer {cluster.token}"}, base_url=url, verify=False) as client:
+        yield Prometheus(client)
 
 
 @pytest.fixture(scope="module")

@@ -45,8 +45,7 @@ class Metrics:
 class Prometheus:
     """Interface to the Prometheus client"""
 
-    def __init__(self, client: Client, namespace: str = None):
-        self.namespace = namespace
+    def __init__(self, client: Client):
         self.client = ApyProxy(str(client.base_url), session=client).api.v1
 
     def get_active_targets(self) -> dict:
@@ -57,10 +56,6 @@ class Prometheus:
 
     def get_metrics(self, key: str = "", labels: dict[str, str] = None) -> Metrics:
         """Get metrics by key or labels"""
-        if self.namespace:
-            labels = labels or {}
-            labels.setdefault("namespace", self.namespace)
-
         params = _params(key, labels)
         response = self.client.query.get(params=params)
 
