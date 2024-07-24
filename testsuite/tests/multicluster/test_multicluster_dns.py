@@ -30,4 +30,4 @@ def test_multicluster_dns(client, hostname, gateways):
         answer = dns.resolver.resolve(hostname.hostname)[0]
         assert answer.address in ips, f"Got {answer.address} that is not expected in {ips}"
         dns_ips.add(answer.address)
-    assert ips == dns_ips, f"Expected IPs and actual IP mismatch, got {ips}, expected {ips}"
+    assert ips == dns_ips, f"Expected IPs and actual IP mismatch, got {dns_ips}, expected {ips}"
