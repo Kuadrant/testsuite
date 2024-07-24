@@ -1,0 +1,23 @@
+name: Project automations
+on:
+  pull_request_target:
+    types:
+      - opened
+
+env:
+  review: "In Review"
+
+jobs:
+  pr_to_add_review:
+    name: pr_opened
+    runs-on: ubuntu-latest
+    steps:
+      - name: Move PR to ${{ env.review }}
+        uses: leonsteinhaeuser/project-beta-automations@v2.1.0
+        with:
+          gh_token: ${{ secrets.ADD_ISSUES_TOKEN }}
+          organization: kuadrant
+          project_id: 16
+          resource_node_id: ${{ github.event.pull_request.node_id }}
+          status_value: ${{ env.review }} # Target status
+          move_related_issues: true
