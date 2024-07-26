@@ -51,7 +51,7 @@ def test_no_limit_for_auth_user(client, auth):
     responses.assert_all(status_code=200)
 
 
-def test_anonymous_identity(client, auth):
+def test_limit_for_anonymous_identity(client, auth):
     """Test that an anonymous requests are correctly limited"""
     assert client.get("/get", auth=auth).status_code == 200
 
