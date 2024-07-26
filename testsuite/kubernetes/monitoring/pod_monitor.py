@@ -1,24 +1,13 @@
-"""Module implements Service Monitor CR """
+"""Module implements Pod Monitor CR"""
 
-from dataclasses import dataclass
-
-from testsuite.utils import asdict
-from testsuite.kubernetes.client import KubernetesClient
 from testsuite.kubernetes import KubernetesObject
+from testsuite.kubernetes.client import KubernetesClient
+from testsuite.kubernetes.monitoring import MetricsEndpoint
+from testsuite.utils import asdict
 
 
-@dataclass
-class MetricsEndpoint:
-    """Dataclass for endpoint definition in ServiceMonitor Kubernetes object.
-    It contains endpoint path and port to the exported metrics."""
-
-    path: str = "/metrics"
-    port: str = "http"
-    interval: str = "30s"
-
-
-class ServiceMonitor(KubernetesObject):
-    """Kubernetes ServiceMonitor object"""
+class PodMonitor(KubernetesObject):
+    """Represents Pod Monitor object for OpenShift"""
 
     @classmethod
     def create_instance(
@@ -32,13 +21,13 @@ class ServiceMonitor(KubernetesObject):
         """Creates new instance of ServiceMonitor"""
         model = {
             "apiVersion": "monitoring.coreos.com/v1",
-            "kind": "ServiceMonitor",
+            "kind": "PodMonitor",
             "metadata": {
                 "name": name,
                 "labels": labels,
             },
             "spec": {
-                "endpoints": [asdict(e) for e in endpoints],
+                "podMetricsEndpoints": [asdict(e) for e in endpoints],
                 "selector": {
                     "matchLabels": match_labels,
                 },

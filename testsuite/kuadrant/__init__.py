@@ -28,6 +28,10 @@ class KuadrantSection:
         with self.context:
             return selector("deployment", labels={"app": self.spec_name}).object(cls=Deployment)
 
+    def name(self):
+        """Overrides `name` method from `apiobject` so it returns name of Kuadrant section"""
+        return self.spec_name
+
     def __getitem__(self, name):
         return self.kuadrant_cr.model.spec[self.spec_name][name]
 
@@ -67,6 +71,22 @@ class AuthorinoSection(KuadrantSection, Authorino):
             return selector(f"service/{self.spec_name}-controller-metrics").object()
 
 
+class LimitadorSection(KuadrantSection):
+    """Limitador `spec.limitador` from KuadrantCR object"""
+
+    @property
+    def deployment(self) -> Deployment:
+        """Returns Deployment object for this Limitador"""
+        with self.context:
+            return selector(f"deployment/{self.name()}").object(cls=Deployment)
+
+    @property
+    def pod(self):
+        """Returns Pod object for this Limitadaor"""
+        with self.context:
+            return selector("pod", labels={"app": self.name()}).object()
+
+
 class KuadrantCR(CustomResource):
     """Represents Kuadrant CR objects"""
 
@@ -77,7 +97,7 @@ class KuadrantCR(CustomResource):
         return AuthorinoSection(self, "authorino")
 
     @property
-    def limitador(self) -> KuadrantSection:
+    def limitador(self) -> LimitadorSection:
         """Returns spec.limitador from Kuadrant object"""
         self.model.spec.setdefault("limitador", {})
-        return KuadrantSection(self, "limitador")
+        return LimitadorSection(self, "limitador")
