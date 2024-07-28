@@ -3,15 +3,18 @@
 import pytest
 
 from testsuite.httpx.auth import HttpxOidcClientAuth
-from testsuite.kubernetes.client import KubernetesClient
-from testsuite.kubernetes.api_key import APIKey
+from testsuite.kuadrant.authorino import AuthorinoCR, PreexistingAuthorino
 from testsuite.kuadrant.policy.authorization.auth_config import AuthConfig
-from testsuite.kuadrant.authorino import AuthorinoCR, Authorino, PreexistingAuthorino
+from testsuite.kubernetes.api_key import APIKey
+from testsuite.kubernetes.client import KubernetesClient
 
 
 @pytest.fixture(scope="session")
-def authorino(cluster, blame, request, testconfig, label) -> Authorino:
+def authorino(kuadrant, cluster, blame, request, testconfig, label):
     """Authorino instance"""
+    if kuadrant:
+        return kuadrant.authorino
+
     authorino_config = testconfig["service_protection"]["authorino"]
     if not authorino_config["deploy"]:
         return PreexistingAuthorino(

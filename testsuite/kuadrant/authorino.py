@@ -6,7 +6,6 @@ from typing import Any, Optional, Dict, List
 
 from openshift_client import selector
 
-from testsuite.lifecycle import LifecycleObject
 from testsuite.kubernetes import CustomResource
 from testsuite.kubernetes.client import KubernetesClient
 from testsuite.kubernetes.deployment import Deployment
@@ -22,7 +21,7 @@ class TracingOptions:
     insecure: Optional[bool] = None
 
 
-class Authorino(LifecycleObject):
+class Authorino:
     """Authorino interface"""
 
     @abc.abstractmethod
@@ -133,9 +132,3 @@ class PreexistingAuthorino(Authorino):
     @property
     def oidc_url(self):
         return self._oidc_url
-
-    def commit(self):
-        return
-
-    def delete(self):
-        return

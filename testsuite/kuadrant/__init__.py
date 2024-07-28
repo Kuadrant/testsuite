@@ -4,6 +4,7 @@ import dataclasses
 
 from openshift_client import selector
 
+from testsuite.kuadrant.authorino import Authorino
 from testsuite.kubernetes import CustomResource
 from testsuite.kubernetes.deployment import Deployment
 from testsuite.utils import asdict
@@ -43,14 +44,37 @@ class KuadrantSection:
             raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{item}'") from exc
 
 
+class AuthorinoSection(KuadrantSection, Authorino):
+    """Authorino `spec.authorino` from KuadrantCR object"""
+
+    def wait_for_ready(self):
+        return super(KuadrantSection, self).wait_for_ready()
+
+    @property
+    def authorization_url(self):
+        """Return service endpoint for authorization"""
+        return f"{self.spec_name}-authorino-authorization.{self.namespace()}.svc.cluster.local"
+
+    @property
+    def oidc_url(self):
+        """Return authorino oidc endpoint"""
+        return f"{self.spec_name}-authorino-oidc.{self.namespace()}.svc.cluster.local"
+
+    @property
+    def metrics_service(self):
+        """Returns Authorino metrics service APIObject"""
+        with self.context:
+            return selector(f"service/{self.spec_name}-controller-metrics").object()
+
+
 class KuadrantCR(CustomResource):
     """Represents Kuadrant CR objects"""
 
     @property
-    def authorino(self) -> KuadrantSection:
+    def authorino(self) -> AuthorinoSection:
         """Returns spec.authorino from Kuadrant object"""
         self.model.spec.setdefault("authorino", {})
-        return KuadrantSection(self, "authorino")
+        return AuthorinoSection(self, "authorino")
 
     @property
     def limitador(self) -> KuadrantSection:
