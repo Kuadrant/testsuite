@@ -15,7 +15,7 @@ jobs:
       - name: Move PR to ${{ env.review }}
         uses: leonsteinhaeuser/project-beta-automations@v2.1.0
         with:
-          gh_token: ${{ secrets.ADD_ISSUES_TOKEN }}
+          gh_token: ${{ secrets.UPDATE_ACTION_VARS_TOKEN }}
           organization: kuadrant
           project_id: 16
           resource_node_id: ${{ github.event.pull_request.node_id }}
