@@ -7,7 +7,8 @@ import backoff
 from apyproxy import ApyProxy
 from httpx import Client
 
-from testsuite.kubernetes.service_monitor import ServiceMonitor
+from testsuite.kubernetes.monitoring.pod_monitor import PodMonitor
+from testsuite.kubernetes.monitoring.service_monitor import ServiceMonitor
 
 
 def _params(key: str = "", labels: dict[str, str] = None) -> dict[str, str]:
@@ -62,17 +63,22 @@ class Prometheus:
         return Metrics(response.json()["data"]["result"])
 
     @backoff.on_predicate(backoff.constant, interval=10, jitter=None, max_tries=35)
-    def is_reconciled(self, service_monitor: ServiceMonitor):
+    def is_reconciled(self, monitor: ServiceMonitor | PodMonitor):
         """True, if all endpoints in ServiceMonitor are active targets"""
-        scrape_pools = set(target["scrapePool"] for target in self.get_active_targets())
-        endpoints = len(service_monitor.model.spec.endpoints)
+        scrape_pools = set(target["scrapePool"].lower() for target in self.get_active_targets())
+
+        if isinstance(monitor, ServiceMonitor):
+            endpoints = len(monitor.model.spec["endpoints"])
+        else:
+            endpoints = len(monitor.model.spec["podMetricsEndpoints"])
+
         for i in range(endpoints):
-            if f"serviceMonitor/{service_monitor.namespace()}/{service_monitor.name()}/{i}" not in scrape_pools:
+            if f"{monitor.kind()}/{monitor.namespace()}/{monitor.name()}/{i}".lower() not in scrape_pools:
                 return False
 
         return True
 
-    def wait_for_scrape(self, service_monitor: ServiceMonitor, metrics_path: str):
+    def wait_for_scrape(self, monitor: ServiceMonitor | PodMonitor, metrics_path: str):
         """Wait before next metrics scrape on service is finished"""
         call_time = datetime.now(timezone.utc)
 
@@ -81,7 +87,7 @@ class Prometheus:
             """Wait for new scrape after the function call time"""
             for target in self.get_active_targets():
                 if (
-                    f"serviceMonitor/{service_monitor.namespace()}/{service_monitor.name()}" in target["scrapePool"]
+                    f"{monitor.kind()}/{monitor.namespace()}/{monitor.name()}".lower() in target["scrapePool"].lower()
                     and metrics_path in target["scrapeUrl"]
                 ):
                     return call_time < datetime.fromisoformat(target["lastScrape"][:26]).replace(tzinfo=timezone.utc)

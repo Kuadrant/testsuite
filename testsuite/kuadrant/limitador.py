@@ -14,3 +14,9 @@ class LimitadorCR(CustomResource):
         """Returns Deployment object for this Limitador"""
         with self.context:
             return selector(f"deployment/{self.name()}").object(cls=Deployment)
+
+    @property
+    def pod(self):
+        """Returns Pod object for this Limitadaor"""
+        with self.context:
+            return selector("pod", labels={"app": "limitador"}).object()
