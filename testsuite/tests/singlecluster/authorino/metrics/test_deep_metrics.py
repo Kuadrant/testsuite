@@ -4,7 +4,7 @@ import pytest
 
 from testsuite.kuadrant.policy.authorization import Value, JsonResponse
 
-pytestmark = [pytest.mark.authorino, pytest.mark.standalone_only]
+pytestmark = [pytest.mark.authorino]
 
 
 @pytest.fixture(scope="module")
@@ -53,10 +53,12 @@ def deep_metrics(authorino, service_monitor, prometheus, client, auth):
         pytest.param("json", "RESPONSE_JSON", id="response"),
     ],
 )
-def test_deep_metrics(metric_name, metric_type, deep_metrics):
+def test_deep_metrics(metric_name, metric_type, deep_metrics, authorization):
     """Test if each set evaluator metric is collected and correctly responds to the request sent"""
     metrics = deep_metrics.filter(
-        lambda x: x["metric"]["evaluator_name"] == metric_name and x["metric"]["evaluator_type"] == metric_type
+        lambda x: x["metric"]["evaluator_name"] == metric_name
+        and x["metric"]["evaluator_type"] == metric_type
+        and x["metric"]["authconfig"].endswith(authorization.name())
     )
 
     assert len(metrics.metrics) == 1
