@@ -65,7 +65,6 @@ class HTTPRoute(KubernetesObject, GatewayRoute):
             "group": "gateway.networking.k8s.io",
             "kind": "HTTPRoute",
             "name": self.name(),
-            "namespace": self.namespace(),
         }
 
     @property
