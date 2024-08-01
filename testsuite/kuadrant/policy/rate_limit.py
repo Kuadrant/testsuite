@@ -41,6 +41,10 @@ class RouteSelector:
 class RateLimitPolicy(Policy):
     """RateLimitPolicy (or RLP for short) object, used for applying rate limiting rules to a Gateway/HTTPRoute"""
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.spec_section = None
+
     @classmethod
     def create_instance(cls, cluster: KubernetesClient, name, target: Referencable, labels: dict[str, str] = None):
         """Creates new instance of RateLimitPolicy"""
@@ -50,7 +54,6 @@ class RateLimitPolicy(Policy):
             "metadata": {"name": name, "labels": labels},
             "spec": {
                 "targetRef": target.reference,
-                "limits": {},
             },
         }
 
@@ -75,7 +78,24 @@ class RateLimitPolicy(Policy):
             limit["counters"] = counters
         if route_selectors:
             limit["routeSelectors"] = [asdict(rule) for rule in route_selectors]
-        self.model.spec.limits[name] = limit
+
+        if self.spec_section is None:
+            self.spec_section = self.model.spec
+
+        self.spec_section.setdefault("limits", {})[name] = limit
+        self.spec_section = None
+
+    @property
+    def defaults(self):
+        """Add new rule into the `defaults` RateLimitPolicy section"""
+        self.spec_section = self.model.spec.setdefault("defaults", {})
+        return self
+
+    @property
+    def overrides(self):
+        """Add new rule into the `overrides` RateLimitPolicy section"""
+        self.spec_section = self.model.spec.setdefault("overrides", {})
+        return self
 
     def wait_for_ready(self):
         """Wait for RLP to be enforced"""
