@@ -19,7 +19,7 @@ pytestmark = [pytest.mark.kuadrant_only]
 def authorization2(request, route2, blame, openshift, label):
     """2nd Authorization object"""
     auth_policy = AuthPolicy.create_instance(openshift, blame("authz2"), route2, labels={"testRun": label})
-    auth_policy.authorization.add_opa_policy("rego", "allow = false")
+    auth_policy.rules.authorization.add_opa_policy("rego", "allow = false")
     request.addfinalizer(auth_policy.delete)
     auth_policy.commit()
     auth_policy.wait_for_accepted()
@@ -29,7 +29,7 @@ def authorization2(request, route2, blame, openshift, label):
 @pytest.fixture(scope="module")
 def rate_limit(rate_limit):
     """Add limit to 1st RateLimitPolicy allowing 1 request per 10 minutes (a.k.a. '1rp10m' RateLimitPolicy)"""
-    rate_limit.add_limit("1rp10m", [Limit(1, 10)])
+    rate_limit.limits.add_limit("1rp10m", [Limit(1, 10)])
     return rate_limit
 
 

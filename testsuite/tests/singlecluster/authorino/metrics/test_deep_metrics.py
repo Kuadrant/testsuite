@@ -25,10 +25,10 @@ def authorization(authorization, mockserver_expectation):
         - http metadata from the mockserver
         - non-empty response
     """
-    authorization.identity.add_anonymous("anonymous", metrics=True)
-    authorization.authorization.add_opa_policy("opa", "allow { true }", metrics=True)
-    authorization.metadata.add_http("http", mockserver_expectation, "GET", metrics=True)
-    authorization.responses.add_success_header("json", JsonResponse({"auth": Value("response")}), metrics=True)
+    authorization.rules.identity.add_anonymous("anonymous", metrics=True)
+    authorization.rules.authorization.add_opa_policy("opa", "allow { true }", metrics=True)
+    authorization.rules.metadata.add_http("http", mockserver_expectation, "GET", metrics=True)
+    authorization.rules.responses.add_success_header("json", JsonResponse({"auth": Value("response")}), metrics=True)
 
     return authorization
 

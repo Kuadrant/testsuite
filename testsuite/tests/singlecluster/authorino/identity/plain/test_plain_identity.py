@@ -41,8 +41,8 @@ def authorization(authorization, plain_identity):
     """
     Setup AuthConfig to retrieve identity from given path
     """
-    authorization.identity.add_plain("plain", plain_identity["path"])
-    authorization.responses.add_simple("auth.identity")
+    authorization.rules.identity.add_plain("plain", plain_identity["path"])
+    authorization.rules.responses.add_simple("auth.identity")
     return authorization
 
 

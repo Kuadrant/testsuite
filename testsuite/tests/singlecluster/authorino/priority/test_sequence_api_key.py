@@ -35,13 +35,13 @@ def second_api_key(create_api_key, second_label):
 @pytest.fixture(scope="module")
 def authorization(authorization, first_api_key, second_api_key):
     """Add 2 API key identities with different credential method and priority to the AuthConfig"""
-    authorization.identity.add_api_key(
+    authorization.rules.identity.add_api_key(
         "priority-zero",
         selector=first_api_key.selector,
         credentials=Credentials("authorizationHeader", "APIKEY"),
         priority=0,
     )
-    authorization.identity.add_api_key(
+    authorization.rules.identity.add_api_key(
         "priority-one", selector=second_api_key.selector, credentials=Credentials("queryString", "APIKEY"), priority=1
     )
 

@@ -24,7 +24,7 @@ def gateway(request, cluster, blame, wildcard_domain, module_label):
 def authorization(authorization, oidc_provider):
     # pylint: disable=unused-argument
     """Create AuthPolicy attached to gateway"""
-    authorization.identity.add_oidc("default", oidc_provider.well_known["issuer"])
+    authorization.rules.identity.add_oidc("default", oidc_provider.well_known["issuer"])
     return authorization
 
 

@@ -23,8 +23,8 @@ def authorization(authorization, keycloak):
     Adds auth metadata OIDC UserInfo which fetches OIDC UserInfo in request-time.
     Adds a simple rule that accepts only when fetched UserInfo contains the email address of the default Keycloak user.
     """
-    authorization.metadata.add_user_info("user-info", "default")
-    authorization.authorization.add_auth_rules(
+    authorization.rules.metadata.add_user_info("user-info", "default")
+    authorization.rules.authorization.add_auth_rules(
         "rule", [Pattern("auth.metadata.user-info.email", "eq", keycloak.user.properties["email"])]
     )
     return authorization

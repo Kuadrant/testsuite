@@ -23,7 +23,7 @@ def route(route, wildcard_domain, hostname):
 def authorization(authorino, blame, route, cluster, label, gateway):
     """Create AuthConfig with host set to wildcard_domain"""
     auth = AuthConfig.create_instance(cluster, blame("ac"), route, labels={"testRun": label})
-    auth.responses.add_success_header("header", JsonResponse({"anything": Value("one")}))
+    auth.rules.responses.add_success_header("header", JsonResponse({"anything": Value("one")}))
     return auth
 
 
@@ -32,7 +32,7 @@ def authorization(authorino, blame, route, cluster, label, gateway):
 def authorization2(authorino, blame, route, cluster2, label, gateway):
     """Create AuthConfig with host set to wildcard_domain in another project"""
     auth = AuthConfig.create_instance(cluster2, blame("ac"), route, labels={"testRun": label})
-    auth.responses.add_success_header("header", JsonResponse({"anything": Value("two")}))
+    auth.rules.responses.add_success_header("header", JsonResponse({"anything": Value("two")}))
     return auth
 
 

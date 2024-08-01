@@ -8,7 +8,7 @@ pytestmark = [pytest.mark.authorino]
 @pytest.fixture(scope="module")
 def authorization(authorization, keycloak):
     """Add Keycloak identity"""
-    authorization.identity.add_oidc("keycloak", keycloak.well_known["issuer"])
+    authorization.rules.identity.add_oidc("keycloak", keycloak.well_known["issuer"])
     return authorization
 
 
@@ -31,7 +31,7 @@ def test_anonymous_identity(client, auth, authorization):
     response = client.get("/get")
     assert response.status_code == 401
 
-    authorization.identity.add_anonymous("anonymous")
+    authorization.rules.identity.add_anonymous("anonymous")
     authorization.wait_for_ready()
 
     response = client.get("/get")

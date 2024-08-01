@@ -18,6 +18,11 @@ class AuthConfig(KubernetesObject):
         """Returns objects where all auth related things should be added"""
         return self.model.spec
 
+    @property
+    def rules(self):
+        """Returns `self`. Required for compatibility with AuthPolicy class"""
+        return self
+
     @cached_property
     def authorization(self) -> AuthorizationSection:
         """Gives access to authorization settings"""

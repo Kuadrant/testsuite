@@ -11,7 +11,7 @@ TEST_AUDIENCES = ["test-aud1", "test-aud2", "test-aud3"]
 @pytest.fixture(scope="module")
 def authorization(authorization):
     """Add kubernetes token-review identity with custom audiences specified"""
-    authorization.identity.add_kubernetes("token-review-aud", TEST_AUDIENCES)
+    authorization.rules.identity.add_kubernetes("token-review-aud", TEST_AUDIENCES)
     return authorization
 
 

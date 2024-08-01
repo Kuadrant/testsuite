@@ -16,7 +16,7 @@ pytestmark = [pytest.mark.kuadrant_only]
 def authorization2(request, route2, blame, cluster, label):
     """2nd Authorization object"""
     auth_policy = AuthPolicy.create_instance(cluster, blame("authz2"), route2, labels={"testRun": label})
-    auth_policy.authorization.add_opa_policy("rego", "allow = false")
+    auth_policy.rules.authorization.add_opa_policy("rego", "allow = false")
     request.addfinalizer(auth_policy.delete)
     auth_policy.commit()
     auth_policy.wait_for_accepted()
@@ -66,7 +66,7 @@ def test_identical_hostnames_auth_on_routes_rejected(client, authorization, auth
     # 2nd AuthPolicy only recovers from the "AuthScheme is not ready yet" error if reconciliation is explicitly
     # triggered, e.g. by changing the AuthPolicy CR content (changing AllValues to True in this particular case)
     # Reported as bug https://github.com/Kuadrant/kuadrant-operator/issues/702
-    authorization2.authorization.add_opa_policy("rego", "allow = false", True)
+    authorization2.rules.authorization.add_opa_policy("rego", "allow = false", True)
     authorization2.refresh()
     authorization2.wait_for_ready()
 

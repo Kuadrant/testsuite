@@ -24,7 +24,7 @@ def auth(api_key):
 def authorization(authorization, api_key):
     """Add to the AuthConfig API key identity, which can only be used on requests to the /get path"""
     when_get = [Pattern("context.request.http.path", "eq", "/get")]
-    authorization.identity.add_api_key("api-key", selector=api_key.selector, when=when_get)
+    authorization.rules.identity.add_api_key("api-key", selector=api_key.selector, when=when_get)
     return authorization
 
 

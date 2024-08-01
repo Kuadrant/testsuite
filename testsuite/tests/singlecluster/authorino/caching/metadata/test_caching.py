@@ -12,7 +12,7 @@ pytestmark = [pytest.mark.authorino]
 def authorization(authorization, module_label, expectation_path):
     """Adds Cached Metadata to the AuthConfig"""
     meta_cache = Cache(5, ValueFrom("context.request.http.path"))
-    authorization.metadata.add_http(module_label, expectation_path, "GET", cache=meta_cache)
+    authorization.rules.metadata.add_http(module_label, expectation_path, "GET", cache=meta_cache)
     return authorization
 
 

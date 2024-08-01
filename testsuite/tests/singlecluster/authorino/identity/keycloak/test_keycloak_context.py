@@ -13,7 +13,7 @@ pytestmark = [pytest.mark.authorino]
 @pytest.fixture(scope="module")
 def authorization(authorization):
     """Setup AuthConfig for test"""
-    authorization.responses.add_success_header(
+    authorization.rules.responses.add_success_header(
         "auth-json",
         JsonResponse(
             {

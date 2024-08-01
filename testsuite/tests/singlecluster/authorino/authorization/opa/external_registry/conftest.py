@@ -24,5 +24,5 @@ def authorization(authorization, opa_policy_expectation):
     Adds OPA policy. Rego query is located on external registry (Mockserver).
     Policy accepts requests that contain `header`.
     """
-    authorization.authorization.add_external_opa_policy("opa", opa_policy_expectation, 1)
+    authorization.rules.authorization.add_external_opa_policy("opa", opa_policy_expectation, 1)
     return authorization

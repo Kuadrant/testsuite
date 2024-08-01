@@ -10,8 +10,8 @@ pytestmark = [pytest.mark.authorino]
 @pytest.fixture(scope="module")
 def authorization(authorization):
     """Setup AuthConfig for test"""
-    authorization.identity.add_anonymous("anonymous")
-    authorization.responses.add_simple("auth.identity.anonymous")
+    authorization.rules.identity.add_anonymous("anonymous")
+    authorization.rules.responses.add_simple("auth.identity.anonymous")
     return authorization
 
 

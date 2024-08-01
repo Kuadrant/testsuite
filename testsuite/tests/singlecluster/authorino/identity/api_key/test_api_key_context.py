@@ -10,8 +10,8 @@ pytestmark = [pytest.mark.authorino]
 @pytest.fixture(scope="module")
 def authorization(authorization, api_key):
     """Setup AuthConfig for test"""
-    authorization.identity.add_api_key("api_key", selector=api_key.selector)
-    authorization.responses.add_simple("auth.identity")
+    authorization.rules.identity.add_api_key("api_key", selector=api_key.selector)
+    authorization.rules.responses.add_simple("auth.identity")
     return authorization
 
 

@@ -24,8 +24,8 @@ def keycloak_auth(keycloak):
 @pytest.fixture(scope="module")
 def authorization(authorization, auth0, keycloak):
     """Add both Keycloak and Auth0 identities"""
-    authorization.identity.add_oidc("Keycloak", keycloak.well_known["issuer"])
-    authorization.identity.add_oidc("auth0", auth0.well_known["issuer"])
+    authorization.rules.identity.add_oidc("Keycloak", keycloak.well_known["issuer"])
+    authorization.rules.identity.add_oidc("auth0", auth0.well_known["issuer"])
     return authorization
 
 

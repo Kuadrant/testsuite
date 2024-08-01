@@ -11,7 +11,7 @@ pytestmark = [pytest.mark.authorino]
 @pytest.fixture(scope="module")
 def authorization(authorization):
     """Add to the AuthConfig response, which will only trigger on POST requests"""
-    authorization.responses.add_success_header(
+    authorization.rules.responses.add_success_header(
         "simple", JsonResponse({"data": Value("response")}), when=[Pattern("context.request.http.method", "eq", "POST")]
     )
     return authorization

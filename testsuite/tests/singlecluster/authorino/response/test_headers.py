@@ -18,8 +18,8 @@ def header_name(request):
 @pytest.fixture(scope="module")
 def authorization(authorization, header_name):
     """Add response to Authorization"""
-    authorization.responses.clear_all()  # delete previous responses due to the parametrization
-    authorization.responses.add_success_header(header_name, JsonResponse({"anything": Value("one")}))
+    authorization.rules.responses.clear_all()  # delete previous responses due to the parametrization
+    authorization.rules.responses.add_success_header(header_name, JsonResponse({"anything": Value("one")}))
     return authorization
 
 

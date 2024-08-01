@@ -57,8 +57,8 @@ def authorization(client_secret, authorization, keycloak, client, blame):
     # To prevent the flakiness of these tests, we are adding a new retry code: 404
     client.add_retry_code(404)
 
-    authorization.metadata.add_uma("resource-data", keycloak.well_known["issuer"], client_secret.name())
-    authorization.authorization.add_opa_policy("opa", VALIDATE_RESOURCE_OWNER)
+    authorization.rules.metadata.add_uma("resource-data", keycloak.well_known["issuer"], client_secret.name())
+    authorization.rules.authorization.add_opa_policy("opa", VALIDATE_RESOURCE_OWNER)
     return authorization
 
 

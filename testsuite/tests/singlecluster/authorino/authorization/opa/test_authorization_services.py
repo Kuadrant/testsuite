@@ -106,8 +106,8 @@ def authorization(authorization, rego_policy):
     allValues set to 'true' so that values of all rules declared in the Rego policy - including value in rpt variable -
     are returned after policy evaluation so that the value from rpt variable can be added to the success header.
     """
-    authorization.authorization.add_opa_policy("opa", rego_policy, all_values=True)
-    authorization.responses.add_success_header(
+    authorization.rules.authorization.add_opa_policy("opa", rego_policy, all_values=True)
+    authorization.rules.responses.add_success_header(
         "x-keycloak",
         JsonResponse({"rpt": ValueFrom("auth.authorization.opa.rpt")}),
         when=[Pattern("auth.identity.authorization.permissions", "eq", "")],

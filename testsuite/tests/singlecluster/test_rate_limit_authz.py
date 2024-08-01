@@ -13,7 +13,7 @@ pytestmark = [pytest.mark.kuadrant_only, pytest.mark.limitador]
 @pytest.fixture(scope="module")
 def rate_limit(rate_limit):
     """Add limit to the policy"""
-    rate_limit.add_limit(
+    rate_limit.limits.add_limit(
         "basic", [Limit(5, 60)], counters=[r"metadata.filter_metadata.envoy\.filters\.http\.ext_authz.identity.user"]
     )
     return rate_limit
@@ -22,8 +22,8 @@ def rate_limit(rate_limit):
 @pytest.fixture(scope="module")
 def authorization(authorization, oidc_provider):
     """Adds keycloak identity and JSON injection, that wraps the response as Envoy Dynamic Metadata for rate limit"""
-    authorization.identity.add_oidc("default", oidc_provider.well_known["issuer"])
-    authorization.responses.add_success_dynamic(
+    authorization.rules.identity.add_oidc("default", oidc_provider.well_known["issuer"])
+    authorization.rules.responses.add_success_dynamic(
         "identity", JsonResponse({"user": ValueFrom("auth.identity.preferred_username")})
     )
     return authorization

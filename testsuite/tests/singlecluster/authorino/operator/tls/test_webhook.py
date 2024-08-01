@@ -75,11 +75,11 @@ def authorization(authorization, cluster, authorino_domain) -> AuthConfig:
     authorization.add_host(authorino_domain)
 
     # get user info from admission webhook
-    authorization.identity.clear_all()
-    authorization.identity.add_plain("k8s-userinfo", "context.request.http.body.@fromstr|request.userInfo")
+    authorization.rules.identity.clear_all()
+    authorization.rules.identity.add_plain("k8s-userinfo", "context.request.http.body.@fromstr|request.userInfo")
 
     # add OPA policy to process admission webhook request
-    authorization.authorization.add_opa_policy("features", OPA_POLICY)
+    authorization.rules.authorization.add_opa_policy("features", OPA_POLICY)
     user_value = ValueFrom("auth.identity.username")
 
     when = [
@@ -93,7 +93,7 @@ def authorization(authorization, cluster, authorino_domain) -> AuthConfig:
         "verb": {"value": "create"},
     }
     # add response for admission webhook for creating Ingress
-    authorization.authorization.add_kubernetes(
+    authorization.rules.authorization.add_kubernetes(
         "ingress-authn-k8s-binding-create", user_value, kube_attrs, when=when, priority=1
     )
 
@@ -108,7 +108,7 @@ def authorization(authorization, cluster, authorino_domain) -> AuthConfig:
         "verb": {"value": "delete"},
     }
     # add response for admission webhook for deleting Ingress
-    authorization.authorization.add_kubernetes(
+    authorization.rules.authorization.add_kubernetes(
         "ingress-authn-k8s-binding-delete", user_value, kube_attrs, when=when, priority=1
     )
     return authorization

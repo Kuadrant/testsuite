@@ -30,7 +30,7 @@ def rate_limit(rate_limit):
     selector = RouteSelector(
         RouteMatch(path=PathMatch(value="/anything", type=MatchType.PATH_PREFIX), method=HTTPMethod.GET)
     )
-    rate_limit.add_limit("anything", [Limit(5, 10)], route_selectors=[selector])
+    rate_limit.limits.add_limit("anything", [Limit(5, 10)], route_selectors=[selector])
     return rate_limit
 
 

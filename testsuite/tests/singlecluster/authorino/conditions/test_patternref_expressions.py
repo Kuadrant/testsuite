@@ -27,7 +27,7 @@ def authorization(authorization):
         }
     )
 
-    authorization.authorization.add_auth_rules(
+    authorization.rules.authorization.add_auth_rules(
         "auth_rules",
         [
             AnyPattern(

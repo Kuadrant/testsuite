@@ -131,29 +131,29 @@ def authorization(authorization, keycloak, terms_and_conditions, cluster_info, a
     )
     authorization.add_rule([PatternRef("api-route"), PatternRef("v1-route")])
 
-    authorization.identity.clear_all()
-    authorization.identity.add_oidc(
+    authorization.rules.identity.clear_all()
+    authorization.rules.identity.add_oidc(
         "user-sso",
         keycloak.well_known["issuer"],
         ttl=3600,
         defaults_properties={"org_id": ValueFrom("auth.identity.family_name")},
     )
-    authorization.identity.add_oidc(
+    authorization.rules.identity.add_oidc(
         "admin-sso", admin_rhsso.well_known["issuer"], ttl=3600, when=[PatternRef("admin-route")]
     )
 
-    authorization.metadata.add_http(
+    authorization.rules.metadata.add_http(
         "terms-and-conditions", terms_and_conditions("false"), "GET", when=[PatternRef("create-dinosaur-route")]
     )
-    authorization.metadata.add_http(
+    authorization.rules.metadata.add_http(
         "cluster-info", cluster_info(keycloak.client_name), "GET", when=[PatternRef("agent-clusters-route")]
     )
-    authorization.metadata.add_http(
+    authorization.rules.metadata.add_http(
         "resource-info", resource_info("123", keycloak.client_name), "GET", when=[PatternRef("dinosaur-resource-route")]
     )
 
-    authorization.authorization.add_auth_rules("bearer-token", [Pattern("auth.identity.typ", "eq", "Bearer")])
-    authorization.authorization.add_opa_policy(
+    authorization.rules.authorization.add_auth_rules("bearer-token", [Pattern("auth.identity.typ", "eq", "Bearer")])
+    authorization.rules.authorization.add_opa_policy(
         "deny-list",
         """list := [
   "denied-test-user1@example.com"
@@ -163,7 +163,7 @@ allow { not denied }
 """,
         when=[PatternRef("acl-required")],
     )
-    authorization.authorization.add_opa_policy(
+    authorization.rules.authorization.add_opa_policy(
         "allow-list",
         """list := [
   "123"
@@ -172,25 +172,25 @@ allow { list[_] == input.auth.identity.org_id }
 """,
         when=[PatternRef("acl-required")],
     )
-    authorization.authorization.add_auth_rules(
+    authorization.rules.authorization.add_auth_rules(
         "terms-and-conditions",
         [Pattern("auth.metadata.terms-and-conditions.terms_required", "eq", "false")],
         when=[PatternRef("create-dinosaur-route")],
     )
     for name in ["dinosaurs", "metrics-federate", "service-accounts", "supported-instance-types"]:
-        authorization.authorization.add_auth_rules(
+        authorization.rules.authorization.add_auth_rules(
             name, [PatternRef("user-sso"), PatternRef("require-org-id")], when=[PatternRef(f"{name}-route")]
         )
 
-    authorization.authorization.add_auth_rules(
+    authorization.rules.authorization.add_auth_rules(
         "agent-clusters", [PatternRef("user-sso")], when=[PatternRef("agent-clusters-route")]
     )
-    authorization.authorization.add_opa_policy(
+    authorization.rules.authorization.add_opa_policy(
         "cluster-id",
         """allow { input.auth.identity.azp == object.get(input.auth.metadata, "cluster-info", {}).client_id }""",
         when=[PatternRef("agent-clusters-route")],
     )
-    authorization.authorization.add_opa_policy(
+    authorization.rules.authorization.add_opa_policy(
         "owner",
         """org_id := input.auth.identity.org_id
 filter_by_org { org_id }
@@ -208,7 +208,7 @@ allow { method == "PATCH";  has_permission }
 """,
         when=[PatternRef("dinosaur-resource-route")],
     )
-    authorization.authorization.add_opa_policy(
+    authorization.rules.authorization.add_opa_policy(
         "admin-rbac",
         """method := input.context.request.http.method
 roles := input.auth.identity.realm_access.roles
@@ -221,16 +221,16 @@ allow { method == "DELETE"; roles[_] == "admin-full" }
 """,
         when=[PatternRef("admin-route"), PatternRef("admin-sso")],
     )
-    authorization.authorization.add_opa_policy(
+    authorization.rules.authorization.add_opa_policy(
         "require-admin-sso",
         """allow { false }""",
         when=[PatternRef("admin-route"), PatternRef("user-sso")],
     )
-    authorization.authorization.add_auth_rules(
+    authorization.rules.authorization.add_auth_rules(
         "internal-endpoints", [Pattern(path_fourth_element, "neq", "authz-metadata")]
     )
 
-    authorization.responses.set_unauthorized(
+    authorization.rules.responses.set_unauthorized(
         DenyResponse(
             headers={"content-type": Value("application/json")},
             body=Value(
