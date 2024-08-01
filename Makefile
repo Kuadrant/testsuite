@@ -109,6 +109,7 @@ help: ## Print this help
 CR_NAMES = $\
 authorinos.operator.authorino.kuadrant.io,$\
 gateways.networking.istio.io,$\
+gateways.gateway.networking.k8s.io,$\
 httproutes.gateway.networking.k8s.io,$\
 deployments.apps,$\
 services,$\
