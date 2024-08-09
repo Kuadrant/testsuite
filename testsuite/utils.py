@@ -6,6 +6,7 @@ import json
 import os
 import getpass
 import secrets
+from time import sleep
 from collections.abc import Collection
 from copy import deepcopy
 from dataclasses import is_dataclass, fields
@@ -14,6 +15,7 @@ from io import StringIO
 from typing import Dict, Union
 from urllib.parse import urlparse, ParseResult
 
+import dns.resolver
 from weakget import weakget
 
 from testsuite.certificates import Certificate, CFSSLClient, CertInfo
@@ -176,3 +178,24 @@ def check_condition(condition, condition_type, status, reason=None, message=None
     ):
         return True
     return False
+
+
+def is_nxdomain(hostname: str):
+    """Returns bool value if hostname has `A` record in DNS."""
+    did_raise = False
+    try:
+        dns.resolver.resolve(hostname)
+    except dns.resolver.NXDOMAIN:
+        did_raise = True
+    return did_raise
+
+
+def sleep_ttl(hostname: str):
+    """Sleeps for duration of TTL for given hostname."""
+    try:
+        response = dns.resolver.resolve(hostname)
+    except dns.resolver.NXDOMAIN:
+        return
+    if response.rrset is None:
+        return
+    sleep(response.rrset.ttl)
