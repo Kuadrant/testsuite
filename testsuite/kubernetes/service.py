@@ -3,7 +3,7 @@
 from dataclasses import dataclass, asdict
 from typing import Literal
 
-from openshift_client import timeout
+from openshift_client import timeout, Missing
 
 from testsuite.kubernetes import KubernetesObject
 
@@ -58,7 +58,15 @@ class Service(KubernetesObject):
         """Returns LoadBalancer IP for this service"""
         if self.model.spec.type != "LoadBalancer":
             raise AttributeError("External IP can be only used with LoadBalancer services")
-        return self.model.status.loadBalancer.ingress[0].ip
+        ip = self.model.status.loadBalancer.ingress[0].ip
+
+        # If static IP is not used then hostname might be used instead
+        if ip is Missing:
+            ip = self.model.status.loadBalancer.ingress[0].hostname
+        if ip is Missing:
+            raise AttributeError(f"Neither External IP nor Hostname found in status of {self.model.spec.name} service")
+
+        return ip
 
     def delete(self, ignore_not_found=True, cmd_args=None):
         """Deletes Service, introduces bigger waiting times due to LoadBalancer type"""
