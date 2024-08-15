@@ -40,7 +40,7 @@ def prometheus(cluster):
 @pytest.fixture(scope="package")
 def service_monitor(cluster, request, blame, authorino):
     """Create ServiceMonitor object to follow Authorino /metrics and /server-metrics endpoints"""
-    label = {"app": blame("monitoring")}
+    label = {"app": authorino.name() + "metrics"}
     authorino.metrics_service.label(label)
     endpoints = [MetricsEndpoint("/metrics", "http"), MetricsEndpoint("/server-metrics", "http")]
     monitor = ServiceMonitor.create_instance(
