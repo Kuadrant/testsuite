@@ -11,10 +11,10 @@ pytestmark = [pytest.mark.authorino, pytest.mark.standalone_only]
 
 
 @pytest.fixture(scope="module")
-def api_key(create_api_key, module_label, cluster2):
+def api_key(create_api_key, module_label, second_namespace):
     """Creates API key Secret"""
     api_key = "cluster_wide_api_key"
-    return create_api_key("wide-api-key", module_label, api_key, cluster2)
+    return create_api_key("wide-api-key", module_label, api_key, second_namespace)
 
 
 @pytest.fixture(scope="module")
@@ -30,9 +30,9 @@ def invalid_label_selector():
 
 
 @pytest.fixture(scope="module")
-def invalid_api_key(create_api_key, invalid_label_selector, cluster2):
+def invalid_api_key(create_api_key, invalid_label_selector, second_namespace):
     """Creates API key Secret with label that does not match any of the labelSelectors defined by AuthConfig"""
-    return create_api_key("invalid-api-key", invalid_label_selector, "invalid_api_key", cluster2)
+    return create_api_key("invalid-api-key", invalid_label_selector, "invalid_api_key", second_namespace)
 
 
 @pytest.fixture(scope="module")

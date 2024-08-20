@@ -239,7 +239,7 @@ def module_label(label):
 def cluster(testconfig):
     """Kubernetes client for the primary namespace"""
     project = testconfig["service_protection"]["project"]
-    client = testconfig["cluster"].change_project(testconfig["service_protection"]["project"])
+    client = testconfig["control_plane"]["cluster"].change_project(testconfig["service_protection"]["project"])
     if not client.connected:
         pytest.fail(f"You are not logged into Kubernetes or the {project} namespace doesn't exist")
     return client

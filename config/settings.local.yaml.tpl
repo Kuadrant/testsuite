@@ -1,9 +1,5 @@
 #default:
 #  tester: "someuser"                          # Optional: name of the user, who is running the tests, defaults to whoami/uid
-#  cluster:                                    # Primary cluster where tests should run
-#    api_url: "https://api.kubernetes.com"     # Optional: Kubernetes API URL, if None it will use Kubernetes that you are logged in
-#    token: "KUADRANT_RULEZ"                   # Optional: Kubernetes Token, if None it will Kubernetes that you are logged in
-#    kubeconfig_path: "~/.kube/config"         # Optional: Kubeconfig to use, if None the default one is used
 #  kuadrantctl: kuadrantctl
 #  tools:
 #    project: "tools"                          # Optional: Kubernetes project, where external tools are located
@@ -44,7 +40,14 @@
 #      metrics_service_name: ""                    # controller metrics service name for already deployed Authorino
 #  default_exposer: "kubernetes"                   # Force Exposer typem options: 'openshift', 'kind', 'kubernetes'
 #  control_plane:
-#    additional_clusters: []                       # List of additional clusters for Multicluster testing, see 'cluster' option for more details
+#    cluster:                                      # Primary cluster where tests should run
+#        api_url: "https://api.kubernetes.com"     # Optional: Kubernetes API URL, if None it will use Kubernetes that you are logged in
+#        token: "KUADRANT_RULEZ"                   # Optional: Kubernetes Token, if None it will Kubernetes that you are logged in
+#        kubeconfig_path: "~/.kube/config"         # Optional: Kubeconfig to use, if None the default one is used
+#    cluster2:                                     # Second cluster for the multicluster tests
+#        api_url: "https://api.kubernetes2.com"
+#        token: "KUADRANT_RULEZ"
+#        kubeconfig_path: "~/.kube/config2"
 #    provider_secret: "aws-credentials"            # Name of the Secret resource that contains DNS provider credentials
 #    issuer:                                       # Issuer object for testing TLSPolicy
 #      name: "selfsigned-cluster-issuer"           # Name of Issuer CR
