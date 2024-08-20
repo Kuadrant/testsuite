@@ -180,6 +180,16 @@ def check_condition(condition, condition_type, status, reason=None, message=None
     return False
 
 
+def hostname_to_ip(address: str) -> str:
+    """Resolves hostname to IP if necessary"""
+    if any(c.isalpha() for c in address):
+        try:
+            return dns.resolver.resolve(address)[0].address
+        except dns.resolver.NXDOMAIN as e:
+            raise ValueError(f"Hostname {address} can't be resolved to an IP address") from e
+    return address
+
+
 def is_nxdomain(hostname: str):
     """
     Returns True if hostname has no `A` record in DNS. False otherwise.

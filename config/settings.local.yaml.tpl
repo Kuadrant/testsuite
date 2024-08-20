@@ -52,6 +52,13 @@
 #    issuer:                                       # Issuer object for testing TLSPolicy
 #      name: "selfsigned-cluster-issuer"           # Name of Issuer CR
 #      kind: "ClusterIssuer"                       # Kind of Issuer, can be "Issuer" or "ClusterIssuer"
+#  dns:
+#    dns_server:
+#      geo_code: "DE"                       # dns provider geo code of the dns server
+#      address: "ns1.seolizer.de"           # dns nameserver hostname or ip
+#    dns_server2:
+#      geo_code: "AU"                       # dns provider geo code of the second dns server
+#      address: "ns2.seolizer.de"           # second dns nameserver hostname or ip
 #  letsencrypt:
 #    issuer:                                       # Issuer object for testing TLSPolicy
 #      name: "letsencrypt-staging-issuer"          # Name of Issuer CR

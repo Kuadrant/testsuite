@@ -2,6 +2,7 @@
 
 from dynaconf import Dynaconf, Validator
 
+from testsuite.utils import hostname_to_ip
 from testsuite.config.tools import fetch_route, fetch_service, fetch_secret, fetch_service_ip
 
 
@@ -58,6 +59,12 @@ settings = Dynaconf(
         (
             Validator("letsencrypt.issuer.name", must_exist=True, ne=None)
             & Validator("letsencrypt.issuer.kind", must_exist=True, is_in={"Issuer", "ClusterIssuer"})
+        ),
+        (
+            Validator("dns.dns_server.address", must_exist=True, ne=None, cast=hostname_to_ip)
+            & Validator("dns.dns_server.geo_code", must_exist=True, ne=None)
+            & Validator("dns.dns_server2.address", must_exist=True, ne=None, cast=hostname_to_ip)
+            & Validator("dns.dns_server2.geo_code", must_exist=True, ne=None)
         ),
         DefaultValueValidator("keycloak.url", default=fetch_service_ip("keycloak", force_http=True, port=8080)),
         DefaultValueValidator("keycloak.password", default=fetch_secret("credential-sso", "ADMIN_PASSWORD")),
