@@ -274,3 +274,9 @@ def cluster_issuer(testconfig):
         kind=testconfig["control_plane"]["issuer"]["kind"],
         name=testconfig["control_plane"]["issuer"]["name"],
     )
+
+
+@pytest.fixture(scope="session")
+def dns_provider_secret(testconfig):
+    """Contains name of DNS provider secret"""
+    return testconfig["control_plane"]["provider_secret"]

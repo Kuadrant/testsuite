@@ -4,8 +4,8 @@ import pytest
 
 from testsuite.gateway import CustomReference
 from testsuite.kuadrant.policy.tls import TLSPolicy
+from testsuite.kuadrant.policy.dns import DNSPolicy
 from testsuite.kuadrant.policy import has_condition
-from . import dns_policy
 
 pytestmark = [pytest.mark.kuadrant_only]
 
@@ -17,21 +17,22 @@ def commit():
 
 
 @pytest.mark.parametrize(
-    "create_cr",
+    "policy_cr, issuer_or_secret",
     [
-        pytest.param(dns_policy, id="DNSPolicy", marks=[pytest.mark.dnspolicy]),
-        pytest.param(TLSPolicy.create_instance, id="TLSPolicy", marks=[pytest.mark.tlspolicy]),
+        pytest.param(DNSPolicy, "dns_provider_secret", id="DNSPolicy", marks=[pytest.mark.dnspolicy]),
+        pytest.param(TLSPolicy, "cluster_issuer", id="TLSPolicy", marks=[pytest.mark.tlspolicy]),
     ],
 )
 @pytest.mark.issue("https://github.com/Kuadrant/multicluster-gateway-controller/issues/361")
-def test_no_gw(request, create_cr, cluster, blame, module_label, cluster_issuer):
+def test_no_gw(request, policy_cr, issuer_or_secret, cluster, blame, module_label):
     """Tests that policy is rejected if the Gateway does not exist at all"""
-
-    policy = create_cr(
+    # depending on if DNSPolicy or TLSPolicy is tested the right object for the 4th parameter is passed
+    issuer_or_secret_obj = request.getfixturevalue(issuer_or_secret)
+    policy = policy_cr.create_instance(
         cluster,
         blame("resource"),
         CustomReference(group="gateway.networking.k8s.io", kind="Gateway", name="does-not-exist"),
-        cluster_issuer,
+        issuer_or_secret_obj,
         labels={"app": module_label},
     )
     request.addfinalizer(policy.delete)

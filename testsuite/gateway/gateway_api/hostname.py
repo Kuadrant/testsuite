@@ -42,14 +42,14 @@ class DNSPolicyExposer(Exposer):
 
     @cached_property
     def base_domain(self) -> str:
-        mz_name = settings["control_plane"]["managedzone"]
+        provider_secret_name = settings["control_plane"]["provider_secret"]
         try:
-            zone = selector(f"managedzone/{mz_name}", static_context=self.cluster.context).object()
+            secret = selector(f"secret/{provider_secret_name}", static_context=self.cluster.context).object()
         except OpenShiftPythonException as exc:
             raise OpenShiftPythonException(
-                f"Unable to find managedzone/{mz_name} in namespace {self.cluster.project}"
+                f"Unable to find secret/{provider_secret_name} in namespace {self.cluster.project}"
             ) from exc
-        return f'{generate_tail(5)}.{zone.model["spec"]["domainName"]}'
+        return f'{generate_tail(5)}.{secret.model["metadata"]["annotations"]["base_domain"]}'
 
     def expose_hostname(self, name, gateway: Gateway) -> Hostname:
         return StaticHostname(

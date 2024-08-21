@@ -45,7 +45,7 @@
 #  default_exposer: "kubernetes"                   # Force Exposer typem options: 'openshift', 'kind', 'kubernetes'
 #  control_plane:
 #    additional_clusters: []                       # List of additional clusters for Multicluster testing, see 'cluster' option for more details
-#    managedzone: aws-mz                           # Name of the ManagedZone resource
+#    provider_secret: "aws-credentials"            # Name of the Secret resource that contains DNS provider credentials
 #    issuer:                                       # Issuer object for testing TLSPolicy
 #      name: "selfsigned-cluster-issuer"           # Name of Issuer CR
 #      kind: "ClusterIssuer"                       # Kind of Issuer, can be "Issuer" or "ClusterIssuer"

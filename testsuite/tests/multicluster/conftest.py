@@ -130,9 +130,11 @@ def wildcard_domain(base_domain):
 
 
 @pytest.fixture(scope="module")
-def dns_policy(blame, cluster, gateways, module_label):
+def dns_policy(blame, cluster, gateways, module_label, dns_provider_secret):
     """DNSPolicy fixture"""
-    policy = DNSPolicy.create_instance(cluster, blame("dns"), gateways[cluster], labels={"app": module_label})
+    policy = DNSPolicy.create_instance(
+        cluster, blame("dns"), gateways[cluster], dns_provider_secret, labels={"app": module_label}
+    )
     return policy
 
 

@@ -50,7 +50,7 @@ settings = Dynaconf(
             must_exist=True,
             messages={"condition": "{value} is not valid exposer"},
         ),
-        Validator("control_plane.managedzone", must_exist=True, ne=None),
+        Validator("control_plane.provider_secret", must_exist=True, ne=None),
         (
             Validator("control_plane.issuer.name", must_exist=True, ne=None)
             & Validator("control_plane.issuer.kind", must_exist=True, is_in={"Issuer", "ClusterIssuer"})
