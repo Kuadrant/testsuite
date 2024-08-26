@@ -15,7 +15,21 @@ This repository contains end-to-end tests for Kuadrant project. It supports runn
 * Use `test` make target
 
 ### DNSPolicy tests
-* Existing ManagedZone, named `aws-mz` (name defined in `control_plane.managedzone`)
+* Existing DNS provider Secret named `aws-credentials` (name defined in `control_plane.provider_secret`) with annotation containing the base domain. Example AWS provider Secret:
+```yaml
+kind: Secret
+apiVersion: v1
+metadata:
+  name: aws-credentials
+  namespace: kuadrant
+  annotations:
+    base_domain: example.com
+data:
+  AWS_ACCESS_KEY_ID: <key>
+  AWS_REGION: <region>
+  AWS_SECRET_ACCESS_KEY: <key>
+type: kuadrant.io/aws
+```
 
 ### TLSPolicy tests
 * Existing self-signed ClusterIssuer or Issuer, named `selfsigned-issuer` (name defined in `control_plane.issuer.name`)

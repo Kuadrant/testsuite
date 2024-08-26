@@ -53,9 +53,11 @@ def exposer(request, cluster) -> Exposer:
 
 
 @pytest.fixture(scope="module")
-def dns_policy(blame, gateway, module_label):
+def dns_policy(blame, gateway, module_label, dns_provider_secret):
     """DNSPolicy fixture"""
-    policy = DNSPolicy.create_instance(gateway.cluster, blame("dns"), gateway, labels={"app": module_label})
+    policy = DNSPolicy.create_instance(
+        gateway.cluster, blame("dns"), gateway, dns_provider_secret, labels={"app": module_label}
+    )
     return policy
 
 
