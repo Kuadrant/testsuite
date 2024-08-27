@@ -5,7 +5,20 @@ from dataclasses import dataclass
 from testsuite.gateway import Referencable
 from testsuite.kubernetes.client import KubernetesClient
 from testsuite.kuadrant.policy import Policy
-from testsuite.utils import asdict
+from testsuite.utils import asdict, check_condition
+
+
+def has_record_condition(condition_type, status="True", reason=None, message=None):
+    """Returns function, that returns True if the DNSPolicy has specific record condition"""
+
+    def _check(obj):
+        for record in obj.model.status.recordConditions.values():
+            for condition in record:
+                if check_condition(condition, condition_type, status, reason, message):
+                    return True
+        return False
+
+    return _check
 
 
 @dataclass

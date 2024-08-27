@@ -16,7 +16,7 @@ class Secret(KubernetesObject):
         cluster,
         name,
         data: dict[str, str],
-        secret_type: Literal["kubernetes.io/tls", "Opaque"] = "Opaque",
+        secret_type: Literal["kubernetes.io/tls", "kuadrant.io/aws", "Opaque"] = "Opaque",
         labels: dict[str, str] = None,
     ):
         """Creates new Secret"""
@@ -54,7 +54,7 @@ class TLSSecret(Secret):
         certificate: Certificate,
         cert_name: str = "tls.crt",
         key_name: str = "tls.key",
-        secret_type: Literal["kubernetes.io/tls", "Opaque"] = "kubernetes.io/tls",
+        secret_type: Literal["kubernetes.io/tls", "kuadrant.io/aws", "Opaque"] = "kubernetes.io/tls",
         labels: dict[str, str] = None,
     ):
         return super().create_instance(
