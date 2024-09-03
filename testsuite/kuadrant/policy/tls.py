@@ -51,5 +51,5 @@ class TLSPolicy(Policy):
 
     def wait_for_ready(self):
         """Increase timeout to account for letsEncrypt"""
-        success = self.wait_until(has_condition("Enforced", "True"), timelimit=180)
+        success = self.wait_until(has_condition("Enforced", "True"), timelimit=300)
         assert success, f"{self.kind()} did not get ready in time"
