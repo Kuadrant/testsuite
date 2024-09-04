@@ -22,6 +22,7 @@ def setup_gateway(request, cluster, blame, testconfig, module_label):
         )
         request.addfinalizer(gw.delete)
         gw.commit()
+        gw.wait_for_ready()
         return gw
 
     return _envoy
