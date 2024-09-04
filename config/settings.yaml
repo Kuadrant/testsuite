@@ -11,13 +11,13 @@ default:
       username: "testUser"
       password: "testPassword"
   httpbin:
-    image: "quay.io/jsmadis/httpbin:latest"
+    image: "quay.io/trepel/httpbin:jsmadis"
   service_protection:
     system_project: "kuadrant-system"
     project: "kuadrant"
     project2: "kuadrant2"
     envoy:
-      image: "quay.io/phala/envoy:v1.28-latest"
+      image: "quay.io/trepel/envoy:v1.31.0"
     gateway:
        project: "istio-system"
        name: "istio-ingressgateway"
