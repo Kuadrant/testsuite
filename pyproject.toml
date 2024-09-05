@@ -11,7 +11,6 @@ python = "^3.11"
 typing_extensions = "*"
 pytest-xdist = "*"
 pytest = "*"
-pytest-asyncio = ">=0.23.4"
 pytest-html = "*"
 dynaconf = "*"
 dnspython = "*"
@@ -61,7 +60,6 @@ log_date_format = "%H:%M:%S %z"
 log_level = "INFO"
 junit_logging = "all"
 junit_family = "xunit2"
-asyncio_mode = "auto"
 xfail_strict = true
 
 # Pylint:
