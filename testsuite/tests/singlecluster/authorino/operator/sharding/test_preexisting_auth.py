@@ -59,6 +59,7 @@ def test_preexisting_auth(
     route2 = setup_route(hostname.hostname, gw2)
     auth = setup_authorization(route2, "B")
     auth.wait_for_ready()
+    auth.refresh()
 
     assert (
         hostname.hostname in auth.model.status.summary.hostsReady
