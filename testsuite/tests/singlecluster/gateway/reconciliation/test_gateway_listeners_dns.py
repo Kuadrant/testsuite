@@ -46,7 +46,6 @@ def route(route, wildcard_domain):
     return route
 
 
-@pytest.mark.xfail()
 @pytest.mark.issue("https://github.com/Kuadrant/kuadrant-operator/issues/794")
 def test_change_hostname(client, client_new, auth, gateway, route, new_domain, wildcard_domain):
     """
