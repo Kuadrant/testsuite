@@ -9,7 +9,7 @@ pytestmark = [pytest.mark.authorino, pytest.mark.standalone_only]
 
 
 @pytest.fixture(scope="module")
-def setup_authorino(cluster, blame, testconfig, label, request):
+def setup_authorino(cluster, blame, testconfig, module_label, request):
     """Authorino instance"""
 
     def _authorino(sharding_label):
@@ -17,7 +17,7 @@ def setup_authorino(cluster, blame, testconfig, label, request):
             cluster,
             blame("authorino"),
             image=weakget(testconfig)["authorino"]["image"] % None,
-            label_selectors=[f"sharding={sharding_label}", f"testRun={label}"],
+            label_selectors=[f"sharding={sharding_label}", f"testRun={module_label}"],
         )
         request.addfinalizer(authorino.delete)
         authorino.commit()
@@ -59,7 +59,6 @@ def test_preexisting_auth(
     route2 = setup_route(hostname.hostname, gw2)
     auth = setup_authorization(route2, "B")
     auth.wait_for_ready()
-    auth.refresh()
 
     assert (
         hostname.hostname in auth.model.status.summary.hostsReady
