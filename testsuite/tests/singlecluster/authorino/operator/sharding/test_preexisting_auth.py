@@ -1,30 +1,8 @@
 """Test for preexisting authorino bug issue:https://github.com/Kuadrant/testsuite/issues/69"""
 
 import pytest
-from weakget import weakget
-
-from testsuite.kuadrant.authorino import AuthorinoCR
 
 pytestmark = [pytest.mark.authorino, pytest.mark.standalone_only]
-
-
-@pytest.fixture(scope="module")
-def setup_authorino(cluster, blame, testconfig, module_label, request):
-    """Authorino instance"""
-
-    def _authorino(sharding_label):
-        authorino = AuthorinoCR.create_instance(
-            cluster,
-            blame("authorino"),
-            image=weakget(testconfig)["authorino"]["image"] % None,
-            label_selectors=[f"sharding={sharding_label}", f"testRun={module_label}"],
-        )
-        request.addfinalizer(authorino.delete)
-        authorino.commit()
-        authorino.wait_for_ready()
-        return authorino
-
-    return _authorino
 
 
 @pytest.mark.issue("https://github.com/Kuadrant/authorino/pull/349")
