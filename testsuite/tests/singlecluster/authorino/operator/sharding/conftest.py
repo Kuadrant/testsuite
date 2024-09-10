@@ -1,7 +1,9 @@
 """Conftest for authorino sharding tests"""
 
 import pytest
+from weakget import weakget
 
+from testsuite.kuadrant.authorino import AuthorinoCR
 from testsuite.kuadrant.policy.authorization import Value, JsonResponse
 from testsuite.gateway.envoy import Envoy
 from testsuite.kuadrant.policy.authorization.auth_config import AuthConfig
@@ -46,7 +48,26 @@ def setup_route(request, blame, backend, module_label):
 
 
 @pytest.fixture(scope="module")
-def setup_authorization(request, blame, cluster, module_label):  # pylint: disable=unused-argument
+def setup_authorino(cluster, blame, testconfig, module_label, request):
+    """Authorino instance"""
+
+    def _authorino(sharding_label):
+        authorino = AuthorinoCR.create_instance(
+            cluster,
+            blame("authorino"),
+            image=weakget(testconfig)["authorino"]["image"] % None,
+            label_selectors=[f"sharding={sharding_label}", f"testRun={module_label}"],
+        )
+        request.addfinalizer(authorino.delete)
+        authorino.commit()
+        authorino.wait_for_ready()
+        return authorino
+
+    return _authorino
+
+
+@pytest.fixture(scope="module")
+def setup_authorization(request, blame, cluster, module_label):
     """Factory method for creating AuthConfigs in the test run"""
 
     def _authorization(route, sharding_label=None):

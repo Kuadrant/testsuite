@@ -6,10 +6,9 @@ pytestmark = [pytest.mark.authorino, pytest.mark.standalone_only]
 
 
 @pytest.fixture(scope="module")
-def authorino_parameters(authorino_parameters):
-    """Setup sharding for authorino"""
-    authorino_parameters["label_selectors"] = ["sharding=A"]
-    yield authorino_parameters
+def authorino(setup_authorino):
+    """Creates authorino with sharding label"""
+    return setup_authorino(sharding_label="A")
 
 
 def test_sharding(setup_authorization, setup_gateway, setup_route, authorino, exposer, blame):
