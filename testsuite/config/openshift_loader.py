@@ -15,18 +15,19 @@ def inject_client(obj, base_client, path):
 # pylint: disable=unused-argument, too-many-locals
 def load(obj, env=None, silent=True, key=None, filename=None):
     """Creates all KubernetesClients"""
-    section = obj.setdefault("cluster", {})
+    control_plane = obj.setdefault("control_plane", {})
+
+    cluster = control_plane.setdefault("cluster", {})
     client = KubernetesClient(
-        section.get("project"), section.get("api_url"), section.get("token"), section.get("kubeconfig_path")
+        cluster.get("project"), cluster.get("api_url"), cluster.get("token"), cluster.get("kubeconfig_path")
     )
-    obj["cluster"] = client
+    obj["control_plane"]["cluster"] = client
 
     tools = None
     if "tools" in obj and "project" in obj["tools"]:
         tools = client.change_project(obj["tools"]["project"])
     obj["tools"] = tools
 
-    control_plane = obj.setdefault("control_plane", {})
     clients = []
     clusters = control_plane.setdefault("additional_clusters", [])
     for value in clusters:
@@ -37,3 +38,8 @@ def load(obj, env=None, silent=True, key=None, filename=None):
         )
     if len(clients) > 0:
         control_plane["additional_clusters"] = clients
+
+    if cluster2 := control_plane.setdefault("cluster2", {}):
+        obj["control_plane"]["cluster2"] = KubernetesClient(
+            cluster2.get("project"), cluster2.get("api_url"), cluster2.get("token"), cluster2.get("kubeconfig_path")
+        )

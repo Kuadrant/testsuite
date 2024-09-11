@@ -17,13 +17,14 @@ from testsuite.kuadrant.policy.authorization.auth_policy import AuthPolicy
 from testsuite.kuadrant.policy.rate_limit import RateLimitPolicy
 from testsuite.kubernetes.config_map import ConfigMap
 from testsuite.prometheus import Prometheus
+from testsuite.kubernetes.client import KubernetesClient
 
 
 @pytest.fixture(scope="session")
-def cluster2(testconfig, skip_or_fail):
+def second_namespace(testconfig, skip_or_fail) -> KubernetesClient:
     """Kubernetes client for the secondary namespace located on the same cluster as primary cluster"""
     project = testconfig["service_protection"]["project2"]
-    client = testconfig["cluster"].change_project(testconfig["service_protection"]["project2"])
+    client = testconfig["control_plane"]["cluster"].change_project(testconfig["service_protection"]["project2"])
     if client is None:
         skip_or_fail("Tests requires second_project but service_protection.project2 is not set")
     if not client.connected:
@@ -78,7 +79,7 @@ def kuadrant(request, testconfig):
     if request.config.getoption("--standalone"):
         return None
 
-    ocp = testconfig["cluster"]
+    ocp = testconfig["control_plane"]["cluster"]
     project = testconfig["service_protection"]["system_project"]
     kuadrant_openshift = ocp.change_project(project)
 

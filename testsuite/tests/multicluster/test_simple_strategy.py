@@ -6,13 +6,13 @@ import pytest
 pytestmark = [pytest.mark.multicluster]
 
 
-def test_gateway_readiness(gateways):
+def test_gateway_readiness(gateway, gateway2):
     """Tests whether the Gateway was successfully placed by having its IP address assigned"""
-    for client, gateway in gateways.items():
-        assert gateway.is_ready(), f"Gateway {gateway.name()} on a server {client.api_url} did not get ready"
+    assert gateway.is_ready(), "Gateway on the first cluster did not get ready in time"
+    assert gateway2.is_ready(), "Gateway on the second cluster did not get ready in time"
 
 
-def test_multicluster_dns(client, hostname, gateways):
+def test_simple_strategy(client, hostname, gateway, gateway2):
     """
     Tests DNS/TLS across multiple clusters
     - Checks that all Gateways will get ready
@@ -24,6 +24,6 @@ def test_multicluster_dns(client, hostname, gateways):
     assert not result.has_cert_verify_error(), result.error
     assert result.status_code == 200
 
-    ips = {gateway.external_ip().split(":")[0] for gateway in gateways.values()}
+    ips = {gateway.external_ip().split(":")[0], gateway2.external_ip().split(":")[0]}
     dns_ips = {ip.address for ip in dns.resolver.resolve(hostname.hostname)}
     assert ips == dns_ips, f"Expected IPs and actual IP mismatch, got {dns_ips}, expected {ips}"

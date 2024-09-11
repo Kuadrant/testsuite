@@ -29,9 +29,9 @@ def authorization(authorino, blame, route, cluster, label, gateway):
 
 # pylint: disable = unused-argument
 @pytest.fixture(scope="module")
-def authorization2(authorino, blame, route, cluster2, label, gateway):
+def authorization2(authorino, blame, route, second_namespace, label, gateway):
     """Create AuthConfig with host set to wildcard_domain in another project"""
-    auth = AuthConfig.create_instance(cluster2, blame("ac"), route, labels={"testRun": label})
+    auth = AuthConfig.create_instance(second_namespace, blame("ac"), route, labels={"testRun": label})
     auth.responses.add_success_header("header", JsonResponse({"anything": Value("two")}))
     return auth
 

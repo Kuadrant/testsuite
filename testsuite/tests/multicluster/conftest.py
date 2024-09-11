@@ -1,29 +1,31 @@
 """Conftest for Multicluster tests"""
 
 from importlib import resources
-from typing import TypeVar
 
 import pytest
 from openshift_client import selector, OpenShiftPythonException
 
 from testsuite.backend.httpbin import Httpbin
 from testsuite.certificates import Certificate
-from testsuite.gateway import Exposer, Gateway, CustomReference, Hostname
+from testsuite.gateway import Exposer, CustomReference, Hostname
 from testsuite.gateway.gateway_api.gateway import KuadrantGateway
 from testsuite.gateway.gateway_api.hostname import DNSPolicyExposer
 from testsuite.gateway.gateway_api.route import HTTPRoute
-from testsuite.kubernetes.client import KubernetesClient
-from testsuite.kuadrant.policy import Policy
 from testsuite.kuadrant.policy.dns import DNSPolicy
 from testsuite.kuadrant.policy.tls import TLSPolicy
 
 
-AnyPolicy = TypeVar("AnyPolicy", bound=Policy)
+@pytest.fixture(scope="session")
+def cluster2(testconfig):
+    """Kubernetes client for the primary namespace"""
+    if not testconfig["control_plane"]["cluster2"]:
+        pytest.skip("Second cluster is not configured properly")
 
-
-def generate_policies(clusters: list[KubernetesClient], policy: AnyPolicy) -> dict[KubernetesClient, AnyPolicy]:
-    """Copy policies for each cluster"""
-    return {cluster: policy.__class__(policy.as_dict(), context=cluster.context) for cluster in clusters}
+    project = testconfig["service_protection"]["project"]
+    client = testconfig["control_plane"]["cluster2"].change_project(project)
+    if not client.connected:
+        pytest.fail(f"You are not logged into the second cluster or the {project} namespace doesn't exist")
+    return client
 
 
 @pytest.fixture(scope="module")
@@ -43,67 +45,10 @@ def cluster_issuer(testconfig, cluster, skip_or_fail):
     )
 
 
-@pytest.fixture(scope="session")
-def clusters(testconfig, cluster, skip_or_fail) -> list[KubernetesClient]:
-    """Returns list of all clusters on which to run Multicluster tests"""
-    additional_clusters = testconfig["control_plane"]["additional_clusters"]
-    if len(additional_clusters) == 0:
-        skip_or_fail("Only one cluster was provided for multi-cluster tests")
-    return [
-        cluster,
-        *(cluster.change_project(testconfig["service_protection"]["project"]) for cluster in additional_clusters),
-    ]
-
-
-@pytest.fixture(scope="session")
-def backends(request, clusters, blame, label, testconfig) -> dict[KubernetesClient, Httpbin]:
-    """Deploys Backend to each Kubernetes cluster"""
-    backends = {}
-    name = blame("httpbin")
-    image = testconfig["httpbin"]["image"]
-    for cluster in clusters:
-        httpbin = Httpbin(cluster, name, label, image)
-        request.addfinalizer(httpbin.delete)
-        httpbin.commit()
-        backends[cluster] = httpbin
-    return backends
-
-
 @pytest.fixture(scope="module")
-def gateways(request, clusters, blame, label, wildcard_domain) -> dict[KubernetesClient, Gateway]:
-    """Deploys Gateway to each Kubernetes cluster"""
-    gateways = {}
-    name = blame("gw")
-    for cluster in clusters:
-        gw = KuadrantGateway.create_instance(cluster, name, wildcard_domain, {"app": label}, tls=True)
-        request.addfinalizer(gw.delete)
-        gw.commit()
-        gateways[cluster] = gw
-    for gateway in gateways.values():
-        gateway.wait_for_ready()
-    return gateways
-
-
-@pytest.fixture(scope="module")
-def routes(request, gateways, blame, hostname, backends, module_label) -> dict[KubernetesClient, HTTPRoute]:
-    """Deploys HttpRoute to each Kubernetes cluster"""
-    routes = {}
-    name = blame("route")
-    for client, gateway in gateways.items():
-        route = HTTPRoute.create_instance(gateway.cluster, name, gateway, {"app": module_label})
-        route.add_hostname(hostname.hostname)
-        route.add_backend(backends[client])
-        request.addfinalizer(route.delete)
-        route.commit()
-        routes[client] = route
-    return routes
-
-
-@pytest.fixture(scope="module")
-def hostname(gateways, cluster, exposer, blame) -> Hostname:
+def hostname(gateway, exposer, blame) -> Hostname:
     """Exposed Hostname object"""
-    hostname = exposer.expose_hostname(blame("hostname"), gateways[cluster])
-    return hostname
+    return exposer.expose_hostname(blame("hostname"), gateway)
 
 
 @pytest.fixture(scope="module")
@@ -129,42 +74,95 @@ def wildcard_domain(base_domain):
     return f"*.{base_domain}"
 
 
+@pytest.fixture(scope="session")
+def backends(request, cluster, cluster2, blame, label, testconfig) -> list[Httpbin]:
+    """Deploys Backend to each Kubernetes cluster"""
+    backends = []
+    name = blame("httpbin")
+    image = testconfig["httpbin"]["image"]
+    for client in [cluster, cluster2]:
+        httpbin = Httpbin(client, name, label, image)
+        request.addfinalizer(httpbin.delete)
+        httpbin.commit()
+        backends.append(httpbin)
+    return backends
+
+
 @pytest.fixture(scope="module")
-def dns_policy(blame, cluster, gateways, module_label, dns_provider_secret):
-    """DNSPolicy fixture"""
-    policy = DNSPolicy.create_instance(
-        cluster, blame("dns"), gateways[cluster], dns_provider_secret, labels={"app": module_label}
+def routes(request, gateway, gateway2, blame, hostname, backends, module_label) -> list[HTTPRoute]:
+    """Deploys HttpRoute for each gateway"""
+    routes = []
+    name = blame("route")
+    for i, gateway_ in enumerate([gateway, gateway2]):
+        route = HTTPRoute.create_instance(gateway_.cluster, name, gateway_, {"app": module_label})
+        route.add_hostname(hostname.hostname)
+        route.add_backend(backends[i])
+        request.addfinalizer(route.delete)
+        route.commit()
+        routes.append(route)
+    return routes
+
+
+@pytest.fixture(scope="module")
+def gateway(request, cluster, blame, label, wildcard_domain):
+    """Deploys Gateway to first Kubernetes cluster"""
+    gw = KuadrantGateway.create_instance(cluster, blame("gw"), wildcard_domain, {"app": label}, tls=True)
+    request.addfinalizer(gw.delete)
+    gw.commit()
+    gw.wait_for_ready()
+    return gw
+
+
+@pytest.fixture(scope="module")
+def gateway2(request, cluster2, blame, label, wildcard_domain):
+    """Deploys Gateway to second Kubernetes cluster"""
+    gw = KuadrantGateway.create_instance(cluster2, blame("gw"), wildcard_domain, {"app": label}, tls=True)
+    request.addfinalizer(gw.delete)
+    gw.commit()
+    gw.wait_for_ready()
+    return gw
+
+
+@pytest.fixture(scope="module")
+def dns_policy(blame, cluster, gateway, dns_provider_secret, module_label):
+    """DNSPolicy for the first cluster"""
+    return DNSPolicy.create_instance(cluster, blame("dns"), gateway, dns_provider_secret, labels={"app": module_label})
+
+
+@pytest.fixture(scope="module")
+def dns_policy2(blame, cluster2, gateway2, dns_provider_secret, module_label):
+    """DNSPolicy for the second cluster"""
+    return DNSPolicy.create_instance(
+        cluster2, blame("dns"), gateway2, dns_provider_secret, labels={"app": module_label}
     )
-    return policy
 
 
 @pytest.fixture(scope="module")
-def tls_policy(blame, cluster, gateways, module_label, cluster_issuer):
-    """TLSPolicy fixture"""
-    policy = TLSPolicy.create_instance(
+def tls_policy(blame, cluster, gateway, module_label, cluster_issuer):
+    """TLSPolicy for the first cluster"""
+    return TLSPolicy.create_instance(
         cluster,
         blame("tls"),
-        parent=gateways[cluster],
+        parent=gateway,
         issuer=cluster_issuer,
         labels={"app": module_label},
     )
-    return policy
 
 
 @pytest.fixture(scope="module")
-def dns_policies(clusters, dns_policy) -> dict[KubernetesClient, DNSPolicy]:
-    """Creates DNSPolicy for each Kubernetes cluster"""
-    return generate_policies(clusters, dns_policy)
+def tls_policy2(blame, cluster2, gateway2, module_label, cluster_issuer):
+    """TLSPolicy for the second cluster"""
+    return TLSPolicy.create_instance(
+        cluster2,
+        blame("tls"),
+        parent=gateway2,
+        issuer=cluster_issuer,
+        labels={"app": module_label},
+    )
 
 
 @pytest.fixture(scope="module")
-def tls_policies(clusters, tls_policy) -> dict[KubernetesClient, TLSPolicy]:
-    """Creates TLSPolicy for each Kubernetes cluster"""
-    return generate_policies(clusters, tls_policy)
-
-
-@pytest.fixture(scope="module")
-def client(hostname, gateways):  # pylint: disable=unused-argument
+def client(hostname, gateway, gateway2):  # pylint: disable=unused-argument
     """Returns httpx client to be used for requests"""
     root_cert = resources.files("testsuite.resources").joinpath("letsencrypt-stg-root-x1.pem").read_text()
     client = hostname.client(verify=Certificate(certificate=root_cert, chain=root_cert, key=""))
@@ -173,9 +171,9 @@ def client(hostname, gateways):  # pylint: disable=unused-argument
 
 
 @pytest.fixture(scope="module", autouse=True)
-def commit(request, routes, dns_policies, tls_policies):  # pylint: disable=unused-argument
+def commit(request, routes, dns_policy, dns_policy2, tls_policy, tls_policy2):  # pylint: disable=unused-argument
     """Commits all policies before tests"""
-    components = [*dns_policies.values(), *tls_policies.values()]
+    components = [dns_policy, dns_policy2, tls_policy, tls_policy2]
     for component in components:
         request.addfinalizer(component.delete)
         component.commit()
