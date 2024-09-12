@@ -5,66 +5,45 @@ from typing import Any
 import openshift_client as oc
 
 from testsuite.certificates import Certificate
-from testsuite.gateway import Gateway
+from testsuite.gateway import Gateway, GatewayListener
 from testsuite.kubernetes.client import KubernetesClient
-from testsuite.kubernetes import KubernetesObject
+from testsuite.kubernetes import KubernetesObject, modify
 from testsuite.kuadrant.policy import Policy
-from testsuite.utils import check_condition
+from testsuite.utils import check_condition, asdict
 
 
 class KuadrantGateway(KubernetesObject, Gateway):
     """Gateway object for Kuadrant"""
 
     @classmethod
-    def create_instance(cls, cluster: KubernetesClient, name, hostname, labels, tls=False):
+    def create_instance(cls, cluster: KubernetesClient, name, labels):
         """Creates new instance of Gateway"""
 
         model: dict[Any, Any] = {
             "apiVersion": "gateway.networking.k8s.io/v1beta1",
             "kind": "Gateway",
             "metadata": {"name": name, "labels": labels},
-            "spec": {
-                "gatewayClassName": "istio",
-                "listeners": [
-                    {
-                        "name": "api",
-                        "port": 80,
-                        "protocol": "HTTP",
-                        "hostname": hostname,
-                        "allowedRoutes": {"namespaces": {"from": "All"}},
-                    }
-                ],
-            },
+            "spec": {"gatewayClassName": "istio", "listeners": []},
         }
+        gateway = cls(model, context=cluster.context)
+        return gateway
 
-        if tls:
-            model["spec"]["listeners"] = [
-                {
-                    "name": "api",
-                    "port": 443,
-                    "protocol": "HTTPS",
-                    "hostname": hostname,
-                    "allowedRoutes": {"namespaces": {"from": "All"}},
-                    "tls": {
-                        "mode": "Terminate",
-                        "certificateRefs": [{"name": f"{name}-tls", "kind": "Secret"}],
-                    },
-                }
-            ]
+    @modify
+    def add_listener(self, listener: GatewayListener):
+        """Adds a listener to Gateway."""
+        self.model.spec.listeners.append(asdict(listener))
 
-        return cls(model, context=cluster.context)
+    @modify
+    def remove_listener(self, listener_name: str):
+        """Removes a listener from Gateway."""
+        self.model.spec.listeners = list(filter(lambda i: i["name"] != listener_name, self.model.spec.listeners))
 
-    def add_listener(self, name: str, hostname: str):
-        """Adds new listener to the Gateway"""
-        self.model.spec.listeners.append(
-            {
-                "name": name,
-                "port": 80,
-                "protocol": "HTTP",
-                "hostname": hostname,
-                "allowedRoutes": {"namespaces": {"from": "All"}},
-            }
+    def get_listener_dns_ttl(self, listener_name: str) -> int:
+        """Returns TTL stored in DNSRecord CR under the specified Listener."""
+        dns_record = self.cluster.do_action(
+            "get", ["-o", "yaml", f"dnsrecords.kuadrant.io/{self.name()}-{listener_name}"], parse_output=True
         )
+        return dns_record.model.spec.endpoints[0].recordTTL
 
     @property
     def service_name(self) -> str:

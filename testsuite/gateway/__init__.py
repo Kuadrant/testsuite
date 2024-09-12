@@ -177,6 +177,44 @@ class GatewayRoute(LifecycleObject, Referencable):
         """Sets match for a specific backend"""
 
 
+@dataclass
+class GatewayListener:
+    """
+    Dataclass of Gateway listener object.
+    When used in `add_listener()` function you MUST specify a unique name!
+    """
+
+    hostname: str
+    name: str = "api"
+    port: int = 80
+    protocol: str = "HTTP"
+    allowedRoutes = {"namespaces": {"from": "All"}}
+
+
+@dataclass(kw_only=True)
+class TLSGatewayListener(GatewayListener):
+    """
+    Dataclass for Gateway listener with TLS support.
+    When used in `add_listener()` function you MUST specify a unique name!
+    """
+
+    gateway_name: str
+    mode: str = "Terminate"
+    port: int = 443
+    protocol: str = "HTTPS"
+
+    def asdict(self):
+        """Custom asdict to easily add tls certificateRefs"""
+        return {
+            "name": self.name,
+            "hostname": self.hostname,
+            "port": self.port,
+            "protocol": self.protocol,
+            "allowedRoutes": self.allowedRoutes,
+            "tls": {"mode": self.mode, "certificateRefs": [{"name": f"{self.gateway_name}-tls", "kind": "Secret"}]},
+        }
+
+
 class Hostname(ABC):
     """
     Abstraction layer on top of externally exposed hostname

@@ -2,7 +2,7 @@
 
 import pytest
 
-from testsuite.gateway import Exposer
+from testsuite.gateway import Exposer, TLSGatewayListener
 from testsuite.gateway.gateway_api.gateway import KuadrantGateway
 from testsuite.gateway.gateway_api.hostname import DNSPolicyExposer
 from testsuite.httpx.auth import HttpxOidcClientAuth
@@ -13,7 +13,13 @@ from testsuite.kuadrant.policy.tls import TLSPolicy
 @pytest.fixture(scope="module")
 def gateway(request, cluster, blame, wildcard_domain, module_label):
     """Returns ready gateway"""
-    gw = KuadrantGateway.create_instance(cluster, blame("gw"), wildcard_domain, {"app": module_label}, tls=True)
+    gateway_name = blame("gw")
+    gw = KuadrantGateway.create_instance(
+        cluster,
+        gateway_name,
+        {"app": module_label},
+    )
+    gw.add_listener(TLSGatewayListener(hostname=wildcard_domain, gateway_name=gateway_name))
     request.addfinalizer(gw.delete)
     gw.commit()
     gw.wait_for_ready()
