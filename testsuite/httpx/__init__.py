@@ -50,6 +50,7 @@ class Result:
             or (self.error is None and self.status_code in self.retry_codes)
             or self.has_error("Server disconnected without sending a response.")
             or self.has_error("timed out")
+            or self.has_error("SSL: UNEXPECTED_EOF_WHILE_READING")
         )
 
     def has_error(self, error_msg: str) -> bool:
