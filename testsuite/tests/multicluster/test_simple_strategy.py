@@ -24,6 +24,10 @@ def test_simple_strategy(client, hostname, gateway, gateway2):
     assert not result.has_cert_verify_error(), result.error
     assert result.status_code == 200
 
-    ips = {gateway.external_ip().split(":")[0], gateway2.external_ip().split(":")[0]}
-    dns_ips = {ip.address for ip in dns.resolver.resolve(hostname.hostname)}
-    assert ips == dns_ips, f"Expected IPs and actual IP mismatch, got {dns_ips}, expected {ips}"
+    dns_ip1 = dns.resolver.resolve(hostname.hostname)[0].address
+    dns_ip2 = dns.resolver.resolve(hostname.hostname)[0].address
+    assert dns_ip1 != dns_ip2, "Simple routing strategy should return IPs in a round-robin fashion"
+
+    gateway_ips = {gateway.external_ip().split(":")[0], gateway2.external_ip().split(":")[0]}
+    dns_ips = {dns_ip1, dns_ip2}
+    assert gateway_ips == dns_ips, f"Expected and actual IPs mismatch, expected {gateway_ips}, got {dns_ips}"
