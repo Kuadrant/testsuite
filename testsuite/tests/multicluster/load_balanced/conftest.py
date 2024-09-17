@@ -1,15 +1,19 @@
 """Conftest for load-balanced multicluster tests"""
 
 import pytest
+from dynaconf import ValidationError
 
 from testsuite.kuadrant.policy.dns import DNSPolicy, LoadBalancing
 
 
 @pytest.fixture(scope="package")
-def dns_config(testconfig):
+def dns_config(testconfig, skip_or_fail):
     """Configuration for DNS tests"""
-    testconfig.validators.validate(only="dns")
-    return testconfig["dns"]
+    try:
+        testconfig.validators.validate(only="dns")
+        return testconfig["dns"]
+    except ValidationError as exc:
+        return skip_or_fail(f"DNS configuration is missing: {exc}")
 
 
 @pytest.fixture(scope="package")
