@@ -27,7 +27,7 @@ class StaticHostname(Hostname):
 
     def client(self, **kwargs) -> KuadrantClient:
         protocol = "http"
-        if self.tls_cert_getter is not None:
+        if self.tls_cert_getter is not None and self.tls_cert_getter() is not None:
             protocol = "https"
             kwargs.setdefault("verify", self.tls_cert_getter())
         return KuadrantClient(base_url=f"{protocol}://{self.hostname}", **kwargs)
