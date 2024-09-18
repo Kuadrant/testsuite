@@ -67,3 +67,7 @@ class DNSPolicy(Policy):
             model["spec"]["loadBalancing"] = asdict(load_balancing)
 
         return cls(model, context=cluster.context)
+
+    def wait_for_full_enforced(self, timelimit=300):
+        """Wait for a Policy to be fully Enforced with increased timelimit for DNSPolicy"""
+        super().wait_for_full_enforced(timelimit=timelimit)

@@ -54,6 +54,18 @@ class KuadrantGateway(KubernetesObject, Gateway):
 
         return cls(model, context=cluster.context)
 
+    def add_listener(self, name: str, hostname: str):
+        """Adds new listener to the Gateway"""
+        self.model.spec.listeners.append(
+            {
+                "name": name,
+                "port": 80,
+                "protocol": "HTTP",
+                "hostname": hostname,
+                "allowedRoutes": {"namespaces": {"from": "All"}},
+            }
+        )
+
     @property
     def service_name(self) -> str:
         return f"{self.name()}-istio"

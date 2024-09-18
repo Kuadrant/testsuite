@@ -35,9 +35,10 @@ class Policy(KubernetesObject):
         )
         assert success, f"{self.kind(False)} did not get partially enforced in time"
 
-    def wait_for_full_enforced(self):
+    def wait_for_full_enforced(self, timelimit=60):
         """Wait for a Policy to be fully Enforced"""
         success = self.wait_until(
-            has_condition("Enforced", "True", "Enforced", f"{self.kind(False)} has been successfully enforced")
+            has_condition("Enforced", "True", "Enforced", f"{self.kind(False)} has been successfully enforced"),
+            timelimit=timelimit,
         )
         assert success, f"{self.kind()} did not get fully enforced in time"
