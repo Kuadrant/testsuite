@@ -19,7 +19,7 @@ def rate_limit(rate_limit):
             Pattern(
                 selector=r"metadata.filter_metadata.envoy\.filters\.http\.ext_authz.identity.anonymous",
                 operator="eq",
-                value="true",
+                value='"true"',
             )
         ],
     )
