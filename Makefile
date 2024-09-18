@@ -121,7 +121,9 @@ ratelimitpolicies.kuadrant.io,$\
 dnspolicies.kuadrant.io,$\
 tlspolicies.kuadrant.io,$\
 validatingwebhookconfigurations.admissionregistration.k8s.io,$\
-wasmplugins.extensions.istio.io
+wasmplugins.extensions.istio.io,$\
+servicemonitors.monitoring.coreos.com,$\
+podmonitors.monitoring.coreos.com
 
 clean: ## Clean all objects on cluster created by running this testsuite. Set the env variable USER to delete after someone else
 	@echo "Deleting objects for user: $(USER)"
