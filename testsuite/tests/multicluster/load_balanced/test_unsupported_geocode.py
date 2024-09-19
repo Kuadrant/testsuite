@@ -9,7 +9,7 @@ pytestmark = [pytest.mark.multicluster]
 
 def test_unsupported_geocode(dns_policy):
     """Change default geocode to not existent one and verify that policy became not enforced"""
-    dns_policy.model.spec.loadBalancing.geo.defaultGeo = "XX"
+    dns_policy.model.spec.loadBalancing.geo = "XX"
     dns_policy.apply()
 
     assert dns_policy.wait_until(has_condition("Enforced", "False"))
