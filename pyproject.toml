@@ -70,6 +70,7 @@ disable = [
     "fixme", # ignore TODOs
     "redefined-outer-name",
     "too-many-arguments",
+    "too-many-positional-arguments",
     "too-few-public-methods"]
 
 [tool.pylint.BASIC]
