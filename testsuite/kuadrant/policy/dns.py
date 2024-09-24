@@ -1,6 +1,7 @@
 """Module for DNSPolicy related classes"""
 
 from dataclasses import dataclass
+from typing import Optional
 
 from testsuite.gateway import Referencable
 from testsuite.kubernetes.client import KubernetesClient
@@ -25,15 +26,9 @@ def has_record_condition(condition_type, status="True", reason=None, message=Non
 class LoadBalancing:
     """Dataclass for DNSPolicy load-balancing spec"""
 
-    default_geo: str
-    default_weight: int
-
-    def asdict(self):
-        """Custom asdict due to nested structure."""
-        return {
-            "geo": {"defaultGeo": self.default_geo},
-            "weighted": {"defaultWeight": self.default_weight},
-        }
+    defaultGeo: bool  # pylint: disable=invalid-name
+    geo: str
+    weight: Optional[int]
 
 
 class DNSPolicy(Policy):
@@ -58,12 +53,10 @@ class DNSPolicy(Policy):
             "spec": {
                 "targetRef": parent.reference,
                 "providerRefs": [{"name": provider_secret_name}],
-                "routingStrategy": "simple",
             },
         }
 
         if load_balancing:
-            model["spec"]["routingStrategy"] = "loadbalanced"
             model["spec"]["loadBalancing"] = asdict(load_balancing)
 
         return cls(model, context=cluster.context)
