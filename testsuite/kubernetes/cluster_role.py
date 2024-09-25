@@ -1,6 +1,6 @@
 """ClusterRole and ClusterRoleBinding objects for Kubernetes"""
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 from testsuite.kubernetes import KubernetesObject
 
 
@@ -12,7 +12,7 @@ class ClusterRole(KubernetesObject):
         cls,
         cluster,
         name,
-        rules: Optional[List[Dict[str, Any]]] = None,
+        rules: list[dict[str, Any]] = None,
         labels: dict[str, str] = None,
     ):
         """Creates a new ClusterRole instance"""
@@ -37,7 +37,7 @@ class ClusterRoleBinding(KubernetesObject):
         cluster,
         name,
         cluster_role: str,
-        serviceaccounts: List[str],
+        serviceaccounts: list[str],
         labels: dict[str, str] = None,
     ):
         """Creates a new ClusterRoleBinding object"""
