@@ -4,10 +4,11 @@ import signal
 from urllib.parse import urlparse
 
 import pytest
+from pytest_metadata.plugin import metadata_key  # type: ignore
 from dynaconf import ValidationError
 from keycloak import KeycloakAuthenticationError
 
-from testsuite.capabilities import has_kuadrant
+from testsuite.capabilities import has_kuadrant, kuadrant_version
 from testsuite.certificates import CFSSLClient
 from testsuite.config import settings
 from testsuite.gateway import Exposer, CustomReference
@@ -69,6 +70,17 @@ def pytest_runtest_makereport(item, call):  # pylint: disable=unused-argument
                 label = issue
             extra.append(pytest_html.extras.url(issue, name=label))
         report.extra = extra
+
+
+def pytest_report_header(config):
+    """Adds Kuadrant version string to pytest header output for every cluster."""
+    header = ""
+    images = []
+    for image, cluster in kuadrant_version():
+        header += f"Kuadrant image: {image} on cluster {cluster}\n"
+        images.append(image)
+    config.stash[metadata_key]["Kuadrant"] = images
+    return header
 
 
 @pytest.fixture(scope="session")
