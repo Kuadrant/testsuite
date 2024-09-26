@@ -7,13 +7,6 @@ import dns.resolver
 pytestmark = [pytest.mark.multicluster]
 
 
-@pytest.fixture(scope="module")
-def gateway2(gateway2, dns_server2):
-    """Overwrite second gateway to have a different geocode"""
-    gateway2.label({"kuadrant.io/lb-attribute-geo-code": dns_server2["geo_code"]})
-    return gateway2
-
-
 def test_load_balanced_geo(client, hostname, gateway, gateway2, dns_server, dns_server2):
     """
     - Verify that request to the hostname is successful

@@ -28,7 +28,7 @@ class LoadBalancing:
 
     defaultGeo: bool  # pylint: disable=invalid-name
     geo: str
-    weight: Optional[int]
+    weight: Optional[int] = None
 
 
 class DNSPolicy(Policy):
