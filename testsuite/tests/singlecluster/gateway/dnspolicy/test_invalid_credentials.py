@@ -5,7 +5,7 @@ import pytest
 from testsuite.kubernetes.secret import Secret
 from testsuite.kuadrant.policy import has_condition
 from testsuite.kuadrant.policy.dns import has_record_condition
-from testsuite.gateway.gateway_api.gateway import KuadrantGateway
+from testsuite.gateway.gateway_api.gateway import KuadrantGateway, GatewayListener
 
 pytestmark = [pytest.mark.kuadrant_only, pytest.mark.dnspolicy]
 
@@ -13,7 +13,8 @@ pytestmark = [pytest.mark.kuadrant_only, pytest.mark.dnspolicy]
 @pytest.fixture(scope="module")
 def gateway(request, cluster, blame, wildcard_domain, module_label):
     """Create gateway without TLS enabled"""
-    gw = KuadrantGateway.create_instance(cluster, blame("gw"), wildcard_domain, {"app": module_label}, tls=False)
+    gw = KuadrantGateway.create_instance(cluster, blame("gw"), {"app": module_label})
+    gw.add_listener(GatewayListener(wildcard_domain, name="api"))
     request.addfinalizer(gw.delete)
     gw.commit()
     gw.wait_for_ready()

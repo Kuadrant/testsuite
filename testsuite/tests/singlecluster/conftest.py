@@ -6,7 +6,7 @@ import yaml
 from openshift_client import selector
 
 from testsuite.backend.httpbin import Httpbin
-from testsuite.gateway import GatewayRoute, Gateway, Hostname
+from testsuite.gateway import GatewayRoute, Gateway, Hostname, GatewayListener
 from testsuite.gateway.envoy import Envoy
 from testsuite.gateway.envoy.route import EnvoyVirtualRoute
 from testsuite.gateway.gateway_api.gateway import KuadrantGateway
@@ -130,7 +130,8 @@ def backend(request, cluster, blame, label, testconfig):
 def gateway(request, kuadrant, cluster, blame, label, testconfig, wildcard_domain) -> Gateway:
     """Deploys Gateway that wires up the Backend behind the reverse-proxy and Authorino instance"""
     if kuadrant:
-        gw = KuadrantGateway.create_instance(cluster, blame("gw"), wildcard_domain, {"app": label})
+        gw = KuadrantGateway.create_instance(cluster, blame("gw"), {"app": label})
+        gw.add_listener(GatewayListener(wildcard_domain))
     else:
         authorino = request.getfixturevalue("authorino")
         gw = Envoy(

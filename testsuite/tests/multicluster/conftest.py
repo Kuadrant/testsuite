@@ -8,6 +8,7 @@ from openshift_client import selector, OpenShiftPythonException
 from testsuite.backend.httpbin import Httpbin
 from testsuite.certificates import Certificate
 from testsuite.gateway import Exposer, CustomReference, Hostname
+from testsuite.gateway import TLSGatewayListener
 from testsuite.gateway.gateway_api.gateway import KuadrantGateway
 from testsuite.gateway.gateway_api.hostname import DNSPolicyExposer
 from testsuite.gateway.gateway_api.route import HTTPRoute
@@ -106,7 +107,9 @@ def routes(request, gateway, gateway2, blame, hostname, backends, module_label) 
 @pytest.fixture(scope="module")
 def gateway(request, cluster, blame, label, wildcard_domain):
     """Deploys Gateway to first Kubernetes cluster"""
-    gw = KuadrantGateway.create_instance(cluster, blame("gw"), wildcard_domain, {"app": label}, tls=True)
+    name = blame("gw")
+    gw = KuadrantGateway.create_instance(cluster, name, {"app": label})
+    gw.add_listener(TLSGatewayListener(hostname=wildcard_domain, gateway_name=name))
     request.addfinalizer(gw.delete)
     gw.commit()
     gw.wait_for_ready()
@@ -116,7 +119,9 @@ def gateway(request, cluster, blame, label, wildcard_domain):
 @pytest.fixture(scope="module")
 def gateway2(request, cluster2, blame, label, wildcard_domain):
     """Deploys Gateway to second Kubernetes cluster"""
-    gw = KuadrantGateway.create_instance(cluster2, blame("gw"), wildcard_domain, {"app": label}, tls=True)
+    name = blame("gw")
+    gw = KuadrantGateway.create_instance(cluster2, name, {"app": label})
+    gw.add_listener(TLSGatewayListener(hostname=wildcard_domain, gateway_name=name))
     request.addfinalizer(gw.delete)
     gw.commit()
     gw.wait_for_ready()

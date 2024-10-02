@@ -4,7 +4,7 @@ import pytest
 
 from testsuite.httpx import KuadrantClient
 from testsuite.gateway.gateway_api.route import HTTPRoute
-from testsuite.gateway.gateway_api.gateway import KuadrantGateway
+from testsuite.gateway.gateway_api.gateway import KuadrantGateway, GatewayListener
 from testsuite.kuadrant.policy.dns import DNSPolicy
 
 pytestmark = [pytest.mark.kuadrant_only, pytest.mark.dnspolicy]
@@ -15,9 +15,10 @@ MAX_GATEWAY_LISTENERS = 64
 @pytest.fixture(scope="module")
 def gateway(request, cluster, blame, base_domain, module_label):
     """Create first gateway with 64 listeners"""
-    gw = KuadrantGateway.create_instance(cluster, blame("gw"), f"gw1-api.{base_domain}", {"app": module_label})
+    gw = KuadrantGateway.create_instance(cluster, blame("gw"), {"app": module_label})
+    gw.add_listener(GatewayListener(f"gw1-api.{base_domain}"))
     for i in range(1, MAX_GATEWAY_LISTENERS):
-        gw.add_listener(f"api{i}", f"gw1-api{i}.{base_domain}")
+        gw.add_listener(GatewayListener(f"api{i}", f"gw1-api{i}.{base_domain}"))
     request.addfinalizer(gw.delete)
     gw.commit()
     gw.wait_for_ready()
@@ -27,9 +28,10 @@ def gateway(request, cluster, blame, base_domain, module_label):
 @pytest.fixture(scope="module")
 def gateway2(request, cluster, blame, base_domain, module_label):
     """Create second gateway with 64 listeners"""
-    gw = KuadrantGateway.create_instance(cluster, blame("gw"), f"gw2-api.{base_domain}", {"app": module_label})
+    gw = KuadrantGateway.create_instance(cluster, blame("gw"), {"app": module_label})
+    gw.add_listener(GatewayListener(f"gw2-api.{base_domain}"))
     for i in range(1, MAX_GATEWAY_LISTENERS):
-        gw.add_listener(f"api{i}", f"gw2-api{i}.{base_domain}")
+        gw.add_listener(GatewayListener(f"api{i}", f"gw2-api{i}.{base_domain}"))
     request.addfinalizer(gw.delete)
     gw.commit()
     gw.wait_for_ready()
