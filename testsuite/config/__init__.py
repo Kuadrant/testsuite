@@ -66,6 +66,7 @@ settings = Dynaconf(
             & Validator("dns.dns_server2.address", must_exist=True, ne=None, cast=hostname_to_ip)
             & Validator("dns.dns_server2.geo_code", must_exist=True, ne=None)
         ),
+        Validator("dns.default_geo_server", must_exist=True, ne=None, cast=hostname_to_ip),
         DefaultValueValidator("keycloak.url", default=fetch_service_ip("keycloak", force_http=True, port=8080)),
         DefaultValueValidator("keycloak.password", default=fetch_secret("credential-sso", "ADMIN_PASSWORD")),
         DefaultValueValidator("mockserver.url", default=fetch_service_ip("mockserver", force_http=True, port=1080)),
