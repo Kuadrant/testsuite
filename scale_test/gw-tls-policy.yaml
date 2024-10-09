@@ -1,0 +1,15 @@
+apiVersion: kuadrant.io/v1alpha1
+kind: TLSPolicy
+metadata:
+  name: gw-tls-policy-{{.Iteration}}
+  labels: 
+    app: scale-test
+spec:
+  targetRef:
+    group: gateway.networking.k8s.io
+    kind: Gateway
+    name: scale-test-{{.Iteration}}
+  issuerRef:
+    group: cert-manager.io
+    kind: ClusterIssuer
+    name: selfsigned-issuer

@@ -1,0 +1,80 @@
+---
+metricsEndpoints: 
+  - endpoint: {{ .PROMETHEUS_URL }}
+    token: {{ .PROMETHEUS_TOKEN }}
+    metrics: 
+    - ./metrics.yaml
+    indexer: 
+      type: local
+      metricsDirectory: ./metrics
+global: 
+  gc: true
+jobs: 
+  - name: scale-test-preparations
+    jobIterations: 1
+    qps: 1
+    burst: 1
+    namespacedIterations: true
+    namespace: scale-test
+    waitWhenFinished: true
+    objects:
+      - objectTemplate: ./httpbin-deployment.yaml
+        kind: Deployment
+        replicas: 1
+        waitOptions:
+          forCondition: "Available"
+          customStatusPath: ".conditions[].type"
+      - objectTemplate: ./httpbin-service.yaml
+        kind: Service
+        replicas: 1
+      - objectTemplate: ./aws-credentials.yaml
+        kind: Secret
+        replicas: 1
+  - name: scale-test-main
+    jobIterations: 1
+    qps: 1
+    burst: 1
+    namespacedIterations: true
+    namespace: scale-test
+    waitWhenFinished: true
+    objects:
+      - objectTemplate: ./gw.yaml
+        replicas: 1
+        waitOptions:
+          forCondition: Programmed
+          customStatusPath: ".conditions[].type"
+      - objectTemplate: ./gw-tls-policy.yaml
+        replicas: 1
+        waitOptions:
+          forCondition: Enforced
+          customStatusPath: ".conditions[].type"
+      - objectTemplate: ./gw-dns-policy.yaml
+        replicas: 1
+        waitOptions:
+          forCondition: Enforced
+          customStatusPath: ".conditions[].type"
+      - objectTemplate: ./gw-rlp.yaml
+        replicas: 1
+        waitOptions:
+          forCondition: Enforced
+          customStatusPath: ".conditions[].type"
+      - objectTemplate: ./gw-auth-policy.yaml
+        replicas: 1
+        waitOptions:
+          forCondition: Enforced
+          customStatusPath: ".conditions[].type"
+      - objectTemplate: ./httproute.yaml
+        replicas: 1
+        waitOptions:
+          forCondition: Accepted
+          customStatusPath: ".conditions[].type"
+      - objectTemplate: ./httproute-rlp.yaml
+        replicas: 1
+        waitOptions:
+          forCondition: Enforced
+          customStatusPath: ".conditions[].type"
+      - objectTemplate: ./httproute-auth-policy.yaml
+        replicas: 1
+        waitOptions:
+          forCondition: Enforced
+          customStatusPath: ".conditions[].type"

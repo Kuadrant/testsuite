@@ -1,0 +1,13 @@
+apiVersion: kuadrant.io/v1alpha1
+kind: DNSPolicy
+metadata:
+  name: gw-dns-policy-{{.Iteration}}
+  labels: 
+    app: scale-test
+spec:
+  targetRef:
+    group: gateway.networking.k8s.io
+    kind: Gateway
+    name: scale-test-{{.Iteration}}
+  providerRefs:
+  - name: aws-credentials

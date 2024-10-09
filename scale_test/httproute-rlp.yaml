@@ -1,0 +1,17 @@
+apiVersion: kuadrant.io/v1beta3
+kind: RateLimitPolicy
+metadata:
+  name: httproute-rlp-{{.Iteration}}
+  labels: 
+    app: scale-test
+spec:
+  targetRef:
+    group: gateway.networking.k8s.io
+    kind: HTTPRoute
+    name: scale-test-{{.Iteration}}
+  limits:
+    "httproute-level":
+      rates:
+      - limit: 10
+        duration: 10
+        unit: second

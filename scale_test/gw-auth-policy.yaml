@@ -1,0 +1,27 @@
+apiVersion: kuadrant.io/v1beta2
+kind: AuthPolicy
+metadata:
+  name: gw-auth-policy-{{.Iteration}}
+  labels: 
+    app: scale-test
+spec:
+  targetRef:
+    group: gateway.networking.k8s.io
+    kind: Gateway
+    name: scale-test-{{.Iteration}}
+  rules:
+    authorization:
+      deny-all:
+        opa:
+          rego: "allow = false"
+    response:
+      unauthorized:
+        headers:
+          "content-type":
+            value: application/json
+        body:
+          value: |
+            {
+              "error": "Forbidden",
+              "message": "Access denied by default by the gateway operator. If you are the administrator of the service, create a specific auth policy for the route."
+            }

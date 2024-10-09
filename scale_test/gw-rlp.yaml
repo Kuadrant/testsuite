@@ -1,0 +1,17 @@
+apiVersion: kuadrant.io/v1beta3
+kind: RateLimitPolicy
+metadata:
+  name: gw-rlp-{{.Iteration}}
+  labels: 
+    app: scale-test
+spec:
+  targetRef:
+    group: gateway.networking.k8s.io
+    kind: Gateway
+    name: scale-test-{{.Iteration}}
+  limits:
+    "global":
+      rates:
+      - limit: 5
+        duration: 10
+        unit: second

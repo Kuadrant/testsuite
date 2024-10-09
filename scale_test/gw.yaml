@@ -1,0 +1,21 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata: 
+  name: scale-test-{{.Iteration}}
+  labels: 
+    app: scale-test
+spec: 
+  gatewayClassName: istio
+  listeners: 
+  - allowedRoutes: 
+      namespaces: 
+        from: All
+    hostname: "*.scale-test-{{.Iteration}}.the.domain.iown"
+    name: api
+    port: 443
+    protocol: HTTPS
+    tls:
+      mode: Terminate
+      certificateRefs:
+        - name: scale-test-{{.Iteration}}
+          kind: Secret

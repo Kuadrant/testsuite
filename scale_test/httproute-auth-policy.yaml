@@ -1,0 +1,16 @@
+apiVersion: kuadrant.io/v1beta2
+kind: AuthPolicy
+metadata:
+  name: httproute-auth-policy-{{.Iteration}}
+  labels: 
+    app: scale-test
+spec:
+  targetRef:
+    group: gateway.networking.k8s.io
+    kind: HTTPRoute
+    name: scale-test-{{.Iteration}}
+  rules:
+    authorization:
+      allow-all:
+        opa:
+          rego: "allow = true"
