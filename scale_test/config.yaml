@@ -56,12 +56,12 @@ jobs:
       - objectTemplate: ./gw-rlp.yaml
         replicas: 1
         waitOptions:
-          forCondition: Enforced
+          forCondition: Accepted
           customStatusPath: ".conditions[].type"
       - objectTemplate: ./gw-auth-policy.yaml
         replicas: 1
         waitOptions:
-          forCondition: Enforced
+          forCondition: Accepted
           customStatusPath: ".conditions[].type"
       - objectTemplate: ./httproute.yaml
         replicas: 1

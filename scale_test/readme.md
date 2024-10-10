@@ -14,3 +14,53 @@ Create an empty `./metrics` directory where the data returned from Prometheus ar
 ## Execution
 
 `kube-burner init -c ./config.yaml --timeout 5m`
+
+## Setting up a local cluster for execution
+
+Follow the instructions in the Prerequisities section.
+
+Clone the [kuadrant-operator](https://github.com/Kuadrant/kuadrant-operator) repo:
+
+```bash
+CONTAINER_ENGINE=podman make local-setup
+```
+
+Deploy the observability stack, as per the instructions in https://github.com/Kuadrant/kuadrant-operator/blob/main/config/observability/README.md
+
+Create the Kuadrant resource:
+
+```bash
+kubectl create -f ./config/samples/kuadrant_v1beta1_kuadrant.yaml -n kuadrant-system
+```
+
+Create a ClusterIssuer:
+
+```bash
+kubectl apply -f - <<EOF
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: selfsigned-issuer
+spec:
+  selfSigned: {}
+EOF
+```
+
+Port forward to prometheus:
+
+```bash
+kubectl -n monitoring port-forward svc/prometheus-k8s 9090:9090
+```
+
+Set env vars for prometheus:
+
+```bash
+export PROMETHEUS_URL="http://127.0.0.1:9090"
+export PROMETHEUS_TOKEN=""
+```
+
+Run kube-burner:
+
+```bash
+kube-burner init -c ./config.yaml --timeout 5m
+```
