@@ -19,8 +19,6 @@ export OS_INDEXING=true   # if sending metrics to opensearch/elasticsearch
 export ES_SERVER=https://[user]:[password]@[host]:[port]
 ```
 
-Create an empty `./metrics` directory where the data returned from Prometheus are to be stored.
-
 ## Execution
 
 `kube-burner init -c ./config.yaml --timeout 5m`
