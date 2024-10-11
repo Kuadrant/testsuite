@@ -78,3 +78,13 @@ jobs:
         waitOptions:
           forCondition: Enforced
           customStatusPath: ".conditions[].type"
+  - name: scale-test-safe-dnspolicy-cleanup
+    jobType: delete
+    jobIterations: 1
+    namespacedIterations: true
+    namespace: scale-test
+    waitWhenFinished: true
+    objects:
+      - kind: DNSPolicy
+        apiVersion: kuadrant.io/v1alpha1
+        labelSelector: {kube-burner-job: scale-test-main}
