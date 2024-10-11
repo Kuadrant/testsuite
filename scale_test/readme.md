@@ -6,8 +6,18 @@ Control Plane scale testing via kube-burner utility
 
 This test assumes that Kuadrant together with all the dependencies (Gateway API, Istio, Certificate Manager etc) is installed. A ClusterIssuer (self-signed one is enough) is expected to exist too. Also make sure to port-forward Prometheus instance so that it is possible for kube-burner to query it.
 
-Provide the AWS credentials for DNS setup in `aws-credentials.yaml`
-Replace the `the.domain.iown` placeholder with the actual domain in `gw.yaml` and `httproute.yaml`.
+The following env vars will need to be set to run the tests:
+
+```
+export KUADRANT_AWS_SECRET_ACCESS_KEY=[key]
+export KUADRANT_AWS_ACCESS_KEY_ID=[id]
+export KUADRANT_ZONE_ROOT_DOMAIN=[domain]
+export KUADRANT_AWS_REGION=[region]
+export PROMETHEUS_URL=http://127.0.0.1:9090
+export PROMETHEUS_TOKEN=""
+export OS_INDEXING=true   # if sending metrics to opensearch/elasticsearch
+export ES_SERVER=https://[user]:[password]@[host]:[port]
+```
 
 Create an empty `./metrics` directory where the data returned from Prometheus are to be stored.
 

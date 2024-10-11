@@ -10,7 +10,7 @@ spec:
     kind: Gateway
     name: scale-test-{{.Iteration}}
   hostnames:
-  - "api-{{.Iteration}}.scale-test-{{.Iteration}}.the.domain.iown"
+  - "api-{{.Iteration}}.scale-test-{{.Iteration}}.{{ .KUADRANT_ZONE_ROOT_DOMAIN }}"
   rules:
   - backendRefs:
     - group: ''

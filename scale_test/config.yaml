@@ -4,9 +4,17 @@ metricsEndpoints:
     token: {{ .PROMETHEUS_TOKEN }}
     metrics: 
     - ./metrics.yaml
-    indexer: 
+{{ if .OS_INDEXING }}
+    indexer:
+      type: opensearch
+      esServers: ["{{ .ES_SERVER }}"]
+      insecureSkipVerify: true
+      defaultIndex: kube-burner
+{{ else }}
+    indexer:
       type: local
       metricsDirectory: ./metrics
+{{ end }}
 global: 
   gc: true
 jobs: 
@@ -30,6 +38,10 @@ jobs:
       - objectTemplate: ./aws-credentials.yaml
         kind: Secret
         replicas: 1
+        inputVars:
+          KUADRANT_AWS_ACCESS_KEY_ID: "{{ .KUADRANT_AWS_ACCESS_KEY_ID }}"
+          KUADRANT_AWS_REGION: "{{ .KUADRANT_AWS_REGION }}"
+          KUADRANT_AWS_SECRET_ACCESS_KEY: "{{ .KUADRANT_AWS_SECRET_ACCESS_KEY }}"
   - name: scale-test-main
     jobIterations: 1
     qps: 1
@@ -43,6 +55,8 @@ jobs:
         waitOptions:
           forCondition: Programmed
           customStatusPath: ".conditions[].type"
+        inputVars:
+          KUADRANT_ZONE_ROOT_DOMAIN: "{{ .KUADRANT_ZONE_ROOT_DOMAIN }}"
       - objectTemplate: ./gw-tls-policy.yaml
         replicas: 1
         waitOptions:
@@ -68,6 +82,8 @@ jobs:
         waitOptions:
           forCondition: Accepted
           customStatusPath: ".conditions[].type"
+        inputVars:
+          KUADRANT_ZONE_ROOT_DOMAIN: "{{ .KUADRANT_ZONE_ROOT_DOMAIN }}"
       - objectTemplate: ./httproute-rlp.yaml
         replicas: 1
         waitOptions:

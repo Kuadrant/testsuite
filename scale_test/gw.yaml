@@ -10,7 +10,7 @@ spec:
   - allowedRoutes: 
       namespaces: 
         from: All
-    hostname: "*.scale-test-{{.Iteration}}.the.domain.iown"
+    hostname: "*.scale-test-{{.Iteration}}.{{ .KUADRANT_ZONE_ROOT_DOMAIN }}"
     name: api
     port: 443
     protocol: HTTPS
