@@ -62,13 +62,6 @@ Port forward to prometheus:
 kubectl -n monitoring port-forward svc/prometheus-k8s 9090:9090
 ```
 
-Set env vars for prometheus:
-
-```bash
-export PROMETHEUS_URL="http://127.0.0.1:9090"
-export PROMETHEUS_TOKEN=""
-```
-
 Run kube-burner:
 
 ```bash
