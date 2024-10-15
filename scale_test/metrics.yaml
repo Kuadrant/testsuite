@@ -1,3 +1,14 @@
+- query: sum(rate(container_cpu_usage_seconds_total{container="",namespace=~"kuadrant-system|istio-system|gateway-system|scale-test-.*"}[5m])) by(namespace)
+  metricName: namespaceCPU
+- query: sum(container_memory_usage_bytes{container="",namespace=~"kuadrant-system|istio-system|gateway-system|scale-test-.*"}) by(namespace)
+  metricName: namespaceMemory
+- query: sum(rate(container_cpu_usage_seconds_total{container="",namespace=~"kuadrant-system|istio-system|gateway-system|scale-test-.*"}[5m])) by(namespace, pod)
+  metricName: namespacePodCPU
+- query: sum(container_memory_usage_bytes{container="",namespace=~"kuadrant-system|istio-system|gateway-system|scale-test-.*"}) by(namespace, pod)
+  metricName: namespacePodMemory
+- query: histogram_quantile(0.99, sum(rate(controller_runtime_reconcile_time_seconds_bucket{namespace="kuadrant-system"}[5m])) by (controller, le)) > 0
+  metricName: Controller99thReconcile
+
 # API server
 - query: histogram_quantile(0.99, sum(rate(apiserver_request_duration_seconds_bucket{apiserver="kube-apiserver", verb!~"WATCH", subresource!="log"}[2m])) by (verb,resource,subresource,instance,le)) > 0
   metricName: API99thLatency

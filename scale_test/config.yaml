@@ -48,6 +48,7 @@ jobs:
     jobIterations: 1
     qps: 1
     burst: 1
+    jobPause: 2m
     namespacedIterations: true
     namespace: scale-test
     waitWhenFinished: true
