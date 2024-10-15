@@ -1,0 +1,15 @@
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: httpbin
+  labels:
+    app: scale-test
+spec:
+  ports:
+    - name: http
+      protocol: TCP
+      port: 8080
+      targetPort: api
+  selector:
+    app: scale-test
