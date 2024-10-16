@@ -1,14 +1,15 @@
+{{- $GW_NUM := .GW_NUM }}
 apiVersion: kuadrant.io/v1beta2
 kind: AuthPolicy
 metadata:
-  name: gw-auth-policy-{{.Iteration}}
+  name: auth-policy-gw{{$GW_NUM}}-i{{ .Iteration }}
   labels: 
     app: scale-test
 spec:
   targetRef:
     group: gateway.networking.k8s.io
     kind: Gateway
-    name: scale-test-{{.Iteration}}
+    name: gw{{$GW_NUM}}-i{{ .Iteration }}
   rules:
     authorization:
       deny-all:

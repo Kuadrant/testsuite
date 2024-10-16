@@ -1,14 +1,15 @@
+{{- $GW_NUM := .GW_NUM }}
 apiVersion: kuadrant.io/v1beta3
 kind: RateLimitPolicy
 metadata:
-  name: gw-rlp-{{.Iteration}}
+  name: rlp-gw{{$GW_NUM}}-i{{ .Iteration }}
   labels: 
     app: scale-test
 spec:
   targetRef:
     group: gateway.networking.k8s.io
     kind: Gateway
-    name: scale-test-{{.Iteration}}
+    name: gw{{$GW_NUM}}-i{{ .Iteration }}
   limits:
     "global":
       rates:
