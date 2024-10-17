@@ -1,21 +1,28 @@
+{{- $Iteration := .Iteration }}
+{{- $KUADRANT_ZONE_ROOT_DOMAIN := .KUADRANT_ZONE_ROOT_DOMAIN }}
+{{- $GW_NUM := .GW_NUM }}
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata: 
-  name: scale-test-{{.Iteration}}
+  name: gw{{$GW_NUM}}-i{{$Iteration}}
   labels: 
     app: scale-test
 spec: 
   gatewayClassName: istio
   listeners: 
+{{- $numListeners := .NUM_LISTENERS | atoi }}
+{{- range $index := until $numListeners }}
+  {{- $LISTENER_NUM := add1 $index }}
   - allowedRoutes: 
       namespaces: 
         from: All
-    hostname: "*.scale-test-{{.Iteration}}.{{ .KUADRANT_ZONE_ROOT_DOMAIN }}"
-    name: api
+    hostname: "*.scale-test-gw{{$GW_NUM}}-l{{ $LISTENER_NUM }}-i{{$Iteration}}.{{ $KUADRANT_ZONE_ROOT_DOMAIN }}"
+    name: api-{{ $LISTENER_NUM }}
     port: 443
     protocol: HTTPS
     tls:
       mode: Terminate
       certificateRefs:
-        - name: scale-test-{{.Iteration}}
+        - name: cert-gw{{$GW_NUM}}-l{{ $LISTENER_NUM }}-i{{$Iteration}}
           kind: Secret
+{{- end }}
