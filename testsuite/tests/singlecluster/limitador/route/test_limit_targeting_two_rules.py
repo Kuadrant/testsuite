@@ -2,8 +2,8 @@
 
 import pytest
 
-from testsuite.gateway import RouteMatch, PathMatch, MatchType
-from testsuite.kuadrant.policy.rate_limit import RouteSelector, Limit
+from testsuite.kuadrant.policy.authorization import Pattern
+from testsuite.kuadrant.policy.rate_limit import Limit
 
 
 pytestmark = [pytest.mark.kuadrant_only, pytest.mark.limitador]
@@ -12,14 +12,12 @@ pytestmark = [pytest.mark.kuadrant_only, pytest.mark.limitador]
 @pytest.fixture(scope="module")
 def rate_limit(rate_limit):
     """Add limit to the policy"""
-    selector = RouteSelector(
-        RouteMatch(path=PathMatch(value="/get", type=MatchType.PATH_PREFIX)),
-        RouteMatch(path=PathMatch(value="/anything", type=MatchType.PATH_PREFIX)),
-    )
-    rate_limit.add_limit("test", [Limit(5, 10)], route_selectors=[selector])
+    when = Pattern("request.method", "eq", "GET")
+    rate_limit.add_limit("test", [Limit(5, 10)], when=[when])
     return rate_limit
 
 
+@pytest.mark.issue("https://github.com/Kuadrant/testsuite/issues/561")
 def test_limit_targeting_two_rules(client):
     """Tests that one RLP limit targeting two rules limits them together"""
     responses = client.get_many("/get", 3)

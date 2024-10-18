@@ -2,9 +2,9 @@
 
 import time
 from dataclasses import dataclass
-from typing import Iterable, Literal, Optional, List
+from typing import Iterable, Literal
 
-from testsuite.gateway import Referencable, RouteMatch
+from testsuite.gateway import Referencable
 from testsuite.kubernetes import modify
 from testsuite.kubernetes.client import KubernetesClient
 from testsuite.kuadrant.policy import Policy
@@ -21,23 +21,6 @@ class Limit:
     unit: Literal["second", "minute", "day"] = "second"
 
 
-@dataclass
-class RouteSelector:
-    """
-    RouteSelector is an object composed of a set of HTTPRouteMatch objects (from Gateway API -
-    HTTPPathMatch, HTTPHeaderMatch, HTTPQueryParamMatch, HTTPMethodMatch),
-    and an additional hostnames field.
-    https://docs.kuadrant.io/kuadrant-operator/doc/reference/route-selectors/#routeselector
-    """
-
-    matches: Optional[list[RouteMatch]] = None
-    hostnames: Optional[list[str]] = None
-
-    def __init__(self, *matches: RouteMatch, hostnames: Optional[List[str]] = None):
-        self.matches = list(matches) if matches else []
-        self.hostnames = hostnames
-
-
 class RateLimitPolicy(Policy):
     """RateLimitPolicy (or RLP for short) object, used for applying rate limiting rules to a Gateway/HTTPRoute"""
 
@@ -49,7 +32,7 @@ class RateLimitPolicy(Policy):
     def create_instance(cls, cluster: KubernetesClient, name, target: Referencable, labels: dict[str, str] = None):
         """Creates new instance of RateLimitPolicy"""
         model = {
-            "apiVersion": "kuadrant.io/v1beta2",
+            "apiVersion": "kuadrant.io/v1beta3",
             "kind": "RateLimitPolicy",
             "metadata": {"name": name, "labels": labels},
             "spec": {
@@ -66,7 +49,6 @@ class RateLimitPolicy(Policy):
         limits: Iterable[Limit],
         when: Iterable[Rule] = None,
         counters: list[str] = None,
-        route_selectors: Iterable[RouteSelector] = None,
     ):
         """Add another limit"""
         limit: dict = {
@@ -76,8 +58,6 @@ class RateLimitPolicy(Policy):
             limit["when"] = [asdict(rule) for rule in when]
         if counters:
             limit["counters"] = counters
-        if route_selectors:
-            limit["routeSelectors"] = [asdict(rule) for rule in route_selectors]
 
         if self.spec_section is None:
             self.spec_section = self.model.spec
