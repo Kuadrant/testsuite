@@ -15,7 +15,7 @@ pytest-html = "*"
 dynaconf = "*"
 dnspython = "*"
 python-keycloak = ">=3.6"
-python-jose = "*"
+PyJWT = "*"
 lxml = "*"
 cryptography = "*"
 backoff = "*"
@@ -29,7 +29,6 @@ weakget = "*"
 mypy = "*"
 pylint = "*"
 types-PyYAML = "*"
-types-python-jose = "*"
 black = {version = "*", extras = ["d"]}
 
 
