@@ -1,5 +1,5 @@
 {{- $GW_NUM := .GW_NUM }}
-apiVersion: kuadrant.io/v1beta2
+apiVersion: kuadrant.io/v1beta3
 kind: AuthPolicy
 metadata:
   name: auth-policy-gw{{$GW_NUM}}-i{{ .Iteration }}

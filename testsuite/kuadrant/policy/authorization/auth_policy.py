@@ -30,7 +30,7 @@ class AuthPolicy(Policy, AuthConfig):
     ):
         """Creates base instance"""
         model: Dict = {
-            "apiVersion": "kuadrant.io/v1beta2",
+            "apiVersion": "kuadrant.io/v1beta3",
             "kind": "AuthPolicy",
             "metadata": {"name": name, "namespace": cluster.project, "labels": labels},
             "spec": {
