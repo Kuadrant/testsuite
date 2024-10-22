@@ -873,7 +873,7 @@
             {
               "id": "1",
               "settings": {
-                "size": "500"
+                "size": "1000"
               },
               "type": "raw_data"
             }
@@ -894,7 +894,7 @@
             {
               "id": "1",
               "settings": {
-                "size": "500"
+                "size": "1000"
               },
               "type": "raw_data"
             }
@@ -959,13 +959,13 @@
               },
               "UUID 1 Value": {
                 "aggregations": [
-                  "lastNotNull"
+                  "mean"
                 ],
                 "operation": "aggregate"
               },
               "UUID 2 Value": {
                 "aggregations": [
-                  "lastNotNull"
+                  "mean"
                 ],
                 "operation": "aggregate"
               },
@@ -992,9 +992,9 @@
           "options": {
             "alias": "Diff (UUID 2 - UUID 1)",
             "binary": {
-              "left": "UUID 2 Value (lastNotNull)",
+              "left": "UUID 2 Value (mean)",
               "operator": "-",
-              "right": "UUID 1 Value (lastNotNull)"
+              "right": "UUID 1 Value (mean)"
             },
             "mode": "binary",
             "reduce": {
@@ -1151,6 +1151,17 @@
       ],
       "title": "99th %ile reconcile time per controller",
       "transformations": [
+        {
+          "id": "sortBy",
+          "options": {
+            "fields": {},
+            "sort": [
+              {
+                "field": "timestamp"
+              }
+            ]
+          }
+        },
         {
           "id": "joinByField",
           "options": {
@@ -1318,32 +1329,8 @@
           },
           {
             "matcher": {
-              "id": "byName",
-              "options": "UUID 1 Value (lastNotNull)"
-            },
-            "properties": [
-              {
-                "id": "unit",
-                "value": "decbytes"
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "UUID 2 Value (lastNotNull)"
-            },
-            "properties": [
-              {
-                "id": "unit",
-                "value": "decbytes"
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Diff (UUID 2 - UUID 1)"
+              "id": "byRegexp",
+              "options": "/.*UUID.*/"
             },
             "properties": [
               {
@@ -1392,7 +1379,7 @@
             {
               "id": "1",
               "settings": {
-                "size": "500"
+                "size": "1000"
               },
               "type": "raw_data"
             }
@@ -1413,7 +1400,7 @@
             {
               "id": "1",
               "settings": {
-                "size": "500"
+                "size": "1000"
               },
               "type": "raw_data"
             }
@@ -1478,13 +1465,13 @@
               },
               "UUID 1 Value": {
                 "aggregations": [
-                  "lastNotNull"
+                  "mean"
                 ],
                 "operation": "aggregate"
               },
               "UUID 2 Value": {
                 "aggregations": [
-                  "lastNotNull"
+                  "mean"
                 ],
                 "operation": "aggregate"
               },
@@ -1511,9 +1498,9 @@
           "options": {
             "alias": "Diff (UUID 2 - UUID 1)",
             "binary": {
-              "left": "UUID 2 Value (lastNotNull)",
+              "left": "UUID 2 Value (mean)",
               "operator": "-",
-              "right": "UUID 1 Value (lastNotNull)"
+              "right": "UUID 1 Value (mean)"
             },
             "mode": "binary",
             "reduce": {
@@ -1577,9 +1564,9 @@
       },
       {
         "current": {
-          "selected": false,
-          "text": "cbabe4da-3beb-4630-84f2-8fb91d6990e4",
-          "value": "cbabe4da-3beb-4630-84f2-8fb91d6990e4"
+          "selected": true,
+          "text": "c1195a3d-6ceb-4468-951c-d0492ef7c79c",
+          "value": "c1195a3d-6ceb-4468-951c-d0492ef7c79c"
         },
         "datasource": {
           "uid": "$Datasource"
@@ -1604,7 +1591,7 @@
     ]
   },
   "time": {
-    "from": "now-6h",
+    "from": "now-7d",
     "to": "now"
   },
   "timepicker": {
@@ -1624,6 +1611,6 @@
   "timezone": "",
   "title": "Kuadrant Performance Testing Comparison",
   "uid": "be0n6vb588jcwe",
-  "version": 18,
+  "version": 19,
   "weekStart": ""
 }
