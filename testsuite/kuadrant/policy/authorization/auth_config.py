@@ -48,7 +48,7 @@ class AuthConfig(KubernetesObject):
     ):
         """Creates base instance"""
         model: Dict = {
-            "apiVersion": "authorino.kuadrant.io/v1beta2",
+            "apiVersion": "authorino.kuadrant.io/v1beta3",
             "kind": "AuthConfig",
             "metadata": {"name": name, "namespace": cluster.project, "labels": labels},
             "spec": {"hosts": []},
