@@ -1,13 +1,12 @@
 """Test load-balancing based on geolocation"""
 
 import pytest
-import dns.name
 import dns.resolver
 
 pytestmark = [pytest.mark.multicluster]
 
 
-def test_load_balanced_geo(client, hostname, gateway, gateway2, dns_server, dns_server2):
+def test_load_balanced_geo(client, hostname, gateway, gateway2, dns_server, dns_server2, dns_default_geo_server):
     """
     - Verify that request to the hostname is successful
     - Verify that DNS resolution through nameservers from different regions returns according IPs
@@ -23,3 +22,6 @@ def test_load_balanced_geo(client, hostname, gateway, gateway2, dns_server, dns_
 
     resolver.nameservers = [dns_server2["address"]]
     assert resolver.resolve(hostname.hostname)[0].address == gateway2.external_ip().split(":")[0]
+
+    resolver.nameservers = [dns_default_geo_server]
+    assert resolver.resolve(hostname.hostname)[0].address == gateway.external_ip().split(":")[0]
