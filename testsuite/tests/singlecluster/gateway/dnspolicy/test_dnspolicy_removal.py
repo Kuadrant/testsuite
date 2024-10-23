@@ -13,7 +13,7 @@ pytestmark = [pytest.mark.kuadrant_only, pytest.mark.dnspolicy]
 def gateway(request, cluster, blame, wildcard_domain, module_label):
     """Create gateway without TLS enabled"""
     gw = KuadrantGateway.create_instance(cluster, blame("gw"), {"app": module_label})
-    gw.add_listener(GatewayListener(wildcard_domain))
+    gw.add_listener(GatewayListener(hostname=wildcard_domain))
     request.addfinalizer(gw.delete)
     gw.commit()
     gw.wait_for_ready()

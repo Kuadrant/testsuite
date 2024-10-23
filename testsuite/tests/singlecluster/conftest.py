@@ -131,7 +131,7 @@ def gateway(request, kuadrant, cluster, blame, label, testconfig, wildcard_domai
     """Deploys Gateway that wires up the Backend behind the reverse-proxy and Authorino instance"""
     if kuadrant:
         gw = KuadrantGateway.create_instance(cluster, blame("gw"), {"app": label})
-        gw.add_listener(GatewayListener(wildcard_domain))
+        gw.add_listener(GatewayListener(hostname=wildcard_domain))
     else:
         authorino = request.getfixturevalue("authorino")
         gw = Envoy(
