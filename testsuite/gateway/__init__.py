@@ -177,7 +177,7 @@ class GatewayRoute(LifecycleObject, Referencable):
         """Sets match for a specific backend"""
 
 
-@dataclass
+@dataclass(kw_only=True)
 class GatewayListener:
     """
     Dataclass of Gateway listener object.

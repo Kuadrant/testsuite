@@ -16,9 +16,9 @@ MAX_GATEWAY_LISTENERS = 64
 def gateway(request, cluster, blame, base_domain, module_label):
     """Create first gateway with 64 listeners"""
     gw = KuadrantGateway.create_instance(cluster, blame("gw"), {"app": module_label})
-    gw.add_listener(GatewayListener(f"gw1-api.{base_domain}"))
+    gw.add_listener(GatewayListener(hostname=f"gw1-api.{base_domain}"))
     for i in range(1, MAX_GATEWAY_LISTENERS):
-        gw.add_listener(GatewayListener(f"api{i}", f"gw1-api{i}.{base_domain}"))
+        gw.add_listener(GatewayListener(name=f"api{i}", hostname=f"gw1-api{i}.{base_domain}"))
     request.addfinalizer(gw.delete)
     gw.commit()
     gw.wait_for_ready()
@@ -29,9 +29,9 @@ def gateway(request, cluster, blame, base_domain, module_label):
 def gateway2(request, cluster, blame, base_domain, module_label):
     """Create second gateway with 64 listeners"""
     gw = KuadrantGateway.create_instance(cluster, blame("gw"), {"app": module_label})
-    gw.add_listener(GatewayListener(f"gw2-api.{base_domain}"))
+    gw.add_listener(GatewayListener(hostname=f"gw2-api.{base_domain}"))
     for i in range(1, MAX_GATEWAY_LISTENERS):
-        gw.add_listener(GatewayListener(f"api{i}", f"gw2-api{i}.{base_domain}"))
+        gw.add_listener(GatewayListener(name=f"api{i}", hostname=f"gw2-api{i}.{base_domain}"))
     request.addfinalizer(gw.delete)
     gw.commit()
     gw.wait_for_ready()
