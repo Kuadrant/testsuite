@@ -14,20 +14,22 @@ def test_gateway_readiness(gateway, gateway2):
 
 def test_simple_strategy(client, hostname, gateway, gateway2):
     """
-    Tests DNS/TLS across multiple clusters
-    - Checks that all Gateways will get ready
+    Test simple load-balancing strategy across multiple clusters
     - Checks that request to the hostname works
-    - Checks DNS records values
+    - Checks that DNS resolution return IPs in a round-robin fashion
     """
     result = client.get("/get")
     assert not result.has_dns_error(), result.error
     assert not result.has_cert_verify_error(), result.error
     assert result.status_code == 200
 
-    dns_ip1 = dns.resolver.resolve(hostname.hostname)[0].address
-    dns_ip2 = dns.resolver.resolve(hostname.hostname)[0].address
-    assert dns_ip1 != dns_ip2, "Simple routing strategy should return IPs in a round-robin fashion"
+    gw1_ip, gw2_ip = gateway.external_ip().split(":")[0], gateway2.external_ip().split(":")[0]
+    assert gw1_ip != gw2_ip
 
-    gateway_ips = {gateway.external_ip().split(":")[0], gateway2.external_ip().split(":")[0]}
-    dns_ips = {dns_ip1, dns_ip2}
-    assert gateway_ips == dns_ips, f"Expected and actual IPs mismatch, expected {gateway_ips}, got {dns_ips}"
+    for i in range(10):
+        assert (
+            dns.resolver.resolve(hostname.hostname)[0].address == gw1_ip
+        ), f"Simple routing strategy should return IPs in a round-robin fashion (iteration {i + 1})"
+        assert (
+            dns.resolver.resolve(hostname.hostname)[0].address == gw2_ip
+        ), f"Simple routing strategy should return IPs in a round-robin fashion (iteration {i + 1})"
