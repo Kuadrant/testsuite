@@ -36,8 +36,9 @@ def test_wrong_issuer_type(request, gateway, blame, module_label):
         has_condition(
             "Accepted",
             "False",
-            "Unknown",
-            'invalid value "Gateway" for issuerRef.kind. Must be empty, "Issuer" or "ClusterIssuer"',
+            "Invalid",
+            'TLSPolicy target is invalid: invalid value "Gateway" for '
+            'issuerRef.kind. Must be empty, "Issuer" or "ClusterIssuer"',
         ),
         timelimit=20,
     ), f"Policy did not reach expected status, instead it was: {policy.refresh().model.status.conditions}"
@@ -61,6 +62,6 @@ def test_non_existing_issuer(request, gateway, cluster, blame, module_label):
     policy.commit()
 
     assert policy.wait_until(
-        has_condition("Accepted", "False", "Unknown", 'ClusterIssuer.cert-manager.io "does-not-exist" not found'),
+        has_condition("Accepted", "False", "Invalid", "TLSPolicy target is invalid: unable to find issuer"),
         timelimit=20,
     ), f"Policy did not reach expected status, instead it was: {policy.refresh().model.status.conditions}"
