@@ -47,7 +47,7 @@ class DNSPolicy(Policy):
         """Creates new instance of DNSPolicy"""
 
         model: dict = {
-            "apiVersion": "kuadrant.io/v1alpha1",
+            "apiVersion": "kuadrant.io/v1",
             "kind": "DNSPolicy",
             "metadata": {"name": name, "labels": labels},
             "spec": {
