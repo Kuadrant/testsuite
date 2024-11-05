@@ -25,7 +25,7 @@ class TLSPolicy(Policy):
         """Creates new instance of TLSPolicy"""
 
         model = {
-            "apiVersion": "kuadrant.io/v1alpha1",
+            "apiVersion": "kuadrant.io/v1",
             "kind": "TLSPolicy",
             "metadata": {"name": name, "labels": labels},
             "spec": {
