@@ -179,3 +179,62 @@ Some common transforms are:
 * "Sort by"
 
 Inspecting some of the existing panels in the Kuadrant dashboard and kube-burner dashboards at https://github.com/kube-burner/kube-burner/tree/main/examples/grafana-dashboards can give inspiration as well.
+
+## Performance Comparison Script
+
+The `./compare.sh` script allows you to compare key performance metrics between two test runs. It fetches metrics from an Elasticsearch instance and generates a report highlighting the differences in performance between the two specified runs, similar to the comparison Grafana dashboard. Values are calculated based on the average of most recent values.
+
+You can specify the UUIDs of the two test runs you wish to compare by setting the `UUID1` and `UUID2` environment variables when running the script.
+
+```bash
+UUID1=<first-test-uuid> UUID2=<second-test-uuid> ./compare.sh
+```
+
+**Example**:
+
+```bash
+UUID1=926c7847-95bd-4ed2-bf80-2cad6746db9c UUID2=c1195a3d-6ceb-4468-951c-d0492ef7c79c ./compare.sh
+```
+
+### Automatic UUID Selection
+
+If you do not specify `UUID1` and `UUID2`, the script will automatically fetch the two most recent test runs from Elasticsearch and compare them.
+
+```bash
+./compare.sh
+```
+
+## Example Output
+
+```
+Metric                    UUID 1 (926c7847)           UUID 2 (c1195a3d)           Diff
+Timestamp                 2024-10-18T12:01:11.588843Z 2024-10-18T12:50:47.638731Z
+Elapsed Time              152                         220                         +68
+
+Namespace CPU (Average Values)
+Namespace                 926c7847        c1195a3d        Diff
+kuadrant-system           0.0119          0.0122          +0.0003
+scale-test-0              0.0006          0.1076          +0.1070
+gateway-system            0.0022          0.0019          -0.0003
+istio-system              0.0071          0.0317          +0.0246
+
+Namespace Memory (MB)
+Namespace                 926c7847        c1195a3d        Diff
+kuadrant-system           181.78          152.12          -29.65
+scale-test-0              168.64          267.74          +99.09
+gateway-system            40.30           39.59           -0.70
+istio-system              114.27          119.07          +4.79
+
+Controller 99th Reconcile (s)
+Controller                926c7847        c1195a3d        Diff
+dnsrecord                 5.8800          2.9600          -2.9200
+authpolicy                0.1835          0.0955          -0.0880
+dnspolicy                 0.1410          0.1423          +0.0012
+kuadrant                  0.0980          0.1475          +0.0495
+limitador                 0.0980          0.3975          +0.2995
+gateway                   0.1474          0.0885          -0.0588
+controller                3.4350          1.2150          -2.2200
+tlspolicy                 3.8300          0.0959          -3.7341
+ratelimitpolicy           0.1760          0.0902          -0.0858
+authorino                 0.0000          0.6955          +0.6955
+```
