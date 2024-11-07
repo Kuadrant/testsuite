@@ -1,0 +1,1616 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "datasource",
+          "uid": "grafana"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": 5,
+  "links": [],
+  "panels": [
+    {
+      "datasource": {
+        "default": false,
+        "type": "elasticsearch",
+        "uid": "$Datasource"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": false,
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "QPS"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 61
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Start Time"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 198
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "End Time"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 233
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "UUID"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 359
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 327,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": []
+      },
+      "pluginVersion": "11.2.0",
+      "targets": [
+        {
+          "bucketAggs": [],
+          "datasource": {
+            "uid": "$Datasource"
+          },
+          "metrics": [
+            {
+              "id": "1",
+              "settings": {
+                "size": "500"
+              },
+              "type": "raw_data"
+            }
+          ],
+          "query": "metricName: \"jobSummary\" AND jobConfig.name: \"scale-test-main\"",
+          "refId": "A",
+          "timeField": "timestamp"
+        }
+      ],
+      "title": "All Jobs Summary",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "_id": true,
+              "_index": true,
+              "_type": true,
+              "elapsedTime": true,
+              "highlight": true,
+              "jobConfig.burst": true,
+              "jobConfig.churnCycles": true,
+              "jobConfig.churnDelay": true,
+              "jobConfig.churnDeletionStrategy": true,
+              "jobConfig.churnDuration": true,
+              "jobConfig.churnPercent": true,
+              "jobConfig.cleanup": true,
+              "jobConfig.errorOnVerify": true,
+              "jobConfig.iterationsPerNamespace": true,
+              "jobConfig.jobIterations": true,
+              "jobConfig.jobPause": true,
+              "jobConfig.jobType": true,
+              "jobConfig.maxWaitTimeout": true,
+              "jobConfig.name": true,
+              "jobConfig.namespace": true,
+              "jobConfig.namespacedIterations": true,
+              "jobConfig.preLoadImages": true,
+              "jobConfig.preLoadPeriod": true,
+              "jobConfig.qps": true,
+              "jobConfig.verifyObjects": true,
+              "jobConfig.waitForDeletion": true,
+              "jobConfig.waitWhenFinished": true,
+              "metricName": true,
+              "passed": false,
+              "sort": true,
+              "timestamp": false,
+              "version": true
+            },
+            "includeByName": {},
+            "indexByName": {
+              "_id": 2,
+              "_index": 3,
+              "_type": 4,
+              "elapsedTime": 5,
+              "endTimestamp": 6,
+              "highlight": 7,
+              "jobConfig.burst": 8,
+              "jobConfig.churnCycles": 9,
+              "jobConfig.churnDelay": 10,
+              "jobConfig.churnDeletionStrategy": 11,
+              "jobConfig.churnDuration": 12,
+              "jobConfig.churnPercent": 13,
+              "jobConfig.cleanup": 14,
+              "jobConfig.errorOnVerify": 15,
+              "jobConfig.iterationsPerNamespace": 16,
+              "jobConfig.jobIterations": 17,
+              "jobConfig.jobPause": 18,
+              "jobConfig.jobType": 19,
+              "jobConfig.maxWaitTimeout": 20,
+              "jobConfig.name": 21,
+              "jobConfig.namespace": 22,
+              "jobConfig.namespacedIterations": 23,
+              "jobConfig.preLoadImages": 24,
+              "jobConfig.preLoadPeriod": 25,
+              "jobConfig.qps": 26,
+              "jobConfig.verifyObjects": 27,
+              "jobConfig.waitForDeletion": 28,
+              "jobConfig.waitWhenFinished": 29,
+              "metricName": 30,
+              "passed": 31,
+              "sort": 32,
+              "timestamp": 1,
+              "uuid": 0,
+              "version": 33
+            },
+            "renameByName": {
+              "endTimestamp": "End Time",
+              "highlight": "",
+              "passed": "Passed",
+              "timestamp": "Start Time",
+              "uuid": "UUID"
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "fields": {},
+            "sort": [
+              {
+                "desc": true,
+                "field": "End Time"
+              }
+            ]
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "default": false,
+        "type": "elasticsearch",
+        "uid": "$Datasource"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": false,
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "QPS"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 77
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Name"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 251
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Start Time"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 189
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "End Time"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 228
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Burst"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 77
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Elapsed time"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 122
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Iterations"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 106
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Job Type"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 110
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "UUID"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 316
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "jobPause"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "ns"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 24,
+        "x": 0,
+        "y": 6
+      },
+      "id": 328,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": []
+      },
+      "pluginVersion": "11.2.0",
+      "targets": [
+        {
+          "bucketAggs": [],
+          "datasource": {
+            "uid": "$Datasource"
+          },
+          "metrics": [
+            {
+              "id": "1",
+              "settings": {
+                "size": "500"
+              },
+              "type": "raw_data"
+            }
+          ],
+          "query": "(uuid.keyword: $uuid_1 OR uuid.keyword: $uuid_2) AND metricName: \"jobSummary\" AND jobConfig.name: \"scale-test-main\"",
+          "refId": "A",
+          "timeField": "timestamp"
+        }
+      ],
+      "title": "Selected Jobs Details",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "_id": true,
+              "_index": true,
+              "_type": true,
+              "jobConfig.cleanup": true,
+              "jobConfig.errorOnVerify": true,
+              "jobConfig.jobIterationDelay": true,
+              "jobConfig.jobIterations": false,
+              "jobConfig.jobPause": false,
+              "jobConfig.maxWaitTimeout": true,
+              "jobConfig.name": true,
+              "jobConfig.namespace": true,
+              "jobConfig.namespaced": true,
+              "jobConfig.namespacedIterations": false,
+              "jobConfig.objects": true,
+              "jobConfig.verifyObjects": true,
+              "jobConfig.waitFor": true,
+              "jobConfig.waitForDeletion": true,
+              "jobConfig.waitWhenFinished": true,
+              "metricName": true,
+              "timestamp": false,
+              "uuid": false
+            },
+            "includeByName": {},
+            "indexByName": {
+              "_id": 1,
+              "_index": 2,
+              "_type": 3,
+              "elapsedTime": 9,
+              "endTimestamp": 6,
+              "highlight": 21,
+              "jobConfig.burst": 8,
+              "jobConfig.churnCycles": 22,
+              "jobConfig.churnDelay": 23,
+              "jobConfig.churnDeletionStrategy": 24,
+              "jobConfig.churnDuration": 25,
+              "jobConfig.churnPercent": 26,
+              "jobConfig.cleanup": 12,
+              "jobConfig.errorOnVerify": 13,
+              "jobConfig.iterationsPerNamespace": 27,
+              "jobConfig.jobIterations": 10,
+              "jobConfig.jobPause": 33,
+              "jobConfig.jobType": 11,
+              "jobConfig.maxWaitTimeout": 14,
+              "jobConfig.name": 4,
+              "jobConfig.namespace": 15,
+              "jobConfig.namespacedIterations": 16,
+              "jobConfig.preLoadImages": 28,
+              "jobConfig.preLoadPeriod": 29,
+              "jobConfig.qps": 7,
+              "jobConfig.verifyObjects": 17,
+              "jobConfig.waitForDeletion": 18,
+              "jobConfig.waitWhenFinished": 19,
+              "metricName": 20,
+              "passed": 30,
+              "sort": 31,
+              "timestamp": 5,
+              "uuid": 0,
+              "version": 32
+            },
+            "renameByName": {
+              "_type": "",
+              "elapsedTime": "Elapsed time",
+              "endTimestamp": "End Time",
+              "jobConfig.burst": "Burst",
+              "jobConfig.cleanup": "",
+              "jobConfig.errorOnVerify": "errorOnVerify",
+              "jobConfig.jobIterationDelay": "jobIterationDelay",
+              "jobConfig.jobIterations": "Iterations",
+              "jobConfig.jobPause": "jobPause",
+              "jobConfig.jobType": "Job Type",
+              "jobConfig.maxWaitTimeout": "maxWaitTImeout",
+              "jobConfig.name": "Name",
+              "jobConfig.namespace": "namespacePrefix",
+              "jobConfig.namespaced": "",
+              "jobConfig.namespacedIterations": "Namespaced iterations",
+              "jobConfig.objects": "",
+              "jobConfig.podWait": "podWait",
+              "jobConfig.qps": "QPS",
+              "jobConfig.verifyObjects": "",
+              "timestamp": "Start Time",
+              "uuid": "UUID"
+            }
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "default": false,
+        "type": "elasticsearch",
+        "uid": "$Datasource"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "semi-dark-green",
+                "value": null
+              },
+              {
+                "color": "semi-dark-red",
+                "value": 0
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/.*UUID.*/"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Diff (UUID 2 - UUID 1)"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 12,
+        "x": 0,
+        "y": 11
+      },
+      "id": 374,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": false,
+            "displayName": "labels.pod"
+          }
+        ]
+      },
+      "pluginVersion": "11.2.0",
+      "targets": [
+        {
+          "alias": "",
+          "bucketAggs": [],
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "ee0gkcjio8c8wc"
+          },
+          "metrics": [
+            {
+              "id": "1",
+              "settings": {
+                "size": "500"
+              },
+              "type": "raw_data"
+            }
+          ],
+          "query": "uuid.keyword: $uuid_1 AND metricName: \"jobSummary\" AND jobConfig.name: \"scale-test-main\"",
+          "refId": "A",
+          "timeField": "timestamp"
+        },
+        {
+          "alias": "",
+          "bucketAggs": [],
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "$Datasource"
+          },
+          "hide": false,
+          "metrics": [
+            {
+              "id": "1",
+              "settings": {
+                "size": "500"
+              },
+              "type": "raw_data"
+            }
+          ],
+          "query": "uuid.keyword: $uuid_2 AND metricName: \"jobSummary\" AND jobConfig.name: \"scale-test-main\"",
+          "refId": "B",
+          "timeField": "timestamp"
+        }
+      ],
+      "title": "Job Elapsed Time (includes any jobPause)",
+      "transformations": [
+        {
+          "id": "joinByField",
+          "options": {
+            "byField": "jobConfig.name",
+            "mode": "inner"
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "_id 1": true,
+              "_id 2": true,
+              "_index 1": true,
+              "_index 2": true,
+              "_type 1": true,
+              "_type 2": true,
+              "elapsedTime 2": false,
+              "endTimestamp 1": true,
+              "endTimestamp 2": true,
+              "highlight 1": true,
+              "highlight 2": true,
+              "jobConfig.burst 1": true,
+              "jobConfig.burst 2": true,
+              "jobConfig.churnCycles 1": true,
+              "jobConfig.churnCycles 2": true,
+              "jobConfig.churnDelay 1": true,
+              "jobConfig.churnDelay 2": true,
+              "jobConfig.churnDeletionStrategy 1": true,
+              "jobConfig.churnDeletionStrategy 2": true,
+              "jobConfig.churnDuration 1": true,
+              "jobConfig.churnDuration 2": true,
+              "jobConfig.churnPercent 1": true,
+              "jobConfig.churnPercent 2": true,
+              "jobConfig.cleanup 1": true,
+              "jobConfig.cleanup 2": true,
+              "jobConfig.errorOnVerify 1": true,
+              "jobConfig.errorOnVerify 2": true,
+              "jobConfig.iterationsPerNamespace 1": true,
+              "jobConfig.iterationsPerNamespace 2": true,
+              "jobConfig.jobIterations 1": true,
+              "jobConfig.jobIterations 2": true,
+              "jobConfig.jobPause 1": true,
+              "jobConfig.jobPause 2": true,
+              "jobConfig.jobType 1": true,
+              "jobConfig.jobType 2": true,
+              "jobConfig.maxWaitTimeout 1": true,
+              "jobConfig.maxWaitTimeout 2": true,
+              "jobConfig.name": true,
+              "jobConfig.namespace 1": true,
+              "jobConfig.namespace 2": true,
+              "jobConfig.namespacedIterations 1": true,
+              "jobConfig.namespacedIterations 2": true,
+              "jobConfig.preLoadImages 1": true,
+              "jobConfig.preLoadImages 2": true,
+              "jobConfig.preLoadPeriod 1": true,
+              "jobConfig.preLoadPeriod 2": true,
+              "jobConfig.qps 1": true,
+              "jobConfig.qps 2": true,
+              "jobConfig.verifyObjects 1": true,
+              "jobConfig.verifyObjects 2": true,
+              "jobConfig.waitForDeletion 1": true,
+              "jobConfig.waitForDeletion 2": true,
+              "jobConfig.waitWhenFinished 1": true,
+              "jobConfig.waitWhenFinished 2": true,
+              "metricName 1": true,
+              "metricName 2": true,
+              "passed 1": true,
+              "passed 2": true,
+              "sort 1": true,
+              "sort 2": true,
+              "timestamp 1": true,
+              "timestamp 2": true,
+              "uuid 1": true,
+              "uuid 2": true,
+              "version 1": true,
+              "version 2": true
+            },
+            "includeByName": {},
+            "indexByName": {},
+            "renameByName": {
+              "elapsedTime 1": "UUID 1 Elapsed Time",
+              "elapsedTime 2": "UUID 2 Elapsed Time",
+              "highlight 1": ""
+            }
+          }
+        },
+        {
+          "id": "calculateField",
+          "options": {
+            "alias": "Diff (UUID 2 - UUID 1)",
+            "binary": {
+              "left": "UUID 2 Elapsed Time",
+              "operator": "-",
+              "right": "UUID 1 Elapsed Time"
+            },
+            "mode": "binary",
+            "reduce": {
+              "reducer": "sum"
+            }
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "default": false,
+        "type": "elasticsearch",
+        "uid": "$Datasource"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "semi-dark-green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Diff (UUID 2 - UUID 1)"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "semi-dark-red",
+                      "value": 0
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 12,
+        "y": 11
+      },
+      "id": 371,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": false,
+            "displayName": "labels.pod"
+          }
+        ]
+      },
+      "pluginVersion": "11.2.0",
+      "targets": [
+        {
+          "alias": "",
+          "bucketAggs": [],
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "ee0gkcjio8c8wc"
+          },
+          "metrics": [
+            {
+              "id": "1",
+              "settings": {
+                "size": "1000"
+              },
+              "type": "raw_data"
+            }
+          ],
+          "query": "uuid.keyword: $uuid_1 AND metricName: \"namespaceCPU\" AND jobName: \"scale-test-main\"",
+          "refId": "A",
+          "timeField": "timestamp"
+        },
+        {
+          "alias": "",
+          "bucketAggs": [],
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "$Datasource"
+          },
+          "hide": false,
+          "metrics": [
+            {
+              "id": "1",
+              "settings": {
+                "size": "1000"
+              },
+              "type": "raw_data"
+            }
+          ],
+          "query": "uuid.keyword: $uuid_2 AND metricName: \"namespaceCPU\" AND jobName: \"scale-test-main\"",
+          "refId": "B",
+          "timeField": "timestamp"
+        }
+      ],
+      "title": "CPU Cores by namespace",
+      "transformations": [
+        {
+          "id": "joinByField",
+          "options": {
+            "byField": "labels.namespace",
+            "mode": "inner"
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "_id 1": true,
+              "_id 2": true,
+              "_index 1": true,
+              "_index 2": true,
+              "_type 1": true,
+              "_type 2": true,
+              "highlight 1": true,
+              "highlight 2": true,
+              "jobName 1": true,
+              "jobName 2": true,
+              "labels.namespace 2": true,
+              "metricName": true,
+              "query 1": true,
+              "query 2": true,
+              "sort 1": true,
+              "sort 2": true,
+              "timestamp 1": true,
+              "timestamp 2": true,
+              "uuid 1": true,
+              "uuid 2": true
+            },
+            "includeByName": {},
+            "indexByName": {},
+            "renameByName": {
+              "labels.namespace": "Namespace",
+              "labels.namespace 1": "Namespace",
+              "query 1": "",
+              "value 1": "UUID 1 Value",
+              "value 2": "UUID 2 Value"
+            }
+          }
+        },
+        {
+          "id": "groupBy",
+          "options": {
+            "fields": {
+              "Namespace": {
+                "aggregations": [],
+                "operation": "groupby"
+              },
+              "UUID 1 Value": {
+                "aggregations": [
+                  "mean"
+                ],
+                "operation": "aggregate"
+              },
+              "UUID 2 Value": {
+                "aggregations": [
+                  "mean"
+                ],
+                "operation": "aggregate"
+              },
+              "labels.namespace": {
+                "aggregations": [],
+                "operation": "groupby"
+              }
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "fields": {},
+            "sort": [
+              {
+                "field": "Namespace"
+              }
+            ]
+          }
+        },
+        {
+          "id": "calculateField",
+          "options": {
+            "alias": "Diff (UUID 2 - UUID 1)",
+            "binary": {
+              "left": "UUID 2 Value (mean)",
+              "operator": "-",
+              "right": "UUID 1 Value (mean)"
+            },
+            "mode": "binary",
+            "reduce": {
+              "reducer": "sum"
+            }
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "default": false,
+        "type": "elasticsearch",
+        "uid": "$Datasource"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "semi-dark-green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Diff (UUID 2 - UUID 1)"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "semi-dark-red",
+                      "value": 0
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/.*UUID.*/"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 12,
+        "x": 0,
+        "y": 15
+      },
+      "id": 373,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": false,
+            "displayName": "labels.pod"
+          }
+        ]
+      },
+      "pluginVersion": "11.2.0",
+      "targets": [
+        {
+          "alias": "",
+          "bucketAggs": [],
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "ee0gkcjio8c8wc"
+          },
+          "metrics": [
+            {
+              "id": "1",
+              "settings": {
+                "size": "500"
+              },
+              "type": "raw_data"
+            }
+          ],
+          "query": "uuid.keyword: $uuid_1 AND metricName: \"Controller99thReconcile\" AND jobName: \"scale-test-main\"",
+          "refId": "A",
+          "timeField": "timestamp"
+        },
+        {
+          "alias": "",
+          "bucketAggs": [],
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "$Datasource"
+          },
+          "hide": false,
+          "metrics": [
+            {
+              "id": "1",
+              "settings": {
+                "size": "500"
+              },
+              "type": "raw_data"
+            }
+          ],
+          "query": "uuid.keyword: $uuid_2 AND metricName: \"Controller99thReconcile\" AND jobName: \"scale-test-main\"",
+          "refId": "B",
+          "timeField": "timestamp"
+        }
+      ],
+      "title": "99th %ile reconcile time per controller",
+      "transformations": [
+        {
+          "id": "sortBy",
+          "options": {
+            "fields": {},
+            "sort": [
+              {
+                "field": "timestamp"
+              }
+            ]
+          }
+        },
+        {
+          "id": "joinByField",
+          "options": {
+            "byField": "labels.controller",
+            "mode": "inner"
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "_id 1": true,
+              "_id 2": true,
+              "_index 1": true,
+              "_index 2": true,
+              "_type 1": true,
+              "_type 2": true,
+              "highlight 1": true,
+              "highlight 2": true,
+              "jobName 1": true,
+              "jobName 2": true,
+              "labels.namespace 2": true,
+              "metricName": true,
+              "query 1": true,
+              "query 2": true,
+              "sort 1": true,
+              "sort 2": true,
+              "timestamp 1": true,
+              "timestamp 2": true,
+              "uuid 1": true,
+              "uuid 2": true
+            },
+            "includeByName": {},
+            "indexByName": {},
+            "renameByName": {
+              "labels.controller": "Controller",
+              "labels.namespace": "Namespace",
+              "labels.namespace 1": "Namespace",
+              "query 1": "",
+              "value 1": "UUID 1 Value",
+              "value 2": "UUID 2 Value"
+            }
+          }
+        },
+        {
+          "id": "groupBy",
+          "options": {
+            "fields": {
+              "Controller": {
+                "aggregations": [],
+                "operation": "groupby"
+              },
+              "Namespace": {
+                "aggregations": [],
+                "operation": "groupby"
+              },
+              "UUID 1 Value": {
+                "aggregations": [
+                  "lastNotNull"
+                ],
+                "operation": "aggregate"
+              },
+              "UUID 2 Value": {
+                "aggregations": [
+                  "lastNotNull"
+                ],
+                "operation": "aggregate"
+              },
+              "labels.namespace": {
+                "aggregations": [],
+                "operation": "groupby"
+              }
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "fields": {},
+            "sort": [
+              {
+                "field": "Controller"
+              }
+            ]
+          }
+        },
+        {
+          "id": "calculateField",
+          "options": {
+            "alias": "Diff (UUID 2 - UUID 1)",
+            "binary": {
+              "left": "UUID 2 Value (lastNotNull)",
+              "operator": "-",
+              "right": "UUID 1 Value (lastNotNull)"
+            },
+            "mode": "binary",
+            "reduce": {
+              "reducer": "sum"
+            }
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "default": false,
+        "type": "elasticsearch",
+        "uid": "$Datasource"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "semi-dark-green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Diff (UUID 2 - UUID 1)"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "semi-dark-red",
+                      "value": 0
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/.*UUID.*/"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "decbytes"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 12,
+        "y": 18
+      },
+      "id": 372,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": false,
+            "displayName": "labels.pod"
+          }
+        ]
+      },
+      "pluginVersion": "11.2.0",
+      "targets": [
+        {
+          "alias": "",
+          "bucketAggs": [],
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "ee0gkcjio8c8wc"
+          },
+          "metrics": [
+            {
+              "id": "1",
+              "settings": {
+                "size": "1000"
+              },
+              "type": "raw_data"
+            }
+          ],
+          "query": "uuid.keyword: $uuid_1 AND metricName: \"namespaceMemory\" AND jobName: \"scale-test-main\"",
+          "refId": "A",
+          "timeField": "timestamp"
+        },
+        {
+          "alias": "",
+          "bucketAggs": [],
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "$Datasource"
+          },
+          "hide": false,
+          "metrics": [
+            {
+              "id": "1",
+              "settings": {
+                "size": "1000"
+              },
+              "type": "raw_data"
+            }
+          ],
+          "query": "uuid.keyword: $uuid_2 AND metricName: \"namespaceMemory\" AND jobName: \"scale-test-main\"",
+          "refId": "B",
+          "timeField": "timestamp"
+        }
+      ],
+      "title": "Memory usage by namespace",
+      "transformations": [
+        {
+          "id": "joinByField",
+          "options": {
+            "byField": "labels.namespace",
+            "mode": "inner"
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "_id 1": true,
+              "_id 2": true,
+              "_index 1": true,
+              "_index 2": true,
+              "_type 1": true,
+              "_type 2": true,
+              "highlight 1": true,
+              "highlight 2": true,
+              "jobName 1": true,
+              "jobName 2": true,
+              "labels.namespace 2": true,
+              "metricName": true,
+              "query 1": true,
+              "query 2": true,
+              "sort 1": true,
+              "sort 2": true,
+              "timestamp 1": true,
+              "timestamp 2": true,
+              "uuid 1": true,
+              "uuid 2": true
+            },
+            "includeByName": {},
+            "indexByName": {},
+            "renameByName": {
+              "labels.namespace": "Namespace",
+              "labels.namespace 1": "Namespace",
+              "query 1": "",
+              "value 1": "UUID 1 Value",
+              "value 2": "UUID 2 Value"
+            }
+          }
+        },
+        {
+          "id": "groupBy",
+          "options": {
+            "fields": {
+              "Namespace": {
+                "aggregations": [],
+                "operation": "groupby"
+              },
+              "UUID 1 Value": {
+                "aggregations": [
+                  "mean"
+                ],
+                "operation": "aggregate"
+              },
+              "UUID 2 Value": {
+                "aggregations": [
+                  "mean"
+                ],
+                "operation": "aggregate"
+              },
+              "labels.namespace": {
+                "aggregations": [],
+                "operation": "groupby"
+              }
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "fields": {},
+            "sort": [
+              {
+                "field": "Namespace"
+              }
+            ]
+          }
+        },
+        {
+          "id": "calculateField",
+          "options": {
+            "alias": "Diff (UUID 2 - UUID 1)",
+            "binary": {
+              "left": "UUID 2 Value (mean)",
+              "operator": "-",
+              "right": "UUID 1 Value (mean)"
+            },
+            "mode": "binary",
+            "reduce": {
+              "reducer": "sum"
+            }
+          }
+        }
+      ],
+      "type": "table"
+    }
+  ],
+  "refresh": false,
+  "schemaVersion": 39,
+  "tags": [],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "selected": false,
+          "text": "kube-burner",
+          "value": "ee0gkcjio8c8wc"
+        },
+        "hide": 0,
+        "includeAll": false,
+        "label": "Datasource",
+        "multi": false,
+        "name": "Datasource",
+        "options": [],
+        "query": "elasticsearch",
+        "queryValue": "",
+        "refresh": 1,
+        "regex": "/.*kube-burner.*/",
+        "skipUrlSync": false,
+        "type": "datasource"
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": "926c7847-95bd-4ed2-bf80-2cad6746db9c",
+          "value": "926c7847-95bd-4ed2-bf80-2cad6746db9c"
+        },
+        "datasource": {
+          "uid": "$Datasource"
+        },
+        "definition": "{\"find\": \"terms\", \"field\": \"uuid.keyword\"}",
+        "hide": 0,
+        "includeAll": false,
+        "label": "UUID 1",
+        "multi": false,
+        "name": "uuid_1",
+        "options": [],
+        "query": "{\"find\": \"terms\", \"field\": \"uuid.keyword\"}",
+        "refresh": 2,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "tagValuesQuery": "",
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
+      },
+      {
+        "current": {
+          "selected": true,
+          "text": "c1195a3d-6ceb-4468-951c-d0492ef7c79c",
+          "value": "c1195a3d-6ceb-4468-951c-d0492ef7c79c"
+        },
+        "datasource": {
+          "uid": "$Datasource"
+        },
+        "definition": "{\"find\": \"terms\", \"field\": \"uuid.keyword\"}",
+        "hide": 0,
+        "includeAll": false,
+        "label": "UUID 2",
+        "multi": false,
+        "name": "uuid_2",
+        "options": [],
+        "query": "{\"find\": \"terms\", \"field\": \"uuid.keyword\"}",
+        "refresh": 2,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "tagValuesQuery": "",
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
+      }
+    ]
+  },
+  "time": {
+    "from": "now-7d",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ]
+  },
+  "timezone": "",
+  "title": "Kuadrant Performance Testing Comparison",
+  "uid": "be0n6vb588jcwe",
+  "version": 19,
+  "weekStart": ""
+}
