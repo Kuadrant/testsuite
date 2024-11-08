@@ -16,6 +16,24 @@ def has_condition(condition_type, status="True", reason=None, message=None):
     return _check
 
 
+def is_affected_by(policy: "Policy"):
+    """Returns function, that returns True if the Kubernetes object has 'affected by policy' condition"""
+
+    def _check(obj):
+        for condition in obj.model.status.conditions:
+            if check_condition(
+                condition,
+                f"kuadrant.io/{policy.kind(lowercase=False)}Affected",
+                "True",
+                "Accepted",
+                f"Object affected by {policy.kind(lowercase=False)} {policy.namespace()}/{policy.name()}",
+            ):
+                return True
+        return False
+
+    return _check
+
+
 class Policy(KubernetesObject):
     """Base class with common functionality for all policies"""
 

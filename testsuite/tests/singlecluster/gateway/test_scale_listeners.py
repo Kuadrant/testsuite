@@ -5,6 +5,7 @@ import pytest
 from testsuite.httpx import KuadrantClient
 from testsuite.gateway.gateway_api.route import HTTPRoute
 from testsuite.gateway.gateway_api.gateway import KuadrantGateway, GatewayListener
+from testsuite.kuadrant.policy import is_affected_by
 from testsuite.kuadrant.policy.dns import DNSPolicy
 
 pytestmark = [pytest.mark.kuadrant_only, pytest.mark.dnspolicy]
@@ -16,8 +17,7 @@ MAX_GATEWAY_LISTENERS = 64
 def gateway(request, cluster, blame, base_domain, module_label):
     """Create first gateway with 64 listeners"""
     gw = KuadrantGateway.create_instance(cluster, blame("gw"), {"app": module_label})
-    gw.add_listener(GatewayListener(hostname=f"gw1-api.{base_domain}"))
-    for i in range(1, MAX_GATEWAY_LISTENERS):
+    for i in range(1, MAX_GATEWAY_LISTENERS + 1):
         gw.add_listener(GatewayListener(name=f"api{i}", hostname=f"gw1-api{i}.{base_domain}"))
     request.addfinalizer(gw.delete)
     gw.commit()
@@ -29,8 +29,7 @@ def gateway(request, cluster, blame, base_domain, module_label):
 def gateway2(request, cluster, blame, base_domain, module_label):
     """Create second gateway with 64 listeners"""
     gw = KuadrantGateway.create_instance(cluster, blame("gw"), {"app": module_label})
-    gw.add_listener(GatewayListener(hostname=f"gw2-api.{base_domain}"))
-    for i in range(1, MAX_GATEWAY_LISTENERS):
+    for i in range(1, MAX_GATEWAY_LISTENERS + 1):
         gw.add_listener(GatewayListener(name=f"api{i}", hostname=f"gw2-api{i}.{base_domain}"))
     request.addfinalizer(gw.delete)
     gw.commit()
@@ -68,11 +67,11 @@ def commit(request, routes, dns_policy, dns_policy2):  # pylint: disable=unused-
 
 def test_gateway_max_listeners(gateway, gateway2, dns_policy, dns_policy2, base_domain):
     """Verify that both gateways are affected by DNSPolicy and their listeners are reachable"""
-    assert gateway.refresh().is_affected_by(dns_policy)
-    assert gateway2.refresh().is_affected_by(dns_policy2)
+    assert gateway.wait_until(is_affected_by(dns_policy))
+    assert gateway2.wait_until(is_affected_by(dns_policy2))
 
-    assert KuadrantClient(base_url=f"http://gw1-api.{base_domain}").get("/get").response.status_code == 200
-    assert KuadrantClient(base_url=f"http://gw1-api63.{base_domain}").get("/get").response.status_code == 200
-
-    assert KuadrantClient(base_url=f"http://gw2-api21.{base_domain}").get("/get").response.status_code == 200
-    assert KuadrantClient(base_url=f"http://gw2-api53.{base_domain}").get("/get").response.status_code == 200
+    for i in [1, 2]:
+        for j in range(1, MAX_GATEWAY_LISTENERS + 1):
+            res = KuadrantClient(base_url=f"http://gw{i}-api{j}.{base_domain}").get("/get").response
+            assert res is not None
+            assert res.status_code == 200
