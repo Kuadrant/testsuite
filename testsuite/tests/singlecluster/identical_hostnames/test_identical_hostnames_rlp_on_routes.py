@@ -14,7 +14,7 @@ pytestmark = [pytest.mark.kuadrant_only]
 @pytest.fixture(scope="module")
 def rate_limit(rate_limit):
     """Add limit to 1st RateLimitPolicy allowing 1 request per 10 minutes (a.k.a. '1rp10m' RateLimitPolicy)"""
-    rate_limit.add_limit("1rp10m", [Limit(1, 10)])
+    rate_limit.add_limit("1rp10m", [Limit(1, "10s")])
     return rate_limit
 
 
@@ -23,7 +23,7 @@ def rate_limit2(request, route2, blame, cluster, label):
     """2nd RateLimitPolicy allowing 2 requests per 10 minutes (a.k.a. '2rp10m' RateLimitPolicy)"""
     rlp = RateLimitPolicy.create_instance(cluster, blame("2rp10m"), route2, labels={"testRun": label})
     request.addfinalizer(rlp.delete)
-    rlp.add_limit("2rp10m", [Limit(2, 10)])
+    rlp.add_limit("2rp10m", [Limit(2, "10s")])
     rlp.commit()
     rlp.wait_for_ready()
     return rlp

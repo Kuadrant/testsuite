@@ -28,8 +28,8 @@ def test_rules_exclusivity_authorization(cluster, route, oidc_provider, module_l
 def test_rules_exclusivity_rate_limit(cluster, route, module_label, blame):
     """Test that server will reject object with implicit and explicit defaults simultaneously in RateLimitPolicy"""
     rate_limit = RateLimitPolicy.create_instance(cluster, blame("limit"), route, labels={"testRun": module_label})
-    rate_limit.defaults.add_limit("inside-defaults", [Limit(2, 5)])
-    rate_limit.add_limit("outside-defaults", [Limit(2, 5)])
+    rate_limit.defaults.add_limit("inside-defaults", [Limit(2, "5s")])
+    rate_limit.add_limit("outside-defaults", [Limit(2, "5s")])
 
     with pytest.raises(OpenShiftPythonException, match="Implicit and explicit defaults are mutually exclusive"):
         rate_limit.commit()

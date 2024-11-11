@@ -45,8 +45,8 @@ def test_rules_exclusivity_explicit_authorization(cluster, route, oidc_provider,
 def test_rules_exclusivity_implicit_rate_limit(cluster, route, module_label, blame):
     """Test that server will reject a RateLimitPolicy with overrides and implicit defaults defined simultaneously"""
     rate_limit = RateLimitPolicy.create_instance(cluster, blame("limit"), route, labels={"testRun": module_label})
-    rate_limit.overrides.add_limit("overrides", [Limit(2, 5)])
-    rate_limit.add_limit("implicit-defaults", [Limit(2, 5)])
+    rate_limit.overrides.add_limit("overrides", [Limit(2, "5s")])
+    rate_limit.add_limit("implicit-defaults", [Limit(2, "5s")])
 
     with pytest.raises(OpenShiftPythonException, match="Overrides and implicit defaults are mutually exclusive"):
         rate_limit.commit()
@@ -56,8 +56,8 @@ def test_rules_exclusivity_implicit_rate_limit(cluster, route, module_label, bla
 def test_rules_exclusivity_explicit_rate_limit(cluster, route, module_label, blame):
     """Test that server will reject a RateLimitPolicy with overrides and explicit defaults defined simultaneously"""
     rate_limit = RateLimitPolicy.create_instance(cluster, blame("limit"), route, labels={"testRun": module_label})
-    rate_limit.overrides.add_limit("overrides", [Limit(2, 5)])
-    rate_limit.defaults.add_limit("explicit-defaults", [Limit(2, 5)])
+    rate_limit.overrides.add_limit("overrides", [Limit(2, "5s")])
+    rate_limit.defaults.add_limit("explicit-defaults", [Limit(2, "5s")])
 
     with pytest.raises(OpenShiftPythonException, match="Overrides and explicit defaults are mutually exclusive"):
         rate_limit.commit()

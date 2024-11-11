@@ -29,7 +29,7 @@ def route(route, backend):
 def rate_limit(rate_limit):
     """Add limit to the policy"""
     when = [Pattern("request.path", "eq", "/anything"), Pattern("request.method", "eq", "GET")]
-    rate_limit.add_limit("anything", [Limit(5, 10)], when=when)
+    rate_limit.add_limit("anything", [Limit(5, "10s")], when=when)
     return rate_limit
 
 

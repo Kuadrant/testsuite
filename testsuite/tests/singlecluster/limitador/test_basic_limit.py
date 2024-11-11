@@ -12,9 +12,9 @@ pytestmark = [pytest.mark.kuadrant_only, pytest.mark.limitador]
 @pytest.fixture(
     scope="module",
     params=[
-        pytest.param(Limit(2, 15), id="2 requests every 15 sec"),
-        pytest.param(Limit(5, 10), id="5 requests every 10 sec"),
-        pytest.param(Limit(3, 5), id="3 request every 5 sec"),
+        pytest.param(Limit(2, "15s"), id="2 requests every 15 sec"),
+        pytest.param(Limit(5, "10s"), id="5 requests every 10 sec"),
+        pytest.param(Limit(3, "5s"), id="3 request every 5 sec"),
     ],
 )
 def limit(request):

@@ -16,7 +16,7 @@ def rate_limit2(request, gateway, blame, cluster, label):
     """2nd RateLimitPolicy object allowing 1 request per 10 minutes (a.k.a. '1rp10m')"""
     rlp = RateLimitPolicy.create_instance(cluster, blame("2rp10m"), gateway, labels={"testRun": label})
     request.addfinalizer(rlp.delete)
-    rlp.add_limit("1rp10m", [Limit(1, 600)])
+    rlp.add_limit("1rp10m", [Limit(1, "600s")])
     rlp.commit()
     rlp.wait_for_partial_enforced()
     return rlp

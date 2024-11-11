@@ -14,7 +14,7 @@ def rate_limit(rate_limit):
     """Add limit to the policy only for anonymous users"""
     rate_limit.add_limit(
         "basic",
-        [Limit(5, 10)],
+        [Limit(5, "10s")],
         when=[
             Pattern(
                 selector=r"metadata.filter_metadata.envoy\.filters\.http\.ext_authz.identity.anonymous",

@@ -17,8 +17,7 @@ class Limit:
     """Limit dataclass"""
 
     limit: int
-    duration: int
-    unit: Literal["second", "minute", "day"] = "second"
+    window: str
 
 
 class RateLimitPolicy(Policy):

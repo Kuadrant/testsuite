@@ -14,7 +14,7 @@ def rate_limit(cluster, blame, module_label, route):
     """
 
     policy = RateLimitPolicy.create_instance(cluster, blame("limit"), route, labels={"testRun": module_label})
-    policy.add_limit("basic", [Limit(5, 10)])
+    policy.add_limit("basic", [Limit(5, "10s")])
     return policy
 
 

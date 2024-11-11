@@ -13,8 +13,8 @@ pytestmark = [pytest.mark.kuadrant_only, pytest.mark.limitador]
 def rate_limit(rate_limit):
     """Add limit to the policy"""
     when = Pattern("request.path", "eq", "/get")
-    rate_limit.add_limit("test1", [Limit(8, 10)], when=[when])
-    rate_limit.add_limit("test2", [Limit(3, 5)], when=[when])
+    rate_limit.add_limit("test1", [Limit(8, "10s")], when=[when])
+    rate_limit.add_limit("test2", [Limit(3, "5s")], when=[when])
     return rate_limit
 
 

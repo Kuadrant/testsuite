@@ -16,7 +16,7 @@ def oas(oas, blame, gateway, hostname, backend):
     oas.add_top_level_route(gateway, hostname, blame("route"))
     oas.add_backend_to_paths(backend)
 
-    oas["paths"]["/anything"]["get"]["x-kuadrant"] = {"rate_limit": {"rates": [asdict(Limit(3, 20))]}}
+    oas["paths"]["/anything"]["get"]["x-kuadrant"] = {"rate_limit": {"rates": [asdict(Limit(3, "20s"))]}}
     return oas
 
 

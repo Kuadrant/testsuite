@@ -14,7 +14,7 @@ pytestmark = [pytest.mark.kuadrant_only, pytest.mark.limitador]
 def rate_limit(rate_limit):
     """Add limit to the policy"""
     rate_limit.add_limit(
-        "basic", [Limit(5, 60)], counters=[r"metadata.filter_metadata.envoy\.filters\.http\.ext_authz.identity.user"]
+        "basic", [Limit(5, "60s")], counters=[r"metadata.filter_metadata.envoy\.filters\.http\.ext_authz.identity.user"]
     )
     return rate_limit
 

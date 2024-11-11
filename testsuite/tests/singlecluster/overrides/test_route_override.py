@@ -18,7 +18,7 @@ def authorization(authorization, oidc_provider):
 @pytest.fixture(scope="module")
 def rate_limit(rate_limit):
     """Add basic rate limiting rules in the overrides block"""
-    rate_limit.overrides.add_limit("override", [Limit(2, 5)])
+    rate_limit.overrides.add_limit("override", [Limit(2, "5s")])
     return rate_limit
 
 
