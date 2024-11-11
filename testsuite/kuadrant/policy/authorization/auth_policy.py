@@ -1,5 +1,6 @@
 """Module containing classes related to AuthPolicy"""
 
+from functools import cached_property
 from typing import Dict, TYPE_CHECKING
 
 from testsuite.gateway import Referencable
@@ -7,6 +8,7 @@ from testsuite.kubernetes import modify
 from testsuite.kubernetes.client import KubernetesClient
 from testsuite.utils import asdict
 from .auth_config import AuthConfig
+from .sections import ResponseSection
 from .. import Policy
 from . import Pattern
 
@@ -55,6 +57,11 @@ class AuthPolicy(Policy, AuthConfig):
         spec_section = self.spec_section
         self.spec_section = None
         return spec_section.setdefault("rules", {})
+
+    @cached_property
+    def responses(self) -> ResponseSection:
+        """Gives access to response settings"""
+        return ResponseSection(self, "response", "filters")
 
     @property
     def defaults(self):
