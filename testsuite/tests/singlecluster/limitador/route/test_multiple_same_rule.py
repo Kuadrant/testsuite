@@ -2,8 +2,8 @@
 
 import pytest
 
+from testsuite.kuadrant.policy import CelPredicate
 from testsuite.kuadrant.policy.rate_limit import Limit
-from testsuite.kuadrant.policy.authorization import Pattern
 
 
 pytestmark = [pytest.mark.kuadrant_only, pytest.mark.limitador]
@@ -12,7 +12,7 @@ pytestmark = [pytest.mark.kuadrant_only, pytest.mark.limitador]
 @pytest.fixture(scope="module")
 def rate_limit(rate_limit):
     """Add limit to the policy"""
-    when = Pattern("request.path", "eq", "/get")
+    when = CelPredicate("request.path == '/get'")
     rate_limit.add_limit("test1", [Limit(8, "10s")], when=[when])
     rate_limit.add_limit("test2", [Limit(3, "5s")], when=[when])
     return rate_limit

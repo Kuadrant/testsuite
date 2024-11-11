@@ -2,13 +2,12 @@
 
 import time
 from dataclasses import dataclass
-from typing import Iterable, Literal
+from typing import Iterable
 
 from testsuite.gateway import Referencable
 from testsuite.kubernetes import modify
 from testsuite.kubernetes.client import KubernetesClient
-from testsuite.kuadrant.policy import Policy
-from testsuite.kuadrant.policy.authorization import Rule
+from testsuite.kuadrant.policy import Policy, CelPredicate, CelExpression
 from testsuite.utils import asdict
 
 
@@ -46,8 +45,8 @@ class RateLimitPolicy(Policy):
         self,
         name,
         limits: Iterable[Limit],
-        when: Iterable[Rule] = None,
-        counters: list[str] = None,
+        when: list[CelPredicate] = None,
+        counters: list[CelExpression] = None,
     ):
         """Add another limit"""
         limit: dict = {
@@ -56,7 +55,7 @@ class RateLimitPolicy(Policy):
         if when:
             limit["when"] = [asdict(rule) for rule in when]
         if counters:
-            limit["counters"] = counters
+            limit["counters"] = [asdict(rule) for rule in counters]
 
         if self.spec_section is None:
             self.spec_section = self.model.spec

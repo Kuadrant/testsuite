@@ -232,7 +232,7 @@ class ResponseSection(Section):
         This section is for items wrapped as Envoy Dynamic Metadata.
         """
 
-        success_dynamic_metadata = self.section.setdefault("success", {}).setdefault("dynamicMetadata", {})
+        success_dynamic_metadata = self.section.setdefault("success", {}).setdefault("filters", {})
         asdict_value = asdict(value)
         add_common_features(asdict_value, **common_features)
         success_dynamic_metadata.update({name: asdict_value})

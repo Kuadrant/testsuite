@@ -3,7 +3,7 @@
 import pytest
 
 from testsuite.gateway import RouteMatch, PathMatch, MatchType, HTTPMethod
-from testsuite.kuadrant.policy.authorization import Pattern
+from testsuite.kuadrant.policy import CelPredicate
 from testsuite.kuadrant.policy.rate_limit import Limit
 
 
@@ -28,7 +28,7 @@ def route(route, backend):
 @pytest.fixture(scope="module")
 def rate_limit(rate_limit):
     """Add limit to the policy"""
-    when = [Pattern("request.path", "eq", "/anything"), Pattern("request.method", "eq", "GET")]
+    when = [CelPredicate("request.path == '/anything'"), CelPredicate("request.method == 'GET'")]
     rate_limit.add_limit("anything", [Limit(5, "10s")], when=when)
     return rate_limit
 

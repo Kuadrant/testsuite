@@ -3,6 +3,7 @@
 import pytest
 
 from testsuite.httpx.auth import HttpxOidcClientAuth
+from testsuite.kuadrant.policy import CelExpression
 from testsuite.kuadrant.policy.authorization import ValueFrom, JsonResponse
 from testsuite.kuadrant.policy.rate_limit import Limit
 
@@ -13,9 +14,7 @@ pytestmark = [pytest.mark.kuadrant_only, pytest.mark.limitador]
 @pytest.fixture(scope="module")
 def rate_limit(rate_limit):
     """Add limit to the policy"""
-    rate_limit.add_limit(
-        "basic", [Limit(5, "60s")], counters=[r"metadata.filter_metadata.envoy\.filters\.http\.ext_authz.identity.user"]
-    )
+    rate_limit.add_limit("basic", [Limit(5, "60s")], counters=[CelExpression("auth.identity.user")])
     return rate_limit
 
 
