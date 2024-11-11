@@ -138,7 +138,7 @@ class IdentitySection(Section):
         name,
         selector: Selector,
         *,
-        all_namespaces: bool = False,
+        all_namespaces: bool = True,
         credentials: Credentials = None,
         **common_features,
     ):
