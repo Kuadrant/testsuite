@@ -8,6 +8,7 @@ from testsuite.kubernetes.client import KubernetesClient
 from testsuite.utils import asdict
 from .auth_config import AuthConfig
 from .. import Policy
+from . import Pattern
 
 if TYPE_CHECKING:
     from . import Rule
@@ -66,3 +67,10 @@ class AuthPolicy(Policy, AuthConfig):
         """Add new rule into the `overrides` AuthPolicy section"""
         self.spec_section = self.model.spec.setdefault("overrides", {})
         return self
+
+    @modify
+    def add_patterns(self, patterns: dict[str, list[Pattern]]):
+        """Add named pattern-matching expressions to be referenced in other "when" rules."""
+        self.model.spec.setdefault("patterns", {})
+        for key, value in patterns.items():
+            self.model.spec["patterns"].update({key: {"allOf": [asdict(x) for x in value]}})
