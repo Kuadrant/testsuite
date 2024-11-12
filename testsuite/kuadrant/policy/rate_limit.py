@@ -30,7 +30,7 @@ class RateLimitPolicy(Policy):
     def create_instance(cls, cluster: KubernetesClient, name, target: Referencable, labels: dict[str, str] = None):
         """Creates new instance of RateLimitPolicy"""
         model = {
-            "apiVersion": "kuadrant.io/v1beta3",
+            "apiVersion": "kuadrant.io/v1",
             "kind": "RateLimitPolicy",
             "metadata": {"name": name, "labels": labels},
             "spec": {
