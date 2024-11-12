@@ -78,7 +78,7 @@ class KuadrantGateway(KubernetesObject, Gateway):
                 f"kuadrant.io/{policy.kind(lowercase=False)}Affected",
                 "True",
                 "Accepted",
-                f"Object affected by {policy.kind(lowercase=False)} {policy.namespace()}/{policy.name()}",
+                f"Object affected by {policy.kind(lowercase=False)} [{policy.namespace()}/{policy.name()}]",
             ):
                 return True
         return False
