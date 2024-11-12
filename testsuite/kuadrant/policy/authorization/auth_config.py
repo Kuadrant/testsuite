@@ -36,7 +36,7 @@ class AuthConfig(KubernetesObject):
     @cached_property
     def responses(self) -> ResponseSection:
         """Gives access to response settings"""
-        return ResponseSection(self, "response")
+        return ResponseSection(self, "response", "dynamicMetadata")
 
     @classmethod
     def create_instance(

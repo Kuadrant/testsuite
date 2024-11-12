@@ -208,6 +208,10 @@ class ResponseSection(Section):
 
     SUCCESS_RESPONSE = Union[JsonResponse, PlainResponse, WristbandResponse]
 
+    def __init__(self, obj: "AuthConfig", section_name, data_key: Literal["filters", "dynamicMetadata"]):
+        super().__init__(obj, section_name)
+        self.data_key = data_key
+
     def add_simple(self, auth_json: str, name="simple", key="data", **common_features):
         """
         Add simple response to AuthConfig, used for configuring response for debugging purposes,
@@ -232,7 +236,7 @@ class ResponseSection(Section):
         This section is for items wrapped as Envoy Dynamic Metadata.
         """
 
-        success_dynamic_metadata = self.section.setdefault("success", {}).setdefault("filters", {})
+        success_dynamic_metadata = self.section.setdefault("success", {}).setdefault(self.data_key, {})
         asdict_value = asdict(value)
         add_common_features(asdict_value, **common_features)
         success_dynamic_metadata.update({name: asdict_value})
