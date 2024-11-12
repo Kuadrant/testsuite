@@ -1,7 +1,23 @@
 """Contains Base class for policies"""
 
+from dataclasses import dataclass
+
 from testsuite.kubernetes import KubernetesObject
 from testsuite.utils import check_condition
+
+
+@dataclass
+class CelPredicate:
+    """Dataclass that references CEL predicate e.g. auth.identity.anonymous == 'true'"""
+
+    predicate: str
+
+
+@dataclass
+class CelExpression:
+    """Dataclass that references CEL expression"""
+
+    expression: str
 
 
 def has_condition(condition_type, status="True", reason=None, message=None):

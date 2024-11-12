@@ -14,7 +14,7 @@ pytestmark = [pytest.mark.kuadrant_only, pytest.mark.limitador]
 @pytest.fixture(scope="module")
 def rate_limit(rate_limit):
     """Add limit to the policy"""
-    rate_limit.add_limit("multiple", [Limit(5, 10)])
+    rate_limit.add_limit("multiple", [Limit(5, "10s")])
     return rate_limit
 
 

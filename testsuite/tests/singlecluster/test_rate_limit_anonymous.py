@@ -3,7 +3,8 @@
 import pytest
 
 from testsuite.httpx.auth import HttpxOidcClientAuth
-from testsuite.kuadrant.policy.authorization import Pattern, JsonResponse, ValueFrom
+from testsuite.kuadrant.policy import CelPredicate
+from testsuite.kuadrant.policy.authorization import JsonResponse, ValueFrom
 from testsuite.kuadrant.policy.rate_limit import Limit
 
 pytestmark = [pytest.mark.kuadrant_only, pytest.mark.limitador]
@@ -14,14 +15,8 @@ def rate_limit(rate_limit):
     """Add limit to the policy only for anonymous users"""
     rate_limit.add_limit(
         "basic",
-        [Limit(5, 10)],
-        when=[
-            Pattern(
-                selector=r"metadata.filter_metadata.envoy\.filters\.http\.ext_authz.identity.anonymous",
-                operator="eq",
-                value='"true"',
-            )
-        ],
+        [Limit(5, "10s")],
+        when=[CelPredicate("auth.identity.anonymous == 'true'")],
     )
     return rate_limit
 

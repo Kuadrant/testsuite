@@ -6,8 +6,8 @@ from testsuite.kuadrant.policy.rate_limit import Limit, RateLimitPolicy
 
 pytestmark = [pytest.mark.kuadrant_only, pytest.mark.limitador]
 
-GATEWAY_LIMIT = Limit(3, 5)
-ROUTE_LIMIT = Limit(2, 5)
+GATEWAY_LIMIT = Limit(3, "5s")
+ROUTE_LIMIT = Limit(2, "5s")
 
 
 @pytest.fixture(scope="module")
