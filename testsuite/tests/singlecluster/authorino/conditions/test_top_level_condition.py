@@ -2,7 +2,7 @@
 
 import pytest
 
-from testsuite.kuadrant.policy.authorization import Pattern
+from testsuite.kuadrant.policy import CelPredicate
 
 pytestmark = [pytest.mark.authorino]
 
@@ -10,7 +10,7 @@ pytestmark = [pytest.mark.authorino]
 @pytest.fixture(scope="module")
 def authorization(authorization, module_label):
     """Add rule to the AuthConfig to skip entire authn/authz with certain request header"""
-    authorization.add_rule([Pattern("context.request.http.headers.key", "neq", module_label)])
+    authorization.add_rule([CelPredicate(f"request.headers.key != '{module_label}'")])
     return authorization
 
 

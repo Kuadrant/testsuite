@@ -1,7 +1,7 @@
 """Module containing classes related to AuthPolicy"""
 
 from functools import cached_property
-from typing import Dict, TYPE_CHECKING
+from typing import Dict
 
 from testsuite.gateway import Referencable
 from testsuite.kubernetes import modify
@@ -9,11 +9,8 @@ from testsuite.kubernetes.client import KubernetesClient
 from testsuite.utils import asdict
 from .auth_config import AuthConfig
 from .sections import ResponseSection
-from .. import Policy
+from .. import Policy, CelPredicate
 from . import Pattern
-
-if TYPE_CHECKING:
-    from . import Rule
 
 
 class AuthPolicy(Policy, AuthConfig):
@@ -44,7 +41,7 @@ class AuthPolicy(Policy, AuthConfig):
         return cls(model, context=cluster.context)
 
     @modify
-    def add_rule(self, when: list["Rule"]):
+    def add_rule(self, when: list[CelPredicate]):
         """Add rule for the skip of entire AuthPolicy"""
         self.model.spec.setdefault("when", [])
         self.model.spec["when"].extend([asdict(x) for x in when])
