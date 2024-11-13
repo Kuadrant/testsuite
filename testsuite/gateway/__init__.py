@@ -211,7 +211,10 @@ class TLSGatewayListener(GatewayListener):
             "port": self.port,
             "protocol": self.protocol,
             "allowedRoutes": self.allowedRoutes,
-            "tls": {"mode": self.mode, "certificateRefs": [{"name": f"{self.gateway_name}-tls", "kind": "Secret"}]},
+            "tls": {
+                "mode": self.mode,
+                "certificateRefs": [{"name": f"{self.gateway_name}-{self.name}-tls", "kind": "Secret"}],
+            },
         }
 
 
