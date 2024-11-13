@@ -6,6 +6,7 @@ import pytest
 from openshift_client import OpenShiftPythonException
 
 from testsuite.httpx.auth import HttpxOidcClientAuth
+from testsuite.kuadrant.policy import CelPredicate
 from testsuite.oidc.keycloak import Keycloak
 from testsuite.utils import ContentType
 from testsuite.kuadrant.policy.authorization import Pattern, PatternRef, Value, ValueFrom, DenyResponse
@@ -100,21 +101,18 @@ def resource_info(request, mockserver, module_label):
 @pytest.fixture(scope="module")
 def authorization(authorization, keycloak, terms_and_conditions, cluster_info, admin_rhsso, resource_info):
     """Creates complex Authorization Config."""
-    path_fourth_element = 'context.request.http.path.@extract:{"sep":"/","pos":4}'
-    path_third_element = 'context.request.http.path.@extract:{"sep":"/","pos":3}'
+    path_fourth_element = 'request.path.@extract:{"sep":"/","pos":4}'
     authorization.add_patterns(
         {
-            "api-route": [Pattern("context.request.http.path", "matches", "^/anything/dinosaurs_mgmt/.+")],
-            "v1-route": [Pattern(path_third_element, "eq", "v1")],
             "dinosaurs-route": [Pattern(path_fourth_element, "eq", "dinosaurs")],
-            "dinosaur-resource-route": [Pattern("context.request.http.path", "matches", "/dinosaurs/[^/]+$")],
+            "dinosaur-resource-route": [Pattern("request.path", "matches", "/dinosaurs/[^/]+$")],
             "create-dinosaur-route": [
-                Pattern("context.request.http.path", "matches", "/dinosaurs/?$"),
-                Pattern("context.request.http.method", "eq", "POST"),
+                Pattern("request.path", "matches", "/dinosaurs/?$"),
+                Pattern("request.method", "eq", "POST"),
             ],
             "metrics-federate-route": [
                 Pattern(path_fourth_element, "eq", "dinosaurs"),
-                Pattern("context.request.http.path", "matches", "/metrics/federate$"),
+                Pattern("request.path", "matches", "/metrics/federate$"),
             ],
             "service-accounts-route": [Pattern(path_fourth_element, "eq", "service_accounts")],
             "supported-instance-types-route": [Pattern(path_fourth_element, "eq", "instance_types")],
@@ -129,7 +127,12 @@ def authorization(authorization, keycloak, terms_and_conditions, cluster_info, a
             "require-org-id": [Pattern("auth.identity.org_id", "neq", "")],
         }
     )
-    authorization.add_rule([PatternRef("api-route"), PatternRef("v1-route")])
+    authorization.add_rule(
+        [
+            CelPredicate("request.path.matches('^/anything/dinosaurs_mgmt/.+')"),
+            CelPredicate("request.path.split('/')[3] == 'v1'"),
+        ]
+    )
 
     authorization.identity.clear_all()
     authorization.identity.add_oidc(
