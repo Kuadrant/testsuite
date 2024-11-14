@@ -168,12 +168,13 @@ def _asdict_recurse(obj):
     return result
 
 
-def check_condition(condition, condition_type, status, reason=None, message=None):
+def check_condition(condition, condition_type, status, reason=None, message=None, policy=None):
     """Checks if condition matches expectation, won't check message and reason if they are None"""
     if (  # pylint: disable=too-many-boolean-expressions
         condition.type == condition_type
         and condition.status == status
         and (message is None or message in condition.message)
+        and (policy is None or policy in condition.message)
         and (reason is None or reason == condition.reason)
     ):
         return True
