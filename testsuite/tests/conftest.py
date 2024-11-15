@@ -166,7 +166,7 @@ def cfssl(testconfig, skip_or_fail):
     return client
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def mockserver(testconfig, skip_or_fail):
     """Returns mockserver"""
     try:

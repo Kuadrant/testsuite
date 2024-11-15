@@ -92,7 +92,7 @@ def cert_builder(
 
 def rego_allow_header(key, value):
     """Rego query that allows all requests that contain specific header with`key` and `value`"""
-    return f'allow {{ input.context.request.http.headers.{key} == "{value}" }}'
+    return f'allow {{ input.context.request.http.headers["{key}"] == "{value}" }}'
 
 
 def add_port(url_str: str, return_netloc=True) -> Union[ParseResult, str]:
