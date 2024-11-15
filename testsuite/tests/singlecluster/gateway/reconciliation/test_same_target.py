@@ -10,13 +10,15 @@ pytestmark = [pytest.mark.kuadrant_only]
 
 
 @pytest.mark.parametrize(
-    "policy_cr, issuer_or_secret",
+    "policy_cr, policy_affected, issuer_or_secret",
     [
-        pytest.param(DNSPolicy, "dns_provider_secret", id="DNSPolicy", marks=[pytest.mark.dnspolicy]),
-        pytest.param(TLSPolicy, "cluster_issuer", id="TLSPolicy", marks=[pytest.mark.tlspolicy]),
+        pytest.param(DNSPolicy, "dns_policy", "dns_provider_secret", id="DNSPolicy", marks=[pytest.mark.dnspolicy]),
+        pytest.param(TLSPolicy, "tls_policy", "cluster_issuer", id="TLSPolicy", marks=[pytest.mark.tlspolicy]),
     ],
 )
-def test_two_policies_one_gw(request, policy_cr, issuer_or_secret, gateway, client, blame, module_label, auth):
+def test_two_policies_one_gw(
+    request, policy_cr, policy_affected, issuer_or_secret, gateway, client, blame, module_label, auth
+):
     """Tests that policy is rejected when the Gateway already has a DNSPolicy"""
 
     # test that it works before the policy
@@ -25,20 +27,26 @@ def test_two_policies_one_gw(request, policy_cr, issuer_or_secret, gateway, clie
 
     # depending on if DNSPolicy or TLSPolicy is tested the right object for the 4th parameter is passed
     issuer_or_secret_obj = request.getfixturevalue(issuer_or_secret)
-    policy = policy_cr.create_instance(
+    policy_new = policy_cr.create_instance(
         gateway.cluster,
         blame("dns2"),
         gateway,
         issuer_or_secret_obj,
         labels={"app": module_label},
     )
-    request.addfinalizer(policy.delete)
-    policy.commit()
+    request.addfinalizer(policy_new.delete)
+    policy_new.commit()
 
-    # Wait for expected status
-    assert policy.wait_until(
-        has_condition("Accepted", "False", "Conflicted", "is already referenced by policy"), timelimit=20
-    ), f"Policy did not reach expected status, instead it was: {policy.refresh().model.status.conditions}"
+    policy = request.getfixturevalue(policy_affected)
+    assert policy_new.wait_until(
+        has_condition(
+            "Accepted",
+            "False",
+            "Conflicted",
+            f"{policy_new.model.kind} is conflicted by {policy.namespace()}/{policy.name()}: conflicting policy",
+        ),
+        timelimit=20,
+    ), f"Policy did not reach expected status, instead it was: {policy_new.refresh().model.status.conditions}"
 
     # Test that the original policy still works
     response = client.get("get", auth=auth)

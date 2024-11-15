@@ -25,10 +25,10 @@ def test_route_status(route, rate_limit, authorization):
     assert route.is_affected_by(authorization)
 
     rate_limit.delete()
-    assert not route.wait_until(lambda obj: obj.is_affected_by(rate_limit))
+    assert route.wait_until(lambda obj: not obj.is_affected_by(rate_limit))
 
     authorization.delete()
-    assert not route.wait_until(lambda obj: obj.is_affected_by(authorization))
+    assert route.wait_until(lambda obj: not obj.is_affected_by(authorization))
 
 
 @pytest.mark.dnspolicy
@@ -40,7 +40,7 @@ def test_gateway_status(gateway, dns_policy, tls_policy):
     assert gateway.is_affected_by(tls_policy)
 
     dns_policy.delete()
-    assert not gateway.wait_until(lambda obj: obj.is_affected_by(dns_policy))
+    assert gateway.wait_until(lambda obj: not obj.is_affected_by(dns_policy))
 
     tls_policy.delete()
-    assert not gateway.wait_until(lambda obj: obj.is_affected_by(tls_policy))
+    assert gateway.wait_until(lambda obj: not obj.is_affected_by(tls_policy))
