@@ -23,12 +23,12 @@ def scrape_metrics_created_by_requests(prometheus, pod_monitor, client):
 
 
 @pytest.mark.parametrize("metric, expected_value", [("authorized_calls", 3), ("limited_calls", 2)])
-def test_calls_metric(prometheus, limitador, rate_limit, metric, expected_value, pod_monitor):
+def test_calls_metric(prometheus, limitador, route, metric, expected_value, pod_monitor):
     """Tests that `authorized_calls` and `limited_calls` are emitted and correctly incremented"""
     metrics = prometheus.get_metrics(
         labels={
             "pod": limitador.pod.name(),
-            "limitador_namespace": f"{rate_limit.namespace()}/{rate_limit.name()}",
+            "limitador_namespace": f"{route.namespace()}/{route.name()}",
             "job": f"{pod_monitor.namespace()}/{pod_monitor.name()}",
         }
     )
