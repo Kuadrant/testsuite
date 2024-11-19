@@ -11,15 +11,12 @@ from testsuite.kuadrant.policy.authorization.auth_policy import AuthPolicy
 pytestmark = [pytest.mark.kuadrant_only]
 
 
-@pytest.fixture(scope="class", autouse=True)
+@pytest.fixture(scope="module", autouse=True)
 def authorization2(request, gateway, blame, cluster, label):
     """2nd Authorization object"""
-    auth_policy = AuthPolicy.create_instance(cluster, blame("authz2"), gateway, labels={"testRun": label})
-    auth_policy.authorization.add_opa_policy("rego", "allow = false")
-    request.addfinalizer(auth_policy.delete)
-    auth_policy.commit()
-    auth_policy.wait_for_ready()
-    return auth_policy
+    auth = AuthPolicy.create_instance(cluster, blame("authz2"), gateway, labels={"testRun": label})
+    auth.authorization.add_opa_policy("rego", "allow = false")
+    return auth
 
 
 def test_identical_hostnames_auth_on_gw_and_route_ignored(client, authorization, hostname):
@@ -51,7 +48,7 @@ def test_identical_hostnames_auth_on_gw_and_route_ignored(client, authorization,
     assert response.status_code == 200
 
     # Deletion of Empty AuthPolicy should make the 'deny-all' Gateway AuthPolicy effectively enforced on both routes.
-    # It might take some time hence the use of retry client.
+    # It might take some time hence the use of retry client.AuthPolicy is not in the path to any existing routes
     authorization.delete()
     with hostname.client(retry_codes={200}) as retry_client:
         response = retry_client.get("/anything/route1/get")
