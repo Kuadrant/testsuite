@@ -2,24 +2,24 @@
 
 import pytest
 
-from testsuite.kuadrant.policy import CelPredicate
-from testsuite.kuadrant.policy.rate_limit import Limit
+from testsuite.kuadrant.policy.rate_limit import Limit, RateLimitPolicy
 
 
 pytestmark = [pytest.mark.kuadrant_only, pytest.mark.limitador]
 
 
 @pytest.fixture(scope="module")
-def rate_limit(rate_limit):
-    """Add limit to the policy"""
-    when = CelPredicate("request.path == '/get'")
-    rate_limit.add_limit("test1", [Limit(8, "10s")], when=[when])
-    rate_limit.add_limit("test2", [Limit(3, "5s")], when=[when])
+def rate_limit(cluster, blame, module_label, route):
+    """Add a RateLimitPolicy targeting the first HTTPRouteRule with two limits."""
+    rate_limit = RateLimitPolicy.create_instance(
+        cluster, blame("limit"), route, "rule-1", labels={"testRun": module_label}
+    )
+    rate_limit.add_limit("test1", [Limit(8, "10s")])
+    rate_limit.add_limit("test2", [Limit(3, "5s")])
     return rate_limit
 
 
-@pytest.mark.issue("https://github.com/Kuadrant/testsuite/issues/561")
-def test_two_rules_targeting_one_limit(client):
+def test_two_limits_targeting_one_rule(client):
     """Test that one limit ends up shadowing others"""
     responses = client.get_many("/get", 3)
     assert all(
