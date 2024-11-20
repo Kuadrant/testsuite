@@ -15,6 +15,7 @@ class TLSPolicy(Policy):
         name: str,
         parent: Referencable,
         issuer: Referencable,
+        section_name: str = None,
         labels: dict[str, str] = None,
         commonName: str = None,
         duration: str = None,
@@ -24,7 +25,7 @@ class TLSPolicy(Policy):
     ):  # pylint: disable=invalid-name
         """Creates new instance of TLSPolicy"""
 
-        model = {
+        model: dict = {
             "apiVersion": "kuadrant.io/v1",
             "kind": "TLSPolicy",
             "metadata": {"name": name, "labels": labels},
@@ -40,6 +41,8 @@ class TLSPolicy(Policy):
                 },
             },
         }
+        if section_name:
+            model["spec"]["targetRef"]["sectionName"] = section_name
 
         return cls(model, context=cluster.context)
 
