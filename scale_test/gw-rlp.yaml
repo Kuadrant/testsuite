@@ -1,5 +1,5 @@
 {{- $GW_NUM := .GW_NUM }}
-apiVersion: kuadrant.io/v1beta3
+apiVersion: kuadrant.io/v1
 kind: RateLimitPolicy
 metadata:
   name: rlp-gw{{$GW_NUM}}-i{{ .Iteration }}
@@ -13,6 +13,5 @@ spec:
   limits:
     "global":
       rates:
-      - limit: 5
-        duration: 10
-        unit: second
+      - limit: 3
+        window: "10s"

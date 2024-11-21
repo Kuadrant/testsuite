@@ -1,5 +1,5 @@
 {{- $GW_NUM := .GW_NUM }}
-apiVersion: kuadrant.io/v1alpha1
+apiVersion: kuadrant.io/v1
 kind: DNSPolicy
 metadata:
   name: dns-policy-gw{{$GW_NUM}}-i{{ .Iteration }}

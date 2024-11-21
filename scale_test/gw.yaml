@@ -16,7 +16,7 @@ spec:
   - allowedRoutes: 
       namespaces: 
         from: All
-    hostname: "*.scale-test-gw{{$GW_NUM}}-l{{ $LISTENER_NUM }}-i{{$Iteration}}.{{ $KUADRANT_ZONE_ROOT_DOMAIN }}"
+    hostname: "api.scale-test-gw{{$GW_NUM}}-l{{$LISTENER_NUM}}-i{{$Iteration}}.{{$KUADRANT_ZONE_ROOT_DOMAIN}}"
     name: api-{{ $LISTENER_NUM }}
     port: 443
     protocol: HTTPS

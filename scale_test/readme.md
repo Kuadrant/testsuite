@@ -23,6 +23,7 @@ export NUM_LISTENERS=1
 ```
 
 If you want to disable indexing you need to explicitly set related environment variables to an empty string:
+
 ```
 export OS_INDEXING= # to disable indexing
 export ES_SERVER= # to disable indexing
@@ -32,7 +33,36 @@ export ES_SERVER= # to disable indexing
 
 `kube-burner init -c ./config.yaml --timeout 5m --uuid scale-test-$(openssl rand -hex 3)`
 
-Don't forget to increase the timeout if larger number of CRs are to be created.
+Don't forget to increase the timeout if a larger number of CRs are to be created. You might also modify policy templates based on your needs, e.g. increase limits in RateLimitPolicy CR templates etc.
+
+## Cleanup
+
+Automatic cleanup can be skipped:
+
+```
+export SKIP_CLEANUP=true
+```
+
+If so then note the UUID of your scale test run so that you can perform manual cleanup. The DNSPolicy CR needs to be removed manually first. That triggers corresponding DNSRecord CR removal. It is not handled gracefully by Kube Burner cleanup so better to remove it manually beforehand:
+
+```
+kubectl delete dnspolicy [:dns_policy_name] -n scale-test-0
+kube-burner destroy --uuid [:uuid]
+```
+
+## Quick Sanity Check
+
+If cleanup is skipped then quick sanity check that everything works can be done:
+
+```
+curl -k -s -o /dev/null -w "%{http_code}\n" -H "Authorization: APIKEY iamalice" https://api.scale-test-gw1-l1-i0.aws.kua.app-services-dev.net/get # expected result: 200
+
+curl -k -s -o /dev/null -w "%{http_code}\n" -H "Authorization: APIKEY iambob" https://api.scale-test-gw1-l1-i0.aws.kua.app-services-dev.net/get # expected result: 200
+
+curl -k -s -o /dev/null -w "%{http_code}\n" -H "Authorization: APIKEY iamX" https://api.scale-test-gw1-l1-i0.aws.kua.app-services-dev.net/get # expected result: 401
+```
+
+Based on limits configured in RateLimitPolicy CRs these commands can be repeated until `HTTP 429 Too Many Requests` is returned. Omit `-k` if valid certificates are used.
 
 ## Setting up a local cluster for execution
 

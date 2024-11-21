@@ -17,8 +17,12 @@ metricsEndpoints:
       type: local
       metricsDirectory: ./metrics
 {{ end }}
-global: 
+global:
+{{ if .SKIP_CLEANUP }}
+  gc: false
+{{ else }}
   gc: true
+{{ end }}
 jobs: 
   - name: scale-test-preparations
     jobIterations: 1
@@ -44,6 +48,16 @@ jobs:
           KUADRANT_AWS_ACCESS_KEY_ID: "{{ .KUADRANT_AWS_ACCESS_KEY_ID }}"
           KUADRANT_AWS_REGION: "{{ .KUADRANT_AWS_REGION }}"
           KUADRANT_AWS_SECRET_ACCESS_KEY: "{{ .KUADRANT_AWS_SECRET_ACCESS_KEY }}"
+      - objectTemplate: ./person-secret.yaml
+        kind: Secret
+        replicas: 1
+        inputVars:
+          person: "alice"
+      - objectTemplate: ./person-secret.yaml
+        kind: Secret
+        replicas: 1
+        inputVars:
+          person: "bob"
   - name: scale-test-main
     jobIterations: 1
     qps: 1
@@ -122,6 +136,9 @@ jobs:
           LISTENER_NUM: "{{$LISTENER_NUM}}"
   {{- end }}
 {{- end }}
+{{ if .SKIP_CLEANUP }}
+# nothing to do if cleanup is skipped
+{{ else }}
   - name: scale-test-safe-dnspolicy-cleanup
     jobType: delete
     jobIterations: 1
@@ -132,3 +149,4 @@ jobs:
       - kind: DNSPolicy
         apiVersion: kuadrant.io/v1alpha1
         labelSelector: {kube-burner-job: scale-test-main}
+{{ end }}
