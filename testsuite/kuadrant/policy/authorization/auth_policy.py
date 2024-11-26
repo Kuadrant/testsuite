@@ -7,10 +7,11 @@ from testsuite.gateway import Referencable
 from testsuite.kubernetes import modify
 from testsuite.kubernetes.client import KubernetesClient
 from testsuite.utils import asdict
+
+from .. import CelPredicate, Policy, Strategy
+from . import Pattern
 from .auth_config import AuthConfig
 from .sections import ResponseSection
-from .. import Policy, CelPredicate
-from . import Pattern
 
 
 class AuthPolicy(Policy, AuthConfig):
@@ -48,6 +49,21 @@ class AuthPolicy(Policy, AuthConfig):
         """Add rule for the skip of entire AuthPolicy"""
         self.model.spec.setdefault("when", [])
         self.model.spec["when"].extend([asdict(x) for x in when])
+
+    # TODO: need to check if the typing is set up correctlly.
+    @modify
+    def strategy(self, strategy: Strategy) -> None:
+        """Add strategy type to default or overrides spec"""
+        if self.spec_section is None:
+            if "defaults" in self.model.spec:
+                self.spec_section = self.model.spec["default"]
+            elif "overrides" in self.model.spec:
+                self.spec_section = self.model.spec["overrides"]
+            else:
+                raise TypeError("no default or override section found in spec")
+
+        self.spec_section["strategy"] = strategy.value
+        self.spec_section = None
 
     @property
     def auth_section(self):

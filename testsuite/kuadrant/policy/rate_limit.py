@@ -5,9 +5,9 @@ from dataclasses import dataclass
 from typing import Iterable
 
 from testsuite.gateway import Referencable
+from testsuite.kuadrant.policy import CelExpression, CelPredicate, Policy, Strategy
 from testsuite.kubernetes import modify
 from testsuite.kubernetes.client import KubernetesClient
-from testsuite.kuadrant.policy import Policy, CelPredicate, CelExpression
 from testsuite.utils import asdict
 
 
@@ -70,6 +70,21 @@ class RateLimitPolicy(Policy):
             self.spec_section = self.model.spec
 
         self.spec_section.setdefault("limits", {})[name] = limit
+        self.spec_section = None
+
+    # TODO: need to check if the typing is set up correctlly.
+    @modify
+    def strategy(self, strategy: Strategy) -> None:
+        """Add strategy type to default or overrides spec"""
+        if self.spec_section is None:
+            if "defaults" in self.model.spec:
+                self.spec_section = self.model.spec["defaults"]
+            elif "overrides" in self.model.spec:
+                self.spec_section = self.model.spec["overrides"]
+            else:
+                raise TypeError("no default or override section found in spec")
+
+        self.spec_section["strategy"] = strategy.value
         self.spec_section = None
 
     @property
