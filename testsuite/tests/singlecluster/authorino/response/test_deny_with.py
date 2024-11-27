@@ -51,6 +51,8 @@ def assert_headers(response):
     assert response.headers["x-dynamic-header"] == TESTING_PATH
 
 
+@pytest.mark.xfail
+@pytest.mark.issue("https://github.com/Kuadrant/kuadrant-operator/issues/1022")
 def test_unauthenticated(client):
     """Test when no auth is passed results in custom unauthenticated response."""
     response = client.get(TESTING_PATH, auth=None)
@@ -60,6 +62,8 @@ def test_unauthenticated(client):
     assert response.content.decode() == "You are unauthenticated."
 
 
+@pytest.mark.xfail
+@pytest.mark.issue("https://github.com/Kuadrant/kuadrant-operator/issues/1022")
 def test_unauthorized(client, auth):
     """Test when not allowed path is passed results in custom unauthorized response."""
     response = client.get(TESTING_PATH, auth=auth)
