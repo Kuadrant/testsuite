@@ -2,37 +2,12 @@
 
 from testsuite.backend import Backend
 from testsuite.kubernetes import Selector
-from testsuite.kubernetes.client import KubernetesClient
 from testsuite.kubernetes.deployment import Deployment, ContainerResources
 from testsuite.kubernetes.service import Service, ServicePort
 
 
 class MockserverBackend(Backend):
     """Mockserver deployed as backend in Kubernetes"""
-
-    PORT = 8080
-
-    def __init__(self, cluster: KubernetesClient, name: str, label: str):
-        self.cluster = cluster
-        self.name = name
-        self.label = label
-
-        self.deployment = None
-        self.service = None
-
-    @property
-    def reference(self):
-        return {
-            "group": "",
-            "kind": "Service",
-            "port": self.PORT,
-            "name": self.name,
-            "namespace": self.cluster.project,
-        }
-
-    @property
-    def url(self):
-        return f"{self.name}.{self.cluster.project}.svc.cluster.local"
 
     def commit(self):
         match_labels = {"app": self.label, "deployment": self.name}
@@ -54,16 +29,15 @@ class MockserverBackend(Backend):
             self.cluster,
             self.name,
             selector=match_labels,
-            ports=[ServicePort(name="1080-tcp", port=self.PORT, targetPort="api")],
+            ports=[ServicePort(name="1080-tcp", port=8080, targetPort="api")],
             labels={"app": self.label},
+            service_type="LoadBalancer",
         )
         self.service.commit()
 
-    def delete(self):
-        with self.cluster.context:
-            if self.service:
-                self.service.delete()
-                self.service = None
-            if self.deployment:
-                self.deployment.delete()
-                self.deployment = None
+    def wait_for_ready(self, timeout=300):
+        """Waits until Deployment is marked as ready"""
+        success = self.service.wait_until(
+            lambda obj: "ip" in self.service.refresh().model.status.loadBalancer.ingress[0], timelimit=timeout
+        )
+        assert success, f"Service {self.name} did not get ready in time"
