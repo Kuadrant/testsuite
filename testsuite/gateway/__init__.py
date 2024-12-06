@@ -135,7 +135,7 @@ class Gateway(LifecycleObject, Referencable):
         """Waits until the gateway is ready"""
 
     @abstractmethod
-    def get_tls_cert(self) -> Optional[Certificate]:
+    def get_tls_cert(self, hostname: str) -> Optional[Certificate]:
         """Returns TLS cert bound to this Gateway, if the Gateway does not use TLS, returns None"""
 
 

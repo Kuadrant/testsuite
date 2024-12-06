@@ -209,3 +209,20 @@ def sleep_ttl(hostname: str):
         return
 
     sleep(dns.resolver.resolve(hostname).rrset.ttl)  # type: ignore
+
+
+def domain_match(first: str, second: str):
+    """Returns true if domains are the same, considering left-most wildcard"""
+    # strip last '.'
+    if first[-1] == ".":
+        first = first[:-1]
+    if second[-1] == ".":
+        second = second[:-1]
+
+    if first == second:
+        return True
+    if first[0] == "*":
+        return first[2:] == ".".join(second.split(".")[1:])
+    if second[0] == "*":
+        return second[2:] == ".".join(first.split(".")[1:])
+    return False
