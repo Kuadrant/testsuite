@@ -99,7 +99,7 @@ class Envoy(Gateway):  # pylint: disable=too-many-instance-attributes
         )
         self.service.commit()
 
-    def get_tls_cert(self) -> Optional[Certificate]:
+    def get_tls_cert(self, _) -> Optional[Certificate]:
         return None
 
     def delete(self):
