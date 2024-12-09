@@ -1,3 +1,5 @@
+"""Setup conftest for policy merge on the same targets"""
+
 import pytest
 
 from testsuite.gateway import MatchType, PathMatch, RouteMatch
