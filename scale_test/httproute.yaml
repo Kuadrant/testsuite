@@ -13,6 +13,7 @@ spec:
   - group: gateway.networking.k8s.io
     kind: Gateway
     name: gw{{$GW_NUM}}-i{{ .Iteration }}
+    sectionName: api-{{$LISTENER_NUM}}
   hostnames:
   - "api.scale-test-gw{{$GW_NUM}}-l{{$LISTENER_NUM}}-i{{$Iteration}}.{{$KUADRANT_ZONE_ROOT_DOMAIN}}"
   rules:
