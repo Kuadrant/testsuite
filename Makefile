@@ -102,9 +102,9 @@ reportportal: ## Upload results to reportportal. Appropriate variables for juni2
 reportportal: polish-junit
 	$(RUNSCRIPT)junit2reportportal $(resultsdir)/junit-*.xml
 
-# Check http://marmelab.com/blog/2016/02/29/auto-documented-makefile.html
-help: ## Print this help
-	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+.PHONY: help
+help: ## Display this help.
+	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_0-9-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
 
 CR_NAMES = $\
 authorinos.operator.authorino.kuadrant.io,$\
@@ -138,3 +138,48 @@ clean: ## Clean all objects on cluster created by running this testsuite. Set th
 	| xargs --no-run-if-empty -P 20 -n 1 kubectl delete --ignore-not-found -n kuadrant
 # this ensures dependent target is run everytime
 FORCE:
+
+##@ Scale Testing
+
+.PHONY: test-scale-dnspolicy
+test-scale-dnspolicy: export DNS_OPERATOR_GITHUB_ORG := kuadrant
+test-scale-dnspolicy: export DNS_OPERATOR_GITREF := main
+test-scale-dnspolicy: export JOB_ITERATIONS := 1
+test-scale-dnspolicy: export KUADRANT_ZONE_ROOT_DOMAIN := kuadrant.local
+test-scale-dnspolicy: export DNS_PROVIDER := inmemory
+test-scale-dnspolicy: export PROMETHEUS_URL := http://127.0.0.1:9090
+test-scale-dnspolicy: export PROMETHEUS_TOKEN := ""
+test-scale-dnspolicy: export SKIP_CLEANUP := false
+test-scale-dnspolicy: export NUM_GWS := 1
+test-scale-dnspolicy: export NUM_LISTENERS := 1
+test-scale-dnspolicy: KUBEBURNER_WORKLOAD := namespaced-dns-operator-deployments.yaml
+test-scale-dnspolicy: kube-burner ## Run DNSPolicy scale tests.
+	@echo "test-scale-dnspolicy: KUBEBURNER_WORKLOAD=${KUBEBURNER_WORKLOAD} JOB_ITERATIONS=${JOB_ITERATIONS} KUADRANT_ZONE_ROOT_DOMAIN=${KUADRANT_ZONE_ROOT_DOMAIN} DNS_PROVIDER=${DNS_PROVIDER} PROMETHEUS_URL=${PROMETHEUS_URL} PROMETHEUS_TOKEN=${PROMETHEUS_TOKEN}"
+	cd scale_test/dnspolicy && $(KUBE_BURNER) init -c ${KUBEBURNER_WORKLOAD} --log-level debug
+
+##@ Build Dependencies
+
+## Location to install dependencies to
+LOCALBIN ?= $(shell pwd)/bin
+$(LOCALBIN):
+	mkdir -p $(LOCALBIN)
+
+## Tool Binaries
+KUBE_BURNER ?= $(LOCALBIN)/kube-burner
+
+## Tool Versions
+KUBE_BURNER_VERSION = v1.11.1
+
+.PHONY: kube-burner
+kube-burner: $(KUBE_BURNER) ## Download kube-burner locally if necessary.
+$(KUBE_BURNER):
+	@{ \
+	set -e ;\
+	mkdir -p $(dir $(KUBE_BURNER)) ;\
+	OS=$(shell go env GOOS) && ARCH=$(shell go env GOARCH) && \
+	wget -O kube-burner.tar.gz https://github.com/kube-burner/kube-burner/releases/download/v1.11.1/kube-burner-V1.11.1-linux-x86_64.tar.gz ;\
+	tar -zxvf kube-burner.tar.gz ;\
+	mv kube-burner $(KUBE_BURNER) ;\
+	chmod +x $(KUBE_BURNER) ;\
+	rm -rf $${OS}-$${ARCH} kube-burner.tar.gz ;\
+	}

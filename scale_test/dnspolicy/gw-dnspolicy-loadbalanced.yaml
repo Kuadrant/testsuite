@@ -1,0 +1,17 @@
+apiVersion: kuadrant.io/v1
+kind: DNSPolicy
+metadata:
+  name: dnspolicy-gw{{ .GW_NUM }}-i{{ .Iteration }}
+  labels:
+    app: scale-test
+spec:
+  targetRef:
+    group: gateway.networking.k8s.io
+    kind: Gateway
+    name: gw{{ .GW_NUM }}-i{{ .Iteration }}
+  providerRefs:
+    - name: {{ .DNS_PROVIDER }}-credentials
+  loadBalancing:
+    weight: 120
+    geo: {{ .GeoCode }}
+    defaultGeo: true
