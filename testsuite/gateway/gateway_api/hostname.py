@@ -15,7 +15,7 @@ from testsuite.utils import generate_tail
 class StaticHostname(Hostname):
     """Already exposed hostname object"""
 
-    def __init__(self, hostname, tls_cert_getter: Callable[[], Certificate | bool] = None):
+    def __init__(self, hostname, tls_cert_getter: Callable[[str], Certificate | bool] = None):
         """
         :param hostname: Hostname that is exposed
         :param tls_cert_getter: Function that will gather TLS certificate when called,
@@ -27,9 +27,11 @@ class StaticHostname(Hostname):
 
     def client(self, **kwargs) -> KuadrantClient:
         protocol = "http"
-        if self.tls_cert_getter is not None and self.tls_cert_getter() is not None:
-            protocol = "https"
-            kwargs.setdefault("verify", self.tls_cert_getter())
+        if self.tls_cert_getter is not None:
+            cert = self.tls_cert_getter(self.hostname)
+            if cert is not None:
+                protocol = "https"
+                kwargs.setdefault("verify", self.tls_cert_getter(self.hostname))
         return KuadrantClient(base_url=f"{protocol}://{self.hostname}", **kwargs)
 
     @property
