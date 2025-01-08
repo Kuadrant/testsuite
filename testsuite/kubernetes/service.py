@@ -64,7 +64,7 @@ class Service(KubernetesObject):
         if ip is Missing:
             ip = self.model.status.loadBalancer.ingress[0].hostname
         if ip is Missing:
-            raise AttributeError(f"Neither External IP nor Hostname found in status of {self.model.spec.name} service")
+            raise AttributeError(f"Neither External IP nor Hostname found in status of {self.kind()}/{self.name()}")
 
         return ip
 
