@@ -9,7 +9,7 @@ from testsuite.gateway import Gateway, GatewayListener
 from testsuite.kubernetes.client import KubernetesClient
 from testsuite.kubernetes import KubernetesObject, modify
 from testsuite.kuadrant.policy import Policy
-from testsuite.utils import check_condition, asdict
+from testsuite.utils import check_condition, asdict, domain_match
 
 
 class KuadrantGateway(KubernetesObject, Gateway):
@@ -84,11 +84,15 @@ class KuadrantGateway(KubernetesObject, Gateway):
                 return True
         return False
 
-    def get_tls_cert(self):
-        if "tls" not in self.model.spec.listeners[0]:
+    def get_tls_cert(self, hostname):
+        tls_cert_secret_name = None
+        for listener in self.all_tls_listeners():
+            if domain_match(hostname, listener.hostname):
+                tls_cert_secret_name = listener.tls.certificateRefs[0].name
+
+        if tls_cert_secret_name is None:
             return None
 
-        tls_cert_secret_name = self.cert_secret_name
         try:
             tls_cert_secret = self.cluster.get_secret(tls_cert_secret_name)
         except oc.OpenShiftPythonException as e:
@@ -102,19 +106,23 @@ class KuadrantGateway(KubernetesObject, Gateway):
         )
         return tls_cert
 
+    def all_tls_listeners(self):
+        """Yields all listeners in gateway that support 'tls'"""
+        for listener in self.model.spec.listeners:
+            if "tls" in listener:
+                yield listener
+
     def delete(self, ignore_not_found=True, cmd_args=None):
         res = super().delete(ignore_not_found, cmd_args)
         with self.cluster.context:
             # TLSPolicy does not delete certificates it creates
-            oc.selector(f"secret/{self.cert_secret_name}").delete(ignore_not_found=True)
+            for secret in oc.selector("secret").objects():
+                if "tls" in secret.name() and self.name() in secret.name():
+                    secret.delete()
+
             # Istio does not delete ServiceAccount
             oc.selector(f"sa/{self.service_name}").delete(ignore_not_found=True)
         return res
-
-    @property
-    def cert_secret_name(self):
-        """Returns name of the secret with generated TLS certificate"""
-        return self.model.spec.listeners[0].tls.certificateRefs[0].name
 
     @property
     def reference(self):

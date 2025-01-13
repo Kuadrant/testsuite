@@ -60,7 +60,7 @@ def cluster_issuer(testconfig, cluster):
 def client(hostname, gateway):
     """Returns httpx client to be used for requests, it also commits AuthConfig"""
     root_cert = resources.files("testsuite.resources").joinpath("letsencrypt-stg-root-x1.pem").read_text()
-    old_cert = gateway.get_tls_cert()
+    old_cert = gateway.get_tls_cert(hostname.hostname)
     cert = dataclasses.replace(old_cert, chain=old_cert.certificate + root_cert)
     client = hostname.client(verify=cert)
     yield client
