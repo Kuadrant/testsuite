@@ -37,6 +37,11 @@ def pytest_runtest_setup(item):
     (https://docs.pytest.org/en/latest/example/markers.html#marking-test-functions-and-selecting-them-for-a-run)
     In this function we skip or fail the tests that were selected but their capabilities are not available
     """
+    # prevents ERROR OpenShiftPythonException due to oc and kuadrant not being set-up
+    # when just printing setup plan
+    # error is raised during has_kuadrant()
+    if item.config.getoption("--setup-plan"):
+        return
     marks = [i.name for i in item.iter_markers()]
     skip_or_fail = pytest.fail if item.config.getoption("--enforce") else pytest.skip
     standalone = item.config.getoption("--standalone")
