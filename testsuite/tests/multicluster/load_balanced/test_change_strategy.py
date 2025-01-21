@@ -19,8 +19,9 @@ def test_change_lb_strategy(hostname, gateway, gateway2, dns_policy2, dns_server
     resolver.nameservers = [dns_server2["address"]]
     assert resolver.resolve(hostname.hostname)[0].address == gateway2.external_ip().split(":")[0]
 
-    dns_policy2.model.spec.pop("loadBalancing")
-    dns_policy2.apply()
+    dns_policy2.refresh().model.spec.pop("loadBalancing")
+    res = dns_policy2.apply()
+    assert res.status() == 0, res.err()
     assert dns_policy2.wait_until(
         has_record_condition(
             "Ready",
@@ -29,7 +30,7 @@ def test_change_lb_strategy(hostname, gateway, gateway2, dns_policy2, dns_server
             "The DNS provider failed to ensure the record: record type conflict, cannot update endpoint "
             f"'{wildcard_domain}' with record type 'A' when endpoint already exists with record type 'CNAME'",
         )
-    )
+    ), f"DNSPolicy did not reach expected record status, instead it was: {dns_policy2.model.status.recordConditions}"
 
     sleep(300)  # wait for DNS propagation on providers
     assert resolver.resolve(hostname.hostname)[0].address == gateway.external_ip().split(":")[0]
