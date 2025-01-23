@@ -1,4 +1,4 @@
-"""Conftest for RLP targeting route tests """
+"""Conftest for RLP section_name targeting tests"""
 
 import pytest
 
@@ -18,3 +18,11 @@ def route(route, backend):
         RouteMatch(path=PathMatch(value="/anything", type=MatchType.PATH_PREFIX)),
     )
     return route
+
+
+@pytest.fixture(scope="module", autouse=True)
+def commit(request, route, rate_limit):  # pylint: disable=unused-argument
+    """Commits RateLimitPolicy after the HTTPRoute is created"""
+    request.addfinalizer(rate_limit.delete)
+    rate_limit.commit()
+    rate_limit.wait_for_ready()
