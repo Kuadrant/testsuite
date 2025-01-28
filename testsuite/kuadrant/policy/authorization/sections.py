@@ -287,7 +287,7 @@ class AuthorizationSection(Section):
         self.add_item(name, {"opa": {"externalPolicy": {"url": endpoint, "ttl": ttl}}}, **common_features)
 
     @modify
-    def add_kubernetes(self, name: str, user: ABCValue, resource_attributes: dict, **common_features):
+    def add_kubernetes(self, name: str, user: ABCValue, resource_attributes: dict = None, **common_features):
         """Adds Kubernetes authorization
 
         :param name: name of kubernetes authorization
