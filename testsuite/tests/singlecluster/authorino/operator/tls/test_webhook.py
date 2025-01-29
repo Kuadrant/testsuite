@@ -10,7 +10,7 @@ from openshift_client import OpenShiftPythonException
 
 from testsuite.certificates import CertInfo
 from testsuite.kubernetes.ingress import Ingress
-from testsuite.kuadrant.policy.authorization import ValueFrom, Pattern
+from testsuite.kuadrant.policy.authorization import ResourceAttributes, Value, ValueFrom, Pattern
 from testsuite.kuadrant.policy.authorization.auth_config import AuthConfig
 from testsuite.utils import cert_builder
 
@@ -86,30 +86,36 @@ def authorization(authorization, cluster, authorino_domain) -> AuthConfig:
         Pattern("auth.authorization.features.allow", "eq", "true"),
         Pattern("auth.authorization.features.verb", "eq", "CREATE"),
     ]
-    kube_attrs = {
-        "namespace": {"value": cluster.project},
-        "group": {"value": "networking.k8s.io"},
-        "resource": {"value": "Ingress"},
-        "verb": {"value": "create"},
-    }
     # add response for admission webhook for creating Ingress
     authorization.authorization.add_kubernetes(
-        "ingress-authn-k8s-binding-create", user_value, kube_attrs, when=when, priority=1
+        "ingress-authn-k8s-binding-create",
+        user_value,
+        ResourceAttributes(
+            namespace=Value(cluster.project),
+            group=Value("networking.k8s.io"),
+            resource=Value("Ingress"),
+            verb=Value("create"),
+        ),
+        when=when,
+        priority=1,
     )
 
     when = [
         Pattern("auth.authorization.features.allow", "eq", "true"),
         Pattern("auth.authorization.features.verb", "eq", "DELETE"),
     ]
-    kube_attrs = {
-        "namespace": {"value": cluster.project},
-        "group": {"value": "networking.k8s.io"},
-        "resource": {"value": "Ingress"},
-        "verb": {"value": "delete"},
-    }
     # add response for admission webhook for deleting Ingress
     authorization.authorization.add_kubernetes(
-        "ingress-authn-k8s-binding-delete", user_value, kube_attrs, when=when, priority=1
+        "ingress-authn-k8s-binding-delete",
+        user_value,
+        ResourceAttributes(
+            namespace=Value(cluster.project),
+            group=Value("networking.k8s.io"),
+            resource=Value("Ingress"),
+            verb=Value("delete"),
+        ),
+        when=when,
+        priority=1,
     )
     return authorization
 

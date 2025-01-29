@@ -4,7 +4,7 @@ import abc
 from dataclasses import dataclass
 from typing import Literal, Optional
 from testsuite.utils import asdict, JSONValues
-
+from testsuite.kuadrant.policy import CelExpression
 
 # pylint: disable=invalid-name
 
@@ -107,6 +107,17 @@ class PlainResponse:
     """Response item as plain text value."""
 
     plain: ABCValue
+
+
+@dataclass(kw_only=True)
+class ResourceAttributes:
+    """Dataclass for specifying Resource Attributes in the KubernetesSubjectAccessReview authorization"""
+
+    namespace: Optional[Value | ValueFrom | CelExpression] = None
+    group: Optional[Value | ValueFrom | CelExpression] = None
+    resource: Optional[Value | ValueFrom | CelExpression] = None
+    name: Optional[Value | ValueFrom | CelExpression] = None
+    verb: Optional[Value | ValueFrom | CelExpression] = None
 
 
 @dataclass
