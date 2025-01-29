@@ -1,5 +1,5 @@
 """Configure all the components through Kuadrant,
- all methods are placeholders for now since we do not work with Kuadrant"""
+all methods are placeholders for now since we do not work with Kuadrant"""
 
 import pytest
 import yaml

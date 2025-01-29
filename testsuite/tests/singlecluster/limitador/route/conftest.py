@@ -1,4 +1,4 @@
-"""Conftest for RLP targeting route tests """
+"""Conftest for RLP targeting route tests"""
 
 import pytest
 

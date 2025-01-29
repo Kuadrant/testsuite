@@ -1,5 +1,5 @@
 """Test kubernetes SubjectAccessReview authorization by verifying only a
- ServiceAccount bound to a ClusterRole is authorized to access a resource"""
+ServiceAccount bound to a ClusterRole is authorized to access a resource"""
 
 import pytest
 
