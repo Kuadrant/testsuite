@@ -69,6 +69,7 @@ class DNSPolicy(Policy):
         name: str,
         parent: Referencable,
         provider_secret_name: str,
+        section_name: str = None,
         load_balancing: LoadBalancing = None,
         labels: dict[str, str] = None,
     ):
@@ -86,6 +87,8 @@ class DNSPolicy(Policy):
 
         if load_balancing:
             model["spec"]["loadBalancing"] = asdict(load_balancing)
+        if section_name:
+            model["spec"]["targetRef"]["sectionName"] = section_name
 
         return cls(model, context=cluster.context)
 

@@ -1,8 +1,8 @@
-"""Conftest for RLP targeting route tests """
+"""Conftest for merge strategy tests"""
 
 import pytest
 
-from testsuite.gateway import PathMatch, RouteMatch, MatchType
+from testsuite.gateway import RouteMatch, PathMatch, MatchType
 
 
 @pytest.fixture(scope="module")
