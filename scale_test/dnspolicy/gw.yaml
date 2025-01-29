@@ -1,0 +1,20 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata: 
+  name: gw{{.GW_NUM}}-i{{.Iteration}}
+  labels: 
+    app: scale-test
+spec: 
+  gatewayClassName: istio
+  listeners:
+{{- $numListeners := .NUM_LISTENERS | atoi }}
+{{- range $index := until $numListeners }}
+  {{- $listenerNum := add1 $index }}
+  - allowedRoutes:
+      namespaces:
+        from: All
+    hostname: api-{{ $listenerNum }}.{{ $.JobName }}.{{ $.KUADRANT_ZONE_ROOT_DOMAIN }}
+    name: api-{{$listenerNum}}
+    port: 80
+    protocol: HTTP
+{{- end }}
