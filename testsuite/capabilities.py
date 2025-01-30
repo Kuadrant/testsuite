@@ -34,7 +34,7 @@ def kuadrant_version():
         clusters.append(cluster2)
     versions = []
     for cluster in clusters:
-        project = cluster.change_project("openshift-marketplace")
+        project = cluster.change_project(settings["service_protection"]["system_project"])
         if not project.connected:
             break
         with project.context:
