@@ -3,8 +3,7 @@
 import pytest
 
 from testsuite.httpx.auth import HeaderApiKeyAuth
-from testsuite.kuadrant.policy.authorization import ValueFrom
-from testsuite.kubernetes.cluster_role import ClusterRole, ClusterRoleBinding
+from testsuite.kubernetes.cluster_role import ClusterRoleBinding
 
 
 @pytest.fixture(scope="module")
@@ -17,8 +16,6 @@ def audience(hostname):
 def authorization(authorization):
     """Add kubernetes token-review and subject-access-review identity"""
     authorization.identity.add_kubernetes("token-review-host")
-    user = ValueFrom("auth.identity.user.username")
-    authorization.authorization.add_kubernetes("subject-access-review-host", user)
     return authorization
 
 
@@ -38,37 +35,27 @@ def create_cluster_role_binding(request, cluster, blame, module_label):
 
 
 @pytest.fixture(scope="module")
-def cluster_role(request, cluster, blame, module_label):
-    """Creates and returns a ClusterRole"""
-    rules = [{"nonResourceURLs": ["/get"], "verbs": ["get"]}]
-    cluster_role = ClusterRole.create_instance(cluster, blame("cr"), rules, labels={"app": module_label})
-    request.addfinalizer(cluster_role.delete)
-    cluster_role.commit()
-    return cluster_role
-
-
-@pytest.fixture(scope="module")
-def bound_service_account_token(cluster_role, create_service_account, create_cluster_role_binding, audience):
+def service_account_token(create_service_account, create_cluster_role_binding, cluster_role, audience):
     """Create a ServiceAccount, bind it to a ClusterRole and return its token with a given audience"""
-    service_account = create_service_account("tkn-auth")
-    create_cluster_role_binding(cluster_role.model.metadata.name, [service_account.model.metadata.name])
+    service_account = create_service_account("auth")
+    create_cluster_role_binding(cluster_role.name(), [service_account.name()])
     return service_account.get_auth_token(audience)
 
 
 @pytest.fixture(scope="module")
-def auth(bound_service_account_token):
-    """Create request auth with service account token as API key"""
-    return HeaderApiKeyAuth(bound_service_account_token, "Bearer")
-
-
-@pytest.fixture(scope="module")
-def service_account_token(create_service_account, audience):
-    """Create a non-authorized service account and request its bound token with the hostname as audience"""
-    service_account = create_service_account("tkn-non-auth")
-    return service_account.get_auth_token(audience)
-
-
-@pytest.fixture(scope="module")
-def auth2(service_account_token):
+def auth(service_account_token):
     """Create request auth with service account token as API key"""
     return HeaderApiKeyAuth(service_account_token, "Bearer")
+
+
+@pytest.fixture(scope="module")
+def service_account_token2(create_service_account, audience):
+    """Create a non-authorized service account and request its bound token with the hostname as audience"""
+    service_account = create_service_account("no-auth")
+    return service_account.get_auth_token(audience)
+
+
+@pytest.fixture(scope="module")
+def auth2(service_account_token2):
+    """Create request auth with service account token as API key"""
+    return HeaderApiKeyAuth(service_account_token2, "Bearer")

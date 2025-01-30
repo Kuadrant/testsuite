@@ -13,6 +13,7 @@ from testsuite.kuadrant.policy.authorization import (
     WristbandResponse,
     DenyResponse,
     Cache,
+    ResourceAttributes,
 )
 from testsuite.utils import asdict
 from testsuite.kubernetes import modify, Selector
@@ -287,7 +288,9 @@ class AuthorizationSection(Section):
         self.add_item(name, {"opa": {"externalPolicy": {"url": endpoint, "ttl": ttl}}}, **common_features)
 
     @modify
-    def add_kubernetes(self, name: str, user: ABCValue, resource_attributes: dict = None, **common_features):
+    def add_kubernetes(
+        self, name: str, user: ABCValue, resource_attributes: ResourceAttributes = None, **common_features
+    ):
         """Adds Kubernetes authorization
 
         :param name: name of kubernetes authorization
@@ -298,7 +301,10 @@ class AuthorizationSection(Section):
         self.add_item(
             name,
             {
-                "kubernetesSubjectAccessReview": {"user": asdict(user), "resourceAttributes": resource_attributes},
+                "kubernetesSubjectAccessReview": {
+                    "user": asdict(user),
+                    "resourceAttributes": asdict(resource_attributes) if resource_attributes else None,
+                },
             },
             **common_features,
         )
