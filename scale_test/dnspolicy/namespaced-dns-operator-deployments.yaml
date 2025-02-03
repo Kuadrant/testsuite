@@ -1,0 +1,162 @@
+metricsEndpoints:
+  - endpoint: {{ .PROMETHEUS_URL }}
+    token: {{ .PROMETHEUS_TOKEN }}
+    metrics:
+      - https://raw.githubusercontent.com/{{.DNS_OPERATOR_GITHUB_ORG}}/dns-operator/refs/heads/{{.DNS_OPERATOR_GITREF}}/test/scale/metrics.yaml
+    alerts:
+      - https://raw.githubusercontent.com/{{.DNS_OPERATOR_GITHUB_ORG}}/dns-operator/refs/heads/{{.DNS_OPERATOR_GITREF}}/test/scale/alerts.yaml
+    indexer:
+      type: local
+      metricsDirectory: ./metrics
+
+jobs:
+  - name: dnspolicy-scale-test-setup-dns-operator-cluster-roles
+    jobIterations: 1
+    verifyObjects: false
+    objects:
+      - objectTemplate: https://raw.githubusercontent.com/{{.DNS_OPERATOR_GITHUB_ORG}}/dns-operator/refs/heads/{{.DNS_OPERATOR_GITREF}}/config/rbac/role.yaml
+        kind: ClusterRole
+        runOnce: true
+        replicas: 1
+  - name: dnspolicy-scale-test-setup-namespaced-dns-operators
+    jobType: create
+    jobIterations: {{ .JOB_ITERATIONS }}
+    namespacedIterations: true
+    namespace: kuadrant-dns-operator
+    waitWhenFinished: true
+    maxWaitTimeout: 5m
+    preLoadImages: false
+    objects:
+      - objectTemplate: https://raw.githubusercontent.com/{{.DNS_OPERATOR_GITHUB_ORG}}/dns-operator/refs/heads/{{.DNS_OPERATOR_GITREF}}/config/rbac/leader_election_role.yaml
+        kind: Role
+        replicas: 1
+      - objectTemplate: https://raw.githubusercontent.com/{{.DNS_OPERATOR_GITHUB_ORG}}/dns-operator/refs/heads/{{.DNS_OPERATOR_GITREF}}/test/scale/kubeburner-object-templates/dns-operator/role-binding.yaml
+        kind: ClusterRoleBinding
+        replicas: 1
+        inputVars:
+          Namespace: "kuadrant-dns-operator"
+      - objectTemplate: https://raw.githubusercontent.com/{{.DNS_OPERATOR_GITHUB_ORG}}/dns-operator/refs/heads/{{.DNS_OPERATOR_GITREF}}/test/scale/kubeburner-object-templates/dns-operator/leader-election-role-binding.yaml
+        kind: RoleBinding
+        replicas: 1
+        inputVars:
+          Namespace: "kuadrant-dns-operator"
+      - objectTemplate: https://raw.githubusercontent.com/{{.DNS_OPERATOR_GITHUB_ORG}}/dns-operator/refs/heads/{{.DNS_OPERATOR_GITREF}}/test/scale/kubeburner-object-templates/dns-operator/service-account.yaml
+        kind: ServiceAccount
+        replicas: 1
+      - objectTemplate: https://raw.githubusercontent.com/{{.DNS_OPERATOR_GITHUB_ORG}}/dns-operator/refs/heads/{{.DNS_OPERATOR_GITREF}}/test/scale/kubeburner-object-templates/dns-operator/dns-operator-deployment.yaml
+        kind: Deployment
+        replicas: 1
+      - objectTemplate: https://raw.githubusercontent.com/{{.DNS_OPERATOR_GITHUB_ORG}}/dns-operator/refs/heads/{{.DNS_OPERATOR_GITREF}}/test/scale/kubeburner-object-templates/dns-operator/metrics-service.yaml
+        kind: Service
+        replicas: 1
+      - objectTemplate: https://raw.githubusercontent.com/{{.DNS_OPERATOR_GITHUB_ORG}}/dns-operator/refs/heads/{{.DNS_OPERATOR_GITREF}}/test/scale/kubeburner-object-templates/dns-operator/service-monitor.yaml
+        kind: ServiceMonitor
+        replicas: 1
+  - name: dnspolicy-scale-test-setup
+    jobType: create #default
+    jobIterations: {{ .JOB_ITERATIONS }}
+    namespacedIterations: true
+    namespace: scale-test
+    waitWhenFinished: true
+    maxWaitTimeout: 5m
+    preLoadImages: false
+    objects:
+      - objectTemplate: ../httpbin-deployment.yaml
+        kind: Deployment
+        replicas: 1
+      - objectTemplate: ../httpbin-service.yaml
+        kind: Service
+        replicas: 1
+      {{if (eq .DNS_PROVIDER "inmemory")}}
+      - objectTemplate: https://raw.githubusercontent.com/{{.DNS_OPERATOR_GITHUB_ORG}}/dns-operator/refs/heads/{{.DNS_OPERATOR_GITREF}}/test/scale/kubeburner-object-templates/inmemory-credentials.yaml
+        kind: Secret
+        replicas: 1
+        inputVars:
+          KUADRANT_ZONE_ROOT_DOMAIN: '{{ .KUADRANT_ZONE_ROOT_DOMAIN }}'
+      {{end}}
+      {{if (eq .DNS_PROVIDER "aws")}}
+      - objectTemplate: https://raw.githubusercontent.com/{{.DNS_OPERATOR_GITHUB_ORG}}/dns-operator/refs/heads/{{.DNS_OPERATOR_GITREF}}/test/scale/kubeburner-object-templates/aws-credentials.yaml
+        kind: Secret
+        replicas: 1
+        inputVars:
+          KUADRANT_AWS_ACCESS_KEY_ID: '{{ .KUADRANT_AWS_ACCESS_KEY_ID }}'
+          KUADRANT_AWS_REGION: '{{ .KUADRANT_AWS_REGION }}'
+          KUADRANT_AWS_SECRET_ACCESS_KEY: '{{ .KUADRANT_AWS_SECRET_ACCESS_KEY }}'
+      {{end}}
+      {{if (eq .DNS_PROVIDER "gcp")}}
+      - objectTemplate: https://raw.githubusercontent.com/{{.DNS_OPERATOR_GITHUB_ORG}}/dns-operator/refs/heads/{{.DNS_OPERATOR_GITREF}}/test/scale/kubeburner-object-templates/gcp-credentials.yaml
+        kind: Secret
+        replicas: 1
+        inputVars:
+          KUADRANT_GCP_GOOGLE_CREDENTIALS: '{{ .KUADRANT_GCP_GOOGLE_CREDENTIALS }}'
+          KUADRANT_GCP_PROJECT_ID: '{{ .KUADRANT_GCP_PROJECT_ID }}'
+      {{end}}
+      {{if (eq .DNS_PROVIDER "azure")}}
+      - objectTemplate: https://raw.githubusercontent.com/{{.DNS_OPERATOR_GITHUB_ORG}}/dns-operator/refs/heads/{{.DNS_OPERATOR_GITREF}}/test/scale/kubeburner-object-templates/azure-credentials.yaml
+        kind: Secret
+        replicas: 1
+        inputVars:
+          KUADRANT_AZURE_CREDENTIALS: '{{ .KUADRANT_AZURE_CREDENTIALS }}'
+      {{end}}
+  - name: dnspolicy-scale-test-loadbalanced
+    jobIterations: {{ .JOB_ITERATIONS }}
+    namespacedIterations: true
+    namespace: scale-test
+    waitWhenFinished: true
+    maxWaitTimeout: 2m
+    preLoadImages: false
+    objects:
+    {{- $numGWs := .NUM_GWS | atoi }}
+    {{- range $index := until $numGWs }}
+      {{- $gwNum := add1 $index }}
+      - objectTemplate: gw.yaml
+        replicas: 1
+        waitOptions:
+          forCondition: Programmed
+          customStatusPath: ".conditions[].type"
+        inputVars:
+          KUADRANT_ZONE_ROOT_DOMAIN: '{{ $.KUADRANT_ZONE_ROOT_DOMAIN }}'
+          NUM_LISTENERS: '{{ $.NUM_LISTENERS }}'
+          GW_NUM: '{{ $gwNum }}'
+      - objectTemplate: gw-dnspolicy-loadbalanced.yaml
+        kind: DNSPolicy
+        replicas: 1
+        inputVars:
+          KUADRANT_ZONE_ROOT_DOMAIN: '{{ $.KUADRANT_ZONE_ROOT_DOMAIN }}'
+          GW_NUM: '{{ $gwNum }}'
+          DNS_PROVIDER: '{{ $.DNS_PROVIDER }}'
+          GeoCode: {{if (eq $.DNS_PROVIDER "aws")}} GEO-EU {{else if (eq $.DNS_PROVIDER "gcp")}} europe-west1 {{else if (eq $.DNS_PROVIDER "azure")}} GEO-EU {{else}} foo {{end}}
+        waitOptions:
+          forCondition: "Enforced"
+          customStatusPath: ".conditions[].type"
+      {{- range $index := until ($.NUM_LISTENERS | atoi) }}
+      {{- $listenerNum := add1 $index }}
+      - objectTemplate: ./httproute.yaml
+        replicas: 1
+        waitOptions:
+          forCondition: Accepted
+          customStatusPath: ".conditions[].type"
+        inputVars:
+          KUADRANT_ZONE_ROOT_DOMAIN: '{{ $.KUADRANT_ZONE_ROOT_DOMAIN }}'
+          GW_NUM: '{{ $gwNum }}'
+          LISTENER_NUM: "{{$listenerNum}}"
+      {{- end }}
+    {{- end }}
+  - name: scale-test-dnspolicy-read
+    jobType: read
+    jobIterations: 1
+    jobPause: 30s
+    objects:
+      - kind: DNSPolicy
+        apiVersion: kuadrant.io/v1
+        labelSelector: {kube-burner-job: dnspolicy-scale-test-loadbalanced}
+  {{ if (eq .SKIP_CLEANUP "true") }}
+  # nothing to do if cleanup is skipped
+  {{ else }}
+  - name: dnspolicy-scale-test-cleanup
+    jobType: delete
+    objects:
+      - kind: DNSPolicy
+        apiVersion: kuadrant.io/v1alpha1
+        labelSelector: {kube-burner-job: dnspolicy-scale-test-loadbalanced}
+  {{ end }}
