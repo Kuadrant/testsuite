@@ -2,7 +2,7 @@
 
 from testsuite.gateway import Referencable
 from testsuite.kubernetes.client import KubernetesClient
-from testsuite.kuadrant.policy import Policy, has_condition
+from testsuite.kuadrant.policy import Policy
 
 
 class TLSPolicy(Policy):
@@ -49,7 +49,6 @@ class TLSPolicy(Policy):
     def __getitem__(self, key):
         return self.model.spec[key]
 
-    def wait_for_ready(self):
-        """Increase timeout to account for letsEncrypt"""
-        success = self.wait_until(has_condition("Enforced", "True"), timelimit=180)
-        assert success, f"{self.kind()} did not get ready in time"
+    def wait_for_full_enforced(self, timelimit=450):
+        """Wait for a Policy to be fully Enforced with increased timelimit for ACME challenges"""
+        super().wait_for_full_enforced(timelimit=timelimit)
