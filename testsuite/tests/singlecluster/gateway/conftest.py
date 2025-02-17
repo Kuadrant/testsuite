@@ -6,6 +6,7 @@ from testsuite.gateway import Exposer, TLSGatewayListener
 from testsuite.gateway.gateway_api.gateway import KuadrantGateway
 from testsuite.gateway.gateway_api.hostname import DNSPolicyExposer
 from testsuite.httpx.auth import HttpxOidcClientAuth
+from testsuite.kuadrant.policy.authorization.auth_policy import AuthPolicy
 from testsuite.kuadrant.policy.dns import DNSPolicy
 from testsuite.kuadrant.policy.tls import TLSPolicy
 
@@ -27,11 +28,12 @@ def gateway(request, cluster, blame, wildcard_domain, module_label):
 
 
 @pytest.fixture(scope="module")
-def authorization(authorization, oidc_provider):
+def authorization(blame, gateway, module_label, cluster, oidc_provider, route):
     # pylint: disable=unused-argument
     """Create AuthPolicy attached to gateway"""
-    authorization.identity.add_oidc("default", oidc_provider.well_known["issuer"])
-    return authorization
+    policy = AuthPolicy.create_instance(cluster, blame("authz"), gateway, labels={"app": module_label})
+    policy.identity.add_oidc("default", oidc_provider.well_known["issuer"])
+    return policy
 
 
 @pytest.fixture(scope="module")
