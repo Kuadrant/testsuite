@@ -133,3 +133,6 @@ dmypy.json
 
 logs/*
 !logs/.gitkeep
+
+# macOS system files
+.DS_Store
