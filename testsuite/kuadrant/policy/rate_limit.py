@@ -7,7 +7,7 @@ from typing import Iterable
 from testsuite.gateway import Referencable
 from testsuite.kubernetes import modify
 from testsuite.kubernetes.client import KubernetesClient
-from testsuite.kuadrant.policy import Policy, CelPredicate, CelExpression
+from testsuite.kuadrant.policy import Policy, CelPredicate, CelExpression, Strategy
 from testsuite.utils import asdict
 
 
@@ -27,9 +27,16 @@ class RateLimitPolicy(Policy):
         self.spec_section = None
 
     @classmethod
-    def create_instance(cls, cluster: KubernetesClient, name, target: Referencable, labels: dict[str, str] = None):
+    def create_instance(
+        cls,
+        cluster: KubernetesClient,
+        name,
+        target: Referencable,
+        section_name: str = None,
+        labels: dict[str, str] = None,
+    ):
         """Creates new instance of RateLimitPolicy"""
-        model = {
+        model: dict = {
             "apiVersion": "kuadrant.io/v1",
             "kind": "RateLimitPolicy",
             "metadata": {"name": name, "labels": labels},
@@ -37,6 +44,8 @@ class RateLimitPolicy(Policy):
                 "targetRef": target.reference,
             },
         }
+        if section_name:
+            model["spec"]["targetRef"]["sectionName"] = section_name
 
         return cls(model, context=cluster.context)
 
@@ -61,6 +70,15 @@ class RateLimitPolicy(Policy):
             self.spec_section = self.model.spec
 
         self.spec_section.setdefault("limits", {})[name] = limit
+        self.spec_section = None
+
+    @modify
+    def strategy(self, strategy: Strategy) -> None:
+        """Add strategy type to default or overrides spec"""
+        if self.spec_section is None:
+            raise TypeError("Strategy can only be set on defaults or overrides")
+
+        self.spec_section["strategy"] = strategy.value
         self.spec_section = None
 
     @property
