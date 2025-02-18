@@ -9,7 +9,7 @@ from testsuite.kubernetes.client import KubernetesClient
 from testsuite.utils import asdict
 from .auth_config import AuthConfig
 from .sections import ResponseSection
-from .. import Policy, CelPredicate
+from .. import Policy, CelPredicate, Strategy
 from . import Pattern
 
 
@@ -48,6 +48,15 @@ class AuthPolicy(Policy, AuthConfig):
         """Add rule for the skip of entire AuthPolicy"""
         self.model.spec.setdefault("when", [])
         self.model.spec["when"].extend([asdict(x) for x in when])
+
+    @modify
+    def strategy(self, strategy: Strategy) -> None:
+        """Add strategy type to default or overrides spec"""
+        if self.spec_section is None:
+            raise TypeError("Strategy can only be set on defaults or overrides")
+
+        self.spec_section["strategy"] = strategy.value
+        self.spec_section = None
 
     @property
     def auth_section(self):
