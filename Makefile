@@ -38,6 +38,9 @@ testsuite/%: FORCE poetry-no-dev
 test: ## Run all non mgc tests
 test pytest tests: kuadrant
 
+smoke: poetry-no-dev
+	$(PYTEST) -n4 -m 'smoke' --dist loadfile --enforce $(flags) testsuite/tests
+
 authorino: ## Run only authorino related tests
 authorino: poetry-no-dev
 	$(PYTEST) -n4 -m 'authorino and not multicluster' --dist loadfile --enforce $(flags) testsuite/tests/singlecluster
