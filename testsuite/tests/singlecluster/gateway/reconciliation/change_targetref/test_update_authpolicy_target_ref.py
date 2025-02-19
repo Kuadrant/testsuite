@@ -4,17 +4,7 @@ Test for changing targetRef field in AuthPolicy
 
 import pytest
 
-from testsuite.kuadrant.policy.authorization.auth_policy import AuthPolicy
-
 pytestmark = [pytest.mark.kuadrant_only, pytest.mark.dnspolicy]
-
-
-@pytest.fixture(scope="module")
-def authorization(oidc_provider, gateway, cluster, blame, module_label, route):  # pylint: disable=unused-argument
-    """Overwrite the authorization fixture and attach it to the gateway"""
-    policy = AuthPolicy.create_instance(cluster, blame("authz"), gateway, labels={"testRun": module_label})
-    policy.identity.add_oidc("default", oidc_provider.well_known["issuer"])
-    return policy
 
 
 def test_update_auth_policy_target_ref(
