@@ -4,7 +4,7 @@ Conftest for changing targetRef field in policies
 
 import pytest
 
-from testsuite.gateway import GatewayRoute, GatewayListener, Hostname, Exposer
+from testsuite.gateway import GatewayRoute, Hostname, Exposer, GatewayListener
 from testsuite.gateway.gateway_api.gateway import KuadrantGateway
 from testsuite.gateway.gateway_api.hostname import DNSPolicyExposer
 from testsuite.gateway.gateway_api.route import HTTPRoute
@@ -79,6 +79,15 @@ def client2(route2, hostname2):  # pylint: disable=unused-argument
     client = hostname2.client()
     yield client
     client.close()
+
+
+@pytest.fixture(scope="module")
+def authorization():
+    """
+    Override the authorization fixture to prevent the creation of an AuthPolicy.
+    This ensures no authentication is enforced during the test
+    """
+    return None
 
 
 @pytest.fixture(scope="module")

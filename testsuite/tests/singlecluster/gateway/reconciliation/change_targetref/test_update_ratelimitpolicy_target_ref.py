@@ -10,15 +10,6 @@ pytestmark = [pytest.mark.kuadrant_only, pytest.mark.dnspolicy]
 
 
 @pytest.fixture(scope="module")
-def authorization():
-    """
-    Override the authorization fixture to prevent the creation of an AuthPolicy.
-    This ensures no authentication is enforced during the test
-    """
-    return None
-
-
-@pytest.fixture(scope="module")
 def rate_limit(cluster, blame, module_label, gateway, route):  # pylint: disable=unused-argument
     """RateLimitPolicy for testing"""
     policy = RateLimitPolicy.create_instance(cluster, blame("limit"), gateway, labels={"testRun": module_label})
