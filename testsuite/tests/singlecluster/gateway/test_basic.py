@@ -1,21 +1,24 @@
-"""Test for AuthPolicy attached directly to gateway"""
+"""
+This module contains the most basic happy path test for both DNSPolicy and TLSPolicy
+"""
 
 import pytest
 
-pytestmark = [pytest.mark.kuadrant_only]
+pytestmark = [pytest.mark.kuadrant_only, pytest.mark.dnspolicy, pytest.mark.tlspolicy, pytest.mark.smoke]
 
 
-@pytest.fixture(scope="module")
-def rate_limit():
-    """Basic gateway test doesn't utilize RateLimitPolicy component"""
-    return None
+def test_gateway_readiness(gateway):
+    """Tests whether the Gateway was successfully placed by having its IP address assigned"""
+    assert gateway.is_ready()
 
 
-@pytest.mark.issue("https://github.com/Kuadrant/kuadrant-operator/pull/287")
-def test_smoke(client, auth):
-    """Test if AuthPolicy attached directly to gateway works"""
-    response = client.get("/get", auth=auth)
-    assert response.status_code == 200
+def test_gateway_basic_dns_tls(client, auth):
+    """
+    Tests whether the backend, exposed using the HTTPRoute and Gateway, was exposed correctly,
+    having a tls secured endpoint with a hostname managed by Kuadrant
+    """
 
-    response = client.get("/get")
-    assert response.status_code == 401
+    result = client.get("/get", auth=auth)
+    assert not result.has_dns_error()
+    assert not result.has_cert_verify_error()
+    assert result.status_code == 200
