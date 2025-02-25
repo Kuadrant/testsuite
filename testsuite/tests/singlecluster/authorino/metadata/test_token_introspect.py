@@ -1,3 +1,9 @@
+"""
+Test for checking I OAuth 2.0 access tokens (e.g. opaque tokens) for online user data and token validation in
+request-time.
+https://github.com/Kuadrant/authorino/blob/main/docs/user-guides/oauth2-token-introspection.md
+"""
+
 import pytest
 
 pytestmark = [pytest.mark.authorino]
@@ -19,7 +25,8 @@ def authorization(client_secret, authorization, keycloak):
         "keycloak",
         {
             "oauth2Introspection": {
-                "endpoint": f"{keycloak.server_url}/realms/{keycloak.realm_name}/protocol/openid-connect/token/introspect",
+                "endpoint": f"{keycloak.server_url}/realms/{keycloak.realm_name}/protocol/openid-connect/token/"
+                            f"introspect",
                 "tokenTypeHint": "requesting_party_token",
                 "credentialsRef": {"name": client_secret.name()},
             }
@@ -28,7 +35,7 @@ def authorization(client_secret, authorization, keycloak):
     return authorization
 
 
-def test_no_token(client, auth):
+def test_no_token(client):
     """Test access with no auth"""
     response = client.get("get")
     assert response.status_code == 401
