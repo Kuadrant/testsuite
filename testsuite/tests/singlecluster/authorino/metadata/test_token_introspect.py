@@ -26,7 +26,7 @@ def authorization(client_secret, authorization, keycloak):
         {
             "oauth2Introspection": {
                 "endpoint": f"{keycloak.server_url}/realms/{keycloak.realm_name}/protocol/openid-connect/token/"
-                            f"introspect",
+                f"introspect",
                 "tokenTypeHint": "requesting_party_token",
                 "credentialsRef": {"name": client_secret.name()},
             }
