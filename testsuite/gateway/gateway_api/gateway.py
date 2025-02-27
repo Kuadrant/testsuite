@@ -1,9 +1,11 @@
 """Module containing all gateway classes"""
 
+from time import sleep
 from typing import Any
 
 import openshift_client as oc
 
+from testsuite.config import settings
 from testsuite.certificates import Certificate
 from testsuite.gateway import Gateway, GatewayListener
 from testsuite.kubernetes.client import KubernetesClient
@@ -69,6 +71,8 @@ class KuadrantGateway(KubernetesObject, Gateway):
         """Waits for the gateway to be ready in the sense of is_ready(self)"""
         success = self.wait_until(lambda obj: self.__class__(obj.model).is_ready(), timelimit=timeout)
         assert success, "Gateway didn't get ready in time"
+        if settings["control_plane"]["slow_loadbalancers"]:
+            sleep(60)
 
     def is_affected_by(self, policy: Policy) -> bool:
         """Returns True, if affected by status is found within the object for the specific policy"""
