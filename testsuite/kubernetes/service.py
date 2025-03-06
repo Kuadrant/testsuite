@@ -1,5 +1,6 @@
 """Service related objects"""
 
+from time import sleep
 from dataclasses import dataclass, asdict
 from typing import Literal
 
@@ -73,3 +74,16 @@ class Service(KubernetesObject):
         with timeout(10 * 60):
             deleted = super(KubernetesObject, self).delete(ignore_not_found, cmd_args)
             return deleted
+
+    def wait_for_ready(self, timeout=60 * 5, slow_loadbalancers=False):
+        """Waits until LoadBalancer service gets ready."""
+        if self.model.spec.type != "LoadBalancer":
+            return
+        success = self.wait_until(
+            lambda obj: "ip" in self.refresh().model.status.loadBalancer.ingress[0]
+            or "hostname" in self.refresh().model.status.loadBalancer.ingress[0],
+            timelimit=timeout,
+        )
+        assert success, f"Service {self.name} did not get ready in time"
+        if slow_loadbalancers:
+            sleep(60)
