@@ -16,7 +16,6 @@ def authorization(authorization, oidc_provider):
     return authorization
 
 
-@pytest.fixture(scope="module", params=("keycloak", "auth0"))
 def oidc_provider(request) -> OIDCProvider:
     """Fixture which enables switching out OIDC providers for individual modules"""
     return request.getfixturevalue(request.param)
@@ -31,25 +30,21 @@ def wrong_auth(oidc_provider, auth0, keycloak):
     return HttpxOidcClientAuth(token)
 
 
-def test_correct_auth(client, auth):
-    """Tests correct auth"""
-    response = client.get("/get", auth=auth)
-    assert response.status_code == 200
-
-
-def test_wrong_auth(wrong_auth, client):
-    """Tests request with wrong token"""
-    response = client.get("/get", auth=wrong_auth)
-    assert response.status_code == 401
-
-
-def test_no_auth(client):
-    """Tests request without any auth"""
+@pytest.mark.parametrize(
+    "oidc_provider",
+    [pytest.param("keycloak", marks=[pytest.mark.smoke]), pytest.param("auth0")],
+    indirect=True,
+)
+def test_auth_identity(client, auth, wrong_auth):
+    """Tests endpoint protection with auth identity"""
     response = client.get("/get")
     assert response.status_code == 401
 
+    response = client.get("/get", auth=auth)
+    assert response.status_code == 200
 
-def test_invalid_auth(client):
-    """Tests request with invalid token"""
+    response = client.get("/get", auth=wrong_auth)
+    assert response.status_code == 401
+
     response = client.get("/get", headers={"Authorization": "Bearer xyz"})
     assert response.status_code == 401
