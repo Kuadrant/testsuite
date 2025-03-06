@@ -4,6 +4,7 @@ import argparse
 import io
 import os
 import sys
+import json
 import zipfile
 
 from lxml import etree
@@ -23,16 +24,28 @@ aparser.add_argument(
     help="Desired launch name in reportportal. default: RP_LAUNCH_NAME env",
     default=os.environ.get("RP_LAUNCH_NAME", os.environ.get("RP_LAUNCH")),
 )
+aparser.add_argument(
+    "--launch-description",
+    help="Description of the imported launch. default: RP_LAUNCH_DESC env",
+    default=os.environ.get("RP_LAUNCH_DESC", ""),
+)
+aparser.add_argument(
+    "--ocp-version",
+    help="OCP version of the cluster imported launch is from. default: OCP_VERSION env",
+    default=os.environ.get("OCP_VERSION"),
+)
 aparser.add_argument("--token-variable", help="env variable with auth token. default: RP_TOKEN", default="RP_TOKEN")
 aparser.add_argument("junitfile", nargs="+", help="junit file to import")
 args = aparser.parse_args()
 
 if not args.reportportal:
     sys.exit("You must define reportportal URL")
+if not args.project:
+    sys.exit("You must define reportportal project")
+if not args.launch_name:
+    sys.exit("You must define reportportal launch name")
 if not args.token_variable:
     sys.exit("You must define correct token-variable")
-
-polish = etree.XSLT(etree.parse("./xslt/polish-junit.xsl"))
 
 stream = io.BytesIO()
 
@@ -44,26 +57,12 @@ with zipfile.ZipFile(stream, mode="w", compression=zipfile.ZIP_DEFLATED) as azip
                 for file in [i for i in zipfile.Path(inzip, at="archive/").iterdir() if i.name.startswith("junit-")]:
                     with file.open() as junit:
                         xml = etree.parse(junit)
-                        content = etree.tostring(polish(xml))
+                        content = etree.tostring(xml)
                         azip.writestr(file.name, content)
         else:
             xml = etree.parse(junitfile)
-            content = etree.tostring(polish(xml))
+            content = etree.tostring(xml)
             azip.writestr(os.path.basename(junitfile), content)
-
-if not args.launch_name:
-    try:
-        args.launch_name = xml.xpath("//property[@name = 'polarion-testrun-title']/@value")[0]
-        assert args.launch_name
-    except Exception:
-        sys.exit("You must define reportportal launch")
-
-if not args.project:
-    try:
-        args.project = xml.xpath("//property[@name = 'project']/@value")[0]
-        assert args.project
-    except Exception:
-        sys.exit("You must define reportportal project")
 
 token = os.environ[args.token_variable]
 reportportal = args.reportportal.rstrip("/")
@@ -71,10 +70,21 @@ reportportal = args.reportportal.rstrip("/")
 auth = {"Authorization": f"Bearer {token}"}
 launch_import = f"{reportportal}/api/v1/{args.project}/launch/import"
 
+launch_import_rq = {
+    "attributes": [
+        {"key": "skippedIsNotIssue", "system": True, "value": "true"},
+    ],
+    "description": args.launch_description,
+}
+launch_import_rq["attributes"].extend([{"key": "ocp", "value": args.ocp_version}] if args.ocp_version else [])
+
 print(
     requests.post(
         launch_import,
-        files={"file": (f"{args.launch_name}.zip", stream.getbuffer(), "application/zip")},
+        files={
+            "file": (f"{args.launch_name}.zip", stream.getbuffer(), "application/zip"),
+            "launchImportRq": (None, json.dumps(launch_import_rq), "application/json"),
+        },
         headers=auth,
     ).text
 )
