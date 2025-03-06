@@ -15,8 +15,9 @@ from testsuite.kuadrant.policy.authorization import (
     Cache,
     ResourceAttributes,
 )
+from testsuite.oidc.keycloak import Keycloak
 from testsuite.utils import asdict
-from testsuite.kubernetes import modify, Selector
+from testsuite.kubernetes import modify, Selector, KubernetesObject
 
 if TYPE_CHECKING:
     from .auth_config import AuthConfig
@@ -171,6 +172,21 @@ class IdentitySection(Section):
     def add_plain(self, name, auth_json, **common_features):
         """Adds plain identity"""
         self.add_item(name, {"plain": asdict(ValueFrom(auth_json))}, **common_features)
+
+    @modify
+    def add_oauth2_introspection(self, name: str, keycloak: Keycloak, client_secret: KubernetesObject):
+        """Add introspection for tokens with keycloak and client credentials stored in secret"""
+        self.add_item(
+            name,
+            {
+                "oauth2Introspection": {
+                    "endpoint": f"{keycloak.server_url}/realms/{keycloak.realm_name}/protocol/openid-connect/token/"
+                    f"introspect",
+                    "tokenTypeHint": "requesting_party_token",
+                    "credentialsRef": {"name": client_secret.name()},
+                }
+            },
+        )
 
 
 class MetadataSection(Section):
