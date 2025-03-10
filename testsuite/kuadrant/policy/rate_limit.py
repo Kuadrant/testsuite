@@ -27,9 +27,16 @@ class RateLimitPolicy(Policy):
         self.spec_section = None
 
     @classmethod
-    def create_instance(cls, cluster: KubernetesClient, name, target: Referencable, labels: dict[str, str] = None):
+    def create_instance(
+        cls,
+        cluster: KubernetesClient,
+        name,
+        target: Referencable,
+        section_name: str = None,
+        labels: dict[str, str] = None,
+    ):
         """Creates new instance of RateLimitPolicy"""
-        model = {
+        model: dict = {
             "apiVersion": "kuadrant.io/v1",
             "kind": "RateLimitPolicy",
             "metadata": {"name": name, "labels": labels},
@@ -37,6 +44,8 @@ class RateLimitPolicy(Policy):
                 "targetRef": target.reference,
             },
         }
+        if section_name:
+            model["spec"]["targetRef"]["sectionName"] = section_name
 
         return cls(model, context=cluster.context)
 

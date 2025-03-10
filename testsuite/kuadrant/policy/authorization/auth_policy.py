@@ -27,6 +27,7 @@ class AuthPolicy(Policy, AuthConfig):
         name,
         target: Referencable,
         labels: Dict[str, str] = None,
+        section_name: str = None,
     ):
         """Creates base instance"""
         model: Dict = {
@@ -37,6 +38,8 @@ class AuthPolicy(Policy, AuthConfig):
                 "targetRef": target.reference,
             },
         }
+        if section_name:
+            model["spec"]["targetRef"]["sectionName"] = section_name
 
         return cls(model, context=cluster.context)
 
