@@ -23,7 +23,7 @@ def authorization(authorization):
     """Set custom deny responses and auth rule with only allowed path '/allow'"""
     authorization.responses.set_unauthenticated(
         DenyResponse(
-            code=333,
+            code=305,
             headers=HEADERS,
             message=Value("Unauthenticated message"),
             body=Value("You are unauthenticated."),
@@ -31,7 +31,7 @@ def authorization(authorization):
     )
     authorization.responses.set_unauthorized(
         DenyResponse(
-            code=444,
+            code=417,
             headers=HEADERS,
             message=ValueFrom("My path is: " + "{context.request.http.path}"),
             body=ValueFrom("You are not authorized to access path: " + "{context.request.http.path}"),
@@ -51,23 +51,19 @@ def assert_headers(response):
     assert response.headers["x-dynamic-header"] == TESTING_PATH
 
 
-@pytest.mark.xfail
-@pytest.mark.issue("https://github.com/Kuadrant/kuadrant-operator/issues/1022")
 def test_unauthenticated(client):
     """Test when no auth is passed results in custom unauthenticated response."""
     response = client.get(TESTING_PATH, auth=None)
-    assert response.status_code == 333
+    assert response.status_code == 305
     assert_headers(response)
     assert response.headers["x-ext-auth-reason"] == "Unauthenticated message"
     assert response.content.decode() == "You are unauthenticated."
 
 
-@pytest.mark.xfail
-@pytest.mark.issue("https://github.com/Kuadrant/kuadrant-operator/issues/1022")
 def test_unauthorized(client, auth):
     """Test when not allowed path is passed results in custom unauthorized response."""
     response = client.get(TESTING_PATH, auth=auth)
-    assert response.status_code == 444
+    assert response.status_code == 417
     assert_headers(response)
     assert response.headers["x-ext-auth-reason"] == f"My path is: {TESTING_PATH}"
     assert response.content.decode() == f"You are not authorized to access path: {TESTING_PATH}"
