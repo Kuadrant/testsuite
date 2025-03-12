@@ -3,6 +3,8 @@
 from dataclasses import dataclass
 from typing import Optional, Literal
 
+import openshift_client as oc
+
 from testsuite.gateway import Referencable
 from testsuite.kubernetes import KubernetesObject
 from testsuite.kubernetes.client import KubernetesClient
@@ -54,8 +56,13 @@ class HealthCheck:  # pylint: disable=invalid-name
 class DNSHealthCheckProbe(KubernetesObject):
     """DNSHealthCheckProbe object"""
 
+    def _status_ready(self):
+        """Returns True if DNSHealthCheckProbe status.healthy field has appeared"""
+        return self.wait_until(lambda obj: obj.model.status.healthy is not oc.Missing)
+
     def is_healthy(self) -> bool:
         """Returns True if DNSHealthCheckProbe endpoint is healthy"""
+        assert self._status_ready(), "DNSHealthCheckProbe status wasn't ready in time"
         return self.refresh().model.status.healthy
 
 
@@ -93,10 +100,23 @@ class DNSPolicy(Policy):
         """Sets health check for DNSPolicy"""
         self.model["spec"]["healthCheck"] = asdict(health_check)
 
+    def _get_dns_record(self):
+        """Returns DNSRecord object for the created DNSPolicy"""
+        with self.context:
+            assert self.wait_until(
+                lambda obj: len(obj.get_owned("dnsrecords.kuadrant.io")) > 0
+            ), "The corresponding DNSRecord object wasn't created in time"
+            dns_record = self.get_owned("dnsrecords.kuadrant.io")[0]
+        return KubernetesObject(dns_record.model, context=self.context)
+
     def get_dns_health_probe(self) -> DNSHealthCheckProbe:
         """Returns DNSHealthCheckProbe object for the created DNSPolicy"""
+        dns_record = self._get_dns_record()
         with self.context:
-            dns_probe = self.get_owned("dnsrecords.kuadrant.io")[0].get_owned("DNSHealthCheckProbe")[0]
+            assert dns_record.wait_until(
+                lambda obj: len(obj.get_owned("DNSHealthCheckProbe")) > 0
+            ), "The corresponding DNSHealthCheckProbe object wasn't created in time"
+            dns_probe = dns_record.get_owned("DNSHealthCheckProbe")[0]
         return DNSHealthCheckProbe(dns_probe.model, context=self.context)
 
     def wait_for_full_enforced(self, timelimit=300):
