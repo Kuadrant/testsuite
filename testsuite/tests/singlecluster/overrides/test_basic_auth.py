@@ -9,7 +9,7 @@ pytestmark = [pytest.mark.kuadrant_only]
 
 @pytest.fixture(scope="module")
 def authorization(authorization, oidc_provider):
-    """Add oidc identity to defaults block of AuthPolicy"""
+    """Add oidc identity to overrides block of AuthPolicy"""
     authorization.overrides.identity.add_oidc("override", oidc_provider.well_known["issuer"])
     return authorization
 

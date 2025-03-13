@@ -26,7 +26,7 @@ def rate_limit2(route2, blame, cluster, label):
 
 @pytest.fixture(scope="module", autouse=True)
 def commit(request, rate_limit, rate_limit2):
-    """Ensure Authorizations are created"""
+    """Ensure RLPs are created"""
     for rlp in [rate_limit, rate_limit2]:
         if rlp is not None:
             request.addfinalizer(rlp.delete)
