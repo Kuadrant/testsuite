@@ -15,6 +15,7 @@ from testsuite.httpx import KuadrantClient
 from testsuite.kuadrant import KuadrantCR
 from testsuite.kuadrant.policy.authorization.auth_policy import AuthPolicy
 from testsuite.kuadrant.policy.rate_limit import RateLimitPolicy
+from testsuite.kubernetes.api_key import APIKey
 from testsuite.kubernetes.config_map import ConfigMap
 from testsuite.prometheus import Prometheus
 from testsuite.kubernetes.client import KubernetesClient
@@ -174,3 +175,19 @@ def client(route, hostname):  # pylint: disable=unused-argument
     client = hostname.client()
     yield client
     client.close()
+
+
+@pytest.fixture(scope="module")
+def create_api_key(blame, request, cluster):
+    """Creates API key Secret"""
+
+    def _create_secret(
+        name, label_selector, api_key, ocp: KubernetesClient = cluster, annotations: dict[str, str] = None
+    ):
+        secret_name = blame(name)
+        secret = APIKey.create_instance(ocp, secret_name, label_selector, api_key, annotations)
+        request.addfinalizer(lambda: secret.delete(ignore_not_found=True))
+        secret.commit()
+        return secret
+
+    return _create_secret
