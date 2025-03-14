@@ -4,16 +4,18 @@ import pytest
 
 from testsuite.httpx.auth import HttpxOidcClientAuth
 from testsuite.kuadrant.policy.authorization.auth_policy import AuthPolicy
-from testsuite.kuadrant.policy.rate_limit import RateLimitPolicy, Limit, Strategy
+from testsuite.kuadrant.policy.rate_limit import Strategy
 from testsuite.oidc import OIDCProvider
 from testsuite.oidc.keycloak import Keycloak
 
 pytestmark = [pytest.mark.kuadrant_only, pytest.mark.limitador]
 
+
 @pytest.fixture(scope="module")
 def global_oidc_provider(request, blame, keycloak) -> OIDCProvider:
+    """Fixture that will create an OIDC provider with a new realm that will be used as default in an auth policy"""
     realm_name = blame("realm")
-    request.addfinalizer(lambda : keycloak.master_realm.delete_realm(realm_name))
+    request.addfinalizer(lambda: keycloak.master_realm.delete_realm(realm_name))
     k = Keycloak(
         keycloak.server_url,
         keycloak.username,
@@ -23,6 +25,7 @@ def global_oidc_provider(request, blame, keycloak) -> OIDCProvider:
     )
     k.commit()
     return k
+
 
 @pytest.fixture(scope="module")
 def authorization(authorization, oidc_provider):
@@ -34,11 +37,9 @@ def authorization(authorization, oidc_provider):
 @pytest.fixture(scope="module")
 def global_authorization(cluster, blame, module_label, gateway, global_oidc_provider):
     """Create a AuthPolicy with default policies and a merge strategy."""
-    global_auth_policy = AuthPolicy.create_instance(
-        cluster, blame("authz"), gateway, labels={"testRun": module_label}
-    )
+    global_auth_policy = AuthPolicy.create_instance(cluster, blame("authz"), gateway, labels={"testRun": module_label})
     global_auth_policy.defaults.strategy(Strategy.MERGE)
-    global_auth_policy.defaults.identity.add_oidc("global", global_oidc_provider.well_known["issuer"])
+    global_auth_policy.defaults.identity.add_oidc("gateway_auth", global_oidc_provider.well_known["issuer"])
     return global_auth_policy
 
 
@@ -50,13 +51,13 @@ def auth(oidc_provider):
 
 @pytest.fixture(scope="module")
 def global_auth(global_oidc_provider):
-    """Returns Authentication object for HTTPX for the global Auth Policy"""
+    """Returns Authentication object for HTTPX for the global AuthPolicy"""
     return HttpxOidcClientAuth(global_oidc_provider.get_token, "authorization")
 
 
 @pytest.fixture(scope="module", autouse=True)
 def commit(request, route, authorization, global_authorization):  # pylint: disable=unused-argument
-    """Commits RateLimitPolicy after the HTTPRoute is created"""
+    """Commits AuthPolicy after the HTTPRoute is created"""
     for policy in [global_authorization, authorization]:  # Forcing order of creation.
         request.addfinalizer(policy.delete)
         policy.commit()
@@ -64,10 +65,8 @@ def commit(request, route, authorization, global_authorization):  # pylint: disa
 
 
 @pytest.mark.parametrize("authorization", ["gateway", "route"], indirect=True)
-def test_gateway_default_merge(client, global_authorization, auth, global_auth):
+def test_gateway_default_merge(client, global_authorization, auth, global_auth):  # pylint: disable=unused-argument
     """Test Gateway default policy being partially overriden when another policy with the same target is created."""
     assert client.get("/get").status_code == 401
     assert client.get("/get", auth=global_auth).status_code == 200
     assert client.get("/get", auth=auth).status_code == 200  # assert that AuthPolicy is enforced
-
-
