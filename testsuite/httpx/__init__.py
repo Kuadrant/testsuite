@@ -59,11 +59,19 @@ class Result:
 
     def has_dns_error(self):
         """True, if the result failed due to DNS failure"""
-        return self.has_error("Name or service not known") or self.has_error("No address associated with hostname")
+        return (
+            self.has_error("nodename nor servname provided, or not known")
+            or self.has_error("Name or service not known")
+            or self.has_error("No address associated with hostname")
+        )
 
     def has_cert_verify_error(self):
         """True, if the result failed due to TLS certificate verification failure"""
-        return self.has_error("SSL: CERTIFICATE_VERIFY_FAILED")
+        return (
+            self.has_error("SSL: CERTIFICATE_VERIFY_FAILED")
+            or self.has_error("certificate verify failed")
+            or self.has_error("self-signed certificate")
+        )
 
     def has_unknown_ca_error(self):
         """True, if the result failed due to TLS unknown certificate authority failure"""

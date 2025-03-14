@@ -4,7 +4,7 @@ Conftest for changing targetRef field in policies
 
 import pytest
 
-from testsuite.gateway import GatewayRoute, GatewayListener, Hostname, Exposer
+from testsuite.gateway import GatewayRoute, Hostname, Exposer, GatewayListener
 from testsuite.gateway.gateway_api.gateway import KuadrantGateway
 from testsuite.gateway.gateway_api.hostname import DNSPolicyExposer
 from testsuite.gateway.gateway_api.route import HTTPRoute
@@ -82,6 +82,15 @@ def client2(route2, hostname2):  # pylint: disable=unused-argument
 
 
 @pytest.fixture(scope="module")
+def authorization():
+    """
+    Override the authorization fixture to prevent the creation of an AuthPolicy.
+    This ensures no authentication is enforced during the test
+    """
+    return None
+
+
+@pytest.fixture(scope="module")
 def dns_policy2(blame, gateway2, module_label, dns_provider_secret, request):
     """DNSPolicy fixture for Gateway 2"""
     policy = DNSPolicy.create_instance(
@@ -106,3 +115,19 @@ def change_target_ref():
         policy.wait_for_ready()
 
     return _change_targetref
+
+
+@pytest.fixture(scope="session")
+def change_route_parent_ref():
+    """Function that changes the parentRefs of a route to a new gateway"""
+
+    def _change_route(route, gateway, hostname):
+        def _apply_parent_ref(apiobj):
+            apiobj.refresh().model.spec.parentRefs = [gateway.reference]
+            apiobj.model.spec.hostnames = [hostname]
+            return True
+
+        route.modify_and_apply(_apply_parent_ref)
+        route.wait_for_ready()
+
+    return _change_route
