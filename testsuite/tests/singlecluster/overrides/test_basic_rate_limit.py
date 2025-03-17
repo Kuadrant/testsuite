@@ -18,7 +18,7 @@ def authorization():
 
 @pytest.fixture(scope="function")
 def rate_limit_route(request, cluster, blame, module_label, route):
-    """Add a RateLimitPolicy to the HTTPRoute with a basic limit to be overriden."""
+    """Add a RateLimitPolicy to the HTTPRoute with a basic limit to be overridden."""
     rate_limit_route = RateLimitPolicy.create_instance(
         cluster, blame("limit-route"), route, labels={"testRun": module_label}
     )
