@@ -11,6 +11,8 @@ default:
       password: "testPassword"
   httpbin:
     image: "quay.io/trepel/httpbin:jsmadis"
+  mockserver:
+    image: "quay.io/mganisin/mockserver:latest"
   service_protection:
     system_project: "kuadrant-system"
     project: "kuadrant"
@@ -25,6 +27,7 @@ default:
       log_level: "debug"
   control_plane:
     cluster: {}
+    slow_loadbalancers: false
     provider_secret: "aws-credentials"
     issuer:
       name: "selfsigned-issuer"
