@@ -8,7 +8,7 @@ from testsuite.kuadrant.policy.rate_limit import Strategy
 from testsuite.oidc import OIDCProvider
 from testsuite.oidc.keycloak import Keycloak
 
-pytestmark = [pytest.mark.kuadrant_only, pytest.mark.limitador]
+pytestmark = [pytest.mark.kuadrant_only, pytest.mark.authorino]
 
 
 @pytest.fixture(scope="module")
