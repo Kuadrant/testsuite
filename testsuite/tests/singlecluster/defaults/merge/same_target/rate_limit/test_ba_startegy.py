@@ -3,7 +3,7 @@
 import pytest
 
 from testsuite.kuadrant.policy import has_condition
-from testsuite.tests.singlecluster.defaults.merge.same_target.conftest import LIMIT, MERGE_LIMIT2
+from testsuite.tests.singlecluster.defaults.merge.same_target.rate_limit.conftest import MERGE_LIMIT2, LIMIT
 
 pytestmark = [pytest.mark.kuadrant_only, pytest.mark.limitador]
 
