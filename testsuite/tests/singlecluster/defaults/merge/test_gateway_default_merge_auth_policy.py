@@ -6,24 +6,8 @@ from testsuite.httpx.auth import HttpxOidcClientAuth, HeaderApiKeyAuth
 from testsuite.kuadrant.policy import has_condition
 from testsuite.kuadrant.policy.authorization.auth_policy import AuthPolicy
 from testsuite.kuadrant.policy.rate_limit import Strategy
-from testsuite.kubernetes.api_key import APIKey
-from testsuite.kubernetes.client import KubernetesClient
 
 pytestmark = [pytest.mark.kuadrant_only, pytest.mark.authorino]
-
-
-@pytest.fixture(scope="module")
-def create_api_key(blame, request, cluster):
-    """Creates API key Secret"""
-
-    def _create_secret(name, label_selector, api_key, ocp: KubernetesClient = cluster):
-        secret_name = blame(name)
-        secret = APIKey.create_instance(ocp, secret_name, label_selector, api_key)
-        request.addfinalizer(lambda: secret.delete(ignore_not_found=True))
-        secret.commit()
-        return secret
-
-    return _create_secret
 
 
 @pytest.fixture(scope="module")
