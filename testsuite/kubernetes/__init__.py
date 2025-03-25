@@ -34,6 +34,23 @@ class KubernetesObject(APIObject, LifecycleObject):
         self._committed = True
         return self.refresh()
 
+    def apply(self, *args, **kwargs):
+        """
+        Overrides apply() to fail with assertion error if unsuccessful
+        """
+        result = super().apply(*args, **kwargs)
+        assert result.status() == 0, f"Apply returned non-zero exit code for {self.kind()} {self.name()}"
+        return result
+
+    def modify_and_apply(self, *args, **kwargs):
+        """
+        Overrides modify_and_apply() to fail with assertion error if unsuccessful
+        """
+        result, applied_change = super().modify_and_apply(*args, **kwargs)
+        assert applied_change, f"Modify and apply failed for {self.kind()} {self.name()} with result: {result}"
+        assert result.status() == 0, f"Modify and apply returned non-zero exit code for {self.kind()} {self.name()}"
+        return result, applied_change
+
     def delete(self, ignore_not_found=True, cmd_args=None):
         """Deletes the resource, by default ignored not found"""
         with timeout(30):
