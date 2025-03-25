@@ -10,7 +10,7 @@ pytestmark = [pytest.mark.authorino]
 @pytest.fixture(scope="module")
 def authorization(authorization, module_label):
     """Add rule to the AuthConfig to skip entire authn/authz with certain request header"""
-    authorization.add_rule([CelPredicate(f"request.headers.key != '{module_label}'")])
+    authorization.add_rule([CelPredicate(f"!(has(request.headers.key) && request.headers.key == '{module_label}')")])
     return authorization
 
 
