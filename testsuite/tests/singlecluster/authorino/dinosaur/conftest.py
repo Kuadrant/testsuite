@@ -47,6 +47,7 @@ def commit(request, authorization):
     except OpenShiftPythonException as exc:
         if "Too many" in exc.result.err():
             pytest.xfail("AuthPolicy max limit")
+        raise exc
 
 
 @pytest.fixture()
