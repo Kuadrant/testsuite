@@ -6,6 +6,14 @@ from testsuite.kubernetes.api_key import APIKey
 from testsuite.kubernetes.client import KubernetesClient
 
 
+def create_secret(name, label_selector, api_key, ocp: KubernetesClient, annotations=None):
+    """Create ab API Key as a secret to be used for authentication in tests."""
+    secret_name = name
+    secret = APIKey.create_instance(ocp, secret_name, label_selector, api_key, annotations)
+    secret.commit()
+    return secret
+
+
 @pytest.fixture(scope="module")
 def route(route, backend):
     """Add 2 backend rules for specific backend paths"""
@@ -13,17 +21,3 @@ def route(route, backend):
     route.add_backend(backend, "/get")
     route.add_backend(backend, "/anything")
     return route
-
-
-@pytest.fixture(scope="module")
-def create_api_key(blame, request, cluster):
-    """Creates API key Secret"""
-
-    def _create_secret(name, label_selector, api_key, ocp: KubernetesClient = cluster):
-        secret_name = blame(name)
-        secret = APIKey.create_instance(ocp, secret_name, label_selector, api_key)
-        request.addfinalizer(lambda: secret.delete(ignore_not_found=True))
-        secret.commit()
-        return secret
-
-    return _create_secret

@@ -16,7 +16,7 @@ def commit(request, route, authorization, default_merge_authorization):  # pylin
         policy.wait_for_accepted()
 
 
-def test_multiple_policies_merge_default_ab(client, authorization, default_merge_authorization, auth, merge_auth):
+def test_multiple_policies_merge_default_ab(client, authorization, default_merge_authorization, user_auth, admin_auth):
     """Test AuthPolicy with merge defaults being ignored due to age"""
     assert authorization.wait_until(
         has_condition(
@@ -28,8 +28,6 @@ def test_multiple_policies_merge_default_ab(client, authorization, default_merge
         )
     )
 
-    assert client.get("/get").status_code == 200  # anonymous is accepted from authorization.
-    assert client.get("/get", auth=auth).status_code == 200  # auth is accepted from authorization.
-    assert (
-        client.get("/get", auth=merge_auth).status_code == 200
-    )  # merge auth is ignored, since it is being overridden.
+    assert client.get("/get").status_code == 401  # anonymous authentication is not allowed.
+    assert client.get("/get", auth=user_auth).status_code == 401  # user authentication is overridden.
+    assert client.get("/get", auth=admin_auth).status_code == 200  # admin authentication is allowed.
