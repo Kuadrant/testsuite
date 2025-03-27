@@ -136,3 +136,7 @@ logs/*
 
 # macOS system files
 .DS_Store
+
+# Ignore temporary Drive upload files
+*.tmp.driveupload
+
