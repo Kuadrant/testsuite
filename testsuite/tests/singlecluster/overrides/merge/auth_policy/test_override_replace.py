@@ -58,4 +58,3 @@ def test_override_replace(client, authorization, override_auth_policy, auth, adm
     assert client.get("/get").status_code == 401  # none of the policies allow anonymous authentication.
     assert client.get("/get", auth=auth).status_code == 200  # user authentication overrides.
     assert client.get("/get", auth=admin_auth).status_code == 401  # admin authentication is being overridden.
-

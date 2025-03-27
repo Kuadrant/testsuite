@@ -62,22 +62,22 @@ def test_override_merge(client, override_auth_policy, authorization, user_auth, 
     assert client.get("/get").status_code == 401  # none of the policies allow anonymous authentication.
     assert client.get("/get", auth=user_auth).status_code == 200  # user authentication with api key
     assert (
-            client.get("/get", headers={"X-API-KEY": user_auth.api_key}).status_code == 200
+        client.get("/get", headers={"X-API-KEY": user_auth.api_key}).status_code == 200
     )  # user authentication with header.
     assert (
-            client.get("/get", params={"api_key": user_auth.api_key}).status_code == 200
+        client.get("/get", params={"api_key": user_auth.api_key}).status_code == 200
     )  # user authentication with query string param.
     assert (
-            client.get("/get", cookies={"APIKEY": user_auth.api_key}).status_code == 200
+        client.get("/get", cookies={"APIKEY": user_auth.api_key}).status_code == 200
     )  # user authentication with cookie.
     assert client.get("/get", auth=admin_auth).status_code == 200  # admin authentication with api key.
 
     assert (
-            client.get("/get", headers={"X-API-KEY": admin_auth.api_key}).status_code == 401
+        client.get("/get", headers={"X-API-KEY": admin_auth.api_key}).status_code == 401
     )  # admin authentication with header should not work
     assert (
-            client.get("/get", params={"api_key": admin_auth.api_key}).status_code == 401
+        client.get("/get", params={"api_key": admin_auth.api_key}).status_code == 401
     )  # admin authentication with query string param should not work.
     assert (
-            client.get("/get", cookies={"APIKEY": admin_auth.api_key}).status_code == 401
+        client.get("/get", cookies={"APIKEY": admin_auth.api_key}).status_code == 401
     )  # admin authentication with cookie should not work.
