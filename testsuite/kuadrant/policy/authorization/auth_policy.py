@@ -46,6 +46,12 @@ class AuthPolicy(Policy, AuthConfig):
     @modify
     def add_rule(self, when: list[CelPredicate]):
         """Add rule for the skip of entire AuthPolicy"""
+        if self.spec_section is not None:
+            self.spec_section.setdefault("when", [])
+            self.spec_section["when"].extend([asdict(x) for x in when])
+            self.spec_section = None
+            return
+
         self.model.spec.setdefault("when", [])
         self.model.spec["when"].extend([asdict(x) for x in when])
 
