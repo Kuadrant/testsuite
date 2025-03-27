@@ -6,16 +6,7 @@ import pytest
 
 from testsuite.kuadrant.policy.rate_limit import Limit, RateLimitPolicy
 
-pytestmark = [pytest.mark.kuadrant_only, pytest.mark.dnspolicy]
-
-
-@pytest.fixture(scope="module")
-def authorization():
-    """
-    Override the authorization fixture to prevent the creation of an AuthPolicy.
-    This ensures no authentication is enforced during the test
-    """
-    return None
+pytestmark = [pytest.mark.kuadrant_only, pytest.mark.dnspolicy, pytest.mark.limitador]
 
 
 @pytest.fixture(scope="module")
@@ -27,7 +18,7 @@ def rate_limit(cluster, blame, module_label, gateway, route):  # pylint: disable
 
 
 def test_update_ratelimit_policy_target_ref(
-    gateway2, rate_limit, client, client2, dns_policy, dns_policy2, change_target_ref
+    route2, gateway2, rate_limit, client, client2, dns_policy, dns_policy2, change_target_ref
 ):  # pylint: disable=unused-argument
     """Test updating the targetRef of a RateLimitPolicy from Gateway 1 to Gateway 2"""
     responses = client.get_many("/get", 2)
@@ -42,3 +33,6 @@ def test_update_ratelimit_policy_target_ref(
     responses = client2.get_many("/get", 2)
     responses.assert_all(status_code=200)
     assert client2.get("/get").status_code == 429
+
+    responses = client.get_many("/get", 3)
+    responses.assert_all(status_code=200)
