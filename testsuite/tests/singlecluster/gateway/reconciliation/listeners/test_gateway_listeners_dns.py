@@ -21,11 +21,9 @@ def test_change_listener(custom_client, check_ok_https, gateway, route, second_d
     check_ok_https(wildcard_domain)
     wildcard_domain_ttl = gateway.get_listener_dns_ttl(DEFAULT_LISTENER_NAME)
 
-    gateway.remove_listener(DEFAULT_LISTENER_NAME)
+    gateway.refresh().model.spec.listeners[0].hostname = second_domain
+    gateway.apply()
     route.remove_hostname(wildcard_domain)
-    gateway.add_listener(
-        TLSGatewayListener(hostname=second_domain, gateway_name=gateway.name(), name=DEFAULT_LISTENER_NAME)
-    )
     route.add_hostname(second_domain)
 
     sleep(wildcard_domain_ttl)
