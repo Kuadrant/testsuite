@@ -27,6 +27,7 @@ default:
       log_level: "debug"
   control_plane:
     cluster: {}
+    slow_loadbalancers: false
     provider_secret: "aws-credentials"
     issuer:
       name: "selfsigned-issuer"

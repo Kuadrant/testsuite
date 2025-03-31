@@ -24,7 +24,6 @@ class MockserverBackend(Backend):
             lifecycle={"postStart": {"exec": {"command": ["/bin/sh", "init-mockserver"]}}},
         )
         self.deployment.commit()
-        self.deployment.wait_for_ready()
 
         self.service = Service.create_instance(
             self.cluster,
@@ -36,9 +35,7 @@ class MockserverBackend(Backend):
         )
         self.service.commit()
 
-    def wait_for_ready(self, timeout=300):
-        """Waits until Deployment is marked as ready"""
-        success = self.service.wait_until(
-            lambda obj: "ip" in self.service.refresh().model.status.loadBalancer.ingress[0], timelimit=timeout
-        )
-        assert success, f"Service {self.name} did not get ready in time"
+    def wait_for_ready(self, timeout=60 * 5):
+        """Waits until Deployment and Service is marked as ready"""
+        self.deployment.wait_for_ready(timeout)
+        self.service.wait_for_ready(timeout, settings["control_plane"]["slow_loadbalancers"])

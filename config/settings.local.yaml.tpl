@@ -49,6 +49,7 @@
 #        api_url: "https://api.kubernetes2.com"
 #        token: "KUADRANT_RULEZ"
 #        kubeconfig_path: "~/.kube/config2"
+#    slow_loadbalancers: false                     # For use in Openshift on AWS: If true, causes all Gateways and LoadBalancer Services to wait longer to become ready
 #    provider_secret: "aws-credentials"            # Name of the Secret resource that contains DNS provider credentials
 #    issuer:                                       # Issuer object for testing TLSPolicy
 #      name: "selfsigned-cluster-issuer"           # Name of Issuer CR
