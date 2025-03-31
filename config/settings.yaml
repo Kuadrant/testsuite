@@ -11,6 +11,8 @@ default:
       password: "testPassword"
   httpbin:
     image: "quay.io/trepel/httpbin:jsmadis"
+  mockserver:
+    image: "quay.io/mganisin/mockserver:latest"
   service_protection:
     system_project: "kuadrant-system"
     project: "kuadrant"

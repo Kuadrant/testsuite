@@ -1,5 +1,6 @@
 """Mockserver implementation as Backend"""
 
+from testsuite.config import settings
 from testsuite.backend import Backend
 from testsuite.kubernetes import Selector
 from testsuite.kubernetes.deployment import Deployment, ContainerResources
@@ -15,7 +16,7 @@ class MockserverBackend(Backend):
             self.cluster,
             self.name,
             container_name="mockserver",
-            image="quay.io/mganisin/mockserver:latest",
+            image=settings["mockserver"]["image"],
             ports={"api": 1080},
             selector=Selector(matchLabels=match_labels),
             labels={"app": self.label},

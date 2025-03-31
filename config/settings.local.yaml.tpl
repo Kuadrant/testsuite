@@ -18,6 +18,7 @@
 #    image: "HTTPBIN_IMAGE"
 #  mockserver:
 #    url: "MOCKSERVER_URL"
+#    image: "MOCKSERVER_IMAGE"                  # Image to be used for self-deployed Mockserver
 #  tracing:
 #    backend: "jaeger"                          # Tracing backend
 #    collector_url: "rpc://jaeger-collector.com:4317"  # Tracing collector URL (may be internal)
