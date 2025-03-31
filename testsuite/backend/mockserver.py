@@ -1,5 +1,6 @@
 """Mockserver implementation as Backend"""
 
+from testsuite.config import settings
 from testsuite.backend import Backend
 from testsuite.kubernetes import Selector
 from testsuite.kubernetes.deployment import Deployment, ContainerResources
@@ -15,7 +16,7 @@ class MockserverBackend(Backend):
             self.cluster,
             self.name,
             container_name="mockserver",
-            image="quay.io/mganisin/mockserver:latest",
+            image=settings["mockserver"]["image"],
             ports={"api": 1080},
             selector=Selector(matchLabels=match_labels),
             labels={"app": self.label},
@@ -23,7 +24,6 @@ class MockserverBackend(Backend):
             lifecycle={"postStart": {"exec": {"command": ["/bin/sh", "init-mockserver"]}}},
         )
         self.deployment.commit()
-        self.deployment.wait_for_ready()
 
         self.service = Service.create_instance(
             self.cluster,
@@ -35,9 +35,7 @@ class MockserverBackend(Backend):
         )
         self.service.commit()
 
-    def wait_for_ready(self, timeout=300):
-        """Waits until Deployment is marked as ready"""
-        success = self.service.wait_until(
-            lambda obj: "ip" in self.service.refresh().model.status.loadBalancer.ingress[0], timelimit=timeout
-        )
-        assert success, f"Service {self.name} did not get ready in time"
+    def wait_for_ready(self, timeout=60 * 5):
+        """Waits until Deployment and Service is marked as ready"""
+        self.deployment.wait_for_ready(timeout)
+        self.service.wait_for_ready(timeout, settings["control_plane"]["slow_loadbalancers"])

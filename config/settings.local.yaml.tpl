@@ -18,6 +18,7 @@
 #    image: "HTTPBIN_IMAGE"
 #  mockserver:
 #    url: "MOCKSERVER_URL"
+#    image: "MOCKSERVER_IMAGE"                  # Image to be used for self-deployed Mockserver
 #  tracing:
 #    backend: "jaeger"                          # Tracing backend
 #    collector_url: "rpc://jaeger-collector.com:4317"  # Tracing collector URL (may be internal)
@@ -48,6 +49,7 @@
 #        api_url: "https://api.kubernetes2.com"
 #        token: "KUADRANT_RULEZ"
 #        kubeconfig_path: "~/.kube/config2"
+#    slow_loadbalancers: false                     # For use in Openshift on AWS: If true, causes all Gateways and LoadBalancer Services to wait longer to become ready
 #    provider_secret: "aws-credentials"            # Name of the Secret resource that contains DNS provider credentials
 #    issuer:                                       # Issuer object for testing TLSPolicy
 #      name: "selfsigned-cluster-issuer"           # Name of Issuer CR
