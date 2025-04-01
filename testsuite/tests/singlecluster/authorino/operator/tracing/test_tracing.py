@@ -7,6 +7,7 @@ from testsuite.utils import extract_response
 pytestmark = [pytest.mark.authorino, pytest.mark.standalone_only]
 
 
+@pytest.mark.xfail(reason="https://github.com/Kuadrant/testsuite/issues/659")
 def test_tracing(client, auth, tracing):
     """Send request and check if it's trace is saved into the tracing client"""
     response = client.get("/get", auth=auth)

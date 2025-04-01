@@ -18,7 +18,7 @@ def authorino_parameters(authorino_parameters):
     return authorino_parameters
 
 
-@pytest.mark.issue("https://github.com/Kuadrant/authorino-operator/issues/171")
+@pytest.mark.xfail(reason="https://github.com/Kuadrant/testsuite/issues/659")
 def test_tracing_tags(client, auth, tracing):
     """Send request and check if it's trace with custom tags is saved into the tracing client"""
     response = client.get("/get", auth=auth)
