@@ -89,6 +89,19 @@ class KuadrantGateway(KubernetesObject, Gateway):
         return False
 
     def get_tls_cert(self, hostname):
+        tls_cert_secret = self.get_tls_secret(hostname)
+        if tls_cert_secret is None:
+            return None
+
+        tls_cert = Certificate(
+            key=tls_cert_secret["tls.key"],
+            certificate=tls_cert_secret["tls.crt"],
+            chain=tls_cert_secret["ca.crt"] if "ca.crt" in tls_cert_secret else None,
+        )
+        return tls_cert
+
+    def get_tls_secret(self, hostname):
+        """Returns the TLS secret for the matching listener hostname, or None if not found"""
         tls_cert_secret_name = None
         for listener in self.all_tls_listeners():
             if domain_match(hostname, listener.hostname):
@@ -98,17 +111,11 @@ class KuadrantGateway(KubernetesObject, Gateway):
             return None
 
         try:
-            tls_cert_secret = self.cluster.get_secret(tls_cert_secret_name)
+            return self.cluster.get_secret(tls_cert_secret_name)
         except oc.OpenShiftPythonException as e:
             if "Expected a single object, but selected 0" in e.msg:
                 raise oc.OpenShiftPythonException("TLS secret was not created") from None
             raise e
-        tls_cert = Certificate(
-            key=tls_cert_secret["tls.key"],
-            certificate=tls_cert_secret["tls.crt"],
-            chain=tls_cert_secret["ca.crt"] if "ca.crt" in tls_cert_secret else None,
-        )
-        return tls_cert
 
     def all_tls_listeners(self):
         """Yields all listeners in gateway that support 'tls'"""

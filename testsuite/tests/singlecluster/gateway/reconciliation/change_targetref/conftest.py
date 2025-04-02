@@ -2,9 +2,11 @@
 Conftest for changing targetRef field in policies
 """
 
+import time
+
 import pytest
 
-from testsuite.gateway import GatewayRoute, GatewayListener, Hostname, Exposer
+from testsuite.gateway import GatewayRoute, Hostname, Exposer, GatewayListener
 from testsuite.gateway.gateway_api.gateway import KuadrantGateway
 from testsuite.gateway.gateway_api.hostname import DNSPolicyExposer
 from testsuite.gateway.gateway_api.route import HTTPRoute
@@ -82,6 +84,15 @@ def client2(route2, hostname2):  # pylint: disable=unused-argument
 
 
 @pytest.fixture(scope="module")
+def authorization():
+    """
+    Override the authorization fixture to prevent the creation of an AuthPolicy.
+    This ensures no authentication is enforced during the test
+    """
+    return None
+
+
+@pytest.fixture(scope="module")
 def dns_policy2(blame, gateway2, module_label, dns_provider_secret, request):
     """DNSPolicy fixture for Gateway 2"""
     policy = DNSPolicy.create_instance(
@@ -93,7 +104,13 @@ def dns_policy2(blame, gateway2, module_label, dns_provider_secret, request):
     return policy
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module", autouse=True)
+def ensure_routes_created(route, route2):  # pylint: disable=unused-argument
+    """Ensures both routes exist and are ready before test executes"""
+    return
+
+
+@pytest.fixture(scope="module")
 def change_target_ref():
     """Function that changes targetRef of given policy"""
 
@@ -104,5 +121,6 @@ def change_target_ref():
 
         policy.modify_and_apply(_apply_target_ref)
         policy.wait_for_ready()
+        time.sleep(5)  # Extra wait to avoid inconsistent DNS issues, wait_for_ready isn't always enough
 
     return _change_targetref
