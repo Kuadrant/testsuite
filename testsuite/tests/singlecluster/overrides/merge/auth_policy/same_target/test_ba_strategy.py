@@ -1,0 +1,37 @@
+"""Test defaults policy aimed at the same resource uses the oldest policy."""
+
+import pytest
+
+from testsuite.kuadrant.policy import has_condition
+
+pytestmark = [pytest.mark.kuadrant_only, pytest.mark.authorino]
+
+
+@pytest.fixture(scope="module", autouse=True)
+def commit(request, route, authorization, override_merge_authorization):  # pylint: disable=unused-argument
+    """Commits AuthPolicy after the HTTPRoute is created"""
+    for policy in [override_merge_authorization, authorization]:  # Forcing order of creation.
+        request.addfinalizer(policy.delete)
+        policy.commit()
+        policy.wait_for_accepted()
+
+
+def test_multiple_policies_merge_default_ba(client, authorization, override_merge_authorization, user_auth, admin_auth):
+    """Test AuthPolicy with merge defaults being ignored due to age"""
+    assert authorization.wait_until(
+        has_condition(
+            "Enforced",
+            "False",
+            "Overridden",
+            "AuthPolicy is overridden by "
+            f"[{override_merge_authorization.namespace()}/{override_merge_authorization.name()}]",
+        )
+    )
+
+    assert client.get("/get").status_code == 401  # anonymous authentication is not allowed.
+    assert (
+        client.get("/get", auth=user_auth).status_code == 401
+    )  # user is authenticated, but it is forbidden in the authorization policy.
+    assert (
+        client.get("/get", auth=admin_auth).status_code == 200
+    )  # admin is not authenticated, since the policy is ignored.

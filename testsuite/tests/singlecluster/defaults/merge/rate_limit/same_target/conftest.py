@@ -1,4 +1,4 @@
-"""Setup conftest for policy merge on the same targets"""
+"""Conftest for merge strategy tests for same target for rate limits"""
 
 import pytest
 
