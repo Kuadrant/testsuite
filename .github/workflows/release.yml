@@ -1,0 +1,63 @@
+name: Push tag, create image, release
+
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"
+  workflow_dispatch:
+    inputs:
+      version_tag:
+        description: 'New version to tag and push image in SemVer (vX.Y.Z)'
+        required: true
+        default: 'v0.0.0'
+
+
+env:
+  IMG_REGISTRY_HOST: quay.io
+  IMG_REGISTRY_ORG: kuadrant
+  IMG_NAME: testsuite
+  # ternary operation to choose tag input based on how this workflow was triggered
+  IMG_TAGS: latest ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version_tag || github.ref_name }}
+
+jobs:
+  release-testsuite:
+    name: Push tag, create image, release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # fetch tags to generate release notes
+
+      - name: Create tag if triggered from github
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        run: |
+          git tag ${{ github.event.inputs.version_tag }}
+          git push origin ${{ github.event.inputs.version_tag }}
+
+      - name: Build testsuite image
+        id: build-image
+        uses: redhat-actions/buildah-build@v2
+        with:
+          image: ${{ env.IMG_NAME }}
+          tags: ${{ env.IMG_TAGS }}
+          layers: true
+          platforms: linux/amd64
+          containerfiles: |
+            ./Dockerfile
+
+      - name: Push testsuite image to quay
+        uses: redhat-actions/push-to-registry@v2
+        with:
+          image: ${{ steps.build-image.outputs.image }}
+          tags: ${{ steps.build-image.outputs.tags }}
+          registry: ${{ env.IMG_REGISTRY_HOST }}/${{ env.IMG_REGISTRY_ORG }}
+          username: ${{ secrets.IMG_REGISTRY_USERNAME }}
+          password: ${{ secrets.IMG_REGISTRY_TOKEN }}
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v1
+        with:
+          # ternary operation to choose tag input based on how this workflow was triggered
+          tag_name: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version_tag || github.ref_name }}
+          generate_release_notes: true

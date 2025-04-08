@@ -1,4 +1,4 @@
-name: Build and push image
+name: Build unstable images every new push
 
 on:
   push:
@@ -9,16 +9,17 @@ env:
   IMG_REGISTRY_HOST: quay.io
   IMG_REGISTRY_ORG: kuadrant
   IMG_NAME: testsuite
-  IMG_TAGS: unstable
+  IMG_TAGS: unstable ${{ github.sha }}
 
 jobs:
-  build:
-    name: Build and push image
+  build-unstable:
+    name: Build unstable images every new PR
     runs-on: ubuntu-latest
     steps:
       - name: Check out code
         uses: actions/checkout@v3
-      - name: Build Image
+
+      - name: Build unstable and sha images
         id: build-image
         uses: redhat-actions/buildah-build@v2
         with:
@@ -28,9 +29,8 @@ jobs:
           platforms: linux/amd64
           containerfiles: |
             ./Dockerfile
-      - name: Push Image
-        if: ${{ !env.ACT }}
-        id: push-to-quay
+
+      - name: Push images to quay
         uses: redhat-actions/push-to-registry@v2
         with:
           image: ${{ steps.build-image.outputs.image }}
@@ -38,5 +38,3 @@ jobs:
           registry: ${{ env.IMG_REGISTRY_HOST }}/${{ env.IMG_REGISTRY_ORG }}
           username: ${{ secrets.IMG_REGISTRY_USERNAME }}
           password: ${{ secrets.IMG_REGISTRY_TOKEN }}
-      - name: Print Image URL
-        run: echo "Image pushed to ${{ steps.push-to-quay.outputs.registry-paths }}"

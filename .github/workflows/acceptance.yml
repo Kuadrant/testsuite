@@ -1,4 +1,4 @@
-name: acceptance
+name: Code static analysis
 on:
   push:
   pull_request:
