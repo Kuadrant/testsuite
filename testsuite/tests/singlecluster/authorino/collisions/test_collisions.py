@@ -13,10 +13,9 @@ def api_key(create_api_key, module_label):
     return create_api_key("api-key", module_label, "api_key_value")
 
 
-# pylint: disable = unused-argument
 @pytest.fixture(scope="module")
 def authorization(request, cluster, blame, module_label, route, label, oidc_provider):
-    """Create a RateLimitPolicy with a basic limit with target coming from test parameter"""
+    """Create a AuthPolicy with route as target reference"""
     target_ref = request.getfixturevalue(getattr(request, "param", "route"))
 
     auth = AuthPolicy.create_instance(cluster, blame("fp"), target_ref, labels={"testRun": label})
@@ -26,7 +25,7 @@ def authorization(request, cluster, blame, module_label, route, label, oidc_prov
 
 @pytest.fixture(scope="module")
 def authorization2(request, cluster, blame, module_label, route, label, api_key):
-    """Create a RateLimitPolicy with a basic limit with target coming from test parameter"""
+    """Create a AuthPolicy with route as target reference"""
     target_ref = request.getfixturevalue(getattr(request, "param", "route"))
 
     auth = AuthPolicy.create_instance(cluster, blame("sp"), target_ref, labels={"testRun": label})
@@ -49,7 +48,10 @@ def commit(request, authorization, authorization2):
         policy.wait_for_ready()
 
 
-@pytest.mark.parametrize("authorization", ["gateway", "route"], indirect=True)
+@pytest.mark.parametrize("authorization, authorization2", [
+    pytest.param("gateway", "gateway", id="gateway"),
+    pytest.param("route", "route", id="route")
+], indirect=True)
 def test_collision_auth_policy(client, authorization, authorization2, auth, auth2):
     """Test first policy is being overridden when another policy with the same target is created."""
     assert authorization.wait_until(has_condition("Enforced", "False", "Overridden", "AuthPolicy is overridden"))
