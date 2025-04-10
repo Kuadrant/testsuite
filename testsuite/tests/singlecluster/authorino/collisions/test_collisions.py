@@ -16,7 +16,7 @@ def api_key(create_api_key, module_label):
 
 
 @pytest.fixture(scope="module")
-def authorization(request, cluster, blame, module_label, route, label, oidc_provider):
+def authorization(request, cluster, blame, route, label, oidc_provider):  # pylint: disable=unused-argument
     """Create a AuthPolicy with route as target reference"""
     target_ref = request.getfixturevalue(getattr(request, "param", "route"))
 
@@ -26,7 +26,7 @@ def authorization(request, cluster, blame, module_label, route, label, oidc_prov
 
 
 @pytest.fixture(scope="module")
-def authorization2(request, cluster, blame, module_label, route, label, api_key):
+def authorization2(request, cluster, blame, route, label, api_key):  # pylint: disable=unused-argument
     """Create a AuthPolicy with route as target reference"""
     target_ref = request.getfixturevalue(getattr(request, "param", "route"))
 
@@ -55,7 +55,7 @@ def commit(request, authorization, authorization2):
     [pytest.param("gateway", "gateway", id="gateway"), pytest.param("route", "route", id="route")],
     indirect=True,
 )
-def test_collision_auth_policy(client, authorization, authorization2, auth, auth2):
+def test_collision_auth_policy(client, authorization, auth, auth2):
     """Test first policy is being overridden when another policy with the same target is created."""
     assert authorization.wait_until(has_condition("Enforced", "False", "Overridden", "AuthPolicy is overridden"))
     assert client.get("/get", auth=auth).status_code == 401
