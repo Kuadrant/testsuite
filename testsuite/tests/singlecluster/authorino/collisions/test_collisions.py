@@ -17,7 +17,7 @@ def api_key(create_api_key, module_label):
 
 @pytest.fixture(scope="module")
 def authorization(request, cluster, blame, route, label, oidc_provider):  # pylint: disable=unused-argument
-    """Create a AuthPolicy with route as target reference"""
+    """Create an AuthPolicy with route as target reference"""
     target_ref = request.getfixturevalue(getattr(request, "param", "route"))
 
     auth = AuthPolicy.create_instance(cluster, blame("fp"), target_ref, labels={"testRun": label})
@@ -27,7 +27,7 @@ def authorization(request, cluster, blame, route, label, oidc_provider):  # pyli
 
 @pytest.fixture(scope="module")
 def authorization2(request, cluster, blame, route, label, api_key):  # pylint: disable=unused-argument
-    """Create a AuthPolicy with route as target reference"""
+    """Create an AuthPolicy with route as target reference"""
     target_ref = request.getfixturevalue(getattr(request, "param", "route"))
 
     auth = AuthPolicy.create_instance(cluster, blame("sp"), target_ref, labels={"testRun": label})
@@ -43,7 +43,7 @@ def auth2(api_key):
 
 @pytest.fixture(scope="module", autouse=True)
 def commit(request, authorization, authorization2):
-    """Commits AuthPolicy after the target is created"""
+    """Commits both AuthPolicies after the target is created"""
     for policy in [authorization, authorization2]:  # Forcing order of creation.
         request.addfinalizer(policy.delete)
         policy.commit()
