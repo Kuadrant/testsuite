@@ -5,8 +5,11 @@ import pytest
 from testsuite.kuadrant.policy import has_condition, CelPredicate
 from testsuite.kuadrant.policy.rate_limit import Limit, RateLimitPolicy
 
+
 FIRST_LIMIT = Limit(3, "5s")
 SECOND_LIMIT = Limit(6, "5s")
+
+pytestmark = [pytest.mark.kuadrant_only, pytest.mark.limitador]
 
 
 # pylint: disable = unused-argument
@@ -39,10 +42,11 @@ def commit(request, rate_limit, rate_limit2):
         policy.wait_for_ready()
 
 
-@pytest.mark.parametrize("rate_limit, rate_limit2", [
-    pytest.param("gateway", "gateway", id="gateway"),
-    pytest.param("route", "route", id="route")
-], indirect=True)
+@pytest.mark.parametrize(
+    "rate_limit, rate_limit2",
+    [pytest.param("gateway", "gateway", id="gateway"), pytest.param("route", "route", id="route")],
+    indirect=True,
+)
 def test_collision_rate_limit(client, rate_limit, rate_limit2):
     """Test first policy is being overridden when another policy with the same target is created."""
     assert rate_limit.wait_until(has_condition("Enforced", "False", "Overridden", "RateLimitPolicy is overridden"))

@@ -6,6 +6,8 @@ from testsuite.httpx.auth import HeaderApiKeyAuth
 from testsuite.kuadrant.policy import has_condition
 from testsuite.kuadrant.policy.authorization.auth_policy import AuthPolicy
 
+pytestmark = [pytest.mark.authorino]
+
 
 @pytest.fixture(scope="module")
 def api_key(create_api_key, module_label):
@@ -48,10 +50,11 @@ def commit(request, authorization, authorization2):
         policy.wait_for_ready()
 
 
-@pytest.mark.parametrize("authorization, authorization2", [
-    pytest.param("gateway", "gateway", id="gateway"),
-    pytest.param("route", "route", id="route")
-], indirect=True)
+@pytest.mark.parametrize(
+    "authorization, authorization2",
+    [pytest.param("gateway", "gateway", id="gateway"), pytest.param("route", "route", id="route")],
+    indirect=True,
+)
 def test_collision_auth_policy(client, authorization, authorization2, auth, auth2):
     """Test first policy is being overridden when another policy with the same target is created."""
     assert authorization.wait_until(has_condition("Enforced", "False", "Overridden", "AuthPolicy is overridden"))
