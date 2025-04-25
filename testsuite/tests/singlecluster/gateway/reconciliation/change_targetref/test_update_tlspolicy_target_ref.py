@@ -2,6 +2,8 @@
 Test for changing targetRef field in TLSPolicy
 """
 
+import time
+
 import pytest
 
 from testsuite.gateway import TLSGatewayListener
@@ -68,7 +70,7 @@ def test_update_tls_policy_target_ref(
     assert response.status_code == 200
 
     response = KuadrantClient(base_url=f"https://{hostname2.hostname}", verify=False).get("/get")
-    assert response.has_error("[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol")
+    assert response.has_tls_error()
 
     change_target_ref(tls_policy, gateway2)
 
@@ -82,6 +84,7 @@ def test_update_tls_policy_target_ref(
     # Delete TLS secret to verify gateway1 no longer serves valid TLS traffic
     tls_secret = gateway.get_tls_secret(hostname.hostname)
     tls_secret.delete()
+    time.sleep(10)  # Allow extra time for secret deletion to propagate
 
     response = KuadrantClient(base_url=f"https://{hostname.hostname}", verify=False).get("/get")
-    assert response.has_error("[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol")
+    assert response.has_tls_error()

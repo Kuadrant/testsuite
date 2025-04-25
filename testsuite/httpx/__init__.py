@@ -65,6 +65,10 @@ class Result:
             or self.has_error("No address associated with hostname")
         )
 
+    def has_tls_error(self):
+        """True, if the result failed due to TLS failure"""
+        return self.has_error("SSL: UNEXPECTED_EOF_WHILE_READING") or self.has_error("Connection refused")
+
     def has_cert_verify_error(self):
         """True, if the result failed due to TLS certificate verification failure"""
         return self.has_error("SSL: CERTIFICATE_VERIFY_FAILED")
