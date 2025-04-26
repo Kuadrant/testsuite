@@ -2,6 +2,8 @@
 Test for changing targetRef field in AuthPolicy
 """
 
+import time
+
 import pytest
 
 from testsuite.kuadrant.policy.authorization.auth_policy import AuthPolicy
@@ -31,6 +33,8 @@ def test_update_auth_policy_target_ref(
     assert response.status_code == 200
 
     change_target_ref(authorization, gateway2)
+
+    time.sleep(10)  # Allow extra time for AuthPolicy enforcement to propagate
 
     response = client2.get("/get", auth=auth)
     assert response.status_code == 200
