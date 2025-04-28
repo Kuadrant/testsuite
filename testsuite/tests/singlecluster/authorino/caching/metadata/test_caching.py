@@ -22,12 +22,15 @@ def test_cached(client, auth, module_label, mockserver):
         - both requests return the same result
         - only single external value evaluation occurs. The second response contains cached (in-memory) value
     """
-    response = client.get("/get", auth=auth)
-    data = extract_response(response)[module_label]["uuid"] % None
-    response = client.get("/get", auth=auth)
-    cached_data = extract_response(response)[module_label]["uuid"] % None
-
-    assert cached_data is not None
+    response1 = client.get("/get", auth=auth)
+    assert response1.status_code == 200
+    data = extract_response(response1)[module_label]["uuid"] % None
     assert data is not None
+
+    response2 = client.get("/get", auth=auth)
+    assert response2.status_code == 200
+    cached_data = extract_response(response2)[module_label]["uuid"] % None
+    assert cached_data is not None
+
     assert data == cached_data
     assert len(mockserver.retrieve_requests(module_label)) == 1

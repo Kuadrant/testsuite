@@ -125,7 +125,7 @@ def extract_response(response, header="Simple", key="data"):
 
     # Returning None if content is empty, this typically happens for non-200 responses
     if len(response.content) == 0:
-        return weakget(None)
+        return weakget({})
 
     return weakget(json.loads(response.json()["headers"][header]))[key]
 
