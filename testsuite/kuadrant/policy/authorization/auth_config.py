@@ -78,7 +78,7 @@ class AuthConfig(KubernetesObject):
             lambda obj: len(obj.model.status.conditions) > 0
             and all(x.status == "True" for x in obj.model.status.conditions)
         )
-        assert success, f"{self.kind()} did not get ready in time"
+        assert success, f"{self.kind()} didn't reach required state, instead it was: {self.model.status.conditions}"
 
     @modify
     def add_rule(self, when: list[Rule]):

@@ -84,6 +84,6 @@ class Service(KubernetesObject):
             or "hostname" in self.refresh().model.status.loadBalancer.ingress[0],
             timelimit=timeout,
         )
-        assert success, f"Service {self.name} did not get ready in time"
+        assert success, f"Service {self.name()} did not get ready in time"
         if slow_loadbalancers:
             sleep(60)
