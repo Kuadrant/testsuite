@@ -70,7 +70,7 @@ class KuadrantGateway(KubernetesObject, Gateway):
     def wait_for_ready(self, timeout: int = 10 * 60):
         """Waits for the gateway to be ready in the sense of is_ready(self)"""
         success = self.wait_until(lambda obj: self.__class__(obj.model).is_ready(), timelimit=timeout)
-        assert success, "Gateway didn't get ready in time"
+        assert success, f"Gateway didn't reach required state, instead it was: {self.model.status.conditions}"
         if settings["control_plane"]["slow_loadbalancers"]:
             sleep(60)
 
