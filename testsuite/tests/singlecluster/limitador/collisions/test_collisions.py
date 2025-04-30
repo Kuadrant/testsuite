@@ -12,23 +12,25 @@ SECOND_LIMIT = Limit(6, "5s")
 pytestmark = [pytest.mark.kuadrant_only, pytest.mark.limitador]
 
 
+@pytest.fixture(scope="module")
+def target(request):
+    """Returns the test target(gateway or route)"""
+    return request.getfixturevalue(request.param)
+
+
 # pylint: disable = unused-argument
 @pytest.fixture(scope="module")
-def rate_limit(request, cluster, blame, module_label, route, label):
-    """Create a RateLimitPolicy with a basic limit with target coming from test parameter"""
-    target_ref = request.getfixturevalue(getattr(request, "param", "route"))
-
-    rate_limit = RateLimitPolicy.create_instance(cluster, blame("fp"), target_ref, labels={"testRun": module_label})
+def rate_limit(request, cluster, blame, module_label, target, label):
+    """Create a RateLimitPolicy with either gateway or route as target reference"""
+    rate_limit = RateLimitPolicy.create_instance(cluster, blame("fp"), target, labels={"testRun": module_label})
     rate_limit.add_limit("first", [FIRST_LIMIT], when=[CelPredicate("request.path == '/get'")])
     return rate_limit
 
 
 @pytest.fixture(scope="module")
-def rate_limit2(request, cluster, blame, module_label, route, label):
-    """Create a RateLimitPolicy with a basic limit with target coming from test parameter"""
-    target_ref = request.getfixturevalue(getattr(request, "param", "route"))
-
-    rate_limit = RateLimitPolicy.create_instance(cluster, blame("sp"), target_ref, labels={"testRun": module_label})
+def rate_limit2(request, cluster, blame, module_label, target, label):
+    """Create a second RateLimitPolicy with with the same target as the first RateLimitPolicy"""
+    rate_limit = RateLimitPolicy.create_instance(cluster, blame("sp"), target, labels={"testRun": module_label})
     rate_limit.add_limit("second", [SECOND_LIMIT], when=[CelPredicate("request.path == '/anything'")])
     return rate_limit
 
@@ -42,11 +44,7 @@ def commit(request, rate_limit, rate_limit2):
         policy.wait_for_ready()
 
 
-@pytest.mark.parametrize(
-    "rate_limit, rate_limit2",
-    [pytest.param("gateway", "gateway", id="gateway"), pytest.param("route", "route", id="route")],
-    indirect=True,
-)
+@pytest.mark.parametrize("target", ["gateway", "route"], indirect=True)
 def test_collision_rate_limit(client, rate_limit, rate_limit2):
     """Test first policy is being overridden when another policy with the same target is created."""
     assert rate_limit.wait_until(has_condition("Enforced", "False", "Overridden", "RateLimitPolicy is overridden"))

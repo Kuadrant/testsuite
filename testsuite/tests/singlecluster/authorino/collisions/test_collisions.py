@@ -16,21 +16,23 @@ def api_key(create_api_key, module_label):
 
 
 @pytest.fixture(scope="module")
-def authorization(request, cluster, blame, route, label, oidc_provider):  # pylint: disable=unused-argument
-    """Create an AuthPolicy with route as target reference"""
-    target_ref = request.getfixturevalue(getattr(request, "param", "route"))
+def target(request):
+    """Returns the test target(gateway or route)"""
+    return request.getfixturevalue(request.param)
 
-    auth = AuthPolicy.create_instance(cluster, blame("fp"), target_ref, labels={"testRun": label})
+
+@pytest.fixture(scope="module")
+def authorization(request, cluster, blame, target, label, oidc_provider):  # pylint: disable=unused-argument
+    """Create an AuthPolicy with either gateway or route as target reference"""
+    auth = AuthPolicy.create_instance(cluster, blame("fp"), target, labels={"testRun": label})
     auth.identity.add_oidc("first", oidc_provider.well_known["issuer"])
     return auth
 
 
 @pytest.fixture(scope="module")
-def authorization2(request, cluster, blame, route, label, api_key):  # pylint: disable=unused-argument
-    """Create an AuthPolicy with route as target reference"""
-    target_ref = request.getfixturevalue(getattr(request, "param", "route"))
-
-    auth = AuthPolicy.create_instance(cluster, blame("sp"), target_ref, labels={"testRun": label})
+def authorization2(request, cluster, blame, target, label, api_key):  # pylint: disable=unused-argument
+    """Create a second AuthPolicy with the same target as the first AuthPolicy"""
+    auth = AuthPolicy.create_instance(cluster, blame("sp"), target, labels={"testRun": label})
     auth.identity.add_api_key("second", selector=api_key.selector)
     return auth
 
@@ -50,11 +52,7 @@ def commit(request, authorization, authorization2):
         policy.wait_for_ready()
 
 
-@pytest.mark.parametrize(
-    "authorization, authorization2",
-    [pytest.param("gateway", "gateway", id="gateway"), pytest.param("route", "route", id="route")],
-    indirect=True,
-)
+@pytest.mark.parametrize("target", ["gateway", "route"], indirect=True)
 def test_collision_auth_policy(client, authorization, auth, auth2):
     """Test first policy is being overridden when another policy with the same target is created."""
     assert authorization.wait_until(has_condition("Enforced", "False", "Overridden", "AuthPolicy is overridden"))
