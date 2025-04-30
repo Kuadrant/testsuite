@@ -56,14 +56,14 @@ class HealthCheck:  # pylint: disable=invalid-name
 class DNSHealthCheckProbe(KubernetesObject):
     """DNSHealthCheckProbe object"""
 
-    def _status_ready(self):
-        """Returns True if DNSHealthCheckProbe status.healthy field has appeared"""
-        return self.wait_until(lambda obj: obj.model.status.healthy is not oc.Missing)
-
     def is_healthy(self) -> bool:
         """Returns True if DNSHealthCheckProbe endpoint is healthy"""
-        assert self._status_ready(), "DNSHealthCheckProbe status wasn't ready in time"
-        return self.refresh().model.status.healthy
+        return self.model.status.healthy
+
+    def wait_for_ready(self):
+        """Returns True if DNSHealthCheckProbe status.healthy field has appeared"""
+        success = self.wait_until(lambda obj: obj.model.status.healthy is not oc.Missing)
+        assert success, "DNSHealthCheckProbe status wasn't ready in time"
 
 
 class DNSPolicy(Policy):
