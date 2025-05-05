@@ -22,11 +22,11 @@ pytestmark = [pytest.mark.authorino]
     scope="module",
     params=[
         pytest.param(
-            {"path": "context.nonexistent.path", "code": 401, "identity": None},
+            {"path": "context.nonexistent.path", "code": 401},
             id="non-existent AuthJson path to retrieve identity from",
         ),
         pytest.param(
-            {"path": "context.request.http.method", "code": 200, "identity": "GET"},
+            {"path": "context.request.http.method", "code": 200},
             id="existing AuthJson path to retrieve identity from",
         ),
     ],
@@ -58,6 +58,5 @@ def test_plain_identity(client, plain_identity):
     response = client.get("/get")
     assert response.status_code == plain_identity["code"]
 
-    identity = extract_response(response)
-    # identity should be populated with the value retrieved from AuthJson in the specified path
-    assert identity % None == plain_identity["identity"]
+    if plain_identity["code"] == 200:
+        assert extract_response(response) % None == "GET"
