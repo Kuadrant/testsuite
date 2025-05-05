@@ -16,11 +16,11 @@ def authorization(authorization, keycloak):
     return authorization
 
 
-def has_generation(generation):
+def has_observed_generation(observed_generation):
     """Check expected generation is present in the object's definition"""
 
     def _check(obj):
-        if obj.model.metadata.generation == generation:
+        if obj.model.status.observed_generation == observed_generation:
             return True
         return False
 
@@ -46,10 +46,10 @@ def test_anonymous_identity(client, auth, authorization):
     response = client.get("/get")
     assert response.status_code == 401
 
-    generation = authorization.model.metadata.generation + 1
+    observed_generation = authorization.model.status.observed_generation + 1
     authorization.identity.add_anonymous("anonymous")
-    success = authorization.wait_until(has_generation(generation))
-    assert success, "AuthPolicy did not increment the generation in due time"
+    success = authorization.wait_until(has_observed_generation(observed_generation))
+    assert success, "AuthPolicy did not increment the observed generation in due time"
     authorization.wait_for_ready()
 
     response = client.get("/get")
