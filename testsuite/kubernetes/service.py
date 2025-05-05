@@ -30,6 +30,7 @@ class Service(KubernetesObject):
         ports: list[ServicePort],
         labels: dict[str, str] = None,
         service_type: Literal["ClusterIP", "LoadBalancer", "NodePort", "ExternalName"] = None,
+        annotations: dict[str, str] = None,
     ):
         """Creates new Service"""
         model: dict = {
@@ -38,6 +39,7 @@ class Service(KubernetesObject):
             "metadata": {
                 "name": name,
                 "labels": labels,
+                "annotations": annotations if annotations else {},
             },
             "spec": {"ports": [asdict(port) for port in ports], "selector": selector},
         }
