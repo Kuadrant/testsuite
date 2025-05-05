@@ -25,6 +25,11 @@ class KubernetesObject(APIObject, LifecycleObject):
             self._committed, _ = self.exists()
         return self._committed
 
+    @property
+    def observed_generation(self):
+        """Returns the observed generation field under status"""
+        return self.model.status.observed_generation
+
     def commit(self):
         """
         Creates object on the server and returns created entity.

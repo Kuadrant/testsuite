@@ -85,3 +85,8 @@ class Policy(KubernetesObject):
             timelimit=timelimit,
         )
         assert success, f"{self.kind()} did not get fully enforced in time"
+
+    def wait_for_update(self, observed_generation):
+        """Wait for a policy to reach a given observed_generation"""
+        success = self.wait_until(lambda obj: obj.observed_generation == observed_generation)
+        assert success, f"{self.kind()} did not reach required observed generation {observed_generation} in due time"
