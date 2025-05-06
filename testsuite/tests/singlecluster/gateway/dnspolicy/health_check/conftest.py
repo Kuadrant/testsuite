@@ -44,7 +44,9 @@ def dns_policy(dns_policy, health_check):
 @pytest.fixture(scope="module")
 def dns_health_probe(dns_policy):
     """Return DNSHealthCheckProbe object for created DNSPolicy"""
-    return dns_policy.get_dns_health_probe()
+    dns_health_probe = dns_policy.get_dns_health_probe()
+    dns_health_probe.wait_for_ready()
+    return dns_health_probe
 
 
 @pytest.fixture(scope="module", autouse=True)
