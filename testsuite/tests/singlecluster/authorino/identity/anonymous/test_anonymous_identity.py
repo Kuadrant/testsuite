@@ -4,6 +4,8 @@ import logging
 
 import pytest
 
+from testsuite.kuadrant.policy import has_observed_generation
+
 pytestmark = [pytest.mark.authorino]
 
 logger = logging.getLogger(__name__)
@@ -14,17 +16,6 @@ def authorization(authorization, keycloak):
     """Add Keycloak identity"""
     authorization.identity.add_oidc("keycloak", keycloak.well_known["issuer"])
     return authorization
-
-
-def has_observed_generation(observed_generation):
-    """Check expected generation is present in the object's definition"""
-
-    def _check(obj):
-        if obj.observed_generation == observed_generation:
-            return True
-        return False
-
-    return _check
 
 
 def test_anonymous_identity(client, auth, authorization):
@@ -46,10 +37,9 @@ def test_anonymous_identity(client, auth, authorization):
     response = client.get("/get")
     assert response.status_code == 401
 
-    observed_generation = authorization.observed_generation + 1
+    generation = authorization.generation
     authorization.identity.add_anonymous("anonymous")
-    authorization.wait_for_update(observed_generation)
-    authorization.wait_for_ready()
+    authorization.wait_until(has_observed_generation(generation + 1))
 
     response = client.get("/get")
     assert response.status_code == 200
