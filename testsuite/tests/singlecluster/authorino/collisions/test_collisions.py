@@ -22,7 +22,9 @@ def target(request):
 
 
 @pytest.fixture(scope="module")
-def authorization(request, cluster, blame, target, label, oidc_provider):  # pylint: disable=unused-argument
+def authorization(
+    request, gateway, route, cluster, blame, target, label, oidc_provider
+):  # pylint: disable=unused-argument
     """Create an AuthPolicy with either gateway or route as target reference"""
     auth = AuthPolicy.create_instance(cluster, blame("fp"), target, labels={"testRun": label})
     auth.identity.add_oidc("first", oidc_provider.well_known["issuer"])
