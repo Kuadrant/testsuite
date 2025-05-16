@@ -36,7 +36,7 @@ def rate_limit2(request, cluster, blame, module_label, target, label):
 
 
 @pytest.fixture(scope="module", autouse=True)
-def commit(request, rate_limit, rate_limit2):
+def commit(request, route, rate_limit, rate_limit2):
     """Commits RateLimitPolicies after the target is created"""
     for policy in [rate_limit, rate_limit2]:  # Forcing order of creation.
         request.addfinalizer(policy.delete)
