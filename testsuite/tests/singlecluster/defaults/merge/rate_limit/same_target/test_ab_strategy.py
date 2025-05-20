@@ -17,6 +17,7 @@ def commit(request, route, rate_limit, default_merge_rate_limit):  # pylint: dis
         policy.wait_for_accepted()
 
 
+@pytest.mark.parametrize("target", ["gateway", "route"], indirect=True)
 def test_multiple_policies_merge_default_ab(client, rate_limit, default_merge_rate_limit):
     """Test RateLimitPolicy with merge defaults being enforced due to age"""
     assert rate_limit.wait_until(
