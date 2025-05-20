@@ -1,8 +1,14 @@
 """Test for anonymous identity"""
 
+import logging
+
 import pytest
 
+from testsuite.kuadrant.policy import has_observed_generation
+
 pytestmark = [pytest.mark.authorino]
+
+logger = logging.getLogger(__name__)
 
 
 @pytest.fixture(scope="module")
@@ -31,8 +37,9 @@ def test_anonymous_identity(client, auth, authorization):
     response = client.get("/get")
     assert response.status_code == 401
 
+    generation = authorization.generation
     authorization.identity.add_anonymous("anonymous")
-    authorization.wait_for_ready()
+    authorization.wait_until(has_observed_generation(generation + 1))
 
     response = client.get("/get")
     assert response.status_code == 200
