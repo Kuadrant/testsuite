@@ -6,7 +6,7 @@ from testsuite.httpx.auth import HeaderApiKeyAuth
 from testsuite.kuadrant.policy import has_condition
 from testsuite.kuadrant.policy.authorization.auth_policy import AuthPolicy
 
-pytestmark = [pytest.mark.authorino]
+pytestmark = [pytest.mark.authorino, pytest.mark.kuadrant_only]
 
 
 @pytest.fixture(scope="module")
