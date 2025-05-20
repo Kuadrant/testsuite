@@ -3,8 +3,14 @@
 import pytest
 
 from testsuite.httpx.auth import HeaderApiKeyAuth, HttpxOidcClientAuth
+from testsuite.kuadrant.policy import Strategy
+from testsuite.kuadrant.policy.authorization.auth_policy import AuthPolicy
 from testsuite.tests.singlecluster.overrides.merge.conftest import create_secret
 
+@pytest.fixture(scope="module")
+def target(request):
+    """Returns the test target(gateway or route)"""
+    return request.getfixturevalue(getattr(request, "param", "gateway"))
 
 @pytest.fixture(scope="module")
 def user_label(blame):
@@ -52,3 +58,30 @@ def admin_auth(admin_api_key):
 def auth(oidc_provider):
     """Returns Authentication object for HTTPX"""
     return HttpxOidcClientAuth(oidc_provider.get_token, "authorization")
+
+
+@pytest.fixture(scope="module")
+def global_authorization(cluster, blame, admin_label, target, admin_api_key):
+    """
+    Create an AuthPolicy with authentication for an admin with same target as one default.
+    Also adds authorization for only admins.
+    """
+    auth_policy = AuthPolicy.create_instance(cluster, blame("dmp"), target, labels={"testRun": admin_label})
+    auth_policy.overrides.identity.add_api_key("api-key", selector=admin_api_key.selector)
+    auth_policy.overrides.authorization.add_opa_policy(
+        "group-allowed",
+        """
+        groups := split(object.get(input.auth.identity.metadata.annotations, "kuadrant.io/groups", ""), ",")
+                allow { groups[_] != "" }""",
+    )
+    auth_policy.defaults.strategy(Strategy.MERGE)
+    return auth_policy
+
+
+@pytest.fixture(scope="function", autouse=True)
+def commit(request, route, authorization, global_authorization):  # pylint: disable=unused-argument
+    """Commits AuthPolicy after the HTTPRoute is created"""
+    for policy in [global_authorization, authorization]:  # Forcing order of creation.
+        request.addfinalizer(policy.delete)
+        policy.commit()
+        policy.wait_for_accepted()

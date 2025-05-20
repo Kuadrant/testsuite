@@ -18,22 +18,6 @@ def authorization(cluster, blame, module_label, route, user_api_key):
     return auth_policy
 
 
-@pytest.fixture(scope="module")
-def override_auth_policy(cluster, blame, keycloak, module_label, route, oidc_provider):
-    """
-    Create an AuthPolicy with authentication for an admin with same target as one default.
-    Also adds authorization for only admins.
-    """
-    auth_policy = AuthPolicy.create_instance(cluster, blame("omp"), route, labels={"testRun": module_label})
-    auth_policy.overrides.identity.add_oidc("basic", oidc_provider.well_known["issuer"])
-    auth_policy.overrides.metadata.add_user_info("user-info", "basic")
-    auth_policy.overrides.authorization.add_auth_rules(
-        "rule", [Pattern("auth.metadata.user-info.email", "eq", keycloak.user.properties["email"])]
-    )
-    auth_policy.overrides.strategy(Strategy.MERGE)
-    return auth_policy
-
-
 @pytest.fixture(scope="function", autouse=True)
 def commit(request, route, authorization, override_auth_policy):  # pylint: disable=unused-argument
     """Commits AuthPolicy after the HTTPRoute is created"""
@@ -43,15 +27,14 @@ def commit(request, route, authorization, override_auth_policy):  # pylint: disa
         policy.wait_for_accepted()
 
 
-@pytest.mark.parametrize("authorization", ["gateway", "route"], indirect=True)
-def test_override_replace(client, authorization, override_auth_policy, auth, admin_auth):
+def test_override_replace(client, authorization, global_authorization, auth, admin_auth):
     """Test AuthPolicy with an override and merge strategy overriding only a part of a new policy."""
     assert authorization.wait_until(
         has_condition(
             "Enforced",
             "False",
             "Overridden",
-            "AuthPolicy is overridden by " f"[{override_auth_policy.namespace()}/{override_auth_policy.name()}]",
+            "AuthPolicy is overridden by " f"[{global_authorization.namespace()}/{global_authorization.name()}]",
         )
     )
 

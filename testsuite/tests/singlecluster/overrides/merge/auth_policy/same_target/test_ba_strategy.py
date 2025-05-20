@@ -8,23 +8,23 @@ pytestmark = [pytest.mark.kuadrant_only, pytest.mark.authorino]
 
 
 @pytest.fixture(scope="module", autouse=True)
-def commit(request, route, authorization, override_merge_authorization):  # pylint: disable=unused-argument
+def commit(request, route, authorization, global_authorization):  # pylint: disable=unused-argument
     """Commits AuthPolicy after the HTTPRoute is created"""
-    for policy in [override_merge_authorization, authorization]:  # Forcing order of creation.
+    for policy in [global_authorization, authorization]:  # Forcing order of creation.
         request.addfinalizer(policy.delete)
         policy.commit()
         policy.wait_for_accepted()
 
 
-def test_multiple_policies_merge_default_ba(client, authorization, override_merge_authorization, user_auth, admin_auth):
+@pytest.mark.parametrize("target", ["gateway", "route"], indirect=True)
+def test_multiple_policies_merge_default_ba(client, authorization, global_authorization, user_auth, admin_auth):
     """Test AuthPolicy with merge defaults being ignored due to age"""
     assert authorization.wait_until(
         has_condition(
             "Enforced",
             "False",
             "Overridden",
-            "AuthPolicy is overridden by "
-            f"[{override_merge_authorization.namespace()}/{override_merge_authorization.name()}]",
+            "AuthPolicy is overridden",
         )
     )
 
