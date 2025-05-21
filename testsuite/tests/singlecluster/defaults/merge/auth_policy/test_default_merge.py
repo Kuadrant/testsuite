@@ -1,11 +1,9 @@
-"""Test gateway level default merging with and not being overridden by another policy."""
+"""Test gateway level default merging not being overridden by another policy."""
 
 import pytest
 
 from testsuite.kuadrant.policy import has_condition
-from testsuite.kuadrant.policy.authorization import Credentials
 from testsuite.kuadrant.policy.authorization.auth_policy import AuthPolicy
-from testsuite.kuadrant.policy.rate_limit import Strategy
 
 pytestmark = [pytest.mark.kuadrant_only, pytest.mark.authorino]
 
@@ -28,5 +26,5 @@ def test_default_merge(client, authorization, global_authorization, user_auth, a
     )
 
     assert client.get("/get").status_code == 401  # none of the policies allow anonymous authentication.
-    assert client.get("/get", auth=user_auth).status_code == 403  # user authentication works, but it is not authorized.
+    assert client.get("/get", auth=user_auth).status_code == 200  # user authentication with api key.
     assert client.get("/get", auth=admin_auth).status_code == 200  # admin authentication with api key.

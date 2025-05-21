@@ -2,7 +2,6 @@
 
 import pytest
 
-from testsuite.kuadrant.policy import Strategy
 from testsuite.kuadrant.policy.authorization.auth_policy import AuthPolicy
 
 
@@ -16,5 +15,5 @@ def target(request):
 def authorization(cluster, blame, user_label, target, user_api_key):
     """Create an AuthPolicy with a basic limit with same target as one default."""
     auth_policy = AuthPolicy.create_instance(cluster, blame("sp"), target, labels={"testRun": user_label})
-    auth_policy.identity.add_api_key("basic", selector=user_api_key.selector)
+    auth_policy.identity.add_api_key("api-key", selector=user_api_key.selector)
     return auth_policy

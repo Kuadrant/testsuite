@@ -24,9 +24,7 @@ def test_multiple_policies_merge_default_ba(client, global_authorization, user_a
     )
 
     assert client.get("/get").status_code == 401  # anonymous authentication is not allowed.
-    assert (
-        client.get("/get", auth=user_auth).status_code == 200
-    )  # user is authenticated and authorized.
+    assert client.get("/get", auth=user_auth).status_code == 200  # user is authenticated and authorized.
     assert (
         client.get("/get", auth=admin_auth).status_code == 401
     )  # admin is not authenticated, since the policy is ignored.

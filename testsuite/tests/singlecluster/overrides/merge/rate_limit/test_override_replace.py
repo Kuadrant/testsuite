@@ -1,4 +1,4 @@
-"""Test gateway level default merging with and being partially overriden by another policy."""
+"""Test merging override policies on gateway with policies on route with partial override."""
 
 import pytest
 
@@ -16,13 +16,18 @@ def rate_limit(rate_limit):
     return rate_limit
 
 
-def test_gateway_default_replace(client, global_rate_limit):
-    """Test Gateway default policy being partially overridden when a policy with the same name is attached on a route"""
-    assert global_rate_limit.wait_until(
-        has_condition("Enforced", "True", "Enforced", "RateLimitPolicy has been partially enforced")
+def test_gateway_override_replace(client, global_rate_limit, rate_limit):
+    """Test RateLimitPolicy with an override and merge strategy overrides completely the lower level one"""
+    assert rate_limit.wait_until(
+        has_condition(
+            "Enforced",
+            "False",
+            "Overridden",
+            "RateLimitPolicy is overridden by " f"[{global_rate_limit.namespace()}/{global_rate_limit.name()}]",
+        )
     )
 
-    get = client.get_many("/get", 3)
+    get = client.get_many("/get", 5)
     get.assert_all(status_code=200)
     assert client.get("/get").status_code == 429
 

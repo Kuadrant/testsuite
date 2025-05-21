@@ -1,11 +1,9 @@
-"""Test gateway level default merging with and being partially overriden by another policy."""
+"""Test gateway level default merging being partially overriden by another policy."""
 
 import pytest
 
 from testsuite.kuadrant.policy import has_condition
-from testsuite.kuadrant.policy.authorization import Pattern
 from testsuite.kuadrant.policy.authorization.auth_policy import AuthPolicy
-from testsuite.kuadrant.policy.rate_limit import Strategy
 
 pytestmark = [pytest.mark.kuadrant_only, pytest.mark.authorino]
 
@@ -18,8 +16,12 @@ def authorization(cluster, blame, user_api_key, module_label, route):
     return auth_policy
 
 
-def test_default_replace(client, authorization, global_authorization, user_auth, admin_auth):
-    """Test Gateway policy being partially overridden when another policy is attached with target as route with the same name"""
+def test_default_replace(
+    client, authorization, global_authorization, user_auth, admin_auth
+):  # pylint: disable=unused-argument
+    """
+    Test Gateway policy being partially overridden when another policy is attached to route with the same name
+    """
     assert global_authorization.wait_until(
         has_condition("Enforced", "True", "Enforced", "AuthPolicy has been partially enforced")
     )
