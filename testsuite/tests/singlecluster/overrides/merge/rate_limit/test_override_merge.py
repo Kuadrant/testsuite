@@ -1,0 +1,45 @@
+"""Test merging override policies on gateway with policies on route without override."""
+
+import pytest
+
+from testsuite.kuadrant.policy import CelPredicate, has_condition
+from testsuite.kuadrant.policy.rate_limit import Limit
+
+pytestmark = [pytest.mark.kuadrant_only, pytest.mark.limitador]
+
+
+@pytest.fixture(scope="module")
+def route(backend, route):
+    """Add 1 additional backend rules for specific backend paths"""
+    route.add_backend(backend, "/image")
+    return route
+
+
+@pytest.fixture(scope="module")
+def rate_limit(rate_limit):
+    """Create a RateLimitPolicy with a basic limit with route as target"""
+    route_when = CelPredicate("request.path == '/image'")
+    rate_limit.add_limit("route_limit", [Limit(3, "5s")], when=[route_when])
+    return rate_limit
+
+
+def test_gateway_override_merge(client, global_rate_limit, rate_limit):
+    """Test RateLimitPolicy with an override and merge strategy overriding only a part of a new policy."""
+    assert global_rate_limit.wait_until(
+        has_condition("Enforced", "True", "Enforced", "RateLimitPolicy has been successfully enforced")
+    )
+    assert rate_limit.wait_until(
+        has_condition("Enforced", "True", "Enforced", "RateLimitPolicy has been successfully enforced")
+    )
+
+    anything = client.get_many("/anything", 10)
+    anything.assert_all(status_code=200)
+    assert client.get("/anything").status_code == 429
+
+    get = client.get_many("/get", 5)
+    get.assert_all(status_code=200)
+    assert client.get("/get").status_code == 429
+
+    get = client.get_many("/image", 3, headers={"accept": "image/webp"})
+    get.assert_all(status_code=200)
+    assert client.get("/get").status_code == 429
