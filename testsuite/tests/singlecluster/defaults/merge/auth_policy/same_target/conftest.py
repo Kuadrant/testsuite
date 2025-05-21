@@ -2,7 +2,6 @@
 
 import pytest
 
-from testsuite.kuadrant.policy import Strategy
 from testsuite.kuadrant.policy.authorization.auth_policy import AuthPolicy
 
 

@@ -17,14 +17,14 @@ def commit(request, route, authorization, global_authorization):  # pylint: disa
 
 
 @pytest.mark.parametrize("target", ["gateway", "route"], indirect=True)
-def test_multiple_policies_merge_default_ba(client, authorization, global_authorization, user_auth, admin_auth):
+def test_multiple_policies_merge_override_ba(client, authorization, global_authorization, user_auth, admin_auth):
     """Test AuthPolicy with merge defaults being ignored due to age"""
     assert authorization.wait_until(
         has_condition(
             "Enforced",
             "False",
             "Overridden",
-            "AuthPolicy is overridden",
+            "AuthPolicy is overridden by " f"[{global_authorization.namespace()}/{global_authorization.name()}]",
         )
     )
 

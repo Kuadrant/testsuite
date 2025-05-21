@@ -3,7 +3,7 @@
 import pytest
 
 from testsuite.kuadrant.policy import CelPredicate, has_condition
-from testsuite.kuadrant.policy.rate_limit import RateLimitPolicy, Limit, Strategy
+from testsuite.kuadrant.policy.rate_limit import Limit
 
 pytestmark = [pytest.mark.kuadrant_only, pytest.mark.limitador]
 
