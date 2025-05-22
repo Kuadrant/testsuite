@@ -105,26 +105,20 @@ def routes(request, gateway, gateway2, blame, hostname, backends, module_label) 
 
 
 @pytest.fixture(scope="module")
-def gateway(request, cluster, blame, label, wildcard_domain):
-    """Deploys Gateway to first Kubernetes cluster"""
+def gateway(cluster, blame, label, wildcard_domain):
+    """Gateway to first Kubernetes cluster"""
     name = blame("gw")
     gw = KuadrantGateway.create_instance(cluster, name, {"app": label})
     gw.add_listener(TLSGatewayListener(hostname=wildcard_domain, gateway_name=name))
-    request.addfinalizer(gw.delete)
-    gw.commit()
-    gw.wait_for_ready()
     return gw
 
 
 @pytest.fixture(scope="module")
-def gateway2(request, cluster2, blame, label, wildcard_domain):
-    """Deploys Gateway to second Kubernetes cluster"""
+def gateway2(cluster2, blame, label, wildcard_domain):
+    """Gateway to second Kubernetes cluster"""
     name = blame("gw")
     gw = KuadrantGateway.create_instance(cluster2, name, {"app": label})
     gw.add_listener(TLSGatewayListener(hostname=wildcard_domain, gateway_name=name))
-    request.addfinalizer(gw.delete)
-    gw.commit()
-    gw.wait_for_ready()
     return gw
 
 
@@ -176,9 +170,18 @@ def client(hostname, gateway, gateway2):  # pylint: disable=unused-argument
 
 
 @pytest.fixture(scope="module", autouse=True)
-def commit(request, routes, dns_policy, dns_policy2, tls_policy, tls_policy2):  # pylint: disable=unused-argument
-    """Commits all policies before tests"""
-    components = [dns_policy, dns_policy2, tls_policy, tls_policy2]
+def commit(
+    request,
+    routes,
+    gateway,
+    gateway2,
+    dns_policy,
+    dns_policy2,
+    tls_policy,
+    tls_policy2,
+):  # pylint: disable=unused-argument
+    """Commits gateways and all policies before tests"""
+    components = [gateway, gateway2, dns_policy, dns_policy2, tls_policy, tls_policy2]
     for component in components:
         request.addfinalizer(component.delete)
         component.commit()
