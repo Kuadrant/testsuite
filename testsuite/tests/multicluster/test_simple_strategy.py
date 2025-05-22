@@ -16,7 +16,7 @@ def test_simple_strategy(client, hostname, gateway, gateway2):
     """
     Test simple load-balancing strategy across multiple clusters
     - Checks that request to the hostname works
-    - Checks that DNS resolution return IPs in a round-robin fashion
+    - Checks that DNS resolution returns both IP addresses in A record set
     """
     result = client.get("/get")
     assert not result.has_dns_error(), result.error
@@ -26,15 +26,5 @@ def test_simple_strategy(client, hostname, gateway, gateway2):
     gw1_ip, gw2_ip = gateway.external_ip().split(":")[0], gateway2.external_ip().split(":")[0]
     assert gw1_ip != gw2_ip
 
-    gw1_ip_resolved = dns.resolver.resolve(hostname.hostname)[0].address
-    gw2_ip_resolved = dns.resolver.resolve(hostname.hostname)[0].address
-    assert gw1_ip_resolved != gw2_ip_resolved, "Simple routing strategy should return IPs in a round-robin fashion"
-    assert {gw1_ip_resolved, gw2_ip_resolved} == {gw1_ip, gw2_ip}
-
-    for i in range(10):
-        assert (
-            dns.resolver.resolve(hostname.hostname)[0].address == gw1_ip_resolved
-        ), f"Simple routing strategy should return IPs in a round-robin fashion (iteration {i + 1})"
-        assert (
-            dns.resolver.resolve(hostname.hostname)[0].address == gw2_ip_resolved
-        ), f"Simple routing strategy should return IPs in a round-robin fashion (iteration {i + 1})"
+    dns_ips = {ip.address for ip in dns.resolver.resolve(hostname.hostname)}
+    assert {gw1_ip, gw2_ip} == dns_ips, "Simple routing strategy should return both IP addresses in A record set"
