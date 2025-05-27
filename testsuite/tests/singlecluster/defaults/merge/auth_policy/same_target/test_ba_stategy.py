@@ -23,8 +23,14 @@ def test_multiple_policies_merge_default_ba(client, global_authorization, user_a
         has_condition("Enforced", "True", "Enforced", "AuthPolicy has been partially enforced")
     )
 
-    assert client.get("/get").status_code == 401  # anonymous authentication is not allowed.
-    assert client.get("/get", auth=user_auth).status_code == 200  # user is authenticated and authorized.
-    assert (
-        client.get("/get", auth=admin_auth).status_code == 401
-    )  # admin is not authenticated, since the policy is ignored.
+    anon_auth_resp = client.get("/get")
+    assert anon_auth_resp is not None
+    assert anon_auth_resp.status_code == 401  # anonymous authentication is not allowed.
+
+    user_auth_res = client.get("/get", auth=user_auth)
+    assert user_auth_res is not None
+    assert user_auth_res.status_code == 200  # user is authenticated and authorized.
+
+    admin_auth_res = client.get("/get", auth=admin_auth)  # admin is not authenticated, since the policy is ignored.
+    assert admin_auth_res is not None
+    assert admin_auth_res.status_code == 401
