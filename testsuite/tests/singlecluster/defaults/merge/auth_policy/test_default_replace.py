@@ -26,6 +26,14 @@ def test_default_replace(
         has_condition("Enforced", "True", "Enforced", "AuthPolicy has been partially enforced")
     )
 
-    assert client.get("/get").status_code == 401  # none of the policies allow anonymous authentication.
-    assert client.get("/get", auth=user_auth).status_code == 200  # user authentication works as expected.
-    assert client.get("/get", auth=admin_auth).status_code == 401  # admin authentication is being overridden.
+    anon_auth_resp = client.get("/get")
+    assert anon_auth_resp is not None
+    assert anon_auth_resp.status_code == 401  # none of the policies allow anonymous authentication.
+
+    user_auth_res = client.get("/get", auth=user_auth)
+    assert user_auth_res is not None
+    assert user_auth_res.status_code == 200  # user authentication with api key.
+
+    admin_auth_res = client.get("/get", auth=admin_auth)  # admin authentication is being overridden.
+    assert admin_auth_res is not None
+    assert admin_auth_res.status_code == 401
