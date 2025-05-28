@@ -62,8 +62,8 @@ def test_update_tls_policy_target_ref(
     tls_policy, gateway, gateway2, dns_policy, dns_policy2, change_target_ref, custom_client, hostname, hostname2
 ):  # pylint: disable=unused-argument
     """Test updating the targetRef of TLSPolicy from Gateway 1 to Gateway 2"""
-    assert gateway.refresh().is_affected_by(tls_policy)
-    assert not gateway2.refresh().is_affected_by(tls_policy)
+    assert gateway.wait_until(lambda obj: obj.is_affected_by(tls_policy))
+    assert gateway2.wait_until(lambda obj: not obj.is_affected_by(tls_policy))
 
     response = custom_client(hostname.hostname, gateway).get("/get")
     assert not response.has_cert_verify_error()
@@ -74,8 +74,8 @@ def test_update_tls_policy_target_ref(
 
     change_target_ref(tls_policy, gateway2)
 
-    assert not gateway.refresh().is_affected_by(tls_policy)
-    assert gateway2.refresh().is_affected_by(tls_policy)
+    assert gateway.wait_until(lambda obj: not obj.is_affected_by(tls_policy))
+    assert gateway2.wait_until(lambda obj: obj.is_affected_by(tls_policy))
 
     response = custom_client(hostname2.hostname, gateway2).get("/get")
     assert not response.has_cert_verify_error()
