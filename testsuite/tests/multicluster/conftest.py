@@ -112,7 +112,6 @@ def gateway(request, cluster, blame, label, wildcard_domain):
     gw.add_listener(TLSGatewayListener(hostname=wildcard_domain, gateway_name=name))
     request.addfinalizer(gw.delete)
     gw.commit()
-    gw.wait_for_ready()
     return gw
 
 
@@ -124,7 +123,6 @@ def gateway2(request, cluster2, blame, label, wildcard_domain):
     gw.add_listener(TLSGatewayListener(hostname=wildcard_domain, gateway_name=name))
     request.addfinalizer(gw.delete)
     gw.commit()
-    gw.wait_for_ready()
     return gw
 
 
@@ -176,8 +174,12 @@ def client(hostname, gateway, gateway2):  # pylint: disable=unused-argument
 
 
 @pytest.fixture(scope="module", autouse=True)
-def commit(request, routes, dns_policy, dns_policy2, tls_policy, tls_policy2):  # pylint: disable=unused-argument
-    """Commits all policies before tests"""
+def commit(
+    request, routes, dns_policy, dns_policy2, tls_policy, tls_policy2, gateway, gateway2
+):  # pylint: disable=unused-argument
+    """Waits for gateways to be ready and commits all policies before tests"""
+    gateway.wait_for_ready()
+    gateway2.wait_for_ready()
     components = [dns_policy, dns_policy2, tls_policy, tls_policy2]
     for component in components:
         request.addfinalizer(component.delete)
