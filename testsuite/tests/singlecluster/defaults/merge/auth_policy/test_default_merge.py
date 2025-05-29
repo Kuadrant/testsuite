@@ -9,11 +9,11 @@ pytestmark = [pytest.mark.kuadrant_only, pytest.mark.authorino]
 
 
 @pytest.fixture(scope="module")
-def authorization(cluster, blame, user_api_key, module_label, route):
+def authorization(authorization, user_api_key, route):
     """Create an AuthPolicy with authentication for a simple user with same target as one default"""
-    auth_policy = AuthPolicy.create_instance(cluster, blame("sp"), route, labels={"testRun": module_label})
-    auth_policy.identity.add_api_key("second-api-key", selector=user_api_key.selector)
-    return auth_policy
+    # auth_policy = AuthPolicy.create_instance(cluster, blame("sp"), route, labels={"testRun": module_label})
+    authorization.identity.add_api_key("second-api-key", selector=user_api_key.selector)
+    return authorization
 
 
 def test_default_merge(client, authorization, global_authorization, user_auth, admin_auth):
