@@ -16,7 +16,7 @@ def commit(request, route, authorization, global_authorization):  # pylint: disa
         policy.wait_for_accepted()
 
 
-@pytest.mark.parametrize("target", ["gateway", "route"], indirect=True)
+@pytest.mark.parametrize("authorization, global_authorization", [("gateway", "route"), ("gateway", "route")], indirect=True)
 def test_multiple_policies_merge_default_ba(client, global_authorization, user_auth, admin_auth):
     """Test AuthPolicy with merge defaults being ignored due to age"""
     assert global_authorization.wait_until(
