@@ -24,8 +24,7 @@ def test_multiple_policies_merge_default_ba(client, rate_limit, global_rate_limi
             "Enforced",
             "False",
             "Overridden",
-            "RateLimitPolicy is overridden by "
-            f"[{global_rate_limit.namespace()}/{global_rate_limit.name()}]",
+            "RateLimitPolicy is overridden by " f"[{global_rate_limit.namespace()}/{global_rate_limit.name()}]",
         )
     )
 

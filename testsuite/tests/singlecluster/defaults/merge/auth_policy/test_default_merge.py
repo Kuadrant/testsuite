@@ -8,7 +8,7 @@ pytestmark = [pytest.mark.kuadrant_only, pytest.mark.authorino]
 
 
 @pytest.fixture(scope="module")
-def authorization(authorization, user_api_key, route):
+def authorization(authorization, user_api_key):
     """Create an AuthPolicy with authentication for a simple user with same target as one default"""
     authorization.identity.add_api_key("second-api-key", selector=user_api_key.selector)
     return authorization

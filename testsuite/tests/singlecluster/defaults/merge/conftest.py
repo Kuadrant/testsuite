@@ -2,8 +2,6 @@
 
 import pytest
 
-from testsuite.kubernetes.api_key import APIKey
-from testsuite.kubernetes.client import KubernetesClient
 
 @pytest.fixture(scope="module")
 def route(route, backend):

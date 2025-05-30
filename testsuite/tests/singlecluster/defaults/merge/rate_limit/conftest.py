@@ -9,6 +9,7 @@ LIMIT = Limit(4, "10s")
 MERGE_LIMIT = Limit(2, "10s")
 MERGE_LIMIT2 = Limit(6, "10s")
 
+
 @pytest.fixture(scope="module")
 def route(backend, route):
     """Add 2 backend rules for specific backend paths"""
@@ -17,7 +18,7 @@ def route(backend, route):
 
 
 @pytest.fixture(scope="module")
-def global_rate_limit(request, cluster, blame, module_label, gateway):
+def global_rate_limit(request, cluster, blame, module_label):
     """Create a RateLimitPolicy with default policies and a merge strategy."""
     target_ref = request.getfixturevalue(getattr(request, "param", "gateway"))
 
@@ -29,7 +30,12 @@ def global_rate_limit(request, cluster, blame, module_label, gateway):
 
 
 @pytest.fixture(scope="module", autouse=True)
-def commit(request, route, global_rate_limit, rate_limit,):  # pylint: disable=unused-argument
+def commit(
+    request,
+    route,
+    global_rate_limit,
+    rate_limit,
+):  # pylint: disable=unused-argument
     """Commits RateLimitPolicy after the HTTPRoute is created"""
     for policy in [global_rate_limit, rate_limit]:  # Forcing order of creation.
         request.addfinalizer(policy.delete)

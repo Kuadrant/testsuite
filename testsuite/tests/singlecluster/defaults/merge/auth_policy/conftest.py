@@ -20,18 +20,18 @@ def admin_label(blame):
 
 
 @pytest.fixture(scope="module")
-def user_api_key(request, create_api_key, user_label, cluster):
+def user_api_key(create_api_key, user_label, cluster):
     """Creates API key Secret for a user"""
     annotations = {"kuadrant.io/groups": "users"}
-    secret = create_api_key("api-key", user_label, "api_key_value", annotations)
+    secret = create_api_key("api-key", user_label, "api_key_value", annotations, cluster)
     return secret
 
 
 @pytest.fixture(scope="module")
-def admin_api_key(request, create_api_key, admin_label, cluster):
+def admin_api_key(create_api_key, admin_label, cluster):
     """Creates API key Secret for an admin"""
     annotations = {"kuadrant.io/groups": "admins"}
-    secret = create_api_key("admin-api-key", admin_label, "admin_api_key_value", annotations)
+    secret = create_api_key("admin-api-key", admin_label, "admin_api_key_value", annotations, cluster)
     return secret
 
 
@@ -54,7 +54,9 @@ def auth(oidc_provider):
 
 
 @pytest.fixture(scope="module")
-def global_authorization(request, cluster, route, gateway, blame, admin_label, admin_api_key):
+def global_authorization(
+    request, cluster, route, gateway, blame, admin_label, admin_api_key
+):  # pylint: disable=unused-argument
     """
     Create an AuthPolicy with authentication for an admin with same target as one default.
     Also adds authorization for only admins.

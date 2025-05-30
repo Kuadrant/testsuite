@@ -5,8 +5,6 @@ import pytest
 from testsuite.httpx.auth import HttpxOidcClientAuth
 from testsuite.kuadrant.authorino import AuthorinoCR, PreexistingAuthorino
 from testsuite.kuadrant.policy.authorization.auth_config import AuthConfig
-from testsuite.kubernetes.api_key import APIKey
-from testsuite.kubernetes.client import KubernetesClient
 
 
 @pytest.fixture(scope="session")
