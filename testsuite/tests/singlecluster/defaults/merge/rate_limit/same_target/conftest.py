@@ -1,3 +1,5 @@
+"""Conftest for defaults merge strategy tests for RateLimitPolicies on same target"""
+
 import pytest
 
 from testsuite.kuadrant.policy import CelPredicate

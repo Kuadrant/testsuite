@@ -3,8 +3,6 @@
 TB ?= short
 LOGLEVEL ?= INFO
 
-flags = "-n 4"
-
 ifdef WORKSPACE  # Yes, this is for jenkins
 resultsdir = $(WORKSPACE)
 else

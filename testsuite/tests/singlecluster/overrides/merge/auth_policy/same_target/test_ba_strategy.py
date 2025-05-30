@@ -29,10 +29,14 @@ def test_multiple_policies_merge_override_ba(client, authorization, global_autho
         )
     )
 
-    assert client.get("/get").status_code == 401  # anonymous authentication is not allowed.
-    assert (
-        client.get("/get", auth=user_auth).status_code == 401
-    )  # user is authenticated, but it is forbidden in the authorization policy.
-    assert (
-        client.get("/get", auth=admin_auth).status_code == 200
-    )  # admin is not authenticated, since the policy is ignored.
+    anon_auth_resp = client.get("/get")
+    assert anon_auth_resp is not None
+    assert anon_auth_resp.status_code == 401  # none of the policies allow anonymous authentication.
+
+    user_auth_res = client.get("/get", auth=user_auth)
+    assert user_auth_res is not None
+    assert user_auth_res.status_code == 401  # # user is not authenticated
+
+    admin_auth_res = client.get("/get", auth=admin_auth)  # admin authentication with api key.
+    assert admin_auth_res is not None
+    assert admin_auth_res.status_code == 200

@@ -1,5 +1,6 @@
 """Configure all the components through Kuadrant,
 all methods are placeholders for now since we do not work with Kuadrant"""
+
 import functools
 
 import pytest
@@ -182,7 +183,9 @@ def client(route, hostname):  # pylint: disable=unused-argument
 def create_api_key(blame, request, cluster):
     """Creates API key Secret"""
 
-    def _create_secret(name, label_selector, api_key, annotations: dict[str, str] = None, ocp: KubernetesClient = cluster):
+    def _create_secret(
+        name, label_selector, api_key, annotations: dict[str, str] = None, ocp: KubernetesClient = cluster
+    ):
         secret_name = blame(name)
         secret = APIKey.create_instance(ocp, secret_name, label_selector, api_key, annotations)
         request.addfinalizer(lambda: secret.delete(ignore_not_found=True))
@@ -203,15 +206,17 @@ def auth_parametrize_gateway_route(func):
         ids=["gateway", "route"]
     )
     """
+
     @pytest.mark.parametrize(
         "authorization, global_authorization",
         [("gateway", "gateway"), ("route", "route")],
         indirect=True,
-        ids=["gateway", "route"]
+        ids=["gateway", "route"],
     )
-    @functools.wraps(func) # Use functools.wraps to preserve function metadata
+    @functools.wraps(func)  # Use functools.wraps to preserve function metadata
     def wrapper(*args, **kwargs):
         return func(*args, **kwargs)
+
     return wrapper
 
 
@@ -226,13 +231,15 @@ def rate_limit_parametrize_gateway_route(func):
         ids=["gateway", "route"]
     )
     """
+
     @pytest.mark.parametrize(
         "rate_limit, global_rate_limit",
         [("gateway", "gateway"), ("route", "route")],
         indirect=True,
-        ids=["gateway", "route"]
+        ids=["gateway", "route"],
     )
-    @functools.wraps(func) # Use functools.wraps to preserve function metadata
+    @functools.wraps(func)  # Use functools.wraps to preserve function metadata
     def wrapper(*args, **kwargs):
         return func(*args, **kwargs)
+
     return wrapper

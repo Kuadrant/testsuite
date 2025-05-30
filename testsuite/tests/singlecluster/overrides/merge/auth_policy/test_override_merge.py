@@ -8,14 +8,18 @@ pytestmark = [pytest.mark.kuadrant_only, pytest.mark.limitador]
 
 
 @pytest.fixture(scope="module")
-def authorization(authorization, user_api_key, route):
+def authorization(authorization, user_api_key):
     """Create an AuthPolicy with authentication for a simple user with same target as one default."""
     authorization.identity.add_api_key("second-api-key", selector=user_api_key.selector)
     return authorization
 
 
 def test_override_merge(
-    client, global_authorization, authorization, user_auth, admin_auth, auth
+    client,
+    global_authorization,
+    authorization,
+    user_auth,
+    admin_auth,
 ):  # pylint: disable=unused-argument
     """Test AuthPolicy with an override and merge strategy overriding only a part of a new policy."""
     assert global_authorization.wait_until(
@@ -25,6 +29,14 @@ def test_override_merge(
         has_condition("Enforced", "True", "Enforced", "AuthPolicy has been successfully enforced")
     )
 
-    assert client.get("/get").status_code == 401  # none of the policies allow anonymous authentication.
-    assert client.get("/get", auth=admin_auth).status_code == 200  # admin api key authentication works.
-    assert client.get("/get", auth=user_auth).status_code == 200  # user api key authentication works.
+    anon_auth_resp = client.get("/get")
+    assert anon_auth_resp is not None
+    assert anon_auth_resp.status_code == 401  # none of the policies allow anonymous authentication.
+
+    user_auth_res = client.get("/get", auth=user_auth)
+    assert user_auth_res is not None
+    assert user_auth_res.status_code == 200  # user authentication with api key.
+
+    admin_auth_res = client.get("/get", auth=admin_auth)  # admin authentication with api key.
+    assert admin_auth_res is not None
+    assert admin_auth_res.status_code == 200

@@ -3,13 +3,12 @@
 import pytest
 
 from testsuite.kuadrant.policy import has_condition
-from testsuite.kuadrant.policy.authorization.auth_policy import AuthPolicy
 
 pytestmark = [pytest.mark.kuadrant_only, pytest.mark.authorino]
 
 
 @pytest.fixture(scope="module")
-def authorization(authorization, user_api_key, route):
+def authorization(authorization, user_api_key):
     """Create an AuthPolicy with authentication with the same name as in the policy attached on the gateway"""
     authorization.identity.add_api_key("api-key", selector=user_api_key.selector)
     return authorization
