@@ -1,5 +1,6 @@
 """Configure all the components through Kuadrant,
 all methods are placeholders for now since we do not work with Kuadrant"""
+import functools
 
 import pytest
 import yaml
@@ -189,3 +190,49 @@ def create_api_key(blame, request, cluster):
         return secret
 
     return _create_secret
+
+
+def auth_parametrize_gateway_route(func):
+    """
+    A custom decorator to apply specific authorization parameterization.
+    Equivalent to:
+    @pytest.mark.parametrize(
+        "authorization, global_authorization",
+        [("gateway", "gateway"), ("route", "route")],
+        indirect=True,
+        ids=["gateway", "route"]
+    )
+    """
+    @pytest.mark.parametrize(
+        "authorization, global_authorization",
+        [("gateway", "gateway"), ("route", "route")],
+        indirect=True,
+        ids=["gateway", "route"]
+    )
+    @functools.wraps(func) # Use functools.wraps to preserve function metadata
+    def wrapper(*args, **kwargs):
+        return func(*args, **kwargs)
+    return wrapper
+
+
+def rate_limit_parametrize_gateway_route(func):
+    """
+    A custom decorator to apply specific rate limit parameterization.
+    Equivalent to:
+    @pytest.mark.parametrize(
+        "rate_limit, global_rate_limit",
+        [("gateway", "gateway"), ("route", "route")],
+        indirect=True,
+        ids=["gateway", "route"]
+    )
+    """
+    @pytest.mark.parametrize(
+        "rate_limit, global_rate_limit",
+        [("gateway", "gateway"), ("route", "route")],
+        indirect=True,
+        ids=["gateway", "route"]
+    )
+    @functools.wraps(func) # Use functools.wraps to preserve function metadata
+    def wrapper(*args, **kwargs):
+        return func(*args, **kwargs)
+    return wrapper

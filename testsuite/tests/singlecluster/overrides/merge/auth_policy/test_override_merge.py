@@ -3,20 +3,17 @@
 import pytest
 
 from testsuite.kuadrant.policy import has_condition
-from testsuite.kuadrant.policy.authorization.auth_policy import AuthPolicy
 
 pytestmark = [pytest.mark.kuadrant_only, pytest.mark.limitador]
 
 
 @pytest.fixture(scope="module")
-def authorization(cluster, blame, user_api_key, module_label, route):
+def authorization(authorization, user_api_key, route):
     """Create an AuthPolicy with authentication for a simple user with same target as one default."""
-    auth_policy = AuthPolicy.create_instance(cluster, blame("sp"), route, labels={"testRun": module_label})
-    auth_policy.identity.add_api_key("second-api-key", selector=user_api_key.selector)
-    return auth_policy
+    authorization.identity.add_api_key("second-api-key", selector=user_api_key.selector)
+    return authorization
 
 
-@pytest.mark.parametrize("target", ["gateway", "route"], indirect=True)
 def test_override_merge(
     client, global_authorization, authorization, user_auth, admin_auth, auth
 ):  # pylint: disable=unused-argument
