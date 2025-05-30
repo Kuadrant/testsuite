@@ -1,34 +1,11 @@
-"""Conftest for merge strategy tests for same target for rate limits"""
-
 import pytest
 
-from testsuite.kuadrant.policy import CelPredicate, Strategy
-from testsuite.kuadrant.policy.rate_limit import Limit, RateLimitPolicy
-
-LIMIT = Limit(4, "10s")
-MERGE_LIMIT = Limit(2, "10s")
-MERGE_LIMIT2 = Limit(6, "10s")
+from testsuite.kuadrant.policy import CelPredicate
+from testsuite.tests.singlecluster.defaults.merge.rate_limit.conftest import LIMIT
 
 
 @pytest.fixture(scope="module")
-def target(request):
-    """Returns the test target(gateway or route)"""
-    return request.getfixturevalue(request.param)
-
-
-@pytest.fixture(scope="module")
-def rate_limit(cluster, blame, module_label, target):
+def rate_limit(rate_limit):
     """Add a RateLimitPolicy targeting the first HTTPRouteRule."""
-    rate_limit = RateLimitPolicy.create_instance(cluster, blame("sp"), target, labels={"testRun": module_label})
-    rate_limit.add_limit("basic", [LIMIT], when=[CelPredicate("request.path == '/get'")])
+    rate_limit.add_limit("get_limit", [LIMIT], when=[CelPredicate("request.path == '/get'")])
     return rate_limit
-
-
-@pytest.fixture(scope="module")
-def default_merge_rate_limit(cluster, blame, module_label, target):
-    """Add a RateLimitPolicy targeting the first HTTPRouteRule."""
-    policy = RateLimitPolicy.create_instance(cluster, blame("dmp"), target, labels={"testRun": module_label})
-    policy.defaults.add_limit("basic", [MERGE_LIMIT], when=[CelPredicate("request.path == '/get'")])
-    policy.defaults.add_limit("merge", [MERGE_LIMIT2], when=[CelPredicate("request.path == '/anything'")])
-    policy.defaults.strategy(Strategy.MERGE)
-    return policy

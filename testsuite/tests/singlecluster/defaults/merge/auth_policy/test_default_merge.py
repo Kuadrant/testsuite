@@ -3,7 +3,6 @@
 import pytest
 
 from testsuite.kuadrant.policy import has_condition
-from testsuite.kuadrant.policy.authorization.auth_policy import AuthPolicy
 
 pytestmark = [pytest.mark.kuadrant_only, pytest.mark.authorino]
 
@@ -11,7 +10,6 @@ pytestmark = [pytest.mark.kuadrant_only, pytest.mark.authorino]
 @pytest.fixture(scope="module")
 def authorization(authorization, user_api_key, route):
     """Create an AuthPolicy with authentication for a simple user with same target as one default"""
-    # auth_policy = AuthPolicy.create_instance(cluster, blame("sp"), route, labels={"testRun": module_label})
     authorization.identity.add_api_key("second-api-key", selector=user_api_key.selector)
     return authorization
 

@@ -5,14 +5,6 @@ import pytest
 from testsuite.httpx.auth import HeaderApiKeyAuth, HttpxOidcClientAuth
 from testsuite.kuadrant.policy import Strategy
 from testsuite.kuadrant.policy.authorization.auth_policy import AuthPolicy
-from testsuite.kubernetes.api_key import APIKey
-from testsuite.kubernetes.client import KubernetesClient
-
-
-# @pytest.fixture(scope="module")
-# def target(request):
-#     """Returns the test target(gateway or route)"""
-#     return request.getfixturevalue(getattr(request, "param", "gateway"))
 
 
 @pytest.fixture(scope="module")
@@ -28,7 +20,7 @@ def admin_label(blame):
 
 
 @pytest.fixture(scope="module")
-def user_api_key(request, create_api_key, blame, user_label, cluster):
+def user_api_key(request, create_api_key, user_label, cluster):
     """Creates API key Secret for a user"""
     annotations = {"kuadrant.io/groups": "users"}
     secret = create_api_key("api-key", user_label, "api_key_value", annotations)
@@ -36,7 +28,7 @@ def user_api_key(request, create_api_key, blame, user_label, cluster):
 
 
 @pytest.fixture(scope="module")
-def admin_api_key(request, create_api_key, blame, admin_label, cluster):
+def admin_api_key(request, create_api_key, admin_label, cluster):
     """Creates API key Secret for an admin"""
     annotations = {"kuadrant.io/groups": "admins"}
     secret = create_api_key("admin-api-key", admin_label, "admin_api_key_value", annotations)
@@ -82,9 +74,9 @@ def global_authorization(request, cluster, route, gateway, blame, admin_label, a
 
 
 @pytest.fixture(scope="module", autouse=True)
-def commit(request, route, authorization, global_authorization):  # pylint: disable=unused-argument
+def commit(request, route, global_authorization, authorization):  # pylint: disable=unused-argument
     """Commits AuthPolicy after the HTTPRoute is created"""
-    for policy in [authorization, global_authorization]:  # Forcing order of creation.
+    for policy in [global_authorization, authorization]:  # Forcing order of creation.
         request.addfinalizer(policy.delete)
         policy.commit()
         policy.wait_for_accepted()

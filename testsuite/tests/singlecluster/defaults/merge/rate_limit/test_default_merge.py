@@ -3,7 +3,7 @@
 import pytest
 
 from testsuite.kuadrant.policy import CelPredicate, has_condition
-from testsuite.kuadrant.policy.rate_limit import Limit
+from testsuite.tests.singlecluster.defaults.merge.rate_limit.conftest import LIMIT, MERGE_LIMIT, MERGE_LIMIT2
 
 pytestmark = [pytest.mark.kuadrant_only, pytest.mark.limitador]
 
@@ -19,7 +19,7 @@ def route(backend, route):
 def rate_limit(rate_limit):
     """Create a RateLimitPolicy with a basic limit with route as target"""
     route_when = CelPredicate("request.path == '/image'")
-    rate_limit.add_limit("route_limit", [Limit(3, "5s")], when=[route_when])
+    rate_limit.add_limit("image_limit", [LIMIT], when=[route_when])
     return rate_limit
 
 
@@ -33,14 +33,14 @@ def test_gateway_default_merge(client, global_rate_limit, rate_limit):
         has_condition("Enforced", "True", "Enforced", "RateLimitPolicy has been successfully enforced")
     )
 
-    anything = client.get_many("/anything", 10)
-    anything.assert_all(status_code=200)
-    assert client.get("/anything").status_code == 429
-
-    get = client.get_many("/get", 5)
+    get = client.get_many("/get", MERGE_LIMIT.limit)
     get.assert_all(status_code=200)
     assert client.get("/get").status_code == 429
 
-    get = client.get_many("/image", 3, headers={"accept": "image/webp"})
+    anything = client.get_many("/anything", MERGE_LIMIT2.limit)
+    anything.assert_all(status_code=200)
+    assert client.get("/anything").status_code == 429
+
+    get = client.get_many("/image", LIMIT.limit, headers={"accept": "image/webp"})
     get.assert_all(status_code=200)
     assert client.get("/get").status_code == 429

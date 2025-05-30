@@ -3,7 +3,7 @@
 import pytest
 
 from testsuite.kuadrant.policy import CelPredicate, has_condition
-from testsuite.kuadrant.policy.rate_limit import Limit
+from testsuite.tests.singlecluster.defaults.merge.rate_limit.conftest import MERGE_LIMIT2, LIMIT
 
 pytestmark = [pytest.mark.kuadrant_only, pytest.mark.limitador]
 
@@ -12,7 +12,7 @@ pytestmark = [pytest.mark.kuadrant_only, pytest.mark.limitador]
 def rate_limit(rate_limit):
     """Create a RateLimitPolicy with a basic limit with same target as one default."""
     when = CelPredicate("request.path == '/get'")
-    rate_limit.add_limit("gateway_limit", [Limit(3, "5s")], when=[when])
+    rate_limit.add_limit("get_limit", [LIMIT], when=[when])
     return rate_limit
 
 
@@ -22,10 +22,10 @@ def test_gateway_default_replace(client, global_rate_limit):
         has_condition("Enforced", "True", "Enforced", "RateLimitPolicy has been partially enforced")
     )
 
-    get = client.get_many("/get", 3)
+    get = client.get_many("/get", LIMIT.limit)
     get.assert_all(status_code=200)
     assert client.get("/get").status_code == 429
 
-    anything = client.get_many("/anything", 10)
+    anything = client.get_many("/anything", MERGE_LIMIT2.limit)
     anything.assert_all(status_code=200)
     assert client.get("/anything").status_code == 429
