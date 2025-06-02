@@ -20,7 +20,7 @@ def test_override_merge(
     authorization,
     user_auth,
     admin_auth,
-):  # pylint: disable=unused-argument
+):
     """Test AuthPolicy with an override and merge strategy overriding only a part of a new policy."""
     assert global_authorization.wait_until(
         has_condition("Enforced", "True", "Enforced", "AuthPolicy has been successfully enforced")
