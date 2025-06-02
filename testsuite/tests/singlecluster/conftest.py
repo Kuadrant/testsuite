@@ -184,7 +184,7 @@ def create_api_key(blame, request, cluster):
     """Creates API key Secret"""
 
     def _create_secret(
-        name, label_selector, api_key, annotations: dict[str, str] = None, ocp: KubernetesClient = cluster
+        name, label_selector, api_key, ocp: KubernetesClient = cluster,  annotations: dict[str, str] = None
     ):
         secret_name = blame(name)
         secret = APIKey.create_instance(ocp, secret_name, label_selector, api_key, annotations)
