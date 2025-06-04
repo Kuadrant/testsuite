@@ -3,7 +3,6 @@
 import pytest
 
 from testsuite.kuadrant.policy import has_condition
-from testsuite.tests.singlecluster.conftest import rate_limit_parametrize_gateway_route
 from testsuite.tests.singlecluster.defaults.merge.rate_limit.conftest import MERGE_LIMIT, MERGE_LIMIT2
 
 pytestmark = [pytest.mark.kuadrant_only, pytest.mark.limitador]
@@ -18,7 +17,12 @@ def commit(request, route, rate_limit, global_rate_limit):  # pylint: disable=un
         policy.wait_for_accepted()
 
 
-@rate_limit_parametrize_gateway_route
+@pytest.mark.parametrize(
+    "rate_limit, global_rate_limit",
+    [({"target": "gateway"}, "gateway"), ({"target": "route"}, "route")],
+    indirect=True,
+    ids=["gateway", "route"],
+)
 def test_multiple_policies_merge_default_ab(client, rate_limit, global_rate_limit):
     """Test RateLimitPolicy with merge defaults being enforced due to age"""
     assert rate_limit.wait_until(

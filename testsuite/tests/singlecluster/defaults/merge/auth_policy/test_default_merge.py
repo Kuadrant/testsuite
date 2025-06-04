@@ -7,19 +7,11 @@ from testsuite.kuadrant.policy import has_condition
 pytestmark = [pytest.mark.kuadrant_only, pytest.mark.authorino]
 
 
-@pytest.fixture(scope="module")
-def authorization(authorization, user_api_key):
-    """Create an AuthPolicy with authentication for a simple user with same target as one default"""
-    authorization.identity.add_api_key("second-api-key", selector=user_api_key.selector)
-    return authorization
-
-
-def test_default_merge(client, authorization, global_authorization, user_auth, admin_auth):
+@pytest.mark.parametrize("authorization", [{"api_key_name": "second-api-key", "section": None}], indirect=True)
+def test_default_merge(client, global_authorization, user_auth, admin_auth):
     """Both policies are enforced and not being overridden"""
+    global_authorization.refresh()
     assert global_authorization.wait_until(
-        has_condition("Enforced", "True", "Enforced", "AuthPolicy has been successfully enforced")
-    )
-    assert authorization.wait_until(
         has_condition("Enforced", "True", "Enforced", "AuthPolicy has been successfully enforced")
     )
 

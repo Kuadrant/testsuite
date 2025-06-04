@@ -3,7 +3,6 @@
 import pytest
 
 from testsuite.kuadrant.policy import has_condition
-from testsuite.tests.singlecluster.conftest import auth_parametrize_gateway_route
 
 pytestmark = [pytest.mark.kuadrant_only, pytest.mark.authorino]
 
@@ -17,15 +16,20 @@ def commit(request, route, authorization, global_authorization):  # pylint: disa
         policy.wait_for_accepted()
 
 
-@auth_parametrize_gateway_route
+@pytest.mark.parametrize(
+    "authorization, global_authorization",
+    [({"target": "gateway"}, "gateway"), ({"target": "route"}, "route")],
+    indirect=True,
+    ids=["gateway", "route"],
+)
 def test_multiple_policies_merge_override_ab(client, authorization, global_authorization, user_auth, admin_auth):
     """Test AuthPolicy with merge defaults being ignored due to age"""
-    assert authorization.wait_until(
+    assert global_authorization.wait_until(
         has_condition(
             "Enforced",
             "False",
             "Overridden",
-            "AuthPolicy is overridden by " f"[{global_authorization.namespace()}/{global_authorization.name()}]",
+            "AuthPolicy is overridden by " f"[{authorization.namespace()}/{authorization.name()}]",
         )
     )
 
@@ -35,8 +39,8 @@ def test_multiple_policies_merge_override_ab(client, authorization, global_autho
 
     user_auth_res = client.get("/get", auth=user_auth)
     assert user_auth_res is not None
-    assert user_auth_res.status_code == 401  # user authentication is overridden.
+    assert user_auth_res.status_code == 200  # user authentication overrides.
 
-    admin_auth_res = client.get("/get", auth=admin_auth)  # anonymous authentication is not allowed.
+    admin_auth_res = client.get("/get", auth=admin_auth)
     assert admin_auth_res is not None
-    assert admin_auth_res.status_code == 200
+    assert admin_auth_res.status_code == 401  # admin authentication is overridden.

@@ -2,7 +2,7 @@
 
 import pytest
 
-from testsuite.kuadrant.policy import CelPredicate, has_condition
+from testsuite.kuadrant.policy import has_condition
 from testsuite.tests.singlecluster.defaults.merge.rate_limit.conftest import LIMIT, MERGE_LIMIT, MERGE_LIMIT2
 
 pytestmark = [pytest.mark.kuadrant_only, pytest.mark.limitador]
@@ -15,14 +15,9 @@ def route(backend, route):
     return route
 
 
-@pytest.fixture(scope="module")
-def rate_limit(rate_limit):
-    """Create a RateLimitPolicy with a basic limit with route as target"""
-    route_when = CelPredicate("request.path == '/image'")
-    rate_limit.add_limit("image_limit", [LIMIT], when=[route_when])
-    return rate_limit
-
-
+@pytest.mark.parametrize(
+    "rate_limit", [{"limit_name": "image_limit", "request_path": "/image", "section": None}], indirect=True
+)
 def test_gateway_default_merge(client, global_rate_limit, rate_limit):
     """Both policies are enforced and not being overridden"""
     assert global_rate_limit.wait_until(

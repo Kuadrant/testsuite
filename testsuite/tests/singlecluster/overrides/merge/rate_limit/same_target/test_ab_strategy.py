@@ -17,6 +17,12 @@ def commit(request, route, rate_limit, global_rate_limit):  # pylint: disable=un
         policy.wait_for_accepted()
 
 
+@pytest.mark.parametrize(
+    "rate_limit, global_rate_limit",
+    [({"target": "gateway"}, "gateway"), ({"target": "route"}, "route")],
+    indirect=True,
+    ids=["gateway", "route"],
+)
 def test_multiple_policies_merge_default_ab(client, rate_limit, global_rate_limit):
     """Test RateLimitPolicy with merge overrides always being enforced"""
     assert rate_limit.wait_until(

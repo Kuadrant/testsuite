@@ -7,16 +7,8 @@ from testsuite.kuadrant.policy import has_condition
 pytestmark = [pytest.mark.kuadrant_only, pytest.mark.authorino]
 
 
-@pytest.fixture(scope="module")
-def authorization(authorization, user_api_key):
-    """Create an AuthPolicy with authentication with the same name as in the policy attached on the gateway"""
-    authorization.identity.add_api_key("api-key", selector=user_api_key.selector)
-    return authorization
-
-
-def test_default_replace(
-    client, authorization, global_authorization, user_auth, admin_auth
-):  # pylint: disable=unused-argument
+@pytest.mark.parametrize("authorization", [{"section": None}], indirect=True)
+def test_default_replace(client, global_authorization, user_auth, admin_auth):  # pylint: disable=unused-argument
     """
     Test Gateway policy being partially overridden when another policy is attached to route with the same name
     """

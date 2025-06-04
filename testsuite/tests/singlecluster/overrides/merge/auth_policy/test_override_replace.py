@@ -7,13 +7,7 @@ from testsuite.kuadrant.policy import has_condition
 pytestmark = [pytest.mark.kuadrant_only, pytest.mark.limitador]
 
 
-@pytest.fixture(scope="module")
-def authorization(authorization, user_api_key):
-    """Create an AuthPolicy with authentication for a simple user with same target as one default."""
-    authorization.identity.add_api_key("api-key", selector=user_api_key.selector)
-    return authorization
-
-
+@pytest.mark.parametrize("authorization", [{"section": None}], indirect=True)
 def test_override_replace(client, authorization, global_authorization, user_auth, admin_auth):
     """Test AuthPolicy with an override and merge strategy overriding only a part of a new policy."""
     assert authorization.wait_until(

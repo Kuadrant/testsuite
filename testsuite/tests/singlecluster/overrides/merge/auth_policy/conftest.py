@@ -2,7 +2,7 @@
 
 import pytest
 
-from testsuite.httpx.auth import HeaderApiKeyAuth, HttpxOidcClientAuth
+from testsuite.httpx.auth import HeaderApiKeyAuth
 from testsuite.kuadrant.policy import Strategy
 from testsuite.kuadrant.policy.authorization.auth_policy import AuthPolicy
 
@@ -47,10 +47,25 @@ def admin_auth(admin_api_key):
     return HeaderApiKeyAuth(admin_api_key)
 
 
-@pytest.fixture()
-def auth(oidc_provider):
-    """Returns Authentication object for HTTPX"""
-    return HttpxOidcClientAuth(oidc_provider.get_token, "authorization")
+@pytest.fixture(scope="module")
+def authorization(
+    request, kuadrant, route, gateway, blame, cluster, label, user_api_key
+):  # pylint: disable=unused-argument
+    """Authorization object (In case of Kuadrant AuthPolicy)"""
+    target_ref = request.getfixturevalue(request.param.get("target", "route"))
+    api_key_name = request.param.get("api_key_name", "api-key")
+    section = request.param.get("section", "overrides")
+
+    if kuadrant:
+        auth_policy = AuthPolicy.create_instance(cluster, blame("authz"), target_ref, labels={"testRun": label})
+
+        if section is None:
+            auth_policy.identity.add_api_key(api_key_name, selector=user_api_key.selector)
+        elif section == "overrides":
+            auth_policy.overrides.identity.add_api_key(api_key_name, selector=user_api_key.selector)
+        return auth_policy
+
+    return None
 
 
 @pytest.fixture(scope="module")
@@ -73,7 +88,7 @@ def global_authorization(request, cluster, blame, admin_label, admin_api_key):
     return auth_policy
 
 
-@pytest.fixture(scope="function", autouse=True)
+@pytest.fixture(scope="module", autouse=True)
 def commit(request, route, authorization, global_authorization):  # pylint: disable=unused-argument
     """Commits AuthPolicy after the HTTPRoute is created"""
     for policy in [global_authorization, authorization]:  # Forcing order of creation.

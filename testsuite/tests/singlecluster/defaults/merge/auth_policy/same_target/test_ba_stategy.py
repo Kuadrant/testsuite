@@ -3,7 +3,6 @@
 import pytest
 
 from testsuite.kuadrant.policy import has_condition
-from testsuite.tests.singlecluster.conftest import auth_parametrize_gateway_route
 
 pytestmark = [pytest.mark.kuadrant_only, pytest.mark.authorino]
 
@@ -17,7 +16,12 @@ def commit(request, route, authorization, global_authorization):  # pylint: disa
         policy.wait_for_accepted()
 
 
-@auth_parametrize_gateway_route
+@pytest.mark.parametrize(
+    "authorization, global_authorization",
+    [({"target": "gateway"}, "gateway"), ({"target": "route"}, "route")],
+    indirect=True,
+    ids=["gateway", "route"],
+)
 def test_multiple_policies_merge_default_ba(client, global_authorization, user_auth, admin_auth):
     """Test AuthPolicy with merge defaults being ignored due to age"""
     assert global_authorization.wait_until(

@@ -18,11 +18,30 @@ def route(backend, route):
 
 
 @pytest.fixture(scope="module")
-def rate_limit(cluster, blame, module_label, route):
-    """Add a RateLimitPolicy targeting the first HTTPRouteRule."""
-    rate_limit = RateLimitPolicy.create_instance(cluster, blame("sp"), route, labels={"testRun": module_label})
-    rate_limit.add_limit("get_limit", [LIMIT], when=[CelPredicate("request.path == '/get'")])
-    return rate_limit
+def rate_limit(request, kuadrant, cluster, blame, module_label, route, gateway):  # pylint: disable=unused-argument
+    """
+    Rate limit object.
+    Request is used for indirect parametrization, with two possible parameters:
+        1. `route` (default)
+        2. `gateway`
+    """
+    target_ref = request.getfixturevalue(request.param.get("target", "route"))
+    limit_name = request.param.get("limit_name", "get_limit")
+    request_path = request.param.get("request_path", "/get")
+    section = request.param.get("section", "defaults")
+
+    if kuadrant:
+        rate_limit = RateLimitPolicy.create_instance(
+            cluster, blame("limit"), target_ref, labels={"testRun": module_label}
+        )
+        when = CelPredicate(f"request.path == '{request_path}'")
+
+        if section is None:
+            rate_limit.add_limit(limit_name, [LIMIT], when=[when])
+        elif section == "defaults":
+            rate_limit.defaults.add_limit(limit_name, [LIMIT], when=[when])
+        return rate_limit
+    return None
 
 
 @pytest.fixture(scope="module")
