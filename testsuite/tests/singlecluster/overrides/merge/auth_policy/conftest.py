@@ -20,18 +20,18 @@ def admin_label(blame):
 
 
 @pytest.fixture(scope="module")
-def user_api_key(create_api_key, user_label, cluster):
+def user_api_key(create_api_key, user_label):
     """Creates API key Secret for a user"""
     annotations = {"kuadrant.io/groups": "users"}
-    secret = create_api_key("api-key", user_label, "api_key_value", annotations, cluster)
+    secret = create_api_key("api-key", user_label, "api_key_value", annotations=annotations)
     return secret
 
 
 @pytest.fixture(scope="module")
-def admin_api_key(create_api_key, admin_label, cluster):
+def admin_api_key(create_api_key, admin_label):
     """Creates API key Secret for an admin"""
     annotations = {"kuadrant.io/groups": "admins"}
-    secret = create_api_key("admin-api-key", admin_label, "admin_api_key_value", annotations, cluster)
+    secret = create_api_key("admin-api-key", admin_label, "admin_api_key_value", annotations=annotations)
     return secret
 
 
