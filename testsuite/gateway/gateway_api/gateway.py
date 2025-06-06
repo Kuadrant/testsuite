@@ -21,11 +21,13 @@ class KuadrantGateway(KubernetesObject, Gateway):
     def create_instance(cls, cluster: KubernetesClient, name, labels):
         """Creates new instance of Gateway"""
 
+        gw_class_name = cls.get_gateway_class_name(cluster)
+
         model: dict[Any, Any] = {
             "apiVersion": "gateway.networking.k8s.io/v1beta1",
             "kind": "Gateway",
             "metadata": {"name": name, "labels": labels},
-            "spec": {"gatewayClassName": "istio", "listeners": []},
+            "spec": {"gatewayClassName": gw_class_name, "listeners": []},
         }
         gateway = cls(model, context=cluster.context)
         return gateway
@@ -49,7 +51,8 @@ class KuadrantGateway(KubernetesObject, Gateway):
 
     @property
     def service_name(self) -> str:
-        return f"{self.name()}-istio"
+        gw_class_name = self.__class__.get_gateway_class_name(self.cluster)
+        return f"{self.name()}-{gw_class_name}"
 
     def external_ip(self) -> str:
         with self.context:
@@ -142,3 +145,23 @@ class KuadrantGateway(KubernetesObject, Gateway):
             "kind": "Gateway",
             "name": self.name(),
         }
+
+    @staticmethod
+    def get_gateway_class_name(cluster: KubernetesClient):
+        """Returns GatewayClass CR name if such CR exists in cluster"""
+        with cluster.context:
+            # returns 'openshift-default' as a default value or if there is a GatewayClass with such a name
+            # returns 'istio' if there is a GatewayClass with such a name and there is no 'openshift-default' one
+            # returns the first (probably effectively random) GatewayClass name otherwise
+
+            gw_class_name = "openshift-default"
+            istio_gw_class_found = False
+            for index, gw_class in enumerate(oc.selector("gatewayclass.gateway.networking.k8s.io").objects()):
+                if gw_class.name() == "openshift-default":
+                    return gw_class.name()
+                if gw_class.name() == "istio":
+                    istio_gw_class_found = True
+                if index == 0:
+                    gw_class_name = gw_class.name()
+
+            return "istio" if istio_gw_class_found else gw_class_name
