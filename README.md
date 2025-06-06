@@ -33,6 +33,7 @@ type: kuadrant.io/aws
 
 ### TLSPolicy tests
 * Existing self-signed ClusterIssuer or Issuer, named `selfsigned-issuer` (name defined in `control_plane.issuer.name`)
+* For multicluster tests a CA ClusterIssuer or Issuer found in [kuadrant-helm-install](https://github.com/azgabur/kuadrant-helm-install/tree/main/instances/templates/cert-manager) (name defined in `control_plane.ca-issuer.name`)
 * (Optional) Existing lets-encrypt ClusterIssuer or Issuer, named `letsencrypt-staging-issuer` (name defined in `letsencrypt.issuer.name`)
 
 ## Configuration

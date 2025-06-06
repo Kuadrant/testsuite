@@ -32,6 +32,9 @@ default:
     issuer:
       name: "selfsigned-issuer"
       kind: "ClusterIssuer"
+    ca-issuer:
+      name: "kuadrant-qe-issuer"
+      kind: "ClusterIssuer"
   letsencrypt:
     issuer:
       name: "letsencrypt-staging-issuer"

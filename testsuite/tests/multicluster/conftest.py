@@ -29,12 +29,12 @@ def cluster2(testconfig):
     return client
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def cluster_issuer(testconfig, cluster, skip_or_fail):
     """Reference to cluster Let's Encrypt certificate issuer"""
-    testconfig.validators.validate(only="letsencrypt")
-    name = testconfig["letsencrypt"]["issuer"]["name"]
-    kind = testconfig["letsencrypt"]["issuer"]["kind"]
+    testconfig.validators.validate(only="control_plane.ca-issuer")
+    name = testconfig["control_plane"]["ca-issuer"]["name"]
+    kind = testconfig["control_plane"]["ca-issuer"]["kind"]
     try:
         selector(f"{kind}/{name}", static_context=cluster.context).object()
     except OpenShiftPythonException as exc:
@@ -169,7 +169,7 @@ def tls_policy2(blame, cluster2, gateway2, module_label, cluster_issuer):
 @pytest.fixture(scope="module")
 def client(hostname, gateway, gateway2):  # pylint: disable=unused-argument
     """Returns httpx client to be used for requests"""
-    root_cert = resources.files("testsuite.resources").joinpath("letsencrypt-stg-root-x1.pem").read_text()
+    root_cert = resources.files("testsuite.resources").joinpath("kuadrant_qe_ca.crt").read_text()
     client = hostname.client(verify=Certificate(certificate=root_cert, chain=root_cert, key=""))
     yield client
     client.close()
