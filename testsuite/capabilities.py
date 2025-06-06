@@ -38,8 +38,9 @@ def kuadrant_version():
         if not project.connected:
             break
         with project.context:
-            catalog_source = selector("CatalogSource/kuadrant-upstream").object(ignore_not_found=True)
-            if catalog_source is None:
-                break
-            versions.append((catalog_source.as_dict()["spec"]["image"], cluster.api_url))
+            if selector("crd/catalogsources.operators.coreos.com").count_existing() == 1:
+                catalog_source = selector("CatalogSource/kuadrant-upstream").object(ignore_not_found=True)
+                if catalog_source is None:
+                    break
+                versions.append((catalog_source.as_dict()["spec"]["image"], cluster.api_url))
     return versions
