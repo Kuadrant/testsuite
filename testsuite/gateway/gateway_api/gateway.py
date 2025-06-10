@@ -17,15 +17,21 @@ from testsuite.utils import check_condition, asdict, domain_match
 class KuadrantGateway(KubernetesObject, Gateway):
     """Gateway object for Kuadrant"""
 
+    # Name of the GatewayClass that is to be used for all the instances
+    cached_gw_class_name = None
+
     @classmethod
     def create_instance(cls, cluster: KubernetesClient, name, labels):
         """Creates new instance of Gateway"""
+
+        # Use cached value if exists
+        cls.cached_gw_class_name = cls.cached_gw_class_name or cls.get_gateway_class_name(cluster)
 
         model: dict[Any, Any] = {
             "apiVersion": "gateway.networking.k8s.io/v1beta1",
             "kind": "Gateway",
             "metadata": {"name": name, "labels": labels},
-            "spec": {"gatewayClassName": "istio", "listeners": []},
+            "spec": {"gatewayClassName": cls.cached_gw_class_name, "listeners": []},
         }
         gateway = cls(model, context=cluster.context)
         return gateway
@@ -49,7 +55,7 @@ class KuadrantGateway(KubernetesObject, Gateway):
 
     @property
     def service_name(self) -> str:
-        return f"{self.name()}-istio"
+        return f"{self.name()}-{self.cached_gw_class_name}"
 
     def external_ip(self) -> str:
         with self.context:
@@ -142,3 +148,17 @@ class KuadrantGateway(KubernetesObject, Gateway):
             "kind": "Gateway",
             "name": self.name(),
         }
+
+    @staticmethod
+    def get_gateway_class_name(cluster: KubernetesClient):
+        """Returns proper GatewayClass CR name if such CR exists in cluster"""
+        with cluster.context:
+            # returns 'openshift-default' if there is a GatewayClass with such a name
+            # returns 'istio' if there is a GatewayClass with such a name and there is no 'openshift-default' one
+            # raises an error otherwise
+            gw_classes = [gw.name() for gw in oc.selector("gatewayclass.gateway.networking.k8s.io").objects()]
+            if "openshift-default" in gw_classes:
+                return "openshift-default"
+            if "istio" in gw_classes:
+                return "istio"
+            raise KeyError("Neither 'openshift-default' nor 'istio' GatewayClass found.")
