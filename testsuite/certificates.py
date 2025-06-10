@@ -10,6 +10,7 @@ from importlib import resources
 from typing import Optional, List, Dict, Collection, Union
 
 from cryptography import x509
+from cryptography.hazmat.primitives.asymmetric.types import CertificatePublicKeyTypes
 
 
 class CFSSLException(Exception):
@@ -55,9 +56,14 @@ class Certificate:
         return self.decoded.extensions.get_extension_for_class(x509.KeyUsage).value
 
     @cached_property
-    def algorithm(self) -> x509.ObjectIdentifier:
-        """Returns certificate algorithm"""
-        return self.decoded.signature_algorithm_oid
+    def pub_key_algorithm(self) -> x509.ObjectIdentifier:
+        """Returns certificate public key algorithm"""
+        return self.decoded.public_key_algorithm_oid
+
+    @cached_property
+    def pub_key(self) -> CertificatePublicKeyTypes:
+        """Returns certificate public key"""
+        return self.decoded.public_key()
 
 
 @dataclasses.dataclass

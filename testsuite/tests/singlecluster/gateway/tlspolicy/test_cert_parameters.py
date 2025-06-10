@@ -4,6 +4,7 @@ from datetime import timedelta
 
 import pytest
 from cryptography import x509
+from cryptography.hazmat.primitives.asymmetric.ec import EllipticCurvePublicKey
 
 pytestmark = [pytest.mark.kuadrant_only, pytest.mark.tlspolicy]
 
@@ -56,4 +57,8 @@ def test_tls_cert_usages(tls_cert):
 
 def test_tls_cert_algorithm(tls_cert):
     """Test certificate algorithm"""
-    assert tls_cert.algorithm == x509.SignatureAlgorithmOID.ECDSA_WITH_SHA384
+    assert tls_cert.pub_key_algorithm == x509.PublicKeyAlgorithmOID.EC_PUBLIC_KEY
+
+    pub_key = tls_cert.pub_key
+    assert isinstance(pub_key, EllipticCurvePublicKey)
+    assert pub_key.curve.key_size == 384
