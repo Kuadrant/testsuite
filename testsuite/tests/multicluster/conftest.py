@@ -3,11 +3,10 @@
 from importlib import resources
 
 import pytest
-from openshift_client import selector, OpenShiftPythonException
 
 from testsuite.backend.httpbin import Httpbin
 from testsuite.certificates import Certificate
-from testsuite.gateway import Exposer, CustomReference, Hostname
+from testsuite.gateway import Exposer, Hostname
 from testsuite.gateway import TLSGatewayListener
 from testsuite.gateway.gateway_api.gateway import KuadrantGateway
 from testsuite.gateway.gateway_api.hostname import DNSPolicyExposer
@@ -27,23 +26,6 @@ def cluster2(testconfig):
     if not client.connected:
         pytest.fail(f"You are not logged into the second cluster or the {project} namespace doesn't exist")
     return client
-
-
-@pytest.fixture(scope="module")
-def cluster_issuer(testconfig, cluster, skip_or_fail):
-    """Reference to cluster Let's Encrypt certificate issuer"""
-    testconfig.validators.validate(only="letsencrypt")
-    name = testconfig["letsencrypt"]["issuer"]["name"]
-    kind = testconfig["letsencrypt"]["issuer"]["kind"]
-    try:
-        selector(f"{kind}/{name}", static_context=cluster.context).object()
-    except OpenShiftPythonException as exc:
-        skip_or_fail(f"{kind}/{name} is not present on the cluster: {exc}")
-    return CustomReference(
-        group="cert-manager.io",
-        kind=kind,
-        name=name,
-    )
 
 
 @pytest.fixture(scope="module")
@@ -169,7 +151,7 @@ def tls_policy2(blame, cluster2, gateway2, module_label, cluster_issuer):
 @pytest.fixture(scope="module")
 def client(hostname, gateway, gateway2):  # pylint: disable=unused-argument
     """Returns httpx client to be used for requests"""
-    root_cert = resources.files("testsuite.resources").joinpath("letsencrypt-stg-root-x1.pem").read_text()
+    root_cert = resources.files("testsuite.resources").joinpath("kuadrant_qe_ca.crt").read_text()
     client = hostname.client(verify=Certificate(certificate=root_cert, chain=root_cert, key=""))
     yield client
     client.close()
