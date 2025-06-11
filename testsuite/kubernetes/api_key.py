@@ -19,7 +19,7 @@ class APIKey(KubernetesObject):
         return base64.b64decode(self.model.data["api_key"]).decode("utf-8")
 
     @classmethod
-    def create_instance(cls, cluster: KubernetesClient, name, label, api_key):
+    def create_instance(cls, cluster: KubernetesClient, name, label, api_key, annotations: dict[str, str] = None):
         """Creates base instance"""
         model = {
             "apiVersion": "v1",
@@ -28,6 +28,7 @@ class APIKey(KubernetesObject):
                 "name": name,
                 "namespace": cluster.project,
                 "labels": {"authorino.kuadrant.io/managed-by": "authorino", "group": label},
+                "annotations": annotations if annotations is not None else {},
             },
             "stringData": {"api_key": api_key},
             "type": "Opaque",

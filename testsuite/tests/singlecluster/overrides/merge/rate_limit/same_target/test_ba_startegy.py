@@ -3,29 +3,33 @@
 import pytest
 
 from testsuite.kuadrant.policy import has_condition
-from .conftest import OVERRIDE_LIMIT, OVERRIDE_LIMIT2
+from testsuite.tests.singlecluster.overrides.merge.rate_limit.conftest import OVERRIDE_LIMIT, OVERRIDE_LIMIT2
 
 pytestmark = [pytest.mark.kuadrant_only, pytest.mark.limitador]
 
 
 @pytest.fixture(scope="module", autouse=True)
-def commit(request, route, rate_limit, override_merge_rate_limit):  # pylint: disable=unused-argument
+def commit(request, route, rate_limit, global_rate_limit):  # pylint: disable=unused-argument
     """Commits RateLimitPolicy after the HTTPRoute is created"""
-    for policy in [rate_limit, override_merge_rate_limit]:  # Forcing order of creation.
+    for policy in [global_rate_limit, rate_limit]:  # Forcing order of creation.
         request.addfinalizer(policy.delete)
         policy.commit()
         policy.wait_for_accepted()
 
 
-def test_multiple_policies_merge_default_ab(client, rate_limit, override_merge_rate_limit):
+@pytest.mark.parametrize(
+    "rate_limit, global_rate_limit",
+    [("gateway", "gateway"), ("route", "route")],
+    indirect=True,
+)
+def test_multiple_policies_merge_default_ba(client, rate_limit, global_rate_limit):
     """Test RateLimitPolicy with merge overrides always being enforced"""
     assert rate_limit.wait_until(
         has_condition(
             "Enforced",
             "False",
             "Overridden",
-            "RateLimitPolicy is overridden by "
-            f"[{override_merge_rate_limit.namespace()}/{override_merge_rate_limit.name()}]",
+            "RateLimitPolicy is overridden by " f"[{global_rate_limit.namespace()}/{global_rate_limit.name()}]",
         )
     )
 
