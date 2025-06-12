@@ -30,7 +30,7 @@ default:
     slow_loadbalancers: false
     provider_secret: "aws-credentials"
     issuer:
-      name: "selfsigned-issuer"
+      name: "kuadrant-qe-issuer"
       kind: "ClusterIssuer"
   letsencrypt:
     issuer:
