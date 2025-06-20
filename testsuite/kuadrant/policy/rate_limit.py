@@ -93,8 +93,8 @@ class RateLimitPolicy(Policy):
         self.spec_section = self.model.spec.setdefault("overrides", {})
         return self
 
-    def wait_for_ready(self):
+    def wait_for_ready(self, desired_observed_generation: int = None):
         """Wait for RLP to be enforced"""
-        super().wait_for_ready()
+        super().wait_for_ready(desired_observed_generation=desired_observed_generation)
         # Even after enforced condition RLP requires a short sleep
         time.sleep(5)
