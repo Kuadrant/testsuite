@@ -7,6 +7,7 @@ import openshift_client as oc
 from openshift_client import Context, OpenShiftPythonException
 
 from testsuite.kubernetes.openshift.route import OpenshiftRoute
+from .deployment import Deployment
 from .secret import Secret
 
 
@@ -92,6 +93,11 @@ class KubernetesClient:
         """Returns list of routes for given service"""
         with self.context:
             return oc.selector("route", field_selectors={"spec.to.name": service_name}).objects(cls=OpenshiftRoute)
+
+    def get_deployment(self, name: str):
+        """Returns dict-like structure for accessing deployment data"""
+        with self.context:
+            return oc.selector(f"deployment/{name}").object(cls=Deployment)
 
     def do_action(self, verb: str, *args, auto_raise: bool = True, parse_output: bool = False):
         """Run an oc command."""
