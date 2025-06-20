@@ -31,7 +31,7 @@ export ES_SERVER= # to disable indexing
 
 ## Execution
 
-`kube-burner init -c ./config.yaml --timeout 5m --uuid scale-test-$(openssl rand -hex 3)`
+`kube-burner init -c ./control-plane-config.yaml --timeout 5m --uuid scale-test-$(openssl rand -hex 3)`
 
 Don't forget to increase the timeout if a larger number of CRs are to be created. You might also modify policy templates based on your needs, e.g. increase limits in RateLimitPolicy CR templates etc.
 
@@ -104,7 +104,7 @@ kubectl -n monitoring port-forward svc/prometheus-k8s 9090:9090
 Run kube-burner (described in more detail above):
 
 ```bash
-kube-burner init -c ./config.yaml --timeout 5m
+kube-burner init -c ./control-plane-config.yaml --timeout 5m
 ```
 
 ## Adding new metrics

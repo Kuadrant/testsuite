@@ -18,7 +18,7 @@ Scale down the default dns operator:
 ```shell
 kubectl scale deployment/dns-operator-controller-manager --replicas=0 -n kuadrant-system
 ```
-Note: This is required for the default kubeburner workload (namespaced-dns-operator-deployments.yaml) as it creates its own dns operator deployments.
+Note: This is required for the default kubeburner workload (namespaced-dns-operator-deployments-config.yaml) as it creates its own dns operator deployments.
 
 Deploy the observability stack:
 ```shell
@@ -126,7 +126,7 @@ scale-test-1   dnspolicy.kuadrant.io/dnspolicy-gw2-i1   9m25s
 
 Records Created in AWS:
 
-![img.png](img.png)
+![namespaced-dns-operator-dnsrecords.png](namespaced-dns-operator-dnsrecords.png)
 
 ## Useful commands
 
