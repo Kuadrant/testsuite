@@ -114,7 +114,7 @@ class EnvoyConfig(ConfigMap):
             "route_config"
         ]["virtual_hosts"][0]["routes"]
         for host in virtual_hosts:
-            if host["match"]["prefix"] == prefix and host["route"]["cluster"] == backend.url:
+            if host["match"].get("prefix") == prefix and host["route"]["cluster"] == backend.url:
                 return True
         return False
 
