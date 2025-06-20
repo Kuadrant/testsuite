@@ -114,7 +114,7 @@ class EnvoyConfig(ConfigMap):
             "route_config"
         ]["virtual_hosts"][0]["routes"]
         for host in virtual_hosts:
-            if host["match"]["prefix"] == prefix and host["route"]["cluster"] == backend.url:
+            if host["match"].get("prefix") == prefix and host["route"]["cluster"] == backend.url:
                 return True
         return False
 
@@ -139,4 +139,13 @@ class EnvoyConfig(ConfigMap):
         config["static_resources"]["listeners"][0]["filter_chains"][0]["filters"][0]["typed_config"]["route_config"][
             "virtual_hosts"
         ][0]["routes"] = {}
+        self["envoy.yaml"] = yaml.dump(config)
+
+    @modify
+    def add_custom_routes_match(self, match: dict, position: int = 0):
+        """Add specific routes match which will be specified through dictionary data into fixture."""
+        config = yaml.safe_load(self["envoy.yaml"])
+        config["static_resources"]["listeners"][0]["filter_chains"][0]["filters"][0]["typed_config"]["route_config"][
+            "virtual_hosts"
+        ][0]["routes"].insert(position, match)
         self["envoy.yaml"] = yaml.dump(config)
