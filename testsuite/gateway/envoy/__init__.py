@@ -57,7 +57,10 @@ class Envoy(Gateway):  # pylint: disable=too-many-instance-attributes
         time.sleep(3)  # or some reason wait_for_ready is not enough, needs more investigation
 
     def wait_for_ready(self, timeout: int = 10 * 60):
+        if self.deployment is None:
+            raise ValueError("Deployment is not initialized")
         with oc.timeout(timeout):
+            self.deployment.wait_for_ready()
             assert self.cluster.do_action(
                 "rollout", ["status", f"deployment/{self.name}"]
             ), "Envoy wasn't ready in time"
@@ -88,7 +91,6 @@ class Envoy(Gateway):  # pylint: disable=too-many-instance-attributes
 
         self.deployment = self.create_deployment()
         self.deployment.commit()
-        self.deployment.wait_for_ready()
 
         self.service = Service.create_instance(
             self.cluster,
