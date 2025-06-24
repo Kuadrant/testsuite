@@ -116,13 +116,21 @@ class HTTPRoute(KubernetesObject, GatewayRoute):
         self.model.spec.rules.clear()
 
     def wait_for_ready(self):
-        """Waits until HTTPRoute is reconcilled by GatewayProvider"""
+        """Waits until HTTPRoute is reconciled by known GatewayProvider controllers"""
+
+        expected_controllers = {
+            "istio.io/gateway-controller",
+            "openshift.io/gateway-controller/v1",
+        }
 
         def _ready(obj):
             for condition_set in obj.model.status.parents:
-                if condition_set.controllerName == "istio.io/gateway-controller":
+                if (
+                    condition_set.controllerName in expected_controllers
+                    or "gateway-controller" in condition_set.controllerName  # fallback
+                ):
                     return (all(x.status == "True" for x in condition_set.conditions),)
             return False
 
         success = self.wait_until(_ready, timelimit=10)
-        assert success, f"{self.kind()} did got get ready in time"
+        assert success, f"{self.kind()} did not get ready in time"
