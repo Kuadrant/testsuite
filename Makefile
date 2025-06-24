@@ -155,7 +155,7 @@ test-scale-dnspolicy: export PROMETHEUS_TOKEN := ""
 test-scale-dnspolicy: export SKIP_CLEANUP := false
 test-scale-dnspolicy: export NUM_GWS := 1
 test-scale-dnspolicy: export NUM_LISTENERS := 1
-test-scale-dnspolicy: KUBEBURNER_WORKLOAD := namespaced-dns-operator-deployments.yaml
+test-scale-dnspolicy: KUBEBURNER_WORKLOAD := namespaced-dns-operator-deployments-config.yaml
 test-scale-dnspolicy: kube-burner ## Run DNSPolicy scale tests.
 	@echo "test-scale-dnspolicy: KUBEBURNER_WORKLOAD=${KUBEBURNER_WORKLOAD} JOB_ITERATIONS=${JOB_ITERATIONS} KUADRANT_ZONE_ROOT_DOMAIN=${KUADRANT_ZONE_ROOT_DOMAIN} DNS_PROVIDER=${DNS_PROVIDER} PROMETHEUS_URL=${PROMETHEUS_URL} PROMETHEUS_TOKEN=${PROMETHEUS_TOKEN}"
 	cd scale_test/dnspolicy && $(KUBE_BURNER) init -c ${KUBEBURNER_WORKLOAD} --log-level debug
@@ -180,7 +180,7 @@ $(KUBE_BURNER):
 	set -e ;\
 	mkdir -p $(dir $(KUBE_BURNER)) ;\
 	OS=$(shell go env GOOS) && ARCH=$(shell go env GOARCH) && \
-	wget -O kube-burner.tar.gz https://github.com/kube-burner/kube-burner/releases/download/v1.11.1/kube-burner-V1.11.1-linux-x86_64.tar.gz ;\
+	wget -O kube-burner.tar.gz https://github.com/kube-burner/kube-burner/releases/download/v1.16.1/kube-burner-V1.16.1-linux-x86_64.tar.gz ;\
 	tar -zxvf kube-burner.tar.gz ;\
 	mv kube-burner $(KUBE_BURNER) ;\
 	chmod +x $(KUBE_BURNER) ;\
