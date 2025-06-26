@@ -5,7 +5,7 @@ import dataclasses
 from openshift_client import selector
 
 from testsuite.kuadrant.authorino import Authorino
-from testsuite.kubernetes import CustomResource
+from testsuite.kubernetes import CustomResource, modify
 from testsuite.kubernetes.deployment import Deployment
 from testsuite.utils import asdict
 
@@ -101,3 +101,8 @@ class KuadrantCR(CustomResource):
         """Returns spec.limitador from Kuadrant object"""
         self.model.spec.setdefault("limitador", {})
         return LimitadorSection(self, "limitador")
+
+    @modify
+    def set_observability(self, enabled: bool):
+        """Enable observability"""
+        self.model.spec["observability"] = {"enable": enabled} if enabled else None

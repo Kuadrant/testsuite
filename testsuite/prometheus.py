@@ -94,3 +94,15 @@ class Prometheus:
             return False
 
         assert _wait_for_scrape(), "Scrape wasn't done in time"
+
+    @backoff.on_predicate(backoff.constant, interval=5, max_tries=12, jitter=None)
+    def verify_no_observability_targets(self, label_filters: dict[str, list[str]]) -> bool:
+        """Verify that no observability targets are active in Prometheus"""
+        targets = self.get_active_targets()
+
+        for t in targets:
+            labels = t.get("labels", {})
+            for label_key, expected_values in label_filters.items():
+                if labels.get(label_key) in expected_values:
+                    return False
+        return True
