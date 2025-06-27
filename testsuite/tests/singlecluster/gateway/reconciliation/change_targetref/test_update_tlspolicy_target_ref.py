@@ -47,12 +47,13 @@ def gateway2(request, cluster, blame, wildcard_domain2, module_label):
 
 
 @pytest.fixture(scope="module")
-def custom_client():
+def custom_client(wait_until_dns_is_resolvable, dns_policy2, hostname2):
     """
     Provides a client for both gateway's to avoid secret and cert errors
     """
 
     def _client_new(hostname: str, gateway_instance: KuadrantGateway):
+        wait_until_dns_is_resolvable(dns_policy2, hostname2.hostname)
         return StaticHostname(hostname, gateway_instance.get_tls_cert).client()
 
     return _client_new

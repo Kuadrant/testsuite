@@ -3,7 +3,7 @@ Conftest for changing targetRef field in policies
 """
 
 import time
-
+import socket
 import pytest
 
 from testsuite.gateway import GatewayRoute, Hostname, Exposer, GatewayListener
@@ -76,8 +76,39 @@ def route2(request, gateway2, blame, hostname2, module_label, backend) -> Gatewa
 
 
 @pytest.fixture(scope="module")
-def client2(route2, hostname2):  # pylint: disable=unused-argument
+def wait_until_dns_is_resolvable():
+    """Function that waits until the DNS record is marked as Ready and the hostname is resolvable"""
+
+    def _wait_until_dns_is_resolvable(dns_policy: DNSPolicy, hostname: str, timeout=300):
+        start = time.time()
+        while time.time() - start < timeout:
+            dns_policy.refresh()
+            conditions = dns_policy.model.status.get("recordConditions", {})
+            if all(cond[0]["type"] == "Ready" and cond[0]["status"] == "True" for cond in conditions.values()):
+                try:
+                    socket.gethostbyname(hostname)
+                    return
+                except socket.gaierror:
+                    pass
+            time.sleep(5)
+        raise TimeoutError(f"DNS record or hostname {hostname} not ready after {timeout} seconds")
+
+    return _wait_until_dns_is_resolvable
+
+
+@pytest.fixture(scope="module")
+def client(route, hostname, dns_policy, wait_until_dns_is_resolvable):  # pylint: disable=unused-argument
+    """Returns httpx client to be used for requests"""
+    wait_until_dns_is_resolvable(dns_policy, hostname.hostname)
+    client = hostname.client()
+    yield client
+    client.close()
+
+
+@pytest.fixture(scope="module")
+def client2(route2, hostname2, dns_policy2, wait_until_dns_is_resolvable):  # pylint: disable=unused-argument
     """Returns httpx client for Gateway 2"""
+    wait_until_dns_is_resolvable(dns_policy2, hostname2.hostname)
     client = hostname2.client()
     yield client
     client.close()
