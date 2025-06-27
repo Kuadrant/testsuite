@@ -10,6 +10,22 @@ from testsuite.gateway import GatewayListener
 pytestmark = [pytest.mark.kuadrant_only, pytest.mark.dnspolicy]
 
 
+@pytest.fixture(scope="module")
+def client(route, hostname):  # pylint: disable=unused-argument
+    """Returns httpx client to be used for requests"""
+    client = hostname.client()
+    yield client
+    client.close()
+
+
+@pytest.fixture(scope="module")
+def client2(route2, hostname2):  # pylint: disable=unused-argument
+    """Returns httpx client for Gateway 2"""
+    client = hostname2.client()
+    yield client
+    client.close()
+
+
 def test_update_dns_policy_target_ref(
     gateway, gateway2, client, client2, dns_policy, change_target_ref
 ):  # pylint: disable=unused-argument
