@@ -10,7 +10,8 @@ from testsuite.gateway import GatewayRoute, Hostname, Exposer, GatewayListener
 from testsuite.gateway.gateway_api.gateway import KuadrantGateway
 from testsuite.gateway.gateway_api.hostname import DNSPolicyExposer
 from testsuite.gateway.gateway_api.route import HTTPRoute
-from testsuite.kuadrant.policy.dns import DNSPolicy
+from testsuite.kuadrant.policy.dns import DNSPolicy, has_record_condition
+from testsuite.utils import is_nxdomain
 
 
 @pytest.fixture(scope="module")
@@ -93,14 +94,17 @@ def authorization():
 
 
 @pytest.fixture(scope="module")
-def dns_policy2(blame, gateway2, module_label, dns_provider_secret, request):
-    """DNSPolicy fixture for Gateway 2"""
+def dns_policy2(blame, gateway2, module_label, dns_provider_secret, request, hostname2):
+    """DNSPolicy fixture for Gateway 2 with hostname readiness check"""
     policy = DNSPolicy.create_instance(
         gateway2.cluster, blame("dns2"), gateway2, dns_provider_secret, labels={"app": module_label}
     )
     request.addfinalizer(policy.delete)
     policy.commit()
     policy.wait_for_ready()
+    policy.wait_until(has_record_condition("Ready", "True"))
+    policy.wait_until(lambda _: not is_nxdomain(hostname2.hostname), timelimit=300)
+
     return policy
 
 
