@@ -15,7 +15,7 @@ def commit():
     return None
 
 
-def test_wrong_issuer_type(request, gateway, blame, module_label):
+def test_wrong_issuer_type(request, gateway, blame, module_label, cluster):
     """Tests that TLSPolicy is rejected if issuer does not have a correct type"""
 
     policy = TLSPolicy.create_instance(
@@ -30,18 +30,12 @@ def test_wrong_issuer_type(request, gateway, blame, module_label):
         labels={"app": module_label},
     )
     request.addfinalizer(policy.delete)
-    policy.commit()
-
-    assert policy.wait_until(
-        has_condition(
-            "Accepted",
-            "False",
-            "Invalid",
-            'TLSPolicy target is invalid: invalid value "Gateway" for '
-            'issuerRef.kind. Must be empty, "Issuer" or "ClusterIssuer"',
-        ),
-        timelimit=20,
-    ), f"Policy did not reach expected status, instead it was: {policy.refresh().model.status.conditions}"
+    res = cluster.do_action("create", "-f", "-", stdin_str=policy.as_json(), auto_raise=False)
+    assert res.status() == 1, "Policy should not be created with invalid issuerRef.kind"
+    assert res.err().strip() == (
+        f'The TLSPolicy "{policy.model.metadata.name}" is invalid: spec.issuerRef: Invalid value: "object": '
+        f"Invalid issuerRef.kind. The only supported values are blank, 'Issuer' and 'ClusterIssuer'"
+    )
 
 
 def test_non_existing_issuer(request, gateway, cluster, blame, module_label):
