@@ -28,6 +28,7 @@ spec:
 """
 
 import dataclasses
+import ssl
 from importlib import resources
 
 import pytest
@@ -35,6 +36,7 @@ from openshift_client import selector
 from openshift_client.model import OpenShiftPythonException
 
 from testsuite.gateway import CustomReference
+from testsuite.httpx import create_tmp_file
 
 pytestmark = [pytest.mark.kuadrant_only, pytest.mark.dnspolicy, pytest.mark.tlspolicy]
 
@@ -62,7 +64,11 @@ def client(hostname, gateway):
     root_cert = resources.files("testsuite.resources").joinpath("letsencrypt-stg-root-x1.pem").read_text()
     old_cert = gateway.get_tls_cert(hostname.hostname)
     cert = dataclasses.replace(old_cert, chain=old_cert.certificate + root_cert)
-    client = hostname.client(verify=cert)
+
+    # Injecting the certificate as a string literal has been deprecated, hence we write to a local file, that during
+    # the teardown of the fixture will be removed.
+    verify_file = create_tmp_file(cert.chain)
+    client = hostname.client(verify=ssl.create_default_context(cafile=verify_file.name))
     yield client
     client.close()
 

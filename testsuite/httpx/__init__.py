@@ -1,11 +1,12 @@
 """Common classes for Httpx"""
 
+import ssl
 import typing
 
 # I change return type of HTTPX client to Kuadrant Result
 # mypy: disable-error-code="override, return-value"
 from tempfile import NamedTemporaryFile
-from typing import Union, Iterable
+from typing import Union, Iterable, MutableMapping
 
 import backoff
 from httpx import Client, RequestError, USE_CLIENT_DEFAULT, Request
@@ -19,7 +20,6 @@ from httpx._types import (
     HeaderTypes,
     CookieTypes,
     TimeoutTypes,
-    RequestExtensions,
 )
 
 from testsuite.certificates import Certificate
@@ -122,7 +122,7 @@ class KuadrantClient(Client):
         if isinstance(verify, Certificate):
             verify_file = create_tmp_file(verify.chain)
             self.files.append(verify_file)
-            _verify = verify_file.name
+            _verify = ssl.create_default_context(cafile=verify_file.name)
         _cert = None
         if cert:
             cert_file = create_tmp_file(cert.chain)
@@ -224,7 +224,7 @@ class ForceSNIClient(KuadrantClient):
         headers: HeaderTypes | None = None,
         cookies: CookieTypes | None = None,
         timeout: TimeoutTypes | UseClientDefault = USE_CLIENT_DEFAULT,
-        extensions: RequestExtensions | None = None,
+        extensions: MutableMapping[str, typing.Any] | None = None,
     ) -> Request:
         extensions = extensions or {}
         extensions.setdefault("sni_hostname", self.sni_hostname)
