@@ -71,10 +71,11 @@ def is_affected_by(policy: "Policy"):
 class Policy(KubernetesObject):
     """Base class with common functionality for all policies"""
 
-    def wait_for_ready(self, desired_observed_generation: int = None):
+    def wait_for_ready(self):
         """Wait for a Policy to be ready"""
-        if desired_observed_generation is not None:
-            self.wait_until(has_observed_generation(desired_observed_generation))
+        self.refresh()
+        success = self.wait_until(has_observed_generation(self.generation))
+        assert success, f"{self.kind()} did not reach observed generation in time"
         self.wait_for_full_enforced()
 
     def wait_for_accepted(self):
@@ -101,3 +102,8 @@ class Policy(KubernetesObject):
     def generation(self):
         """Generation property"""
         return self.model.metadata.generation
+
+    @property
+    def observed_generation(self):
+        """Observed generation property"""
+        return self.model.status.observedGeneration

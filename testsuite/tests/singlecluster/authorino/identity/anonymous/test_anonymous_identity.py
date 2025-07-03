@@ -32,9 +32,8 @@ def test_anonymous_identity(client, auth, authorization):
     response = client.get("/get")
     assert response.status_code == 401
 
-    generation = authorization.generation
     authorization.identity.add_anonymous("anonymous")
-    authorization.wait_for_ready(desired_observed_generation=generation + 1)
+    authorization.wait_for_ready()
 
     response = client.get("/get")
     assert response.status_code == 200
