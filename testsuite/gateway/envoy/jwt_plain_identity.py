@@ -7,15 +7,23 @@ from testsuite.gateway.envoy import Envoy, EnvoyConfig
 
 
 class JwtEnvoy(Envoy):
-    """Envoy configuration with JWT plain identity test setup"""
+    """Envoy configuration with JWT tests setup"""
 
     def __init__(
-        self, cluster, gw_name, authorino, envoy_image, tools, keycloak_realm, keycloak_url, labels: dict[str, str]
+        self,
+        cluster,
+        gw_name,
+        authorino,
+        envoy_image,
+        keycloak_realm,
+        keycloak_url,
+        backend_url,
+        labels: dict[str, str],
     ):
         super().__init__(cluster, gw_name, authorino, envoy_image, labels)
         self.server_url = keycloak_url
         self.realm = keycloak_realm
-        self.tools = tools
+        self.backend_url = backend_url
 
     @property
     def config(self):
@@ -78,5 +86,19 @@ class JwtEnvoy(Envoy):
             config["static_resources"]["listeners"][0]["filter_chains"][0]["filters"][0]["typed_config"][
                 "http_filters"
             ][1]["typed_config"]["metadata_context_namespaces"] = ["envoy.filters.http.jwt_authn"]
+            config["static_resources"]["listeners"][0]["filter_chains"][0]["filters"][0]["typed_config"][
+                "route_config"
+            ]["virtual_hosts"][0]["routes"].append(
+                {
+                    "match": {"path_separated_prefix": "/anything/global"},
+                    "route": {"cluster": self.backend_url},
+                    "typed_per_filter_config": {
+                        "envoy.filters.http.ext_authz": {
+                            "@type": "type.googleapis.com/envoy.extensions.filters.http.ext_authz.v3.ExtAuthzPerRoute",
+                            "disabled": True,
+                        }
+                    },
+                }
+            )
             self._config["envoy.yaml"] = yaml.dump(config)
         return self._config
