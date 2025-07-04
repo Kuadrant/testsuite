@@ -82,7 +82,7 @@ class Prometheus:
         """Wait before next metrics scrape on service is finished"""
         call_time = datetime.now(timezone.utc)
 
-        @backoff.on_predicate(backoff.constant, interval=10, jitter=None, max_tries=4)
+        @backoff.on_predicate(backoff.constant, interval=10, jitter=None, max_tries=24)
         def _wait_for_scrape():
             """Wait for new scrape after the function call time"""
             for target in self.get_active_targets():

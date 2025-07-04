@@ -101,3 +101,10 @@ class KuadrantCR(CustomResource):
         """Returns spec.limitador from Kuadrant object"""
         self.model.spec.setdefault("limitador", {})
         return LimitadorSection(self, "limitador")
+
+    def set_observability(self, enabled: bool):
+        """Enable or disable observability and wait for readiness"""
+        self.refresh().model.spec["observability"] = {"enable": enabled} if enabled else None
+        res = self.apply()
+        assert res.status() == 0, res.err()
+        self.wait_for_ready()
