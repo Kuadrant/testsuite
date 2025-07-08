@@ -32,6 +32,7 @@ USER testsuite
 ENV KUBECONFIG=/run/kubeconfig \
     SECRETS_FOR_DYNACONF=/run/secrets.yaml \
     POETRY_VIRTUALENVS_PATH=/opt/workdir/virtualenvs/ \
+    SSL_CERT_FILE=/etc/pki/tls/certs/ca-bundle.crt \
     junit=yes \
     resultsdir=/test-run-results
 
