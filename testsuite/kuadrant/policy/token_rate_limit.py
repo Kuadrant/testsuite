@@ -1,3 +1,5 @@
+"""TokenRateLimitPolicy implementation for policy"""
+
 from testsuite.gateway import Referencable
 from testsuite.kuadrant.policy.rate_limit import RateLimitPolicy
 from testsuite.kubernetes.client import KubernetesClient
