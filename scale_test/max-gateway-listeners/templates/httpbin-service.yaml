@@ -1,0 +1,14 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: httpbin-{{.UUID}}-i{{.Iteration}}
+  labels:
+    app: max-gateway-listeners-scale-test
+spec:
+  ports:
+    - name: http
+      protocol: TCP
+      port: 8080
+      targetPort: api
+  selector:
+    app: max-gateway-listeners-scale-test

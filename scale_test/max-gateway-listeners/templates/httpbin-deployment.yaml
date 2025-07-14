@@ -1,0 +1,23 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: httpbin-{{.UUID}}-i{{.Iteration}}
+  labels:
+    app: max-gateway-listeners-scale-test
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: max-gateway-listeners-scale-test
+  template:
+    metadata:
+      labels:
+        app: max-gateway-listeners-scale-test
+    spec:
+      containers:
+        - name: httpbin
+          image: 'quay.io/trepel/httpbin:jsmadis'
+          ports:
+            - name: api
+              containerPort: 8080
+              protocol: TCP
