@@ -15,6 +15,9 @@ RUN curl -LO "https://dl.k8s.io/release/v1.30.2/bin/linux/amd64/kubectl" && \
 RUN curl -L https://github.com/cloudflare/cfssl/releases/download/v1.6.4/cfssl_1.6.4_linux_amd64 >/usr/bin/cfssl && \
     chmod +x /usr/bin/cfssl
 
+RUN curl -sL https://github.com/kube-burner/kube-burner/releases/download/v1.16.4/kube-burner-V1.16.4-linux-x86_64.tar.gz |\
+    tar -xz -C /usr/bin --wildcards 'kube-burner' && chmod 0755 /usr/bin/kube-burner
+
 RUN python3.11 -m pip --no-cache-dir install poetry
 
 WORKDIR /opt/workdir/kuadrant-testsuite
