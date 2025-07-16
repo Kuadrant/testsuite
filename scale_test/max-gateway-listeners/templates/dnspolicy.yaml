@@ -1,0 +1,13 @@
+apiVersion: kuadrant.io/v1
+kind: DNSPolicy
+metadata:
+  name: dnspolicy{{.GW_NUM}}-{{.DNS_PROVIDER}}-{{.UUID}}-i{{.Iteration}}
+  labels: 
+    app: max-gateway-listeners-scale-test
+spec:
+  targetRef:
+    group: gateway.networking.k8s.io
+    kind: Gateway
+    name: gw{{.GW_NUM}}-{{.UUID}}-i{{.Iteration}}
+  providerRefs:
+  - name: {{.DNS_PROVIDER}}-credentials-{{.UUID}}-i{{.Iteration}}

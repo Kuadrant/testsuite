@@ -1,0 +1,156 @@
+{{ if not (has .DNS_PROVIDER (list "aws" "gcp" "azure")) }}
+  {{ fail "DNS_PROVIDER must be aws, gcp, or azure" }}
+{{ end }}
+metricsEndpoints:
+  - endpoint: {{ .PROMETHEUS_URL }}
+    token: {{ .PROMETHEUS_TOKEN }}
+    metrics:
+    - ../metrics.yaml
+{{ if .OS_INDEXING }}
+    indexer:
+      type: opensearch
+      esServers: ["{{ .ES_SERVER }}"]
+      insecureSkipVerify: true
+      defaultIndex: kube-burner
+{{ else }}
+    indexer:
+      type: local
+      metricsDirectory: ../metrics
+{{ end }}
+global:
+  gc: {{ not .SKIP_CLEANUP }}
+jobs:
+  - name: max-gateway-listeners-scale-test-prepare
+    jobIterations: 1
+    qps: 1
+    burst: 1
+    namespacedIterations: true
+    namespace: max-gateway-listeners-scale-test
+    waitWhenFinished: true
+    objects:
+      - objectTemplate: templates/httpbin-deployment.yaml
+        kind: Deployment
+        replicas: 1
+        waitOptions:
+          customStatusPaths:
+            - key: '(.conditions.[] | select(.type == "Available")).status'
+              value: "True"
+      - objectTemplate: templates/httpbin-service.yaml
+        kind: Service
+        replicas: 1
+      {{if (eq .DNS_PROVIDER "aws")}}
+      - objectTemplate: templates/aws-credentials.yaml
+        kind: Secret
+        replicas: 1
+        inputVars:
+          KUADRANT_AWS_ACCESS_KEY_ID: "{{ .KUADRANT_AWS_ACCESS_KEY_ID }}"
+          KUADRANT_AWS_REGION: "{{ .KUADRANT_AWS_REGION }}"
+          KUADRANT_AWS_SECRET_ACCESS_KEY: "{{ .KUADRANT_AWS_SECRET_ACCESS_KEY }}"
+      {{else if (eq .DNS_PROVIDER "gcp")}}
+      - objectTemplate: templates/gcp-credentials.yaml
+        kind: Secret
+        replicas: 1
+        inputVars:
+          GCP_CONFIG_JSON: "{{ .GCP_CONFIG_JSON | b64enc }}"
+          GCP_PROJECT_ID: "{{ .GCP_PROJECT_ID | b64enc }}"
+      {{else if (eq .DNS_PROVIDER "azure")}}
+      - objectTemplate: templates/azure-credentials.yaml
+        kind: Secret
+        replicas: 1
+        inputVars:
+          AZURE_CONFIG_JSON: "{{ .AZURE_CONFIG_JSON | b64enc }}"
+      {{end}}
+  - name: max-gateway-listeners-scale-test
+    jobIterations: 1
+    qps: 1
+    burst: 1
+    jobPause: 3m
+    namespacedIterations: true
+    namespace: max-gateway-listeners-scale-test
+    waitWhenFinished: true
+    objects:
+      - objectTemplate: templates/gateway.yaml
+        replicas: 1
+        waitOptions:
+          customStatusPaths:
+            - key: '(.conditions.[] | select(.type == "Programmed")).status'
+              value: "True"
+        inputVars:
+          KUADRANT_ZONE_ROOT_DOMAIN: "{{.KUADRANT_ZONE_ROOT_DOMAIN}}"
+          GW_NUM: 1
+      - objectTemplate: templates/gateway.yaml
+        replicas: 1
+        waitOptions:
+          customStatusPaths:
+            - key: '(.conditions.[] | select(.type == "Programmed")).status'
+              value: "True"
+        inputVars:
+          KUADRANT_ZONE_ROOT_DOMAIN: "{{.KUADRANT_ZONE_ROOT_DOMAIN}}"
+          GW_NUM: 2
+      - objectTemplate: templates/httproute.yaml
+        replicas: 1
+        waitOptions:
+          customStatusPaths:
+            - key: '(.parents[] | select(.controllerName == "istio.io/gateway-controller")).conditions[] | select(.type == "Accepted").status'
+              value: "True"
+            - key: '(.parents[] | select(.controllerName == "kuadrant.io/policy-controller")).conditions[] | select(.type == "kuadrant.io/DNSPolicyAffected").status'
+              value: "True"
+        inputVars:
+          KUADRANT_ZONE_ROOT_DOMAIN: '{{.KUADRANT_ZONE_ROOT_DOMAIN}}'
+          GW_NUM: 1
+      - objectTemplate: templates/httproute.yaml
+        replicas: 1
+        waitOptions:
+          customStatusPaths:
+            - key: '(.parents[] | select(.controllerName == "istio.io/gateway-controller")).conditions[] | select(.type == "Accepted").status'
+              value: "True"
+            - key: '(.parents[] | select(.controllerName == "kuadrant.io/policy-controller")).conditions[] | select(.type == "kuadrant.io/DNSPolicyAffected").status'
+              value: "True"
+        inputVars:
+          KUADRANT_ZONE_ROOT_DOMAIN: '{{.KUADRANT_ZONE_ROOT_DOMAIN}}'
+          GW_NUM: 2
+      - objectTemplate: templates/dnspolicy.yaml
+        replicas: 1
+        waitOptions:
+          customStatusPaths:
+            - key: '(.conditions.[] | select(.type == "Enforced")).status'
+              value: "True"
+        inputVars:
+          GW_NUM: 1
+          DNS_PROVIDER: '{{ .DNS_PROVIDER }}'
+      - objectTemplate: templates/dnspolicy.yaml
+        replicas: 1
+        waitOptions:
+          customStatusPaths:
+            - key: '(.conditions.[] | select(.type == "Enforced")).status'
+              value: "True"
+        inputVars:
+          GW_NUM: 2
+          DNS_PROVIDER: '{{ .DNS_PROVIDER }}'
+{{- if not .SKIP_CLEANUP -}}
+  - name: max-gateway-listeners-scale-test-dnspolicy-precleanup
+    jobType: delete
+    jobIterations: 1
+    namespacedIterations: true
+    namespace: max-gateway-listeners-scale-test
+    jobPause: 5m # to allow DNSRecords to be removed
+    waitWhenFinished: true
+    objects:
+      - kind: DNSPolicy
+        apiVersion: kuadrant.io/v1alpha1
+        labelSelector: {kube-burner-job: max-gateway-listeners-scale-test}
+  - name: max-gateway-listeners-scale-test-cleanup
+    jobType: delete
+    jobIterations: 1
+    namespacedIterations: true
+    namespace: max-gateway-listeners-scale-test
+    jobPause: 2m
+    waitWhenFinished: true
+    objects:
+      - kind: HTTPRoute
+        apiVersion: gateway.networking.k8s.io/v1
+        labelSelector: { kube-burner-job: max-gateway-listeners-scale-test }
+      - kind: Gateway
+        apiVersion: gateway.networking.k8s.io/v1
+        labelSelector: { kube-burner-job: max-gateway-listeners-scale-test }
+{{- end -}}

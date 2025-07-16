@@ -1,0 +1,24 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: httproute{{.GW_NUM}}-{{.UUID}}-i{{.Iteration}}
+  labels:
+    app: max-gateway-listeners-scale-test
+spec:
+  parentRefs:
+  - group: gateway.networking.k8s.io
+    kind: Gateway
+    name: gw{{.GW_NUM}}-{{.UUID}}-i{{.Iteration}}
+  hostnames:
+  - '*.{{.UUID}}.{{.KUADRANT_ZONE_ROOT_DOMAIN}}'
+  rules:
+  - backendRefs:
+    - group: ''
+      kind: Service
+      name: httpbin-{{.UUID}}-i{{.Iteration}}
+      port: 8080
+      weight: 1
+    matches:
+      - path:
+          type: PathPrefix
+          value: /
