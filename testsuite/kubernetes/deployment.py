@@ -68,7 +68,18 @@ class SecretVolume:
         return {"secret": {"secretName": self.secret_name}, "name": self.name}
 
 
-Volume = SecretVolume | ConfigMapVolume
+@dataclass
+class EmptyDirVolume:
+    """Deployment EmptyDirVolume object"""
+
+    name: str
+
+    def asdict(self):
+        """Custom asdict because of needing to put location as parent dict key for inner dict"""
+        return {"emptyDir": {}, "name": self.name}
+
+
+Volume = SecretVolume | ConfigMapVolume | EmptyDirVolume
 
 
 class Deployment(KubernetesObject):
