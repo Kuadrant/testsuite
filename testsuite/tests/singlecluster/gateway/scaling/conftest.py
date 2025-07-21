@@ -1,3 +1,5 @@
+"""Conftest for the auto scale gateway test"""
+
 import pytest
 from testsuite.kuadrant.policy import CelPredicate
 from testsuite.kuadrant.policy.rate_limit import RateLimitPolicy, Limit

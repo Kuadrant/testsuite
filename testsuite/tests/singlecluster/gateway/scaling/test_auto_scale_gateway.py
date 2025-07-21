@@ -6,9 +6,7 @@ import time
 
 import pytest
 
-from testsuite.kuadrant.policy import CelPredicate
 from testsuite.kuadrant.policy.authorization import JsonResponse, ValueFrom
-from testsuite.kuadrant.policy.rate_limit import RateLimitPolicy, Limit
 from testsuite.kubernetes import Selector
 from testsuite.kubernetes.deployment import Deployment, VolumeMount, ConfigMapVolume, SecretVolume, EmptyDirVolume
 from testsuite.kubernetes.horizontal_pod_autoscaler import HorizontalPodAutoscaler
@@ -22,7 +20,6 @@ from testsuite.kubernetes.role_binding import RoleBinding
 from testsuite.kubernetes.service import Service, ServicePort
 from testsuite.kubernetes.api_service import APIService
 from testsuite.kubernetes.config_map import ConfigMap
-from testsuite.tests.conftest import module_label
 
 pytestmark = [pytest.mark.kuadrant_only]
 
@@ -177,14 +174,14 @@ def pod_monitor(blame, cluster, module_label):
         ),
         Relabeling(
             action="replace",
-            regex="(\d+);(([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4})",
+            regex="(\\d+);(([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4})",
             replacement="[$2]:$1",
             sourceLabels=["__meta_kubernetes_pod_annotation_prometheus_io_port", "__meta_kubernetes_pod_ip"],
             targetLabel="__address__",
         ),
         Relabeling(
             action="replace",
-            regex="(\d+);((([0-9]+?)(\.|$)){4})",
+            regex="(\\d+);((([0-9]+?)(\\.|$)){4})",
             replacement="$2:$1",
             sourceLabels=["__meta_kubernetes_pod_annotation_prometheus_io_port", "__meta_kubernetes_pod_ip"],
             targetLabel="__address__",
@@ -217,7 +214,7 @@ def pod_monitor(blame, cluster, module_label):
 
 
 @pytest.fixture(scope="module")
-def hpa(request, cluster, blame, gateway, module_label):
+def hpa(cluster, blame, gateway, module_label):
     """Add hpa to the gateway deployment"""
     hpa = HorizontalPodAutoscaler.create_instance(
         cluster,
@@ -227,7 +224,7 @@ def hpa(request, cluster, blame, gateway, module_label):
             {
                 "type": "Pods",
                 "pods": {
-                    "metric": {"name": "istio_requests_total"},
+                    "metric": {"name": "istio_requests_per_second"},
                     "target": {"type": "Value", "averageValue": "500m"},
                 },
             }
@@ -236,13 +233,11 @@ def hpa(request, cluster, blame, gateway, module_label):
         min_replicas=1,
         max_replicas=5,
     )
-    request.addfinalizer(hpa.delete)
-    hpa.commit()
     return hpa
 
 
 @pytest.fixture(scope="module")
-def load_generator(request, cluster, blame, api_key, client):
+def load_generator(cluster, blame, api_key, client):
     """Creates a deployment that will generate load on the gateway"""
     labels = {"app": "load-generator"}
     load_generator = Deployment.create_instance(
@@ -267,9 +262,6 @@ def load_generator(request, cluster, blame, api_key, client):
             f"{client.base_url.scheme}://{client.base_url.host}/get",  # specific endpoint
         ],
     )
-
-    request.addfinalizer(load_generator.delete)
-    load_generator.commit()
     return load_generator
 
 
@@ -288,7 +280,7 @@ def prometheus_adapter_service(blame, cluster, module_label):
 
 
 @pytest.fixture(scope="module")
-def prometheus_adapter_api_service(blame, cluster, prometheus_adapter_service, module_label):
+def prometheus_adapter_api_service(cluster, prometheus_adapter_service, module_label):
     """Creates the APIService for prometheus adapter"""
     return APIService.create_instance(
         cluster,
@@ -349,7 +341,7 @@ users:
 
 
 @pytest.fixture(scope="module")
-def prometheus_adapter_deployment(blame, cluster, custom_metrics_sa, adapter_config, prometheus_config, module_label):
+def prometheus_adapter_deployment(blame, cluster, custom_metrics_sa, adapter_config, prometheus_config):
     """Creates the Deployment for prometheus adapter"""
     volumes = [
         SecretVolume("prometheus-adapter-tls", "volume-serving-cert"),
@@ -401,7 +393,7 @@ def prometheus_stack(
     prometheus,
     service_monitor,
     pod_monitor,
-    setup_rbac,
+    setup_rbac,  # pylint: disable=unused-argument
     prometheus_adapter_service,
     prometheus_adapter_api_service,
     adapter_config,
@@ -439,7 +431,7 @@ def prometheus_stack(
 
 
 @pytest.fixture(scope="module", autouse=True)
-def commit(request, prometheus_stack, authorization, rate_limit, dns_policy, tls_policy):
+def commit(request, authorization, rate_limit, dns_policy, tls_policy):
     """Commits all important stuff before tests"""
     for component in [dns_policy, tls_policy, authorization, rate_limit]:
         request.addfinalizer(component.delete)
@@ -447,7 +439,7 @@ def commit(request, prometheus_stack, authorization, rate_limit, dns_policy, tls
         component.wait_for_ready()
 
 
-def test_auto_scale_gateway(gateway, client, auth):  # pylint: disable=unused-argument
+def test_auto_scale_gateway(gateway, prometheus_stack, client, auth):  # pylint: disable=unused-argument
     """This test asserts that the policies are working as expected and this behavior does not change after scaling"""
     anon_auth_resp = client.get("/get")
     assert anon_auth_resp is not None
@@ -460,7 +452,7 @@ def test_auto_scale_gateway(gateway, client, auth):  # pylint: disable=unused-ar
 
     time.sleep(5)  # sleep in order to reset the rate limit policy time limit.
 
-    assert gateway.deployment.replicas > 1
+    gateway.deployment.wait_for_replicas(2)
 
     anon_auth_resp = client.get("/get")
     assert anon_auth_resp is not None

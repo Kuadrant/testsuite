@@ -161,6 +161,11 @@ class Deployment(KubernetesObject):
         )
         assert success, f"Deployment {self.name()} did not get ready in time"
 
+    def wait_for_replicas(self, replicas: int, timeout=90):
+        """Waits until Deployment has the given number of replicas"""
+        success = self.wait_until(lambda obj: obj.model.status["readyReplicas"] >= replicas, timelimit=timeout)
+        assert success, f"Deployment {self.name()} did not get {replicas} replicas in time"
+
     @property
     def replicas(self):
         """Set numbers of replicas for the deployment"""
