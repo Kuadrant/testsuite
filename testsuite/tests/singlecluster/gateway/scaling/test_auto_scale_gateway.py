@@ -2,17 +2,19 @@
 This module contains tests for auto-scaling the gateway deployment with an HPA watching the cpu usage
 """
 
+import pyexpat
 import time
 
 import pytest
 
+from testsuite.kuadrant.policy import CelPredicate
 from testsuite.kuadrant.policy.authorization import JsonResponse, ValueFrom
+from testsuite.kuadrant.policy.rate_limit import Limit, RateLimitPolicy
 from testsuite.kubernetes import Selector
 from testsuite.kubernetes.deployment import Deployment, VolumeMount, ConfigMapVolume, SecretVolume, EmptyDirVolume
 from testsuite.kubernetes.horizontal_pod_autoscaler import HorizontalPodAutoscaler
 from testsuite.kubernetes.monitoring import MetricsEndpoint, Relabeling
 from testsuite.kubernetes.monitoring.pod_monitor import PodMonitor
-from testsuite.kubernetes.monitoring.service_monitor import ServiceMonitor
 from testsuite.kubernetes.service_account import ServiceAccount
 from testsuite.kubernetes.cluster_role import ClusterRole, Rule
 from testsuite.kubernetes.cluster_role import ClusterRoleBinding
@@ -131,35 +133,6 @@ def setup_rbac(request, custom_metrics_sa, custom_metrics_server_role, custom_me
 
 
 @pytest.fixture(scope="module")
-def api_key(create_api_key, blame):
-    """Creates API key Secret for a user"""
-    annotations = {"kuadrant.io/groups": "users", "secret.kuadrant.io/user-id": "load-generator"}
-    secret = create_api_key("api-key", blame("user"), "api_key_value", annotations=annotations)
-    return secret
-
-
-@pytest.fixture(scope="module")
-def authorization(authorization, api_key):
-    """Create an AuthPolicy with authentication for a simple user with same target as one default"""
-    authorization.identity.add_api_key("api-key", selector=api_key.selector)
-    authorization.responses.add_success_dynamic(
-        "identity",
-        JsonResponse({"userid": ValueFrom("{auth.identity.metadata.annotations.secret\\.kuadrant\\.io/user-id}")}),
-    )
-    return authorization
-
-
-@pytest.fixture(scope="module")
-def service_monitor(blame, cluster):
-    """Create a service monitor for the gateway deployment"""
-    label = {"istio": "pilot"}
-    endpoints = [MetricsEndpoint("/metrics", "http-monitoring")]
-    return ServiceMonitor.create_instance(
-        cluster.change_project("istio-system"), blame("sm"), endpoints, match_labels=label
-    )
-
-
-@pytest.fixture(scope="module")
 def pod_monitor(blame, cluster, module_label):
     """Create a pod monitor for the gateway deployment"""
     relabelings = [
@@ -224,8 +197,8 @@ def hpa(cluster, blame, gateway, module_label):
             {
                 "type": "Pods",
                 "pods": {
-                    "metric": {"name": "istio_requests_per_second"},
-                    "target": {"type": "Value", "averageValue": "500m"},
+                    "metric": {"name": "istio_requests"},
+                    "target": {"type": "Value", "averageValue": "10"},
                 },
             }
         ],
@@ -234,35 +207,6 @@ def hpa(cluster, blame, gateway, module_label):
         max_replicas=5,
     )
     return hpa
-
-
-@pytest.fixture(scope="module")
-def load_generator(cluster, blame, api_key, client):
-    """Creates a deployment that will generate load on the gateway"""
-    labels = {"app": "load-generator"}
-    load_generator = Deployment.create_instance(
-        cluster,
-        blame("load-generator"),
-        container_name="siege",
-        image="quay.io/acristur/siege:4.1.7",
-        selector=Selector(matchLabels=labels),
-        labels=labels,
-        ports={"http": 8080},  # this is not doing anything, but necessary for the constructor
-        command_args=[
-            "-H",
-            f"Authorization: APIKEY {str(api_key)}",
-            "-c",  # concurrent users
-            "10",
-            "-d",  # delay between requests (1 = 1 second)
-            "2",  # 2 second delay = 0.5 requests per second per user
-            "-t",  # time to run
-            "10m",  # run for 10 minutes to allow HPA to stabilize
-            "-b",  # no delay between starting users
-            "--no-parser",  # don't parse HTML
-            f"{client.base_url.scheme}://{client.base_url.host}/get",  # specific endpoint
-        ],
-    )
-    return load_generator
 
 
 @pytest.fixture(scope="module")
@@ -306,8 +250,8 @@ def adapter_config(blame, cluster, module_label):
       pod: {resource: "pod"}
   name:
     matches: "^(.*)_total"
-    as: "${1}_per_second"
-  metricsQuery: 'sum(rate(<<.Series>>{<<.LabelMatchers>>}[2m])) by (<<.GroupBy>>)'"""
+    as: "${1}"
+  metricsQuery: 'sum(<<.Series>>{<<.LabelMatchers>>}) by (<<.GroupBy>>)'"""
     }
     return ConfigMap.create_instance(cluster, blame("adapter-config"), config, labels={"app": module_label})
 
@@ -391,7 +335,6 @@ def prometheus_adapter_deployment(blame, cluster, custom_metrics_sa, adapter_con
 def prometheus_stack(
     request,
     prometheus,
-    service_monitor,
     pod_monitor,
     setup_rbac,  # pylint: disable=unused-argument
     prometheus_adapter_service,
@@ -400,11 +343,9 @@ def prometheus_stack(
     prometheus_config,
     prometheus_adapter_deployment,
     hpa,
-    load_generator,
 ):
     """Create and commit the prometheus stack"""
     components = [
-        service_monitor,
         pod_monitor,
         prometheus_adapter_service,
         prometheus_adapter_api_service,
@@ -412,7 +353,6 @@ def prometheus_stack(
         prometheus_config,
         prometheus_adapter_deployment,
         hpa,
-        load_generator,
     ]
 
     # Add finalizers for all components
@@ -425,9 +365,22 @@ def prometheus_stack(
         if hasattr(component, "wait_for_ready"):
             component.wait_for_ready()
 
-    assert prometheus.is_reconciled(service_monitor)
     assert prometheus.is_reconciled(pod_monitor)
     return components
+
+
+@pytest.fixture(scope="module")
+def authorization(authorization,):
+    """Create an AuthPolicy with authentication for a simple user with same target as one default"""
+    authorization.metadata.add_user_info("user-info", "default")
+    return authorization
+
+@pytest.fixture(scope="module")
+def rate_limit(blame, gateway, module_label, cluster):
+    """Add limit to the policy"""
+    policy = RateLimitPolicy.create_instance(cluster, blame("rlp"), gateway, labels={"app": module_label})
+    policy.add_limit("basic", [Limit(10, "5s")], when=[CelPredicate("auth.metadata.userinfo.email != ''")])
+    return policy
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -445,7 +398,7 @@ def test_auto_scale_gateway(gateway, prometheus_stack, client, auth):  # pylint:
     assert anon_auth_resp is not None
     assert anon_auth_resp.status_code == 401
 
-    responses = client.get_many("/get", 5, auth=auth)
+    responses = client.get_many("/get", 10, auth=auth)
     responses.assert_all(status_code=200)
 
     assert client.get("/get", auth=auth).status_code == 429
@@ -458,7 +411,7 @@ def test_auto_scale_gateway(gateway, prometheus_stack, client, auth):  # pylint:
     assert anon_auth_resp is not None
     assert anon_auth_resp.status_code == 401
 
-    responses = client.get_many("/get", 5, auth=auth)
+    responses = client.get_many("/get", 10, auth=auth)
     responses.assert_all(status_code=200)
 
     assert client.get("/get", auth=auth).status_code == 429

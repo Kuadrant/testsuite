@@ -24,7 +24,7 @@ def test_scale_gateway(gateway, client, auth, authorization):
     gateway.deployment.set_replicas(2)
     gateway.deployment.wait_for_ready()
 
-    time.sleep(5)
+    time.sleep(5) # sleep in order to reset the rate limit policy time limit.
 
     anon_auth_resp = client.get("/get")
     assert anon_auth_resp is not None
