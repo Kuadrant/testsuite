@@ -116,7 +116,7 @@ def prometheus(cluster, testconfig):
     protocol = "https" if "tls" in routes[0].model.spec else "http"
     route_url = f"{protocol}://{routes[0].model.spec.host}"
     service_url = (
-        f"{protocol}://{service.name()}.{service.namespace()}.svc.cluster.local:{service.get_port("web")["port"]}"
+        f"{protocol}://{service.name()}.{service.namespace()}.svc.cluster.local:{service.get_port('web')['port']}"
     )
     with KuadrantClient(
         headers={"Authorization": f"Bearer {cluster.token}"}, base_url=route_url, verify=False
