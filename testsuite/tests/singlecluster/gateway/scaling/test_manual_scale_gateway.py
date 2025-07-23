@@ -9,14 +9,13 @@ import pytest
 pytestmark = [pytest.mark.kuadrant_only]
 
 
-# pylint: disable=unused-argument
-def test_scale_gateway(gateway, client, auth, authorization):
+def test_scale_gateway(gateway, client, auth):
     """This test asserts that the policies are working as expected and this behavior does not change after scaling"""
     anon_auth_resp = client.get("/get")
     assert anon_auth_resp is not None
     assert anon_auth_resp.status_code == 401
 
-    responses = client.get_many("/get", 5, auth=auth)
+    responses = client.get_many("/get", 10, auth=auth)
     responses.assert_all(status_code=200)
 
     assert client.get("/get", auth=auth).status_code == 429
@@ -24,13 +23,13 @@ def test_scale_gateway(gateway, client, auth, authorization):
     gateway.deployment.set_replicas(2)
     gateway.deployment.wait_for_ready()
 
-    time.sleep(5) # sleep in order to reset the rate limit policy time limit.
+    time.sleep(5)  # sleep in order to reset the rate limit policy time limit.
 
     anon_auth_resp = client.get("/get")
     assert anon_auth_resp is not None
     assert anon_auth_resp.status_code == 401
 
-    responses = client.get_many("/get", 5, auth=auth)
+    responses = client.get_many("/get", 10, auth=auth)
     responses.assert_all(status_code=200)
 
     assert client.get("/get", auth=auth).status_code == 429
