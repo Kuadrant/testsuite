@@ -75,7 +75,6 @@ def prometheus_stack(
     adapter_config,
     prometheus_config,
     prometheus_adapter_deployment,
-    hpa,
 ):
     """Create and commit the prometheus stack"""
     components = [
@@ -85,7 +84,6 @@ def prometheus_stack(
         adapter_config,
         prometheus_config,
         prometheus_adapter_deployment,
-        hpa,
     ]
 
     # Add finalizers for all components
@@ -99,6 +97,11 @@ def prometheus_stack(
             component.wait_for_ready()
 
     assert prometheus.is_reconciled(pod_monitor)
+    prometheus.wait_for_scrape(pod_monitor, "/stats/prometheus")
+
+    # Commit HPA latest to avoid idling without metrics
+    hpa.commit()
+
     return components
 
 
