@@ -75,6 +75,7 @@ def prometheus_stack(
     adapter_config,
     prometheus_config,
     prometheus_adapter_deployment,
+    hpa,
 ):
     """Create and commit the prometheus stack"""
     components = [
