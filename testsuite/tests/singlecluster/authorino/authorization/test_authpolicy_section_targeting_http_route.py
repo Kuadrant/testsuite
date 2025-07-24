@@ -38,8 +38,7 @@ def authorization(cluster, blame, module_label, oidc_provider, route):
     return policy
 
 
-@pytest.mark.usefixtures("authorization")
-def test_gateway_listener_protection(client, auth):
+def test_authpolicy_section_name_targeting_http_route_rule(client, auth):
     """
     Tests that an AuthPolicy attached to a specific HTTPRoute rule protects
     only the requests handled by that rule.

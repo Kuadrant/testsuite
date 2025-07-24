@@ -11,8 +11,6 @@ from testsuite.gateway.gateway_api.gateway import KuadrantGateway
 from testsuite.gateway.gateway_api.hostname import StaticHostname
 from testsuite.gateway.gateway_api.route import HTTPRoute
 from testsuite.kuadrant.policy.authorization.auth_policy import AuthPolicy
-from testsuite.kuadrant.policy.dns import DNSPolicy
-from testsuite.kuadrant.policy.tls import TLSPolicy
 
 
 pytestmark = [pytest.mark.kuadrant_only]
@@ -97,24 +95,6 @@ def public_route(request, cluster, blame, module_label, gateway, backend, public
 
 
 @pytest.fixture(scope="module")
-def tls_policy(blame, gateway, module_label, cluster_issuer):
-    """Creates a TLSPolicy that will cover all listeners on the Gateway."""
-    policy = TLSPolicy.create_instance(
-        gateway.cluster, blame("tls"), parent=gateway, issuer=cluster_issuer, labels={"app": module_label}
-    )
-    return policy
-
-
-@pytest.fixture(scope="module")
-def dns_policy(blame, gateway, module_label, dns_provider_secret):
-    """Creates a DNSPolicy that will cover all listeners on the Gateway."""
-    policy = DNSPolicy.create_instance(
-        gateway.cluster, blame("dns"), gateway, dns_provider_secret, labels={"app": module_label}
-    )
-    return policy
-
-
-@pytest.fixture(scope="module")
 def authorization(
     cluster, blame, module_label, oidc_provider, gateway, public_route, secure_route
 ):  # pylint: disable=unused-argument
@@ -131,7 +111,7 @@ def authorization(
 
 
 @pytest.mark.usefixtures("authorization", "secure_route", "public_route")
-def test_gateway_listener_section_targeting(custom_client, auth, secure_domain, public_domain):
+def test_authpolicy_section_name_targeting_gateway_listener(custom_client, auth, secure_domain, public_domain):
     """
     Tests that an AuthPolicy attached to a specific Gateway listener protects
     only the traffic handled by that listener.
