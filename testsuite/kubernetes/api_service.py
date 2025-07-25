@@ -12,7 +12,6 @@ class APIService(KubernetesObject):
         cluster,
         name: str,
         service_name: str,
-        service_namespace: str,
         group: str,
         version: str,
         labels: dict[str, str] = None,
@@ -31,7 +30,7 @@ class APIService(KubernetesObject):
             "spec": {
                 "service": {
                     "name": service_name,
-                    "namespace": service_namespace,
+                    "namespace": cluster.project,
                 },
                 "group": group,
                 "version": version,

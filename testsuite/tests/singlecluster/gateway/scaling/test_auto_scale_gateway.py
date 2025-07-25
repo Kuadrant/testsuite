@@ -119,7 +119,7 @@ def test_auto_scale_gateway(gateway, prometheus_stack, client, auth):  # pylint:
 
     time.sleep(5)  # sleep in order to reset the rate limit policy time limit.
 
-    gateway.deployment.wait_for_replicas(2, timeout=180)
+    gateway.deployment.wait_for_replicas(2)
 
     anon_auth_resp = client.get("/get")
     assert anon_auth_resp is not None

@@ -188,16 +188,15 @@ def prometheus_adapter_service(testconfig, blame, cluster, module_label):
 
 
 @pytest.fixture(scope="module")
-def prometheus_adapter_api_service(cluster, prometheus_adapter_service, module_label):
+def prometheus_adapter_api_service(testconfig, cluster, prometheus_adapter_service):
     """Creates the APIService for prometheus adapter"""
     return APIService.create_instance(
         cluster,
         "v1beta2.custom.metrics.k8s.io",
         prometheus_adapter_service.name(),
-        "kuadrant",
         "custom.metrics.k8s.io",
         "v1beta2",
-        labels={"app": module_label},
+        labels={"app": testconfig["prometheus"]["adapter"]["name"]},
         insecure_skip_tls_verify=True,
     )
 
