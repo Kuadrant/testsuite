@@ -68,7 +68,18 @@ class SecretVolume:
         return {"secret": {"secretName": self.secret_name}, "name": self.name}
 
 
-Volume = SecretVolume | ConfigMapVolume
+@dataclass
+class EmptyDirVolume:
+    """Deployment EmptyDirVolume object"""
+
+    name: str
+
+    def asdict(self):
+        """Custom asdict because of needing to put location as parent dict key for inner dict"""
+        return {"emptyDir": {}, "name": self.name}
+
+
+Volume = SecretVolume | ConfigMapVolume | EmptyDirVolume
 
 
 class Deployment(KubernetesObject):
@@ -145,8 +156,25 @@ class Deployment(KubernetesObject):
 
     def wait_for_ready(self, timeout=90):
         """Waits until Deployment is marked as ready"""
-        success = self.wait_until(lambda obj: "readyReplicas" in obj.model.status, timelimit=timeout)
+        success = self.wait_until(
+            lambda obj: obj.model.status["readyReplicas"] == self.model.spec.replicas, timelimit=timeout
+        )
         assert success, f"Deployment {self.name()} did not get ready in time"
+
+    def wait_for_replicas(self, replicas: int, timeout=90):
+        """Waits until Deployment has the given number of replicas"""
+        success = self.wait_until(lambda obj: obj.model.status["readyReplicas"] >= replicas, timelimit=timeout)
+        assert success, f"Deployment {self.name()} did not get {replicas} replicas in time"
+
+    @property
+    def replicas(self):
+        """Set numbers of replicas for the deployment"""
+        return self.model.spec.replicas
+
+    @modify
+    def set_replicas(self, replicas: int):
+        """Set numbers of replicas for the deployment"""
+        self.model.spec.replicas = replicas
 
     @property
     def template(self):
