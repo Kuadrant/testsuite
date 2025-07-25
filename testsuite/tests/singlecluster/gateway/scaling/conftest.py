@@ -182,7 +182,7 @@ def prometheus_adapter_service(testconfig, blame, cluster, module_label):
         blame(testconfig["prometheus"]["adapter"]["name"]),
         selector={"app": testconfig["prometheus"]["adapter"]["name"]},
         ports=ports,
-        labels={"name": testconfig["prometheus"]["adapter"]["name"], "app": module_label},
+        labels={"name": testconfig["prometheus"]["adapter"]["name"]},
         annotations={"service.beta.openshift.io/serving-cert-secret-name": "prometheus-adapter-tls"},
     )
 

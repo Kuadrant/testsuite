@@ -101,6 +101,7 @@ def prometheus_stack(
     prometheus.wait_for_scrape(pod_monitor, "/stats/prometheus")
 
     # Commit HPA latest to avoid idling without metrics
+    request.addfinalizer(hpa.delete)
     hpa.commit()
 
     return components
