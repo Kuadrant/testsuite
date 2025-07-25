@@ -177,12 +177,12 @@ def pod_monitor(blame, cluster, module_label):
 def prometheus_adapter_service(testconfig, blame, cluster, module_label):
     """Creates the Service for prometheus adapter"""
     ports = [ServicePort("https", 443, targetPort=6443)]
+    service_name = blame(testconfig["prometheus"]["adapter"]["name"])
     return Service.create_instance(
         cluster,
-        blame(testconfig["prometheus"]["adapter"]["name"]),
-        selector={"app": testconfig["prometheus"]["adapter"]["name"]},
+        service_name,
+        selector={"app": module_label, "name": service_name},
         ports=ports,
-        labels={"name": testconfig["prometheus"]["adapter"]["name"]},
         annotations={"service.beta.openshift.io/serving-cert-secret-name": "prometheus-adapter-tls"},
     )
 
@@ -249,7 +249,7 @@ users:
 
 @pytest.fixture(scope="module")
 def prometheus_adapter_deployment(
-    testconfig, prometheus, blame, cluster, custom_metrics_sa, adapter_config, prometheus_config
+    testconfig, prometheus, blame, cluster, custom_metrics_sa, adapter_config, prometheus_config, prometheus_adapter_service, module_label
 ):
     """Creates the Deployment for prometheus adapter"""
     volumes = [
@@ -274,8 +274,8 @@ def prometheus_adapter_deployment(
         testconfig["prometheus"]["adapter"]["name"],
         testconfig["prometheus"]["adapter"]["image"],
         {"https": 6443},
-        Selector(matchLabels={"app": testconfig["prometheus"]["adapter"]["name"]}),
-        labels={"app": testconfig["prometheus"]["adapter"]["name"]},
+        Selector(matchLabels={"app": module_label, "name": prometheus_adapter_service.name()}),
+        labels={"app": module_label, "name": prometheus_adapter_service.name()},
         command_args=[
             "--prometheus-auth-config=/etc/prometheus-config/prometheus-config.yaml",
             "--secure-port=6443",

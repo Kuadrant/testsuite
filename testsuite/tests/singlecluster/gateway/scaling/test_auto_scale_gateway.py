@@ -81,10 +81,10 @@ def prometheus_stack(
     components = [
         pod_monitor,
         prometheus_adapter_service,
-        prometheus_adapter_api_service,
         adapter_config,
         prometheus_config,
         prometheus_adapter_deployment,
+        prometheus_adapter_api_service,
     ]
 
     # Add finalizers for all components
