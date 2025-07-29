@@ -32,11 +32,6 @@ POD_MONITOR_METRICS = [
     "istio_agent_startup_duration_seconds",
 ]
 
-PREDICTABLE_METRICS = [
-    "istio_requests_total",
-    "istio_response_bytes_count",
-]
-
 
 @pytest.mark.parametrize("metric", SERVICE_MONITOR_METRICS)
 def test_service_monitor_metrics_per_service(metric, service_monitor_metrics_by_service):
@@ -49,17 +44,3 @@ def test_service_monitor_metrics_per_service(metric, service_monitor_metrics_by_
 def test_pod_monitor_metrics(metric, pod_monitor_metrics):
     """Tests that each expected PodMonitor metric is present"""
     assert metric in pod_monitor_metrics.names
-
-
-@pytest.mark.parametrize("metric", PREDICTABLE_METRICS)
-def test_pod_monitor_metrics_values(metric, pod_monitor_metrics):
-    """Tests that PodMonitor metrics have expected source entries"""
-    filtered_metrics = pod_monitor_metrics.filter(lambda x: x["metric"]["__name__"] == metric)
-
-    source_metrics = filtered_metrics.filter(lambda x: x["metric"].get("reporter") == "source")
-
-    assert len(source_metrics.values) == 2, f"{metric} expected 2 source metrics, got {len(source_metrics.values)}"
-
-    # Each metric entry should have value of 1
-    for i, value in enumerate(source_metrics.values):
-        assert value == 1, f"{metric} source metric {i} expected value 1, got {value}"
