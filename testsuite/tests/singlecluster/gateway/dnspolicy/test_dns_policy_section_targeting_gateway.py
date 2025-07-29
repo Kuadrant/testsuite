@@ -5,10 +5,8 @@ only creates a DNS record for that section's hostname.
 This test verifies that a DNSPolicy targeting a specific sectionName of a Gateway:
 - Becomes enforced successfully.
 - Reports exactly one DNS record created (totalRecords == 1).
-
-However, yet it does NOT check which exact domain the DNS record was created for.
-It does not assert that the DNS name corresponds to the managed listener (managed_domain)
-and that no record was created for the unmanaged one.
+- Allows requests to the managed domain to succeed (returns HTTP 200).
+- Fails to resolve the unmanaged domain (DNS resolution fails).
 
 """
 
@@ -20,13 +18,13 @@ from testsuite.gateway.gateway_api.gateway import KuadrantGateway
 from testsuite.gateway.gateway_api.route import HTTPRoute
 from testsuite.kuadrant.policy.dns import DNSPolicy
 
+
 pytestmark = [pytest.mark.kuadrant_only, pytest.mark.dnspolicy]
 
-# Constants for listeners names
+
 MANAGED_LISTENER_NAME = "managed-listener"
 UNMANAGED_LISTENER_NAME = "unmanaged-listener"
 
-# region Fixtures
 
 @pytest.fixture(scope="module")
 def authorization():
@@ -90,6 +88,7 @@ def route(request, cluster, blame, module_label, gateway, backend, managed_domai
 
     request.addfinalizer(route.delete)
     route.commit()
+    route.wait_for_ready()
     return route
 
 @pytest.fixture(scope="module")
@@ -111,15 +110,18 @@ def dns_policy(request, gateway, blame, module_label, dns_provider_secret):
 
 
 @pytest.mark.usefixtures("route")
-def test_dnspolicy_section_name_targeting_gateway_listener(route, dns_policy, managed_domain):
+def test_dns_policy_section_name_targeting_gateway_listener(route, dns_policy, managed_domain, unmanaged_domain, gateway, client):
     """
-    Ensures the DNSPolicy only creates a DNS record for the managed listener,
-    and not for the unmanaged one.
-    """
+Tests that a DNSPolicy with a specific `sectionName` creates a DNS record
+only for the targeted Gateway listener's hostname.
 
-    # Wait for both DNSPolicy and Route to be ready before assertions
-    dns_policy.wait_for_ready()
-    route.wait_for_ready()
+The Gateway has two listeners (managed and unmanaged); the policy targets
+only the managed one. The test verifies that:
+
+- The policy is enforced and exactly one DNS record is created.
+- The managed domain resolves and returns 200.
+- The unmanaged domain fails DNS resolution.
+    """
 
     # Print the current DNSPolicy status for debugging purposes, this will be deleted after test completion
     print(">>> Full DNSPolicy status:")
@@ -143,3 +145,24 @@ def test_dnspolicy_section_name_targeting_gateway_listener(route, dns_policy, ma
     assert dns_policy.wait_until(lambda p: has_condition(p, "Enforced", "True")), \
         "DNSPolicy was not enforced"
 
+    # Simulate curl to managed domain
+    print(f"\n$ curl http://{managed_domain}/get -I")
+    try:
+        response = client.get(f"http://{managed_domain}/get")
+        print(f"HTTP/1.1 {response.status_code} OK")
+        assert response.status_code == 200
+    except Exception as e:
+        print(f"Request to managed domain failed: {e}")
+        pytest.fail("Managed domain should returned 200 OK")
+
+    # Simulate curl to unmanaged domain
+    print(f"\n$ curl http://{unmanaged_domain}/get -I")
+    try:
+        response = client.get(f"http://{unmanaged_domain}/get")
+        if response.has_dns_error():
+            print(f"curl: (6) Could not resolve host: {unmanaged_domain}")
+        else:
+            print(f"HTTP/1.1 {response.status_code} OK")
+            pytest.fail("Unmanaged domain resolved successfully, but it should not exist.")
+    except Exception:
+        print(f"curl: (6) Could not resolve host: {unmanaged_domain}")
