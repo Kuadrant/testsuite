@@ -117,7 +117,7 @@ class KuadrantClient(Client):
         **kwargs,
     ):
         self.files = []
-        self.retry_codes = retry_codes or {503}
+        self.retry_codes = {503} if retry_codes is None else set(retry_codes)
         _verify = None
         if isinstance(verify, Certificate):
             verify_file = create_tmp_file(verify.chain)
