@@ -19,7 +19,7 @@ def health_check():
     )
 
 
-def test_remove_endpoint(backend, dns_policy, dns_health_probe, client, auth):
+def test_remove_endpoint(backend, hostname, dns_policy, dns_health_probe, client, auth):
     """Scale backend replicas to 0 and back to 1, and check if DNSPolicy will remove the unhealthy endpoint"""
     assert dns_health_probe.is_healthy()
     response = client.get("/get", auth=auth)
@@ -32,8 +32,9 @@ def test_remove_endpoint(backend, dns_policy, dns_health_probe, client, auth):
     )
 
     assert dns_health_probe.wait_until(lambda obj: not obj.is_healthy())
-    response = client.get("/get", auth=auth)
-    assert response.status_code == 503
+    with hostname.client(retry_codes={}) as clean_client:
+        response = clean_client.get("/get", auth=auth)
+        assert response.status_code == 503
 
     backend.deployment.self_selector().scale(1)
     assert dns_policy.wait_until(has_condition("SubResourcesHealthy", "True"), timelimit=120)
