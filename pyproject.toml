@@ -33,6 +33,7 @@ black = {version = "*", extras = ["d"]}
 
 
 # Black
+types-requests = "^2.32.4.20250611"
 [tool.black]
 line-length = 120
 
