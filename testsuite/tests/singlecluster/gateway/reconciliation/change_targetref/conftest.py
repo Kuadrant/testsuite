@@ -119,11 +119,8 @@ def change_target_ref():
     """Function that changes targetRef of given policy"""
 
     def _change_targetref(policy, gateway):
-        def _apply_target_ref(apiobj):
-            apiobj.model.spec.targetRef = gateway.reference
-            return True
-
-        policy.modify_and_apply(_apply_target_ref)
+        policy.model.spec.targetRef = gateway.reference
+        policy.apply()
         policy.wait_for_ready()
         time.sleep(5)  # Extra wait to avoid inconsistent DNS issues, wait_for_ready isn't always enough
 

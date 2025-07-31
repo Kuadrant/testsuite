@@ -20,8 +20,7 @@ def test_change_lb_strategy(hostname, gateway, gateway2, dns_policy2, dns_server
     assert resolver.resolve(hostname.hostname)[0].address == gateway2.external_ip().split(":")[0]
 
     dns_policy2.refresh().model.spec.pop("loadBalancing")
-    res = dns_policy2.apply()
-    assert res.status() == 0, res.err()
+    dns_policy2.apply()
     assert dns_policy2.wait_until(
         has_record_condition(
             "Ready",

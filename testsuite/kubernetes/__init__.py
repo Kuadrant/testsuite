@@ -34,22 +34,15 @@ class KubernetesObject(APIObject, LifecycleObject):
         self._committed = True
         return self.refresh()
 
-    def apply(self, *args, **kwargs):
+    def apply(self, modifier_func=None, retries=2, **kwargs):  # pylint: disable=arguments-renamed
         """
-        Overrides apply() to fail with assertion error if unsuccessful
+        Wrapper for modify_and_apply method, which applies the changes to the already commited object.
+        openshift_client library .apply() method is literally .modify_and_apply(), but with no modifier_func and
+        retries set to 0.
         """
-        result = super().apply(*args, **kwargs)
-        assert result.status() == 0, f"Apply returned non-zero exit code for {self.kind()} {self.name()}"
-        return result
-
-    def modify_and_apply(self, *args, **kwargs):
-        """
-        Overrides modify_and_apply() to fail with assertion error if unsuccessful
-        """
-        result, applied_change = super().modify_and_apply(*args, **kwargs)
-        assert applied_change, f"Modify and apply failed for {self.kind()} {self.name()} with result: {result}"
-        assert result.status() == 0, f"Modify and apply returned non-zero exit code for {self.kind()} {self.name()}"
-        return result, applied_change
+        res, success = super().modify_and_apply(modifier_func or (lambda _: True), retries=retries, **kwargs)
+        assert success, f"Modify and apply returned non-zero exit code for {self.kind()}/{self.name()}: {res.err()}"
+        return res
 
     def delete(self, ignore_not_found=True, cmd_args=None):
         """Deletes the resource, by default ignored not found"""
