@@ -8,8 +8,6 @@ This test verifies that a DNSPolicy targeting a specific sectionName of a Gatewa
 - Fails to resolve the unmanaged domain (DNS resolution fails).
 """
 
-import time
-
 import pytest
 
 import requests
@@ -131,11 +129,6 @@ def test_dns_policy_section_name_targeting_gateway_listener(dns_policy, managed_
     - The unmanaged domain fails DNS resolution.
     """
 
-    # Even if the DNSPolicy reports that the record is created,
-    # the DNS record might not be immediately resolvable.
-    # A short delay ensures DNS has time to propagate, preventing test failures.
-    time.sleep(10)
-
     # Check that one DNS record was created
     def dns_record_created(policy):
         return policy.model.status.get("totalRecords", 0) == 1
@@ -143,15 +136,21 @@ def test_dns_policy_section_name_targeting_gateway_listener(dns_policy, managed_
     # Wait until exactly one DNS record is present
     assert dns_policy.wait_until(dns_record_created), "Timed out waiting for DNSPolicy to report totalRecords == 1"
 
+    # Wait for managed domain to become accessible
+    def managed_domain_accessible():
+        try:
+            response = client.get(f"http://{managed_domain}/get", timeout=5)
+            return response.status_code == 200
+        except requests.exceptions.RequestException:
+            return False
+
+    assert dns_policy.wait_until(managed_domain_accessible, timelimit=60), "Managed domain not accessible"
+
     # Simulate curl to managed domain
     print(f"\n$ curl http://{managed_domain}/get -I")
-    try:
-        response = client.get(f"http://{managed_domain}/get")
-        print(f"HTTP/1.1 {response.status_code} OK")
-        assert response.status_code == 200
-    except requests.exceptions.RequestException as e:
-        print(f"Request to managed domain failed: {e}")
-        pytest.fail("Managed domain should have returned 200 OK")
+    response = client.get(f"http://{managed_domain}/get")
+    print(f"HTTP/1.1 {response.status_code} OK")
+    assert response.status_code == 200
 
     # Simulate curl to unmanaged domain
     print(f"\n$ curl http://{unmanaged_domain}/get -I")
