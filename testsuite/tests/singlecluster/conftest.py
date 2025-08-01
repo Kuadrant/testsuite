@@ -91,15 +91,15 @@ def kuadrant(request, testconfig):
 
 
 @pytest.fixture(scope="package")
-def prometheus(cluster):
+def prometheus(cluster, testconfig):
     """
     Return an instance of Thanos metrics client
     Skip tests if query route is not properly configured
     """
-    openshift_monitoring = cluster.change_project("openshift-monitoring")
+    prometheus_project = cluster.change_project(testconfig["prometheus"]["project"])
     # Check if metrics are enabled
     try:
-        with openshift_monitoring.context:
+        with prometheus_project.context:
             cm = selector("cm/cluster-monitoring-config").object(cls=ConfigMap)
             assert yaml.safe_load(cm["config.yaml"])["enableUserWorkload"]
     except Exception:  # pylint: disable=broad-exception-caught
@@ -108,7 +108,7 @@ def prometheus(cluster):
     # find thanos-querier route in the openshift-monitoring project
     # this route allows to query metrics
 
-    routes = openshift_monitoring.get_routes_for_service("thanos-querier")
+    routes = prometheus_project.get_routes_for_service(testconfig["prometheus"]["service"])
     if len(routes) == 0:
         pytest.skip("Skipping metrics tests as query route is not properly configured")
 
