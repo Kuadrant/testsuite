@@ -95,6 +95,7 @@ class Deployment(KubernetesObject):
         ports: dict[str, int],
         selector: Selector,
         labels: dict[str, str],
+        env: list[dict[str, str]] = None,
         command_args: list[str] = None,
         volumes: list[Volume] = None,
         volume_mounts: list[VolumeMount] = None,
@@ -142,6 +143,9 @@ class Deployment(KubernetesObject):
 
         if volume_mounts:
             container["volumeMounts"] = [asdict(mount) for mount in volume_mounts]
+
+        if env:
+            container["env"] = env
 
         if readiness_probe:
             container["readinessProbe"] = readiness_probe

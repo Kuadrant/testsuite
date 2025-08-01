@@ -6,6 +6,8 @@ import time
 
 import pytest
 
+from testsuite.tests.singlecluster.gateway.scaling.conftest import LIMIT
+
 pytestmark = [pytest.mark.kuadrant_only]
 
 
@@ -15,7 +17,7 @@ def test_scale_gateway(gateway, client, auth):
     assert anon_auth_resp is not None
     assert anon_auth_resp.status_code == 401
 
-    responses = client.get_many("/get", 10, auth=auth)
+    responses = client.get_many("/get", LIMIT.limit, auth=auth)
     responses.assert_all(status_code=200)
 
     assert client.get("/get", auth=auth).status_code == 429
@@ -29,7 +31,7 @@ def test_scale_gateway(gateway, client, auth):
     assert anon_auth_resp is not None
     assert anon_auth_resp.status_code == 401
 
-    responses = client.get_many("/get", 10, auth=auth)
+    responses = client.get_many("/get", LIMIT.limit, auth=auth)
     responses.assert_all(status_code=200)
 
     assert client.get("/get", auth=auth).status_code == 429

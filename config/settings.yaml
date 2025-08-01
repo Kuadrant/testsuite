@@ -16,9 +16,6 @@ default:
   prometheus:
     project: "openshift-monitoring"
     service: "thanos-querier"
-    adapter:
-      name: "prometheus-adapter"
-      image: "k8s.gcr.io/prometheus-adapter/prometheus-adapter:v0.12.0"
   service_protection:
     system_project: "kuadrant-system"
     project: "kuadrant"
@@ -42,3 +39,5 @@ default:
     issuer:
       name: "letsencrypt-staging-issuer"
       kind: "Issuer"
+  custom_metrics_apiserver:
+    image: "quay.io/acristur/custom-metrics-apiserver:latest"
