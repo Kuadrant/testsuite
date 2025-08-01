@@ -108,20 +108,13 @@ def prometheus(cluster, testconfig):
     # find thanos-querier route in the openshift-monitoring project
     # this route allows to query metrics
 
-    service = prometheus_project.get_service(testconfig["prometheus"]["service"])
     routes = prometheus_project.get_routes_for_service(testconfig["prometheus"]["service"])
     if len(routes) == 0:
         pytest.skip("Skipping metrics tests as query route is not properly configured")
 
-    protocol = "https" if "tls" in routes[0].model.spec else "http"
-    route_url = f"{protocol}://{routes[0].model.spec.host}"
-    service_url = (
-        f"{protocol}://{service.name()}.{service.namespace()}.svc.cluster.local:{service.get_port('web')['port']}"
-    )
-    with KuadrantClient(
-        headers={"Authorization": f"Bearer {cluster.token}"}, base_url=route_url, verify=False
-    ) as client:
-        yield Prometheus(client, service_url)
+    url = ("https://" if "tls" in routes[0].model.spec else "http://") + routes[0].model.spec.host
+    with KuadrantClient(headers={"Authorization": f"Bearer {cluster.token}"}, base_url=url, verify=False) as client:
+        yield Prometheus(client)
 
 
 @pytest.fixture(scope="session")

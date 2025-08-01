@@ -46,9 +46,8 @@ class Metrics:
 class Prometheus:
     """Interface to the Prometheus client"""
 
-    def __init__(self, client: Client, service_url: str):
+    def __init__(self, client: Client):
         self.client = ApyProxy(str(client.base_url), session=client).api.v1
-        self.service_url = service_url
 
     def get_active_targets(self) -> dict:
         """Get active metric targets information"""

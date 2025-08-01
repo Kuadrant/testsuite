@@ -68,18 +68,7 @@ class SecretVolume:
         return {"secret": {"secretName": self.secret_name}, "name": self.name}
 
 
-@dataclass
-class EmptyDirVolume:
-    """Deployment EmptyDirVolume object"""
-
-    name: str
-
-    def asdict(self):
-        """Custom asdict because of needing to put location as parent dict key for inner dict"""
-        return {"emptyDir": {}, "name": self.name}
-
-
-Volume = SecretVolume | ConfigMapVolume | EmptyDirVolume
+Volume = SecretVolume | ConfigMapVolume
 
 
 class Deployment(KubernetesObject):
@@ -95,7 +84,6 @@ class Deployment(KubernetesObject):
         ports: dict[str, int],
         selector: Selector,
         labels: dict[str, str],
-        env: list[dict[str, str]] = None,
         command_args: list[str] = None,
         volumes: list[Volume] = None,
         volume_mounts: list[VolumeMount] = None,
@@ -144,9 +132,6 @@ class Deployment(KubernetesObject):
         if volume_mounts:
             container["volumeMounts"] = [asdict(mount) for mount in volume_mounts]
 
-        if env:
-            container["env"] = env
-
         if readiness_probe:
             container["readinessProbe"] = readiness_probe
 
@@ -160,13 +145,11 @@ class Deployment(KubernetesObject):
 
     def wait_for_ready(self, timeout=90):
         """Waits until Deployment is marked as ready"""
-        success = self.wait_until(
-            lambda obj: obj.model.status["readyReplicas"] == self.model.spec.replicas, timelimit=timeout
-        )
+        success = self.wait_until(lambda obj: "readyReplicas" in obj.model.status, timelimit=timeout)
         assert success, f"Deployment {self.name()} did not get ready in time"
 
     def wait_for_replicas(self, replicas: int, timeout=90):
-        """Waits until Deployment has the given number of replicas"""
+        """Waits until Deployment has at least the given number of replicas"""
         success = self.wait_until(lambda obj: obj.model.status["readyReplicas"] >= replicas, timelimit=timeout)
         assert success, f"Deployment {self.name()} did not get {replicas} replicas in time"
 
