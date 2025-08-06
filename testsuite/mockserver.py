@@ -1,6 +1,6 @@
 """Module for Mockserver integration"""
 
-from typing import Union
+from typing import Union, Literal
 
 from apyproxy import ApyProxy
 from httpx import Client
@@ -55,12 +55,14 @@ class Mockserver:
         json_data = {"httpResponse": {"headers": {"Content-Type": [str(content_type)]}, "body": body}}
         return self._expectation(expectation_id, json_data)
 
-    def create_template_expectation(self, expectation_id, template):
+    def create_template_expectation(
+        self, expectation_id, template, template_type: Literal["MUSTACHE", "VELOCITY"] = "MUSTACHE"
+    ):
         """
-        Creates template expectation in Mustache format.
+        Creates template expectation in Mustache or Velocity format.
         https://www.mock-server.com/mock_server/response_templates.html
         """
-        json_data = {"httpResponseTemplate": {"templateType": "MUSTACHE", "template": template}}
+        json_data = {"httpResponseTemplate": {"templateType": template_type, "template": template}}
         return self._expectation(expectation_id, json_data)
 
     def clear_expectation(self, expectation_id):
