@@ -13,6 +13,9 @@ default:
     image: "quay.io/trepel/httpbin:jsmadis"
   mockserver:
     image: "quay.io/mganisin/mockserver:latest"
+  prometheus:
+    project: "openshift-monitoring"
+    service: "thanos-querier"
   service_protection:
     system_project: "kuadrant-system"
     project: "kuadrant"
@@ -36,3 +39,5 @@ default:
     issuer:
       name: "letsencrypt-staging-issuer"
       kind: "Issuer"
+  custom_metrics_apiserver:
+    image: "quay.io/acristur/custom-metrics-apiserver:latest"
