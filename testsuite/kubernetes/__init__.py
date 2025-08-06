@@ -69,16 +69,6 @@ class KubernetesObject(APIObject, LifecycleObject):
 class CustomResource(KubernetesObject):
     """Custom APIObjects that implements methods that improves manipulation with CR objects"""
 
-    def safe_apply(self):
-        """
-        Modifies the model of the apiobj and asserts if a change was applied to a resource.
-        Uses modify_and_apply method from KubernetesObject.
-        """
-        result, status = self.modify_and_apply(lambda _: True, retries=2)
-        assert status, f"Unable to apply changes for APIObject with result: {result}"
-        self.refresh()
-        return result
-
     def wait_for_ready(self):
         """Waits until CR reports ready status"""
         success = self.wait_until(
