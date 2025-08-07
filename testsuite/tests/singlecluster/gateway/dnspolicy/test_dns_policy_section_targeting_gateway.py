@@ -13,9 +13,11 @@ import pytest
 
 from testsuite.gateway import CustomReference, GatewayListener
 from testsuite.gateway.gateway_api.gateway import KuadrantGateway
+from testsuite.gateway.gateway_api.hostname import StaticHostname
 from testsuite.gateway.gateway_api.route import HTTPRoute
 from testsuite.httpx import KuadrantClient
 from testsuite.kuadrant.policy.dns import DNSPolicy
+from testsuite.utils import is_nxdomain
 
 
 pytestmark = [pytest.mark.kuadrant_only, pytest.mark.dnspolicy]
@@ -32,9 +34,18 @@ def authorization():
 
 
 @pytest.fixture(scope="module")
-def client(authorization):
-    """Returns a KuadrantClient configured for this test module."""
-    return KuadrantClient(auth=authorization, verify=False)
+def managed_client(gateway, managed_domain):
+    """Returns a client for the successfully protected 'managed' endpoint."""
+    return StaticHostname(managed_domain, gateway.get_tls_cert).client()
+
+
+@pytest.fixture(scope="module")
+def unmanaged_client(unmanaged_domain):
+    """
+    Returns a client for the unmanaged endpoint.
+    This request is expected to fail with a DNS resolution error.
+    """
+    return KuadrantClient(base_url=f"https://{unmanaged_domain}", verify=True)
 
 
 @pytest.fixture(scope="module")
@@ -52,10 +63,9 @@ def unmanaged_domain(base_domain):
 @pytest.fixture(scope="module")
 def gateway(gateway: KuadrantGateway, managed_domain, unmanaged_domain):
     """
-    Modifies the existing, shared gateway for the purposes of this test module.
-    It adds two specific HTTP listeners (one for the managed and one for the
-    unmanaged domain). After the tests in this module complete, these listeners
-    are removed to restore the gateway to its original state.
+    Modifies the existing shared gateway for the purposes of this test module
+    by adding two specific HTTP listeners (one for the managed and one for the
+    unmanaged domain).
     """
 
     gateway.add_listener(GatewayListener(name=MANAGED_LISTENER_NAME, hostname=managed_domain))
@@ -63,32 +73,21 @@ def gateway(gateway: KuadrantGateway, managed_domain, unmanaged_domain):
 
     gateway.wait_for_ready()
 
-    yield gateway
-
-    gateway.remove_listener(MANAGED_LISTENER_NAME)
-    gateway.remove_listener(UNMANAGED_LISTENER_NAME)
-
-    gateway.wait_for_ready()
+    return gateway
 
 
 @pytest.fixture(scope="module")
-def route(route: HTTPRoute, managed_domain, unmanaged_domain, _hostname):
+def route(route: HTTPRoute, managed_domain, unmanaged_domain):
     """
-    Temporarily replaces the hostnames on the existing HTTPRoute
+    Replaces the hostnames on the existing HTTPRoute
     for the duration of the test module.
     """
-    original_hostnames = list(route.hostnames)
     route.remove_all_hostnames()
     route.add_hostname(managed_domain)
     route.add_hostname(unmanaged_domain)
     route.wait_for_ready()
 
-    yield route
-
-    route.remove_all_hostnames()
-    for original_hostname in original_hostnames:
-        route.add_hostname(original_hostname)
-    route.wait_for_ready()
+    return route
 
 
 @pytest.fixture(scope="module")
@@ -110,7 +109,9 @@ def dns_policy(request, gateway, blame, module_label, dns_provider_secret):
 
 
 @pytest.mark.usefixtures("route")
-def test_dns_policy_section_name_targeting_gateway_listener(dns_policy, managed_domain, unmanaged_domain, client):
+def test_dns_policy_section_name_targeting_gateway_listener(
+    dns_policy, managed_client, unmanaged_client, unmanaged_domain
+):
     """
     Tests that a DNSPolicy with a specific `sectionName` creates a DNS record
     only for the targeted Gateway listener's hostname.
@@ -125,10 +126,11 @@ def test_dns_policy_section_name_targeting_gateway_listener(dns_policy, managed_
         lambda policy: policy.model.status.get("totalRecords", 0) == 1
     ), "Timed out waiting for DNSPolicy to report totalRecords == 1"
 
-    # Verify the managed domain is accessible.
-    response_managed = client.get(f"http://{managed_domain}/get")
+    # Test the managed endpoint: it should be successful
+    response_managed = managed_client.get("/get")
     assert response_managed.status_code == 200, "Managed domain should be accessible"
 
-    # Verify the unmanaged domain does not resolve.
-    response_unmanaged = client.get(f"http://{unmanaged_domain}/get")
+    # Test the unmanaged endpoint: it should fail DNS
+    response_unmanaged = unmanaged_client.get("/get")
     assert response_unmanaged.has_dns_error(), "Unmanaged domain should have a DNS resolution error"
+    assert is_nxdomain(unmanaged_domain), "Unmanaged domain should not resolve (NXDOMAIN expected)"
