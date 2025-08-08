@@ -32,31 +32,37 @@ def public_domain(base_domain):
 
 
 @pytest.fixture(scope="module")
-def gateway(request, cluster, blame, module_label, secure_domain, public_domain):
+def gateway(gateway: KuadrantGateway, secure_domain, public_domain):
     """
-    Creates a single Gateway resource with two separate listeners.
+    Modifies the existing, shared gateway for this test module.
+    It adds two specific TLS listeners and applies the changes.
     Core setup needed to test that a policy can target one listener while
-    ignoring the other.
+    ignoring the other. After the test in this module complete, these listeners
+    are removed to restore the gateway to its original state.
     """
-    gw = KuadrantGateway.create_instance(cluster, blame("gw"), {"app": module_label})
-    gw.add_listener(
+    gateway.add_listener(
         TLSGatewayListener(
             hostname=secure_domain,
-            gateway_name=gw.name(),
+            gateway_name=gateway.name(),
             name=SECURE_LISTENER_NAME,
         )
     )
-    gw.add_listener(
+    gateway.add_listener(
         TLSGatewayListener(
             hostname=public_domain,
-            gateway_name=gw.name(),
+            gateway_name=gateway.name(),
             name=PUBLIC_LISTENER_NAME,
         )
     )
-    request.addfinalizer(gw.delete)
-    gw.commit()
-    gw.wait_for_ready()
-    return gw
+
+    gateway.wait_for_ready()
+
+    yield gateway
+
+    gateway.remove_listener(SECURE_LISTENER_NAME)
+    gateway.remove_listener(PUBLIC_LISTENER_NAME)
+
+    gateway.wait_for_ready()
 
 
 @pytest.fixture(scope="module")
@@ -110,7 +116,6 @@ def authorization(
     return policy
 
 
-@pytest.mark.usefixtures("authorization", "secure_route", "public_route")
 def test_authpolicy_section_name_targeting_gateway_listener(custom_client, auth, secure_domain, public_domain):
     """
     Tests that an AuthPolicy attached to a specific Gateway listener protects
