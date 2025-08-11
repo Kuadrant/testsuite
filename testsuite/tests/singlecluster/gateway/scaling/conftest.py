@@ -19,12 +19,12 @@ def custom_metrics_apiserver(testconfig):
 def authorization(authorization, oidc_provider):
     """Create an AuthPolicy with authentication for a simple user with same target as one default"""
     authorization.identity.add_oidc(
-            "default", oidc_provider.well_known["issuer"], when=[CelPredicate("request.path == '/anything/auth'")]
-        )
+        "default", oidc_provider.well_known["issuer"], when=[CelPredicate("request.path == '/anything/auth'")]
+    )
     # Anonymous auth for /anything/limitador
     authorization.identity.add_anonymous(
-            "allow-limitador-anonymous", when=[CelPredicate("request.path == '/anything/limit'")]
-        )
+        "allow-limitador-anonymous", when=[CelPredicate("request.path == '/anything/limit'")]
+    )
     return authorization
 
 
