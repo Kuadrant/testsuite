@@ -33,6 +33,11 @@ class EnvoyVirtualRoute(GatewayRoute):
             self.gateway.config.add_backend(backend, prefix)
             self.gateway.rollout()
 
+    def add_custom_routes_match(self, match: dict, position: int = 0):
+        """Add specific routes match which will be specified through dictionary data into fixture."""
+        self.gateway.config.add_custom_routes_match(position=position, match=match)
+        self.gateway.rollout()
+
     def remove_all_backend(self):
         self.gateway.config.remove_all_backends()
         self.gateway.rollout()
