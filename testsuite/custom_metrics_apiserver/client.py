@@ -2,12 +2,11 @@ from urllib.parse import urljoin
 import httpx
 
 
-class CustomMetricsApiServerClient:
+class CustomMetricsApiServerClient(httpx.Client):
     """Client for the Custom Metrics API Server"""
 
     def __init__(self, url: str):
-        self.url = url
-        self.client = httpx.Client(verify=False)
+        return super().__init__(base_url=url, verify=False, headers={"Content-Type": "application/json"})
 
     def write_metric(self, namespace: str, resource_type: str, name: str, metric: str, value: int):
         """Write a metric value to the Custom Metrics API Server.
@@ -20,9 +19,7 @@ class CustomMetricsApiServerClient:
             value: The value to set
         """
         endpoint = f"/write-metrics/namespaces/{namespace}/{resource_type}/{name}/{metric}"
-        url = urljoin(self.url, endpoint)
 
-        headers = {"Content-Type": "application/json"}
-        response = self.client.post(url, headers=headers, content=f"{value}")
+        response = self.post(endpoint, content=f"{value}")
         response.raise_for_status()
         return response.status_code

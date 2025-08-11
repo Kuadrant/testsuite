@@ -12,7 +12,7 @@ from testsuite.tests.singlecluster.gateway.scaling.conftest import LIMIT
 
 pytestmark = [pytest.mark.kuadrant_only]
 
-METRIC_NAME = "http_requests_total"
+METRIC_NAME = "mocked_metric"
 
 
 @pytest.fixture(scope="module")
@@ -56,14 +56,18 @@ def test_auto_scale_gateway(
     gateway, hpa, backend, client, auth, custom_metrics_apiserver, cluster
 ):  # pylint: disable=unused-argument
     """This test asserts that the policies are working as expected and this behavior does not change after scaling"""
-    anon_auth_resp = client.get("/get")
+    anon_auth_resp = client.get("/anything/auth")
     assert anon_auth_resp is not None
     assert anon_auth_resp.status_code == 401
 
-    responses = client.get_many("/get", LIMIT.limit, auth=auth)
+    auth_resp = client.get("/anything/auth", auth=auth)
+    assert auth_resp is not None
+    assert auth_resp.status_code == 200
+
+    responses = client.get_many("/anything/limit", LIMIT.limit, auth=auth)
     responses.assert_all(status_code=200)
 
-    assert client.get("/get", auth=auth).status_code == 429
+    assert client.get("/anything/limit", auth=auth).status_code == 429
 
     time.sleep(5)  # sleep in order to reset the rate limit policy time limit.
 
@@ -76,11 +80,15 @@ def test_auto_scale_gateway(
     )
     gateway.deployment.wait_for_replicas(2)
 
-    anon_auth_resp = client.get("/get")
+    anon_auth_resp = client.get("/anything/auth")
     assert anon_auth_resp is not None
     assert anon_auth_resp.status_code == 401
 
-    responses = client.get_many("/get", LIMIT.limit, auth=auth)
+    auth_resp = client.get("/anything/auth", auth=auth)
+    assert auth_resp is not None
+    assert auth_resp.status_code == 200
+
+    responses = client.get_many("/anything/limit", LIMIT.limit, auth=auth)
     responses.assert_all(status_code=200)
 
-    assert client.get("/get", auth=auth).status_code == 429
+    assert client.get("/anything/limit", auth=auth).status_code == 429

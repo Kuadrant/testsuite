@@ -16,9 +16,15 @@ def custom_metrics_apiserver(testconfig):
 
 
 @pytest.fixture(scope="module")
-def authorization(authorization):
+def authorization(authorization, oidc_provider):
     """Create an AuthPolicy with authentication for a simple user with same target as one default"""
-    authorization.metadata.add_user_info("user-info", "default")
+    authorization.identity.add_oidc(
+            "default", oidc_provider.well_known["issuer"], when=[CelPredicate("request.path == '/anything/auth'")]
+        )
+    # Anonymous auth for /anything/limitador
+    authorization.identity.add_anonymous(
+            "allow-limitador-anonymous", when=[CelPredicate("request.path == '/anything/limit'")]
+        )
     return authorization
 
 
@@ -26,7 +32,7 @@ def authorization(authorization):
 def rate_limit(blame, gateway, module_label, cluster):
     """Add limit to the policy"""
     policy = RateLimitPolicy.create_instance(cluster, blame("rlp"), gateway, labels={"app": module_label})
-    policy.add_limit("basic", [LIMIT], when=[CelPredicate("auth.metadata.userinfo.email != ''")])
+    policy.add_limit("basic", [LIMIT], when=[CelPredicate("request.path == '/anything/limit'")])
     return policy
 
 

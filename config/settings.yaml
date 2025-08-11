@@ -39,5 +39,3 @@ default:
     issuer:
       name: "letsencrypt-staging-issuer"
       kind: "Issuer"
-  custom_metrics_apiserver:
-    image: "quay.io/acristur/custom-metrics-apiserver:latest"
