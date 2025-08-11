@@ -1,6 +1,6 @@
 """
 Tests that a TLSPolicy with sectionName correctly applies TLS
-only to the targeted gateway listener ('api').
+only to the targeted gateway listener ('managed-listener').
 """
 
 import pytest
@@ -14,7 +14,8 @@ from testsuite.kuadrant.policy.tls import TLSPolicy
 
 pytestmark = [pytest.mark.kuadrant_only]
 
-API_LISTENER_NAME = "api"
+MANAGED_LISTENER_NAME = "managed-listener"
+UNMANAGED_LISTENER_NAME = "unmanaged-listener"
 
 
 # Override unused policies to prevent them from being created by global fixtures
@@ -31,44 +32,57 @@ def rate_limit():
 
 
 @pytest.fixture(scope="module")
-def api_hostname(base_domain):
-    """Returns the hostname for the targeted listener."""
-    return f"api.{base_domain}"
+def managed_domain(base_domain):
+    """Returns the hostname for the listener targeted by the TLSPolicy."""
+    return f"managed.{base_domain}"
 
 
 @pytest.fixture(scope="module")
-def extra_hostname(base_domain):
-    """Returns the hostname for the non-targeted listener."""
-    return f"extra.{base_domain}"
+def unmanaged_domain(base_domain):
+    """Returns the hostname for the listener NOT targeted by the TLSPolicy."""
+    return f"unmanaged.{base_domain}"
 
 
 @pytest.fixture(scope="module")
-def gateway(request, cluster, blame, module_label, api_hostname, extra_hostname):
-    """Gateway with two named TLS listeners for explicit targeting."""
-    gw = KuadrantGateway.create_instance(cluster, blame("gw"), {"testRun": module_label})
-    gw.add_listener(TLSGatewayListener(name=API_LISTENER_NAME, hostname=api_hostname, gateway_name=gw.name()))
-    gw.add_listener(TLSGatewayListener(name="extra", hostname=extra_hostname, gateway_name=gw.name()))
-    request.addfinalizer(gw.delete)
-    gw.commit()
-    gw.wait_for_ready()
-    return gw
+def route(route: HTTPRoute, managed_domain, unmanaged_domain):
+    """
+    Replaces the hostnames on the existing HTTPRoute for the duration
+    of the test module.
+    """
+    route.remove_all_hostnames()
+    route.add_hostname(managed_domain)
+    route.add_hostname(unmanaged_domain)
+    route.wait_for_ready()
 
-
-@pytest.fixture(scope="module")
-def route(request, cluster, blame, module_label, gateway, backend, api_hostname, extra_hostname):
-    """Creates a single HTTPRoute with two hostnames, attaching to both gateway listeners."""
-    route = HTTPRoute.create_instance(cluster, blame("route"), gateway, {"app": module_label})
-    route.add_hostname(api_hostname)
-    route.add_hostname(extra_hostname)
-    route.add_backend(backend, "/")
-    request.addfinalizer(route.delete)
-    route.commit()
     return route
 
 
 @pytest.fixture(scope="module")
+def gateway(gateway: KuadrantGateway, managed_domain, unmanaged_domain):
+    """
+    Modifies the existing shared gateway for the purposes of this test module
+    by adding two specific HTTP listeners (one for the managed and one for the
+    unmanaged domain).
+    """
+
+    gateway.add_listener(
+        TLSGatewayListener(name=MANAGED_LISTENER_NAME, hostname=managed_domain, gateway_name=gateway.name())
+    )
+    gateway.add_listener(
+        TLSGatewayListener(name=UNMANAGED_LISTENER_NAME, hostname=unmanaged_domain, gateway_name=gateway.name())
+    )
+
+    gateway.wait_for_ready()
+
+    return gateway
+
+
+@pytest.fixture(scope="module")
 def dns_policy(gateway, blame, module_label, dns_provider_secret):
-    """Defines a DNSPolicy object."""
+    """
+    Defines a DNSPolicy that targets the whole Gateway to ensure both
+    managed and unmanaged hostnames are routable for the test.
+    """
     return DNSPolicy.create_instance(
         gateway.cluster, blame("dns"), gateway, dns_provider_secret, labels={"testRun": module_label}
     )
@@ -76,9 +90,10 @@ def dns_policy(gateway, blame, module_label, dns_provider_secret):
 
 @pytest.fixture(scope="module")
 def tls_policy(gateway, blame, module_label, cluster_issuer):
-    """Defines a TLSPolicy object using a simplified reference."""
-    # Unpack the gateway's reference and add the sectionName
-    parent_ref = CustomReference(sectionName=API_LISTENER_NAME, **gateway.reference)
+    """
+    Defines a TLSPolicy that targets only the 'managed' listener via sectionName.
+    """
+    parent_ref = CustomReference(sectionName=MANAGED_LISTENER_NAME, **gateway.reference)
     return TLSPolicy.create_instance(
         cluster=gateway.cluster,
         name=blame("tls-section"),
@@ -89,35 +104,32 @@ def tls_policy(gateway, blame, module_label, cluster_issuer):
 
 
 @pytest.fixture(scope="module")
-def api_client(gateway, api_hostname):
-    """Returns a client for the successfully protected 'api' endpoint."""
-    return StaticHostname(api_hostname, gateway.get_tls_cert).client()
+def managed_client(gateway, managed_domain):
+    """Returns a client for the successfully protected 'managed' endpoint."""
+    return StaticHostname(managed_domain, gateway.get_tls_cert).client()
 
 
 @pytest.fixture(scope="module")
-def extra_client(extra_hostname):
+def unmanaged_client(unmanaged_domain):
     """
-    Returns a client that enables default TLS verification, which is expected
-    to fail and be caught internally by the KuadrantClient.
+    Returns a client that enables default TLS verification for the unmanaged endpoint.
+    This request is expected to fail with a TLS certificate error.
     """
-    return KuadrantClient(base_url=f"https://{extra_hostname}", verify=True)
+    return KuadrantClient(base_url=f"https://{unmanaged_domain}", verify=True)
 
 
-@pytest.mark.usefixtures("route")
-def test_tls_policy_section_targeting_gateway_listener(tls_policy, dns_policy, api_client, extra_client):
+@pytest.mark.usefixtures("route", "tls_policy", "dns_policy")
+def test_tls_policy_section_targeting_gateway_listener(managed_client, unmanaged_client):
     """
-    Waits for policies to be ready, then asserts that the TLSPolicy is
-    applied only to the targeted 'api' listener.
+    Asserts that the TLSPolicy is
+    applied only to the targeted 'managed' listener.
     """
-    # Wait for the prerequisite policies to be ready.
-    dns_policy.wait_for_ready()
-    tls_policy.wait_for_ready()
 
-    # Test the targeted endpoint: it should be successful and have a valid cert
-    response_api = api_client.get("/get")
-    assert response_api.status_code == 200
-    assert not response_api.has_cert_verify_error()
+    # Test the managed endpoint: it should be successful and have a valid cert.
+    response_managed = managed_client.get("/get")
+    assert response_managed.status_code == 200
+    assert not response_managed.has_cert_verify_error()
 
-    # Test the non-targeted endpoint: it should fail with a TLS error
-    response_extra = extra_client.get("/get")
-    assert response_extra.has_tls_error()
+    # Test the unmanaged endpoint: it should be connectable but fail with a TLS error.
+    response_unmanaged = unmanaged_client.get("/get")
+    assert response_unmanaged.has_tls_error()
