@@ -26,6 +26,9 @@ class TokenRateLimitPolicy(RateLimitPolicy):
             "apiVersion": "kuadrant.io/v1alpha1",
             "kind": "TokenRateLimitPolicy",
             "metadata": {"name": name, "labels": labels},
+            "spec": {
+                "targetRef": target.reference,
+            },
         }
         if section_name:
             model["spec"]["targetRef"]["sectionName"] = section_name

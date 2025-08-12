@@ -1,8 +1,14 @@
+"""
+Conftest for TokenRateLimitPolicy tests
+"""
+
 import pytest
 
 from testsuite.backend.llm_sim import LlmSim
 from testsuite.httpx.auth import HeaderApiKeyAuth
+from testsuite.kuadrant.policy import CelExpression, CelPredicate
 from testsuite.kuadrant.policy.authorization import JsonResponse, ValueFrom
+from testsuite.kuadrant.policy.rate_limit import Limit
 from testsuite.kuadrant.policy.token_rate_limit import TokenRateLimitPolicy
 
 
@@ -51,7 +57,8 @@ def backend(request, cluster, blame, label, testconfig):
 
 
 @pytest.fixture(scope="module")
-def authorization(authorization, user_label, free_user_api_key):
+def authorization(authorization, free_user_api_key):
+    """Sets AuthPolicy to validate the users API key, expose user ID, and allow free/paid groups"""
     authorization.identity.add_api_key("api-key", selector=free_user_api_key.selector)
     authorization.responses.add_success_dynamic(
         "identity",
@@ -61,22 +68,50 @@ def authorization(authorization, user_label, free_user_api_key):
         "allow-groups",
         """
         groups := split(object.get(input.auth.identity.metadata.annotations, "kuadrant.io/groups", ""), ",")
-        allow { groups[_] = "free" }
-        allow { groups[_] = "paid" }
+        allow { groups[_] == "free" }
+        allow { groups[_] == "paid" }
         """,
     )
     return authorization
 
 
 @pytest.fixture(scope="module")
-def token_rate_limit(cluster, blame, label):
-    """Creates TokenRateLimitPolicy"""
-    policy = TokenRateLimitPolicy.create_instance(cluster, blame("trlp"), label)
+def token_rate_limit(cluster, blame, module_label, route):
+    """Creates TokenRateLimitPolicy for free and paid users"""
+    policy = TokenRateLimitPolicy.create_instance(cluster, blame("trlp"), route, labels={"testRun": module_label})
+
+    # Free user limit - 50 tokens per 24h
+    policy.add_limit(
+        name="free",
+        limits=[Limit(limit=50, window="24h")],
+        when=[
+            CelPredicate('request.path == "/v1/chat/completions"'),
+            CelPredicate(
+                'request.auth.identity.metadata.annotations["kuadrant.io/groups"].split(",").exists(g, g == "free")'
+            ),
+        ],
+        counters=[CelExpression("auth.identity.userid")],
+    )
+
+    # Paid user limit - 100 tokens per 24h
+    policy.add_limit(
+        name="paid",
+        limits=[Limit(limit=100, window="24h")],
+        when=[
+            CelPredicate('request.path == "/v1/chat/completions"'),
+            CelPredicate(
+                'request.auth.identity.metadata.annotations["kuadrant.io/groups"].split(",").exists(g, g == "paid")'
+            ),
+        ],
+        counters=[CelExpression("auth.identity.userid")],
+    )
+
     return policy
 
 
 @pytest.fixture(scope="module", autouse=True)
 def commit(request, authorization, token_rate_limit):
+    """Commits policies"""
     components = [authorization, token_rate_limit]
     for component in components:
         request.addfinalizer(component.delete)
