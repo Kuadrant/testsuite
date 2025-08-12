@@ -6,7 +6,6 @@ from testsuite.certificates import CertInfo
 from testsuite.kuadrant.policy.authorization import WristbandSigningKeyRef, WristbandResponse
 from testsuite.kuadrant.policy.authorization.auth_config import AuthConfig
 from testsuite.gateway.envoy.route import EnvoyVirtualRoute
-from testsuite.gateway.envoy.wristband import WristbandEnvoy
 from testsuite.kubernetes.secret import TLSSecret
 from testsuite.utils import cert_builder
 
@@ -36,21 +35,6 @@ def certificates(cfssl, wildcard_domain):
         "signing_ca": CertInfo(ca=True),
     }
     return cert_builder(cfssl, chain, wildcard_domain)
-
-
-@pytest.fixture(scope="module")
-def gateway(request, authorino, cluster, blame, module_label, testconfig):
-    """Deploys Envoy with additional edge-route match"""
-    envoy = WristbandEnvoy(
-        cluster,
-        blame("gw"),
-        authorino,
-        testconfig["service_protection"]["envoy"]["image"],
-        labels={"app": module_label},
-    )
-    request.addfinalizer(envoy.delete)
-    envoy.commit()
-    return envoy
 
 
 @pytest.fixture(scope="module")
@@ -91,6 +75,24 @@ def wristband_hostname(exposer, gateway, blame):
 
 
 @pytest.fixture(scope="module")
+def route_dictionary():
+    """Create dictionary with wristband specific route match for EnvoyConfig."""
+    route_dictionary = {
+        "match": {"prefix": "/auth"},
+        "directResponse": {"status": 200},
+        "response_headers_to_add": [
+            {
+                "header": {
+                    "key": "wristband-token",
+                    "value": '%DYNAMIC_METADATA(["envoy.filters.http.ext_authz", "wristband"])%',
+                }
+            }
+        ],
+    }
+    return route_dictionary
+
+
+@pytest.fixture(scope="module")
 def wristband_authorization(
     request,
     gateway,
@@ -100,10 +102,12 @@ def wristband_authorization(
     label,
     wristband_endpoint,
     wristband_secret,
+    route_dictionary,
 ):
     """Second AuthConfig with authorino oidc endpoint for getting the wristband token"""
     route = EnvoyVirtualRoute.create_instance(gateway.cluster, wristband_name, gateway)
     route.add_hostname(wristband_hostname.hostname)
+    route.add_custom_routes_match(match=route_dictionary)
 
     request.addfinalizer(route.delete)
     route.commit()
