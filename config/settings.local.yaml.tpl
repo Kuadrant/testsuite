@@ -10,6 +10,9 @@
 #    test_user:
 #      username: "testUser"
 #      password: "testPassword"
+#  spicedb:
+#    url: "SPICEDB_URL"
+#    password: "SPICEDB_PASSWORD"
 #  auth0:
 #    client_id: "CLIENT_ID"
 #    client_secret: "CLIENT_SECRET"
