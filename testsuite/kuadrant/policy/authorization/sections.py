@@ -1,6 +1,7 @@
 """Sections inside of AuthConfig"""
 
 from typing import Literal, Iterable, TYPE_CHECKING, Union
+from urllib.parse import urlparse
 
 from testsuite.kuadrant.policy.authorization import (
     Credentials,
@@ -321,6 +322,50 @@ class AuthorizationSection(Section):
                     "user": asdict(user),
                     "resourceAttributes": asdict(resource_attributes) if resource_attributes else None,
                 },
+            },
+            **common_features,
+        )
+
+    @modify
+    def add_spicedb(
+        self,
+        name,
+        endpoint,
+        credentials_secret,
+        object1: str,
+        object2: str,
+        permission1: tuple,
+        permission2: tuple,
+        subject_selector: str = "context.request.http.headers.username",
+        resource_selector: str = ("context.request.http.path." '@extract:{"sep":"/","pos":2}'),
+        key: str = "grpc-preshared-key",
+        **common_features,
+    ):
+        """Adds spiceDB authorization section."""
+
+        permission_selector = (
+            "context.request.http.method"
+            f'.@replace:{{"old":"{permission1[0]}","new":"{permission1[1]}"}}'
+            f'.@replace:{{"old":"{permission2[0]}","new":"{permission2[1]}"}}'
+        )
+
+        self.add_item(
+            name,
+            {
+                "spicedb": {
+                    "endpoint": urlparse(endpoint).netloc,
+                    "insecure": True,
+                    "sharedSecretRef": {"name": credentials_secret, "key": key},
+                    "subject": {
+                        "kind": {"value": object1},
+                        "name": {"selector": subject_selector},
+                    },
+                    "resource": {
+                        "kind": {"value": object2},
+                        "name": {"selector": resource_selector},
+                    },
+                    "permission": {"selector": permission_selector},
+                }
             },
             **common_features,
         )

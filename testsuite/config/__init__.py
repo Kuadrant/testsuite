@@ -70,6 +70,8 @@ settings = Dynaconf(
         DefaultValueValidator("keycloak.url", default=fetch_service_ip("keycloak", force_http=True, port=8080)),
         DefaultValueValidator("keycloak.password", default=fetch_secret("credential-sso", "ADMIN_PASSWORD")),
         DefaultValueValidator("mockserver.url", default=fetch_service_ip("mockserver", force_http=True, port=1080)),
+        DefaultValueValidator("spicedb.url", default=fetch_service_ip("spicedb", force_http=True, port=50051)),
+        DefaultValueValidator("spicedb.password", default=fetch_secret("spicedb-key", "SPICEDB_GRPC_PRESHARED_KEY")),
     ],
     validate_only=["authorino", "kuadrant", "default_exposer", "control_plane"],
     loaders=["dynaconf.loaders.env_loader", "testsuite.config.openshift_loader", "testsuite.config.exposer"],
