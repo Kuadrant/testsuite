@@ -7,9 +7,16 @@ import pytest
 
 from testsuite.kuadrant.policy.authorization import Pattern, ValueFrom, DenyResponse
 from testsuite.gateway.envoy.jwt_plain_identity import JwtEnvoy
+from testsuite.httpx.auth import HttpxOidcClientAuth
 
 
 pytestmark = [pytest.mark.authorino, pytest.mark.standalone_only]
+
+
+@pytest.fixture(scope="module")
+def auth2(user_with_role, keycloak):
+    """Creates user with role and returns its authentication object for HTTPX"""
+    return HttpxOidcClientAuth.from_user(keycloak.get_token, user_with_role, "authorization")
 
 
 @pytest.fixture(scope="module")
@@ -109,18 +116,6 @@ def test_jwt_user_story(client, auth, auth2):
     User with assigned role can access all paths, regardless of the country parameter.
     """
 
-    response = client.get("/get", auth=auth2, headers={"x-country": "GB"})
-    assert response is not None
-    assert response.status_code == 200
-
-    response = client.get("/get", auth=auth2, headers={"x-country": "IT"})
-    assert response is not None
-    assert response.status_code == 200
-
-    response = client.get("/anything/global", auth=auth2)
-    assert response is not None
-    assert response.status_code == 200
-
     response = client.get("/get", auth=auth, headers={"x-country": "GB"})
     assert response is not None
     assert response.status_code == 200
@@ -132,5 +127,17 @@ def test_jwt_user_story(client, auth, auth2):
     assert deny_message == "The requested resource is not available in Italy"
 
     response = client.get("/anything/global", auth=auth)
+    assert response is not None
+    assert response.status_code == 200
+
+    response = client.get("/get", auth=auth2, headers={"x-country": "GB"})
+    assert response is not None
+    assert response.status_code == 200
+
+    response = client.get("/get", auth=auth2, headers={"x-country": "IT"})
+    assert response is not None
+    assert response.status_code == 200
+
+    response = client.get("/anything/global", auth=auth2)
     assert response is not None
     assert response.status_code == 200
