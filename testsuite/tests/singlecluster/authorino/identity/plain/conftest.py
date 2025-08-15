@@ -2,8 +2,6 @@
 
 import pytest
 
-from testsuite.httpx.auth import HttpxOidcClientAuth
-
 
 @pytest.fixture(scope="module")
 def realm_role(keycloak, blame):
@@ -19,9 +17,3 @@ def user_with_role(keycloak, realm_role, blame):
     user = keycloak.realm.create_user(username, password)
     user.assign_realm_role(realm_role)
     return user
-
-
-@pytest.fixture(scope="module")
-def auth2(user_with_role, keycloak):
-    """Creates user with role and returns its authentication object for HTTPX"""
-    return HttpxOidcClientAuth.from_user(keycloak.get_token, user_with_role, "authorization")
