@@ -25,7 +25,7 @@ def rate_limit(cluster, blame, route, module_label):
 
 
 @pytest.fixture(scope="function", autouse=True)
-def commit(request, rate_limit, limitador):  # pylint: disable=unused-argument
+def commit(request, rate_limit, limitador):
     """
     Commits rate_limit before every test function to reset the counter
     limitador fixture is requested so the storage gets applied to all tests
