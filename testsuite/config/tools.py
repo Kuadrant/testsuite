@@ -52,7 +52,7 @@ def fetch_service(name, protocol: str = None, port: int = None):
     return _fetcher
 
 
-def fetch_service_ip(name, port, force_http=False):
+def fetch_service_ip(name, port: int, protocol: str = "http"):
     """Fetched load balanced ip for LoadBalancer service"""
 
     def _fetcher(settings, _):
@@ -60,7 +60,7 @@ def fetch_service_ip(name, port, force_http=False):
             cluster = settings["tools"]
             with cluster.context:
                 ip = selector(f"service/{name}").object(cls=Service).external_ip
-                return f"http://{ip}:{port}" if force_http else f"https://{ip}:{port}"
+                return f"{protocol}://{ip}:{port}"
         # pylint: disable=broad-except
         except Exception:
             logger.warning("Unable to fetch route %s from tools", name)
