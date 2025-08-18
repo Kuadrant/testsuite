@@ -149,9 +149,15 @@ def gateway(request, kuadrant, cluster, blame, label, testconfig, wildcard_domai
 
 
 @pytest.fixture(scope="module")
-def hostname(gateway, exposer, blame) -> Hostname:
+def domain_name(blame) -> str:
+    """Domain name"""
+    return blame("hostname")
+
+
+@pytest.fixture(scope="module")
+def hostname(gateway, exposer, domain_name) -> Hostname:
     """Exposed Hostname object"""
-    hostname = exposer.expose_hostname(blame("hostname"), gateway)
+    hostname = exposer.expose_hostname(domain_name, gateway)
     return hostname
 
 
