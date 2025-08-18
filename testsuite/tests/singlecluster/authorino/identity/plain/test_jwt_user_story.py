@@ -3,20 +3,14 @@ Test for JWT plain identity implementing user story from :
 https://github.com/Kuadrant/authorino/blob/main/docs/user-guides/envoy-jwt-authn-and-authorino.md
 """
 
+import time
 import pytest
 
 from testsuite.kuadrant.policy.authorization import Pattern, ValueFrom, DenyResponse
 from testsuite.gateway.envoy.jwt_plain_identity import JwtEnvoy
-from testsuite.httpx.auth import HttpxOidcClientAuth
 
 
 pytestmark = [pytest.mark.authorino, pytest.mark.standalone_only]
-
-
-@pytest.fixture(scope="module")
-def auth2(user_with_role, keycloak):
-    """Creates user with role and returns its authentication object for HTTPX"""
-    return HttpxOidcClientAuth.from_user(keycloak.get_token, user_with_role, "authorization")
 
 
 @pytest.fixture(scope="module")
@@ -106,6 +100,7 @@ def route(route, backend):
         },
     }
     route.add_custom_routes_match(match=route_dictionary)
+    time.sleep(5)
     return route
 
 
