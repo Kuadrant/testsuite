@@ -30,6 +30,10 @@ class Realm:
         client_id = self.admin.get_client_id(name)
         return Client(self, client_id)
 
+    def delete_client(self, client_id):
+        """Deletes client"""
+        self.admin.delete_client(client_id)
+
     def create_user(self, username, password, **kwargs):
         """Creates new user"""
         kwargs["username"] = username
