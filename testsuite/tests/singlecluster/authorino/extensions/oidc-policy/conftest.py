@@ -27,30 +27,83 @@ def public_client(keycloak):
 
 
 @pytest.fixture(scope="module")
-def provider(oidc_provider):
-    return Provider(
-        issuer_url=oidc_provider.well_known["issuer"],
-        client_id="my-public-client",
-        # authorization_endpoint=oidc_provider.well_known["authorization_endpoint"],
-        # token_endpoint=oidc_provider.well_known["token_endpoint"],
+def service_client(keycloak):
+    """Creates a confidential client for service account (machine-to-machine) flow"""
+    client = keycloak.realm.create_client(
+        name="my-service-client",
+        publicClient=False,  # This makes it a confidential client (requires client authentication)
+        standardFlowEnabled=False,  # Disable Authorization Code Flow
+        implicitFlowEnabled=False,  # Disable Implicit Flow
+        directAccessGrantsEnabled=False,  # Disable Direct Access Grants
+        serviceAccountsEnabled=True,  # Enable service account for client credentials flow
+        authorizationServicesEnabled=False,  # No need for authorization services
+    )
+    
+    return KeycloakOpenID(
+        server_url=keycloak.server_url,
+        client_id=client.auth_id,
+        client_secret_key=client.secret,
+        realm_name=keycloak.realm_name
+    )
+
+@pytest.fixture(scope="module")
+def confidential_client(keycloak):
+    """Creates a confidential client with Authorization Code Flow enabled"""
+    client = keycloak.realm.create_client(
+        name="my-confidential-client",
+        publicClient=False,  # This makes it a confidential client (requires client authentication)
+        standardFlowEnabled=True,  # Enables Authorization Code Flow
+        directAccessGrantsEnabled=True,  # Enables Resource Owner Password Credentials
+        serviceAccountsEnabled=True,  # Enable service account for confidential client
+        authorizationServicesEnabled=False,  # No need for authorization services
+        # rootUrl="http://localhost:8080",  # Root URL as specified
+        # redirectUris=["http://localhost:8080/*"],  # Redirect URIs as specified
+    )
+    
+    return KeycloakOpenID(
+        server_url=keycloak.server_url,
+        client_id=client.auth_id,
+        client_secret_key=client.secret,
+        realm_name=keycloak.realm_name
     )
 
 
 @pytest.fixture(scope="module")
-def auth(public_client, keycloak):
+def oidc_client(request) -> KeycloakOpenID:
+    """Fixture which enables switching out OIDC clients for individual modules"""
+    return request.getfixturevalue(request.param)
+
+@pytest.fixture(scope="module")
+def provider(oidc_provider, oidc_client):   
+    """Returns a Provider instance configured for the specified client type"""
+    return Provider(
+        issuer_url=oidc_provider.well_known["issuer"],
+        client_id=oidc_client.client_id,
+        client_secret=oidc_client.client_secret_key,
+    )
+
+
+@pytest.fixture(scope="module")
+def auth(oidc_client, keycloak):
     """Returns authentication object for HTTPX"""
-    token_data = public_client.token(keycloak.test_username, keycloak.test_password)
+    if isinstance(oidc_client, KeycloakOpenID) and hasattr(oidc_client, 'client_id') and oidc_client.client_id == "my-service-client":
+        # For service client, use client credentials grant
+        token_data = oidc_client.token(grant_type=["client_credentials"], scope="openid")
+    else:
+        # For other clients, use password grant (simulating Authorization Code flow)
+        token_data = oidc_client.token(keycloak.test_username, keycloak.test_password)
+    
     token = Token(
         token_data["access_token"],
-        public_client.refresh_token,
-        token_data["refresh_token"]
+        oidc_client.refresh_token,
+        token_data.get("refresh_token")  # Client credentials doesn't return refresh token
     )
     return HttpxOidcClientAuth(token, "authorization")
 
 
 @pytest.fixture(scope="module")
-def oidc_policy(request, cluster, blame, route, provider):
-    oidc_policy = OIDCPolicy.create_instance(cluster, blame("oidc-policy"), route, provider=provider)
+def oidc_policy(request, cluster, blame, gateway, provider):
+    oidc_policy = OIDCPolicy.create_instance(cluster, blame("oidc-policy"), gateway, provider=provider)
     request.addfinalizer(oidc_policy.delete)
     oidc_policy.commit()
     return oidc_policy
