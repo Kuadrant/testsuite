@@ -10,15 +10,15 @@ default:
       username: "testUser"
       password: "testPassword"
   httpbin:
-    image: "quay.io/trepel/httpbin:jsmadis"
+    image: "quay.io/rhn_support_azgabur/httpbin:latest"
   mockserver:
-    image: "quay.io/mganisin/mockserver:latest"
+    image: "quay.io/rhn_support_azgabur/mockserver:latest"
   service_protection:
     system_project: "kuadrant-system"
     project: "kuadrant"
     project2: "kuadrant2"
     envoy:
-      image: "quay.io/trepel/envoy:v1.31.0"
+      image: "quay.io/trepel/envoy:v1.35-latest"
     gateway:
        project: "istio-system"
        name: "istio-ingressgateway"
