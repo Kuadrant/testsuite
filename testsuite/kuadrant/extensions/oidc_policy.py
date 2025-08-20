@@ -72,7 +72,7 @@ class OIDCPolicy(Policy):
     ):
         """Creates base instance"""
         model: Dict = {
-            "apiVersion": "kuadrant.io/v1alpha1",
+            "apiVersion": "extensions.kuadrant.io/v1alpha1",
             "kind": "OIDCPolicy",
             "metadata": {"name": name, "namespace": cluster.project, "labels": labels},
             "spec": {
