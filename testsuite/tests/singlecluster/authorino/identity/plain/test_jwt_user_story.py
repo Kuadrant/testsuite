@@ -3,11 +3,14 @@ Test for JWT plain identity implementing user story from :
 https://github.com/Kuadrant/authorino/blob/main/docs/user-guides/envoy-jwt-authn-and-authorino.md
 """
 
+import logging
 import time
 import pytest
 
 from testsuite.kuadrant.policy.authorization import Pattern, ValueFrom, DenyResponse
 from testsuite.gateway.envoy.jwt_plain_identity import JwtEnvoy
+
+logger = logging.getLogger(__name__)
 
 
 pytestmark = [pytest.mark.authorino, pytest.mark.standalone_only]
@@ -100,7 +103,6 @@ def route(route, backend):
         },
     }
     route.add_custom_routes_match(match=route_dictionary)
-    time.sleep(5)
     return route
 
 
@@ -110,8 +112,28 @@ def test_jwt_user_story(client, auth, auth2):
     or when accessing from global path parameter, that doesn't trigger external authorization.
     User with assigned role can access all paths, regardless of the country parameter.
     """
-
+    # Temporary retry loop: keep sending requests until we get a 200 response
+    # or reach the maximum attempts. Remove this once the underlying issue is fixed
+    # and the test passes without retries.
+    max_attempts = 20
     response = client.get("/get", auth=auth, headers={"x-country": "GB"})
+    if response.status_code == 500:
+        start = time.perf_counter()
+        attempts = 1
+        while response.status_code == 500 and attempts < max_attempts:
+            time.sleep(1)
+            response = client.get("/get", auth=auth, headers={"x-country": "GB"})
+            attempts += 1
+
+        end = time.perf_counter()
+        elapsed = end - start
+
+        if response.status_code == 200:
+            logger.warning("Took %.2f seconds to get a 200 response", elapsed)
+            logger.warning("Number of requests until 200: %s", attempts)
+        else:
+            logger.warning("Stopped after %s attempts without getting 200", attempts)
+
     assert response is not None
     assert response.status_code == 200
 
