@@ -105,5 +105,12 @@ def auth(oidc_client, keycloak):
 def oidc_policy(request, cluster, blame, gateway, provider):
     oidc_policy = OIDCPolicy.create_instance(cluster, blame("oidc-policy"), gateway, provider=provider)
     request.addfinalizer(oidc_policy.delete)
-    oidc_policy.commit()
     return oidc_policy
+
+
+@pytest.fixture(scope="module", autouse=True)
+def commit(request, oidc_policy):
+    """Commits all important stuff before tests"""
+    request.addfinalizer(oidc_policy.delete)
+    oidc_policy.commit()
+    # authorization.wait_for_ready()
