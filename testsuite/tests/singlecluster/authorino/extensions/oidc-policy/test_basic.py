@@ -26,7 +26,7 @@ pytestmark = [pytest.mark.kuadrant_only, pytest.mark.authorino]
     ],
     indirect=True,
 )
-def test_oidc_policy(client, oidc_policy, auth):
+def test_oidc_policy(client, oidc_policy, auth, static_hostname_gateway, no_hostname_gateway):
     """Test OIDC policy with both public and confidential clients"""
     response = client.get("/", auth=auth)
     assert response.status_code == 200

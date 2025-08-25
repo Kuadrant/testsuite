@@ -1,9 +1,25 @@
 import pytest
 
 from keycloak import KeycloakOpenID
+from testsuite.gateway import GatewayListener
+from testsuite.gateway.gateway_api.gateway import KuadrantGateway
 from testsuite.httpx.auth import HttpxOidcClientAuth
 from testsuite.kuadrant.extensions.oidc_policy import OIDCPolicy, Provider
 from testsuite.oidc import Token
+
+@pytest.fixture(scope="module")
+def static_hostname_gateway(request, cluster, blame, label, hostname):
+    """Returns the test target(gateway or route)"""
+    gw = KuadrantGateway.create_instance(cluster, blame("gw"), {"app": label})
+    gw.add_listener(GatewayListener(hostname=hostname))
+    return gw
+
+
+@pytest.fixture(scope="module")
+def no_hostname_gateway(request, cluster, blame, label):
+    """Returns the test target(gateway or route)"""
+    gw = KuadrantGateway.create_instance(cluster, blame("gw"), {"app": label})
+    return gw
 
 
 @pytest.fixture(scope="module")
