@@ -8,19 +8,25 @@ from testsuite.kuadrant.extensions.oidc_policy import OIDCPolicy, Provider
 from testsuite.oidc import Token
 
 @pytest.fixture(scope="module")
-def static_hostname_gateway(request, cluster, blame, label, hostname):
-    """Returns the test target(gateway or route)"""
-    gw = KuadrantGateway.create_instance(cluster, blame("gw"), {"app": label})
-    gw.add_listener(GatewayListener(hostname=hostname))
-    return gw
+def exact_hostname(hostname):
+    """Exposed Hostname object"""
+    return hostname.hostname
 
 
 @pytest.fixture(scope="module")
-def no_hostname_gateway(request, cluster, blame, label):
-    """Returns the test target(gateway or route)"""
-    gw = KuadrantGateway.create_instance(cluster, blame("gw"), {"app": label})
-    return gw
+def no_hostname():
+    """No hostname"""
+    return None
 
+
+@pytest.fixture(scope="module")
+def gateway(request, cluster, blame, label):
+    """Returns the test target(gateway or route)"""
+    hostname = request.getfixturevalue(getattr(request, "param", "wildcard_domain"))
+
+    gw = KuadrantGateway.create_instance(cluster, blame("gw"), {"app": label})
+    gw.add_listener(GatewayListener(hostname=hostname))
+    return gw
 
 @pytest.fixture(scope="module")
 def public_client(keycloak):
@@ -125,8 +131,9 @@ def oidc_policy(request, cluster, blame, gateway, provider):
 
 
 @pytest.fixture(scope="module", autouse=True)
-def commit(request, oidc_policy):
+def commit(request, gateway, oidc_policy):
     """Commits all important stuff before tests"""
-    request.addfinalizer(oidc_policy.delete)
-    oidc_policy.commit()
-    # authorization.wait_for_ready()
+    for component in [gateway,oidc_policy]:
+        request.addfinalizer(component.delete)
+        component.commit()
+        component.wait_for_ready()
