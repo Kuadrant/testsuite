@@ -2,8 +2,6 @@
 Test for changing targetRef field in AuthPolicy
 """
 
-import time
-
 import pytest
 
 from testsuite.kuadrant.policy.authorization.auth_policy import AuthPolicy
@@ -20,9 +18,12 @@ def authorization(oidc_provider, gateway, cluster, blame, module_label, route): 
 
 
 def test_update_auth_policy_target_ref(
-    route2, gateway2, authorization, client, client2, auth, dns_policy, dns_policy2, change_target_ref
+    route2, gateway, gateway2, authorization, client, client2, auth, dns_policy, dns_policy2, change_target_ref
 ):  # pylint: disable=unused-argument
     """Test updating the targetRef of an AuthPolicy from Gateway 1 to Gateway 2"""
+    assert gateway.wait_until(lambda obj: obj.is_affected_by(authorization))
+    assert gateway2.wait_until(lambda obj: not obj.is_affected_by(authorization))
+
     response = client.get("/get", auth=auth)
     assert response.status_code == 200
 
@@ -34,7 +35,8 @@ def test_update_auth_policy_target_ref(
 
     change_target_ref(authorization, gateway2)
 
-    time.sleep(10)  # Allow extra time for AuthPolicy enforcement to propagate
+    assert gateway.wait_until(lambda obj: not obj.is_affected_by(authorization))
+    assert gateway2.wait_until(lambda obj: obj.is_affected_by(authorization))
 
     response = client2.get("/get", auth=auth)
     assert response.status_code == 200
