@@ -119,6 +119,7 @@ def change_target_ref():
     """Function that changes targetRef of given policy"""
 
     def _change_targetref(policy, gateway):
+        policy.refresh()
         policy.model.spec.targetRef = gateway.reference
         policy.apply()
         policy.wait_for_ready()
