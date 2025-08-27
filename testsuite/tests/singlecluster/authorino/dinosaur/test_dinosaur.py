@@ -4,10 +4,7 @@ Test for complex AuthConfig
 
 import pytest
 
-pytestmark = [
-    pytest.mark.authorino,
-    pytest.mark.issue("https://github.com/Kuadrant/kuadrant-operator/issues/566"),
-]
+pytestmark = [pytest.mark.authorino]
 
 ERROR_MESSAGE = {
     "kind": "Error",
@@ -43,7 +40,7 @@ def test_deny_invalid_org_id(client, user_with_invalid_org_id):
     """
     Test:
         - send request using user with invalid middle name
-        - assert that response status code is 200
+        - assert that response status code is 403
     """
     response = client.get("/anything/dinosaurs_mgmt/v1/dinosaurs", auth=user_with_invalid_org_id)
     assert response.status_code == 403
@@ -225,7 +222,7 @@ def test_resource_is_owner(client, user_with_valid_org_id, resource_info, keyclo
     """
     Test:
         - set resource info to valid middle name
-        - send requests (GET, DELETE and POST) to dinosaur resource using user with valid midlle name
+        - send requests (GET, DELETE and POST) to dinosaur resource using user with valid middle name
         - assert that response status code is 200
     """
     resource_info("123", keycloak.client_name)
@@ -244,7 +241,7 @@ def test_resource_is_not_owner_client_denied(client, user_with_invalid_email, re
     """
     Test:
         - set resource info to valid middle name
-        - send requests (GET, DELETE and POST) to dinosaur resource using user with invalid midlle name
+        - send requests (GET, DELETE and POST) to dinosaur resource using user with invalid middle name
         - assert that response status code is 403
     """
     resource_info("123", keycloak.client_name)
@@ -266,7 +263,7 @@ def test_resource_is_not_owner_resource_denied(client, user_with_valid_org_id, r
     """
     Test:
         - set resource info to invalid middle name
-        - send requests (GET, DELETE and POST) to dinosaur resource using user with valid midlle name
+        - send requests (GET, DELETE and POST) to dinosaur resource using user with valid middle name
         - assert that response status code is 403
     """
     resource_info("321", keycloak.client_name)

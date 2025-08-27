@@ -3,7 +3,6 @@ Conftest for dinosaur test
 """
 
 import pytest
-from openshift_client import OpenShiftPythonException
 
 from testsuite.httpx.auth import HttpxOidcClientAuth
 from testsuite.kuadrant.policy import CelPredicate
@@ -33,21 +32,13 @@ def admin_rhsso(blame, keycloak):
     info.delete()
 
 
-@pytest.fixture(scope="module", autouse=True)
-def commit(request, authorization):
+@pytest.fixture(scope="module")
+def realm_with_attributes(keycloak):
     """
-    xFails tests if the commit fails with Too many branches exception
-    https://github.com/Kuadrant/kuadrant-operator/issues/566
-    This should happen only when using Kuadrant. The test should pass on AuthConfig
+    Ensure the realm allows a custom user attribute.
     """
-    request.addfinalizer(authorization.delete)
-    try:
-        authorization.commit()
-        authorization.wait_for_ready()
-    except OpenShiftPythonException as exc:
-        if "Too many" in exc.result.err():
-            pytest.xfail("AuthPolicy max limit")
-        raise exc
+    keycloak.realm.add_user_attributes("middleName", "Middle Name")
+    return keycloak
 
 
 @pytest.fixture()
@@ -140,7 +131,7 @@ def authorization(authorization, keycloak, terms_and_conditions, cluster_info, a
         "user-sso",
         keycloak.well_known["issuer"],
         ttl=3600,
-        defaults_properties={"org_id": ValueFrom("auth.identity.family_name")},
+        defaults_properties={"org_id": ValueFrom("auth.identity.middle_name")},
     )
     authorization.identity.add_oidc(
         "admin-sso", admin_rhsso.well_known["issuer"], ttl=3600, when=[PatternRef("admin-route")]
@@ -253,32 +244,34 @@ allow { method == "DELETE"; roles[_] == "admin-full" }
 
 
 @pytest.fixture(scope="module")
-def user_with_valid_org_id(keycloak, blame):
+def user_with_valid_org_id(keycloak, realm_with_attributes, blame):
     """
-    Creates new user with valid last name.
-    last name is mapped to org ID in auth config.
+    Creates new user with valid middle name.
+    Middle name is mapped to org ID in auth config.
     """
-    user = keycloak.realm.create_user(blame("someuser"), blame("password"), lastName="123")
+
+    keycloak = realm_with_attributes
+    user = keycloak.realm.create_user(blame("someuser"), blame("password"), attributes={"middleName": ["123"]})
     return HttpxOidcClientAuth.from_user(keycloak.get_token, user=user)
 
 
-# https://github.com/Kuadrant/testsuite/issues/396
-# @pytest.fixture(scope="module", params=["321", None])
-@pytest.fixture(scope="module")
-def user_with_invalid_org_id(keycloak, blame):
+@pytest.fixture(scope="module", params=["321", None])
+def user_with_invalid_org_id(request, realm_with_attributes, keycloak, blame):
     """
-    Creates new user with valid last name.
-    last name is mapped to org ID in auth config.
+    Creates new user with invalid middle name.
+    Middle name is mapped to org ID in auth config.
     """
-    user = keycloak.realm.create_user(blame("someuser"), blame("password"), lastName="321")
+    keycloak = realm_with_attributes
+    user = keycloak.realm.create_user(blame("someuser"), blame("password"), attributes={"middleName": request.param})
     return HttpxOidcClientAuth.from_user(keycloak.get_token, user=user)
 
 
 @pytest.fixture(scope="module")
-def user_with_invalid_email(keycloak, blame):
+def user_with_invalid_email(keycloak, realm_with_attributes, blame):
     """Creates new user with invalid email"""
+    keycloak = realm_with_attributes
     user = keycloak.realm.create_user(
-        blame("someuser"), blame("password"), email="denied-test-user1@example.com", lastName="123"
+        blame("someuser"), blame("password"), email="denied-test-user1@example.com", attributes={"middleName": ["123"]}
     )
     return HttpxOidcClientAuth.from_user(keycloak.get_token, user=user)
 
