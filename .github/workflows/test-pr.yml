@@ -1,0 +1,254 @@
+name: Run testsuite on PRs
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  kuadrant-test:
+    if: |
+      github.event.issue.pull_request && 
+      startsWith(github.event.comment.body, '/make ')
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    steps:
+      - name: Extract and validate Make target
+        id: extract-target
+        run: |
+          # Extract target from comment
+          TARGET=$(echo "${{ github.event.comment.body }}" | awk '{print $2}')
+          
+          # Validate target
+          ALLOWED_TARGETS="test kuadrant kuadrant-only authorino authorino-standalone limitador dnstls smoke disruptive kuadrantctl"
+          if [[ ! " ${ALLOWED_TARGETS} " =~ " ${TARGET} " ]]; then
+            echo "::error::Invalid target '${TARGET}'. Allowed targets: ${ALLOWED_TARGETS}"
+            exit 1
+          fi
+          
+          echo "target=${TARGET}" >> $GITHUB_OUTPUT
+          echo "Running make ${TARGET}"
+
+      - name: Post comment with run link
+        id: post-comment
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const response = await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: 'Test run has started (`make ${{ steps.extract-target.outputs.target }}`) and can be found [here](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})'
+            });
+            return response.data.id;
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install poetry
+        run: pip install poetry
+
+      - name: Install cfssl
+        run: |
+          sudo curl -L https://github.com/cloudflare/cfssl/releases/download/v1.6.4/cfssl_1.6.4_linux_amd64 -o /usr/local/bin/cfssl && sudo chmod +x /usr/local/bin/cfssl
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.24'
+
+      - name: Create KIND cluster
+        uses: helm/kind-action@v1
+        with:
+          version: "v0.27.0"
+
+      - name: Install metrics-server
+        run: |
+          kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+          kubectl patch deployment metrics-server -n kube-system --type=json -p '[{"op":"add","path":"/spec/template/spec/containers/0/args/-","value":"--kubelet-insecure-tls"}]'
+
+      - name: Install MetalLB
+        run: |
+          kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.15.2/config/manifests/metallb-native.yaml
+          kubectl wait --namespace metallb-system --for=condition=ready pod --selector=app=metallb --timeout=90s
+          
+          kubectl get nodes -o wide
+      
+          kubectl apply -f - <<EOF
+          apiVersion: metallb.io/v1beta1
+          kind: IPAddressPool
+          metadata:
+            name: default
+            namespace: metallb-system
+          spec:
+            addresses:
+            - 172.18.255.200-172.18.255.250
+          EOF
+
+          kubectl apply -f - <<EOF
+          apiVersion: metallb.io/v1beta1
+          kind: L2Advertisement
+          metadata:
+            name: default
+            namespace: metallb-system
+          EOF
+
+      - name: Install Gateway API CRDs
+        run: kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.1.0/standard-install.yaml
+
+      - name: Install cert-manager
+        run: |
+          kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.15.3/cert-manager.yaml
+          kubectl wait --namespace cert-manager --for=condition=Available deployment/cert-manager --timeout=120s
+
+      - name: Install Sail Operator
+        run: |
+          helm repo add sail-operator https://istio-ecosystem.github.io/sail-operator --force-update
+          helm install sail-operator \
+            --create-namespace \
+            --namespace istio-system \
+            --wait \
+            --timeout=300s \
+            sail-operator/sail-operator \
+            --version 1.0.0
+
+      - name: Create Istio objects
+        run: |
+          kubectl apply -f - <<EOF
+          apiVersion: sailoperator.io/v1
+          kind: Istio
+          metadata:
+            name: default
+          spec:
+            namespace: istio-system
+            updateStrategy:
+              type: InPlace
+            values:
+              pilot:
+                autoscaleMin: 2
+            version: v1.24.3
+          EOF
+
+      - name: Create namespaces for testing
+        run: |
+          kubectl create namespace kuadrant
+          kubectl create namespace kuadrant2
+
+      - name: Create testsuite secrets
+        run: |
+          kubectl apply -f - <<EOF
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: kuadrant-qe-ca
+            namespace: cert-manager
+          data:
+            tls.crt: ${{ secrets.CA_TLS_CRT }}
+            tls.key: ${{ secrets.CA_TLS_KEY }}
+          type: Opaque
+          EOF
+          
+          kubectl apply -f - <<EOF
+          apiVersion: cert-manager.io/v1
+          kind: ClusterIssuer
+          metadata:
+            name: kuadrant-qe-issuer
+          spec:
+            ca:
+              secretName: kuadrant-qe-ca
+          EOF
+          
+          kubectl apply -f - <<EOF
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: aws-credentials
+            namespace: kuadrant
+            annotations:
+              base_domain: ${{ secrets.AWS_BASE_DOMAIN }}
+          stringData:
+            AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+            AWS_REGION: eu-north-1
+            AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          type: kuadrant.io/aws
+          EOF
+
+      - name: Deploy Kuadrant
+        run: |
+          helm repo add kuadrant https://kuadrant.io/helm-charts/ --force-update
+          helm install kuadrant-operator kuadrant/kuadrant-operator --create-namespace --namespace kuadrant-system
+          kubectl -n kuadrant-system wait --timeout=300s --for=condition=Available deployments --all
+
+      - name: Add kuadrant-sample
+        run: |
+          kubectl apply -f - <<EOF
+          apiVersion: kuadrant.io/v1beta1
+          kind: Kuadrant
+          metadata:
+            name: kuadrant-sample
+            namespace: kuadrant-system
+          spec: {}
+          EOF
+          
+          kubectl wait kuadrant/kuadrant-sample --for=condition=Ready=True -n kuadrant-system
+
+      - name: Deploy testsuite tools
+        run: |
+          kubectl create namespace tools
+          helm install --repo https://kuadrant.io/helm-charts-olm --set=tools.keycloak.keycloakProvider=deployment --set=tools.redis.enable=false --set=tools.dragonfly.enable=false --set=tools.valkey.enable=false --wait --timeout=10m0s tools tools-instances
+
+      - name: Run Make target
+        id: run-make
+        run: |
+          export KUADRANT_CFSSL="/usr/local/bin/cfssl"  # somehow make doesn't pick up the PATH here
+          export KUADRANT_AUTH0__CLIENT_ID="${{ secrets.AUTH0_CLIENT_ID }}" KUADRANT_AUTH0__CLIENT_SECRET="${{ secrets.AUTH0_CLIENT_SECRET }}" KUADRANT_AUTH0__URL="${{ secrets.AUTH0_URL }}"
+          flags=-vv make "${{ steps.extract-target.outputs.target }}" 2>&1 | tee /tmp/make_output.log || true
+
+          {
+            echo 'make_output<<EOF'
+            cat /tmp/make_output.log
+            echo EOF
+          } >> $GITHUB_OUTPUT
+
+          export SUMMARY=$(sed -n '/short test summary info/,/^====== [0-9]/p' /tmp/make_output.log | head -n -1)
+          {
+            echo 'summary<<EOF'
+            echo "${SUMMARY}"
+            echo EOF
+          } >> $GITHUB_OUTPUT
+
+      - name: Update comment with test results
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const commentId = ${{ steps.post-comment.outputs.result }};
+            const makeOutput = ${{ toJSON(steps.run-make.outputs.make_output) }};
+            const summary = ${{ toJSON(steps.run-make.outputs.summary) }};
+            
+            let body = `Test run completed (\`make ${{ steps.extract-target.outputs.target }}\`) and can be found [here](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            
+            <details>
+            <summary>Short Test Summary</summary>
+            
+            \`\`\`
+            ${summary}
+            \`\`\`
+            
+            </details>
+            
+            <details>
+            <summary>Full Output</summary>
+            
+            \`\`\`
+            ${makeOutput}
+            \`\`\`
+            
+            </details>`;
+            
+            await github.rest.issues.updateComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: commentId,
+              body: body
+            });
