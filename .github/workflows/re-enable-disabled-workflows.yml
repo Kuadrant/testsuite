@@ -1,0 +1,103 @@
+name: Re-enable Disabled Workflows
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * 1' # Once a week: Monday at 00:00 UTC
+
+jobs:
+  re-enable-workflows:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+
+    steps:
+    - name: Re-enable disabled workflows across repositories
+      env:
+        TOKEN: ${{ secrets.ENABLE_WORKFLOWS_TOKEN }}
+        REPOS: |
+          kuadrant-operator
+          limitador
+          wasm-shim
+          docs.kuadrant.io
+          wasm-tests-framework
+          proxy-wasm-rust-sdk
+          limitador-operator
+          testsuite-pipelines
+
+      run: |
+        set -uo pipefail
+
+        echo "Checking for disabled workflows..."
+
+        IFS=$'\n' read -rd '' -a REPO_ARRAY <<< "$(printf '%s\n' "$REPOS" | sed 's/^\s\+//;s/\s\+$//' | sed '/^$/d')" || true
+
+        if [ ${#REPO_ARRAY[@]} -eq 0 ]; then
+          echo "No repositories specified in REPOS."
+          exit 0
+        fi
+
+        failure=false
+        failure_messages=()
+
+        for repo in "${REPO_ARRAY[@]}"; do
+          repo="$(echo "$repo" | xargs || true)"
+          [ -z "$repo" ] && continue
+
+
+          echo "\n=== Repository: Kuadrant/$repo ==="
+
+          url="https://api.github.com/repos/Kuadrant/$repo/actions/workflows?per_page=100"
+          response_code=$(curl -s -w "%{http_code}" -o /tmp/workflows.json \
+            -H "Authorization: Bearer $TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            "$url")
+
+          if [ "$response_code" -ne 200 ]; then
+            echo "Failed to fetch workflows for $repo (HTTP $response_code)"
+            cat /tmp/workflows.json || true
+            resp_snippet=$(head -c 500 /tmp/workflows.json 2>/dev/null | tr '\n' ' ')
+            failure_messages+=("[$repo] list workflows failed (HTTP $response_code): ${resp_snippet:-<no body>}")
+            failure=true
+            continue
+          fi
+
+          workflows=$(cat /tmp/workflows.json)
+          disabled_ids=$(echo "$workflows" | jq -r '.workflows[] | select(.state == "disabled_manually") | .id')
+
+          [ -z "$disabled_ids" ] && continue
+
+          while IFS= read -r workflow_id; do
+            [ -n "$workflow_id" ] || continue
+            workflow_name=$(echo "$workflows" | jq -r --arg id "$workflow_id" '.workflows[] | select(.id == ($id | tonumber)) | .name')
+            echo "$workflow_name"
+            response=$(curl -s -w "%{http_code}" -o /tmp/response.json \
+              -X PUT \
+              -H "Authorization: Bearer $TOKEN" \
+              -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/Kuadrant/$repo/actions/workflows/$workflow_id/enable")
+            if [ "$response" -ne 204 ]; then
+              echo "Failed to re-enable: $workflow_name (HTTP $response)"
+              cat /tmp/response.json || true
+              resp_snippet=$(head -c 500 /tmp/response.json 2>/dev/null | tr '\n' ' ')
+              failure_messages+=("[$repo] enable '$workflow_name' (id $workflow_id) failed (HTTP $response): ${resp_snippet:-<no body>}")
+              failure=true
+            fi
+          done <<< "$disabled_ids"
+        done
+
+        # Cleanup temporary files
+        rm -f /tmp/workflows.json /tmp/response.json || true
+
+        if [ "$failure" = true ]; then
+          echo "Completed with ${#failure_messages[@]} failure(s)."
+          echo "Failures detail:"
+          for msg in "${failure_messages[@]}"; do
+            echo "- $msg"
+          done
+          exit 1
+        fi
+
+        echo "Workflow re-enablement completed successfully!"
+
+
