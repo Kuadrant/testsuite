@@ -15,37 +15,67 @@ jobs:
     - name: Re-enable disabled workflows across repositories
       env:
         TOKEN: ${{ secrets.ENABLE_WORKFLOWS_TOKEN }}
-        REPOS: |
-          kuadrant-operator
-          limitador
-          wasm-shim
-          docs.kuadrant.io
-          wasm-tests-framework
-          proxy-wasm-rust-sdk
-          limitador-operator
-          testsuite-pipelines
 
       run: |
         set -uo pipefail
 
-        echo "Checking for disabled workflows..."
-
-        IFS=$'\n' read -rd '' -a REPO_ARRAY <<< "$(printf '%s\n' "$REPOS" | sed 's/^\s\+//;s/\s\+$//' | sed '/^$/d')" || true
-
-        if [ ${#REPO_ARRAY[@]} -eq 0 ]; then
-          echo "No repositories specified in REPOS."
-          exit 0
-        fi
-
         failure=false
         failure_messages=()
 
-        for repo in "${REPO_ARRAY[@]}"; do
+        echo "Checking for disabled workflows..."
+
+        # Search for repos
+        REPO_LIST=""
+
+        tmplist=/tmp/repos_code_search.txt
+        : > "$tmplist"
+
+        public_repos=$(curl -s -w "%{http_code}" -o /tmp/search_normal.json \
+          -H "Authorization: Bearer $TOKEN" \
+          -H "Accept: application/vnd.github+json" \
+          "https://api.github.com/search/code?q=org:Kuadrant+path:.github/workflows+schedule%3A&per_page=100")
+        if [ "$public_repos" != "200" ]; then
+          echo "Failed to search repositories (non-forks) (HTTP $public_repos)"
+          failure_messages+=("Failed to search repositories (non-forks) (HTTP $public_repos)")
+          failure=true
+        else
+          jq -r '.items[].repository.name' /tmp/search_normal.json >> "$tmplist" || true
+        fi
+
+        fork_repos=$(curl -s -w "%{http_code}" -o /tmp/search_forks.json \
+          -H "Authorization: Bearer $TOKEN" \
+          -H "Accept: application/vnd.github+json" \
+          "https://api.github.com/search/code?q=org:Kuadrant+fork:true+path:.github/workflows+schedule%3A&per_page=100")
+        if [ "$fork_repos" != "200" ]; then
+          echo "Failed to search repositories (forks) (HTTP $fork_repos)"
+          failure_messages+=("Failed to search repositories (forks) (HTTP $fork_repos)")
+          failure=true
+        else
+          jq -r '.items[].repository.name' /tmp/search_forks.json >> "$tmplist" || true
+        fi
+
+        if [ -s "$tmplist" ]; then
+          REPO_LIST="$(sort -u "$tmplist")"
+        fi
+
+        if [ -z "$REPO_LIST" ]; then
+          echo "No repositories found."
+          for msg in "${failure_messages[@]}"; do
+            echo "- $msg"
+          done
+          exit 1
+        fi
+        
+        echo "Repositories found:"
+        echo "$REPO_LIST"
+  
+        # Check repos for disabled workflows
+        while IFS= read -r repo; do
           repo="$(echo "$repo" | xargs || true)"
           [ -z "$repo" ] && continue
 
 
-          echo "\n=== Repository: Kuadrant/$repo ==="
+          printf "\n=== Repository: Kuadrant/%s ===\n" "$repo"
 
           url="https://api.github.com/repos/Kuadrant/$repo/actions/workflows?per_page=100"
           response_code=$(curl -s -w "%{http_code}" -o /tmp/workflows.json \
@@ -66,7 +96,8 @@ jobs:
           disabled_ids=$(echo "$workflows" | jq -r '.workflows[] | select(.state == "disabled_manually") | .id')
 
           [ -z "$disabled_ids" ] && continue
-
+          
+          # Re-enable disabled workflows
           while IFS= read -r workflow_id; do
             [ -n "$workflow_id" ] || continue
             workflow_name=$(echo "$workflows" | jq -r --arg id "$workflow_id" '.workflows[] | select(.id == ($id | tonumber)) | .name')
@@ -84,10 +115,10 @@ jobs:
               failure=true
             fi
           done <<< "$disabled_ids"
-        done
+        done <<< "$REPO_LIST"
 
         # Cleanup temporary files
-        rm -f /tmp/workflows.json /tmp/response.json || true
+        rm -f /tmp/workflows.json /tmp/response.json /tmp/search_normal.json /tmp/search_forks.json /tmp/repos_code_search.txt || true
 
         if [ "$failure" = true ]; then
           echo "Completed with ${#failure_messages[@]} failure(s)."
