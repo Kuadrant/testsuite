@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: httpbin
-          image: 'quay.io/trepel/httpbin:jsmadis'
+          image: 'quay.io/rhn_support_azgabur/httpbin:latest'
           ports:
             - name: api
               containerPort: 8080
