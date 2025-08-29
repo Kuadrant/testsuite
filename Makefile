@@ -128,8 +128,9 @@ wasmplugins.extensions.istio.io,$\
 servicemonitors.monitoring.coreos.com,$\
 podmonitors.monitoring.coreos.com,$\
 apiservices.apiregistration.k8s.io,$\
-horizontalpodautoscalers.autoscaling
-
+horizontalpodautoscalers.autoscaling,$\
+oidcpolicies.extensions.kuadrant.io,$\
+planpolicies.extensions.kuadrant.io
 
 clean: ## Clean all objects on cluster created by running this testsuite. Set the env variable USER to delete after someone else
 	@echo "Deleting objects for user: $(USER)"
