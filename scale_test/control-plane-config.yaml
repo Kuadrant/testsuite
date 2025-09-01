@@ -145,7 +145,7 @@ jobs:
           LISTENER_NUM: "{{$LISTENER_NUM}}"
   {{- end }}
 {{- end }}
-{{- if not .SKIP_CLEANUP }}
+{{- if ne .SKIP_CLEANUP "true" }}
   - name: scale-test-safe-dnspolicy-cleanup
     jobType: delete
     jobIterations: 1
