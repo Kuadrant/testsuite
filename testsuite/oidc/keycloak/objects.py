@@ -61,6 +61,22 @@ class Realm:
             client_secret_key=client_secret,
         )
 
+    def add_user_attributes(self, attribute_name, display_name):
+        """Adds a new custom attribute to the realm's user profile configuration."""
+        user_profile = self.admin.get_realm_users_profile()
+
+        new_attribute = {
+            "name": attribute_name,
+            "displayName": display_name,
+            "validations": {},
+            "annotations": {},
+            "permissions": {"view": ["admin"], "edit": ["admin"]},
+            "multivalued": False,
+        }
+
+        user_profile["attributes"].append(new_attribute)
+        return self.admin.update_realm_users_profile(user_profile)
+
 
 class Client:
     """Helper class for Keycloak client manipulation"""
