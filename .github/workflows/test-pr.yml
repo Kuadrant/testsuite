@@ -71,9 +71,7 @@ jobs:
         run: |
           kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.15.2/config/manifests/metallb-native.yaml
           kubectl wait --namespace metallb-system --for=condition=ready pod --selector=app=metallb --timeout=90s
-          
-          kubectl get nodes -o wide
-      
+                
           kubectl apply -f - <<EOF
           apiVersion: metallb.io/v1beta1
           kind: IPAddressPool
@@ -94,11 +92,11 @@ jobs:
           EOF
 
       - name: Install Gateway API CRDs
-        run: kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.1.0/standard-install.yaml
+        run: kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.3.0/standard-install.yaml
 
       - name: Install cert-manager
         run: |
-          kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.15.3/cert-manager.yaml
+          kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.18.2/cert-manager.yaml
           kubectl wait --namespace cert-manager --for=condition=Available deployment/cert-manager --timeout=120s
 
       - name: Install Sail Operator
@@ -110,7 +108,7 @@ jobs:
             --wait \
             --timeout=300s \
             sail-operator/sail-operator \
-            --version 1.0.0
+            --version 1.27.0
 
       - name: Create Istio objects
         run: |
@@ -195,7 +193,10 @@ jobs:
       - name: Deploy testsuite tools
         run: |
           kubectl create namespace tools
-          helm install --repo https://kuadrant.io/helm-charts-olm --set=tools.keycloak.keycloakProvider=deployment --set=tools.redis.enable=false --set=tools.dragonfly.enable=false --set=tools.valkey.enable=false --wait --timeout=10m0s tools tools-instances
+          kubectl -n tools create secret docker-registry redhat-registry-secret --docker-server=registry.redhat.io --docker-username="${{ secrets.RH_REGISTRY_USERNAME }}" --docker-password="${{ secrets.RH_REGISTRY_PASSWORD }}"
+          kubectl -n tools patch serviceaccount default -p '{"imagePullSecrets": [{"name": "redhat-registry-secret"}]}'
+          
+          helm install --repo https://kuadrant.io/helm-charts-olm --set=tools.keycloak.keycloakProvider=deployment --set=tools.redis.enable=false --set=tools.dragonfly.enable=false --set=tools.valkey.enable=false --set=tools.coredns.enable=false --debug --wait --timeout=10m0s tools tools-instances
 
       - name: Run Make target
         id: run-make
