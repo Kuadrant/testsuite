@@ -51,7 +51,7 @@ def hostname(
 
 
 @pytest.fixture(scope="module")
-def public_client(request, keycloak, fully_qualified_domain_name):
+def public_client(request, keycloak, hostname):
     """Creates a public client with Authorization Code Flow + PKCE enabled"""
     client_name = "my-public-client"
     client = keycloak.realm.create_client(
@@ -59,8 +59,8 @@ def public_client(request, keycloak, fully_qualified_domain_name):
         publicClient=True,  # This makes it a public client (no client authentication)
         standardFlowEnabled=True,  # Enables Authorization Code Flow
         protocol="openid-connect",
-        redirectUris=[f"http://{fully_qualified_domain_name}/*"],  # Allow all paths for testing
-        webOrigins=[f"http://{fully_qualified_domain_name}"],  # Allow CORS from our domain
+        redirectUris=[f"http://{hostname.hostname}/*"],  # Allow all paths for testing
+        webOrigins=[f"http://{hostname.hostname}"],  # Allow CORS from our domain
     )
 
     request.addfinalizer(lambda: keycloak.realm.delete_client(client.client_id))

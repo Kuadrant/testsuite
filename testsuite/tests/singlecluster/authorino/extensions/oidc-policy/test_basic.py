@@ -1,13 +1,14 @@
 import pytest
 import jwt
+from urllib.parse import quote
 
-pytestmark = [pytest.mark.kuadrant_only, pytest.mark.authorino]
+pytestmark = [pytest.mark.kuadrant_only, pytest.mark.authorino, pytest.mark.extensions]
 
 
 @pytest.mark.parametrize("oidc_policy", ["gateway", "route"], indirect=True)
 @pytest.mark.parametrize("gateway", ["fully_qualified_domain_name", "wildcard_domain"], indirect=True)
 @pytest.mark.parametrize("oidc_client", ["public_client"], indirect=True)
-def test_public_client_flow(client, auth, oidc_client, hostname):
+def test_public_client_flow(client, auth, oidc_client, hostname, gateway):
     """Test public client with PKCE flow"""
     # No auth -> redirect to login with PKCE
     response = client.get("/")
@@ -16,7 +17,7 @@ def test_public_client_flow(client, auth, oidc_client, hostname):
     location = response.headers["Location"]
     assert "response_type=code" in location  # Uses authorization  code flow
     assert "scope=openid" in location  # Requests OpenID scope
-    assert f"redirect_uri=http%3A%2F%2F{hostname.hostname}" in location  # Correct redirect URI
+    assert f"redirect_uri=http%3A%2F%2F{quote(gateway.model.spec.listeners[0].hostname, safe=':.')}" in location  # Correct redirect URI
 
     # Valid auth -> success with correct token
     response = client.get("/", auth=auth)
@@ -50,7 +51,7 @@ def test_service_client_flow(client, auth, oidc_client):
 @pytest.mark.parametrize("oidc_policy", ["gateway", "route"], indirect=True)
 @pytest.mark.parametrize("gateway", ["fully_qualified_domain_name", "wildcard_domain"], indirect=True)
 @pytest.mark.parametrize("oidc_client", ["confidential_client"], indirect=True)
-def test_confidential_client_flow(client, auth, oidc_client, hostname):
+def test_confidential_client_flow(client, auth, oidc_client, gateway):
     """Test confidential client with auth code flow"""
     # No auth -> redirect to login
     response = client.get("/")
@@ -60,7 +61,7 @@ def test_confidential_client_flow(client, auth, oidc_client, hostname):
     assert "response_type=code" in location  # Uses authorization code flow
     assert "scope=openid" in location  # Requests OpenID scope
     assert oidc_client.client_id in location  # Correct client ID in redirect
-    assert f"redirect_uri=http%3A%2F%2F{hostname.hostname}" in location  # Correct redirect URI
+    assert f"redirect_uri=http%3A%2F%2F{quote(gateway.model.spec.listeners[0].hostname, safe=':.')}" in location  # Correct redirect URI
 
     # Valid auth -> success with correct token
     response = client.get("/", auth=auth)
