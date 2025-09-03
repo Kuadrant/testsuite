@@ -93,7 +93,7 @@ jobs:
           fi
 
           workflows=$(cat /tmp/workflows.json)
-          disabled_ids=$(echo "$workflows" | jq -r '.workflows[] | select(.state == "disabled_manually") | .id')
+          disabled_ids=$(echo "$workflows" | jq -r '.workflows[] | select(.state == "disabled_inactivity") | .id')
 
           [ -z "$disabled_ids" ] && continue
           
