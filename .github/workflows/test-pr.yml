@@ -42,8 +42,23 @@ jobs:
             });
             return response.data.id;
 
-      - name: Checkout code
+      - name: Get PR branch SHA
+        id: pr-branch-sha
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const response = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number
+            });
+            return response.data.head.sha;
+
+      - name: Checkout PR code
         uses: actions/checkout@v4
+        with:
+          ref: ${{ fromJSON(steps.pr-branch-sha.outputs.result) }}
 
       - name: Install poetry
         run: pip install poetry
