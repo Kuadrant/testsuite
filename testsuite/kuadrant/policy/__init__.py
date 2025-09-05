@@ -96,7 +96,7 @@ class Policy(KubernetesObject):
             has_condition("Enforced", "True", "Enforced", f"{self.kind(False)} has been successfully enforced"),
             timelimit=timelimit,
         )
-        assert success, f"{self.kind()} did not get fully enforced in time"
+        assert success, f"{self.kind()} didn't reach required state, instead it was: {self.model.status.conditions}"
 
     @property
     def generation(self):
