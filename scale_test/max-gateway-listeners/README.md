@@ -11,6 +11,11 @@ export PROMETHEUS_URL=https://thanos-querier-openshift-monitoring.your.thanos.ro
 export OS_INDEXING=  # set as empty string if don't want indexing
 export ES_SERVER=  # format: https://username:password@your.opensearch.instance.com
 export SKIP_CLEANUP=true  # No automatic way to test the enforced policies, so generally set to true
+export USE_STANDALONE_MESH=false # false indicates that Openshift Ingress is used
+```
+If you installed OSSMv3 yourself (IE you are not using Openshift Ingress feature available since OCP v4.19):
+```
+export USE_STANDALONE_MESH=true
 ```
 
 #### Cloud configuration (One of the following)
@@ -37,4 +42,16 @@ export AZURE_CONFIG_JSON='{\"tenantId\":\"abcd-4320\",\"subscriptionId\":\"321-2
 ### Test created dns records
 ```shell
 ./test.sh <KUBE_BURNER_RUN_UUID>
+```
+
+### Cleanup
+
+Manually remove DNSPolicies
+```shell
+kubectl delete dnspolicy --all -n max-gateway-listeners-scale-test-0
+```
+
+Wait for all the DNSRecords to get removed, it might take a while. Then proceed with
+```shell
+kube-burner destroy --uuid <KUBE_BURNER_RUN_UUID>
 ```

@@ -2,7 +2,7 @@
 kind: Service
 apiVersion: v1
 metadata:
-  name: httpbin
+  name: httpbin-service
   labels:
     app: scale-test
 spec:

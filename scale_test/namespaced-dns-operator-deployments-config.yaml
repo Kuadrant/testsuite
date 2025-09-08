@@ -1,4 +1,9 @@
 {{ $DNS_OPERATOR_GITHUB_URL := https://raw.githubusercontent.com/{{.DNS_OPERATOR_GITHUB_ORG}}/dns-operator/refs/heads/{{.DNS_OPERATOR_GITREF}} }}
+{{- $USE_STANDALONE_MESH := .USE_STANDALONE_MESH }}
+{{- $GATEWAY_CONTROLLER_NAME := "openshift.io/gateway-controller/v1" }}
+{{- if eq .USE_STANDALONE_MESH "true" }}
+  {{- $GATEWAY_CONTROLLER_NAME = "istio.io/gateway-controller" }}
+{{- end }}
 
 metricsEndpoints:
   - endpoint: {{ .PROMETHEUS_URL }}
@@ -121,6 +126,7 @@ jobs:
           KUADRANT_ZONE_ROOT_DOMAIN: '{{ $.KUADRANT_ZONE_ROOT_DOMAIN }}'
           NUM_LISTENERS: '{{ $.NUM_LISTENERS }}'
           GW_NUM: '{{ $gwNum }}'
+          USE_STANDALONE_MESH: "{{$USE_STANDALONE_MESH}}"
       - objectTemplate: templates/gw-dnspolicy-loadbalanced.yaml
         kind: DNSPolicy
         replicas: 1
@@ -139,7 +145,7 @@ jobs:
         replicas: 1
         waitOptions:
           customStatusPaths:
-            - key: '(.parents[] | select(.controllerName == "istio.io/gateway-controller")).conditions[] | select(.type == "Accepted").status'
+            - key: '(.parents[] | select(.controllerName == "{{$GATEWAY_CONTROLLER_NAME}}")).conditions[] | select(.type == "Accepted").status'
               value: "True"
         inputVars:
           KUADRANT_ZONE_ROOT_DOMAIN: '{{ $.KUADRANT_ZONE_ROOT_DOMAIN }}'

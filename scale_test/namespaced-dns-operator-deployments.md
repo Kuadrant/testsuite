@@ -10,7 +10,7 @@ In the kuadrant-operator directory, run the following to create a local kind clu
 ```shell
 make local-setup SUBNET_OFFSET=1 CIDR=26 NUM_IPS=64
 ```
-Note: In order to test at scale, metallb must be configured with enough ip address to assign one to each gateway to be created.  
+Note: In order to test at scale, metallb must be configured with enough ip address to assign one to each gateway to be created.
 
 ## Pre-test setup
 
@@ -22,7 +22,7 @@ Note: This is required for the default kubeburner workload (namespaced-dns-opera
 
 Deploy the observability stack:
 ```shell
-kubectl apply --server-side -k github.com/kuadrant/dns-operator/config/observability?ref=main # Run twice if it fails the first time dut o CRDs i.e. "ensure CRDs are installed first"
+kubectl apply --server-side -k github.com/kuadrant/dns-operator/config/observability?ref=main # Run twice if it fails the first time du to CRDs i.e. "ensure CRDs are installed first"
 ```
 Note: This should be in the kuadrant-operator repo instead of the dns operator
 
@@ -33,7 +33,7 @@ kubectl -n monitoring port-forward service/thanos-query 9090:9090
 
 ## Run test 
 
-The `test-scale-dnspolicy` make target can be used without input to run the default test workload with the default configuration:  
+The `test-scale-dnspolicy` make target can be used without input to run the default test workload with the default configuration:
 
 ```shell
 make test-scale-dnspolicy
@@ -60,7 +60,7 @@ Note: DNSPolices are deleted as part of the run as `SKIP_CLEANUP` defaults to fa
 
 Alternatively it can be executed passing in values as required. Please refer to the `test-scale-dnspolicy` make target for possible variables and their default values.
 ```shell
-make test-scale-dnspolicy JOB_ITERATIONS=1 NUM_GWS=1 NUM_LISTENERS=1 SKIP_CLEANUP=true DNS_PROVIDER=aws KUADRANT_ZONE_ROOT_DOMAIN=my.domain.com
+make test-scale-dnspolicy JOB_ITERATIONS=1 NUM_GWS=1 NUM_LISTENERS=1 SKIP_CLEANUP=true DNS_PROVIDER=aws KUADRANT_ZONE_ROOT_DOMAIN=my.domain.com USE_STANDALONE_MESH=false
 ```
 
 ## Workloads
@@ -81,7 +81,7 @@ In each test namespace a dns provider credential is created, the type created is
 Create a shared recordset in AWS (DNS_PROVIDER=aws) for a single host with four distinct A record values, owned by four DNSRecord resources, created by four gateway/dnspolices (JOB_ITERATIONS * NUM_GWS) processed by two dns operators(JOB_ITERATIONS). 
 
 ```shell
-make test-scale-dnspolicy JOB_ITERATIONS=2 NUM_GWS=2 NUM_LISTENERS=1 DNS_PROVIDER=aws KUADRANT_AWS_ACCESS_KEY_ID=<my aws access key> KUADRANT_AWS_SECRET_ACCESS_KEY=<my aws secret id>. KUADRANT_AWS_REGION='' KUADRANT_ZONE_ROOT_DOMAIN=mn.hcpapps.net SKIP_CLEANUP=true
+make test-scale-dnspolicy JOB_ITERATIONS=2 NUM_GWS=2 NUM_LISTENERS=1 DNS_PROVIDER=aws KUADRANT_AWS_ACCESS_KEY_ID=<my aws access key> KUADRANT_AWS_SECRET_ACCESS_KEY=<my aws secret id>. KUADRANT_AWS_REGION='' KUADRANT_ZONE_ROOT_DOMAIN=mn.hcpapps.net SKIP_CLEANUP=true USE_STANDALONE_MESH=false
 ...
 time="2025-01-13 10:19:27" level=info msg="Finished execution with UUID: 469d4b4e-6c41-4433-8c4b-2c48ea4973bc" file="job.go:247"
 time="2025-01-13 10:19:27" level=info msg="👋 Exiting kube-burner 469d4b4e-6c41-4433-8c4b-2c48ea4973bc" file="kube-burner.go:85"

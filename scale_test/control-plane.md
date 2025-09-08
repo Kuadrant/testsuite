@@ -15,6 +15,7 @@ export KUADRANT_ZONE_ROOT_DOMAIN=[domain]
 export KUADRANT_AWS_REGION=[region]
 export PROMETHEUS_URL=http://127.0.0.1:9090
 export PROMETHEUS_TOKEN=""
+export USE_STANDALONE_MESH=false # false indicates that Openshift Ingress is used
 export OS_INDEXING=true   # if sending metrics to opensearch/elasticsearch
 export ES_SERVER=https://[user]:[password]@[host]:[port]
 
@@ -29,9 +30,14 @@ export OS_INDEXING= # to disable indexing
 export ES_SERVER= # to disable indexing
 ```
 
+If you installed OSSMv3 yourself (IE you are not using Openshift Ingress feature available since OCP v4.19):
+```
+export USE_STANDALONE_MESH=true
+```
+
 ## Execution
 
-`kube-burner init -c ./control-plane-config.yaml --timeout 5m --uuid scale-test-$(openssl rand -hex 3)`
+`kube-burner init -c ./control-plane-config.yaml --timeout 15m --uuid scale-test-$(openssl rand -hex 3)`
 
 Don't forget to increase the timeout if a larger number of CRs are to be created. You might also modify policy templates based on your needs, e.g. increase limits in RateLimitPolicy CR templates etc.
 
@@ -46,7 +52,7 @@ export SKIP_CLEANUP=true
 If so then note the UUID of your scale test run so that you can perform manual cleanup. The DNSPolicy CR needs to be removed manually first. That triggers corresponding DNSRecord CR removal. It is not handled gracefully by Kube Burner cleanup so better to remove it manually beforehand:
 
 ```
-kubectl delete dnspolicy [:dns_policy_name] -n scale-test-0
+kubectl delete dnspolicy --all -n scale-test-0
 kube-burner destroy --uuid [:uuid]
 ```
 
