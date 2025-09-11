@@ -1,6 +1,15 @@
-import pytest
-import jwt
+"""Tests for OIDC policy functionality in Kuadrant.
+
+This module tests different OIDC authentication flows:
+- Public client with PKCE
+- Service client (machine-to-machine)
+- Confidential client with authorization code
+"""
+
 from urllib.parse import quote
+
+import jwt
+import pytest
 
 pytestmark = [pytest.mark.kuadrant_only, pytest.mark.authorino, pytest.mark.extensions]
 

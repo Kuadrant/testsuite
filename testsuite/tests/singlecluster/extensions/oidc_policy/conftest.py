@@ -1,8 +1,13 @@
-import pytest
+"""Pytest fixtures for OIDC policy testing.
 
+This module provides fixtures for testing OIDC (OpenID Connect) policy functionality,
+including various client configurations (public, confidential, and service clients),
+gateway setup, and policy management."""
+
+import pytest
 from keycloak import KeycloakOpenID
-from testsuite.gateway import Exposer, Gateway, GatewayListener
-from testsuite.gateway.exposers import LoadBalancerServiceExposer, OpenShiftExposer
+
+from testsuite.gateway import Gateway, GatewayListener
 from testsuite.gateway.gateway_api.gateway import KuadrantGateway
 from testsuite.httpx.auth import HttpxOidcClientAuth
 from testsuite.kuadrant.extensions.oidc_policy import OIDCPolicy, Provider, Auth, Credentials, Prefixed
@@ -11,16 +16,19 @@ from testsuite.oidc import Token
 
 @pytest.fixture(scope="module")
 def domain_name(blame):
+    """Generate a unique domain name for testing."""
     return blame("hostname")
 
 
 @pytest.fixture(scope="module")
 def fully_qualified_domain_name(domain_name, base_domain):
+    """Create a fully qualified domain name for testing."""
     return f"{domain_name}-kuadrant.{base_domain}"
 
 
 @pytest.fixture(scope="module")
 def wildcard_domain(base_domain):
+    """Create a wildcard domain for testing."""
     return f"*.{base_domain}"
 
 
@@ -45,6 +53,7 @@ def hostname(
     domain_name,
     gateway,
 ):
+    """Create and expose a hostname for testing."""
     hostname = exposer.expose_hostname(domain_name, gateway)
     request.addfinalizer(hostname.delete)
     return hostname
@@ -74,7 +83,7 @@ def public_client(request, keycloak, hostname):
 
 
 @pytest.fixture(scope="module")
-def service_client(request, keycloak, hostname):
+def service_client(request, keycloak):
     """Creates a confidential client for service account (machine-to-machine) flow"""
     client_name = "my-service-client"
     client = keycloak.realm.create_client(
@@ -180,7 +189,8 @@ def auth(oidc_client, keycloak):
 
 
 @pytest.fixture(scope="module")
-def oidc_policy(request, cluster, blame, gateway, provider):
+def oidc_policy(request, cluster, blame, provider):
+    """Create an OIDC policy instance for testing."""
     # Create auth configuration to tell where to look for the token
     target_ref = request.getfixturevalue(getattr(request, "param", "gateway"))
 
