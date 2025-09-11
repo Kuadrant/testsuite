@@ -1,3 +1,8 @@
+{{- $USE_STANDALONE_MESH := .USE_STANDALONE_MESH }}
+{{- $GATEWAY_CONTROLLER_NAME := "openshift.io/gateway-controller/v1" }}
+{{- if eq $USE_STANDALONE_MESH "true" }}
+  {{- $GATEWAY_CONTROLLER_NAME = "istio.io/gateway-controller" }}
+{{- end }}
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata: 
@@ -5,7 +10,7 @@ metadata:
   labels: 
     app: scale-test
 spec: 
-  gatewayClassName: istio
+  gatewayClassName: {{$GATEWAY_CLASS_NAME}}
   listeners:
 {{- $numListeners := .NUM_LISTENERS | atoi }}
 {{- range $index := until $numListeners }}

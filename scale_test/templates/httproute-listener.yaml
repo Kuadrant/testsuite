@@ -20,7 +20,7 @@ spec:
   - backendRefs:
     - group: ''
       kind: Service
-      name: httpbin
+      name: httpbin-service
       port: 8080
       weight: 1
     matches:

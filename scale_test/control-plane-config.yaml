@@ -1,5 +1,10 @@
 {{- $KUADRANT_ZONE_ROOT_DOMAIN := .KUADRANT_ZONE_ROOT_DOMAIN }}
 {{- $NUM_LISTENERS := .NUM_LISTENERS }}
+{{- $USE_STANDALONE_MESH := .USE_STANDALONE_MESH }}
+{{- $GATEWAY_CONTROLLER_NAME := "openshift.io/gateway-controller/v1" }}
+{{- if eq $USE_STANDALONE_MESH "true" }}
+  {{- $GATEWAY_CONTROLLER_NAME = "istio.io/gateway-controller" }}
+{{- end }}
 ---
 metricsEndpoints: 
   - endpoint: {{ .PROMETHEUS_URL }}
@@ -81,6 +86,7 @@ jobs:
           KUADRANT_ZONE_ROOT_DOMAIN: "{{$KUADRANT_ZONE_ROOT_DOMAIN}}"
           NUM_LISTENERS: "{{$NUM_LISTENERS}}"
           GW_NUM: "{{$GW_NUM}}"
+          USE_STANDALONE_MESH: "{{$USE_STANDALONE_MESH}}"
       - objectTemplate: templates/gw-tls-policy.yaml
         replicas: 1
         waitOptions:
@@ -119,7 +125,7 @@ jobs:
         replicas: 1
         waitOptions:
           customStatusPaths:
-            - key: '(.parents[] | select(.controllerName == "istio.io/gateway-controller")).conditions[] | select(.type == "Accepted").status'
+            - key: '(.parents[] | select(.controllerName == "{{$GATEWAY_CONTROLLER_NAME}}")).conditions[] | select(.type == "Accepted").status'
               value: "True"
         inputVars:
           KUADRANT_ZONE_ROOT_DOMAIN: "{{$KUADRANT_ZONE_ROOT_DOMAIN}}"

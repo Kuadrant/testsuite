@@ -1,3 +1,8 @@
+{{- $USE_STANDALONE_MESH := .USE_STANDALONE_MESH }}
+{{- $GATEWAY_CLASS_NAME := "openshift-default" }}
+{{- if eq $USE_STANDALONE_MESH "true" }}
+  {{- $GATEWAY_CLASS_NAME = "istio" }}
+{{- end }}
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata: 
@@ -5,7 +10,7 @@ metadata:
   labels: 
     app: max-gateway-listeners-scale-test
 spec: 
-  gatewayClassName: istio
+  gatewayClassName: {{$GATEWAY_CLASS_NAME}}
   listeners:
 {{- $context := . -}}
 {{- range $index := until 64 }}

@@ -1,6 +1,11 @@
 {{ if not (has .DNS_PROVIDER (list "aws" "gcp" "azure")) }}
   {{ fail "DNS_PROVIDER must be aws, gcp, or azure" }}
 {{ end }}
+{{- $USE_STANDALONE_MESH := .USE_STANDALONE_MESH }}
+{{- $GATEWAY_CONTROLLER_NAME := "openshift.io/gateway-controller/v1" }}
+{{- if eq $USE_STANDALONE_MESH "true" }}
+  {{- $GATEWAY_CONTROLLER_NAME = "istio.io/gateway-controller" }}
+{{- end }}
 metricsEndpoints:
   - endpoint: {{ .PROMETHEUS_URL }}
     token: {{ .PROMETHEUS_TOKEN }}
@@ -78,6 +83,7 @@ jobs:
         inputVars:
           KUADRANT_ZONE_ROOT_DOMAIN: "{{.KUADRANT_ZONE_ROOT_DOMAIN}}"
           GW_NUM: 1
+          USE_STANDALONE_MESH: "{{$USE_STANDALONE_MESH}}"
       - objectTemplate: templates/gateway.yaml
         replicas: 1
         waitOptions:
@@ -87,11 +93,12 @@ jobs:
         inputVars:
           KUADRANT_ZONE_ROOT_DOMAIN: "{{.KUADRANT_ZONE_ROOT_DOMAIN}}"
           GW_NUM: 2
+          USE_STANDALONE_MESH: "{{$USE_STANDALONE_MESH}}"
       - objectTemplate: templates/httproute.yaml
         replicas: 1
         waitOptions:
           customStatusPaths:
-            - key: '(.parents[] | select(.controllerName == "istio.io/gateway-controller")).conditions[] | select(.type == "Accepted").status'
+            - key: '(.parents[] | select(.controllerName == "{{$GATEWAY_CONTROLLER_NAME}}")).conditions[] | select(.type == "Accepted").status'
               value: "True"
             - key: '(.parents[] | select(.controllerName == "kuadrant.io/policy-controller")).conditions[] | select(.type == "kuadrant.io/DNSPolicyAffected").status'
               value: "True"
@@ -102,7 +109,7 @@ jobs:
         replicas: 1
         waitOptions:
           customStatusPaths:
-            - key: '(.parents[] | select(.controllerName == "istio.io/gateway-controller")).conditions[] | select(.type == "Accepted").status'
+            - key: '(.parents[] | select(.controllerName == "{{$GATEWAY_CONTROLLER_NAME}}")).conditions[] | select(.type == "Accepted").status'
               value: "True"
             - key: '(.parents[] | select(.controllerName == "kuadrant.io/policy-controller")).conditions[] | select(.type == "kuadrant.io/DNSPolicyAffected").status'
               value: "True"
