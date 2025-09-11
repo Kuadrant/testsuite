@@ -211,7 +211,7 @@ jobs:
           kubectl -n tools create secret docker-registry redhat-registry-secret --docker-server=registry.redhat.io --docker-username="${{ secrets.RH_REGISTRY_USERNAME }}" --docker-password="${{ secrets.RH_REGISTRY_PASSWORD }}"
           kubectl -n tools patch serviceaccount default -p '{"imagePullSecrets": [{"name": "redhat-registry-secret"}]}'
           
-          helm install --repo https://kuadrant.io/helm-charts-olm --set=tools.keycloak.keycloakProvider=deployment --set=tools.redis.enable=false --set=tools.dragonfly.enable=false --set=tools.valkey.enable=false --set=tools.coredns.enable=false --debug --wait --timeout=10m0s tools tools-instances
+          helm install --repo https://kuadrant.io/helm-charts-olm --set=tools.keycloak.keycloakProvider=deployment --set=tools.coredns.enable=false --debug --wait --timeout=10m0s tools tools-instances
 
       - name: Run Make target
         id: run-make
