@@ -1,6 +1,5 @@
-# pylint: disable=line-too-long
 """
-Help as of 0.2.3
+kuadrantctl v0.5.0
 Kuadrant configuration command line utility
 
 Usage:
@@ -9,27 +8,15 @@ Usage:
 Available Commands:
   completion  Generate the autocompletion script for the specified shell
   generate    Commands related to kubernetes object generation
-    gatewayapi  Generate Gataway API resources
-        httproute   Generate Gateway API HTTPRoute from OpenAPI 3.0.X
-    kuadrant    Generate Kuadrant resources
-        authpolicy      Generate Kuadrant AuthPolicy from OpenAPI 3.0.X
-        ratelimitpolicy Generate Kuadrant Rate Limit Policy from OpenAPI 3.0.X
-
-
   help        Help about any command
+  topology    Export and visualize Kuadrant topology
   version     Print the version number of kuadrantctl
 
 Flags:
-  -h, --help                   help for httproute
-      --oas string             Path to OpenAPI spec file (in JSON or YAML format), URL, or '-' to read from standard input (required)
-  -o, --output-format string   Output format: 'yaml' or 'json'. (default "yaml")
-
-Global Flags:
+  -h, --help      help for kuadrantctl
   -v, --verbose   verbose output
 
-
 Use "kuadrantctl [command] --help" for more information about a command.
-
 """
 
 import subprocess
