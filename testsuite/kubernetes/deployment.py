@@ -3,6 +3,8 @@
 from dataclasses import dataclass
 from typing import Any, Optional
 
+from openshift_client import invoke
+
 from testsuite.kubernetes import KubernetesObject, Selector, modify
 from testsuite.utils import asdict
 
@@ -184,3 +186,16 @@ class Deployment(KubernetesObject):
         """Adds volume"""
         mounts = self.template.setdefault("volumes", [])
         mounts.append(asdict(volume))
+
+    def rollout(self, hard=False, timeout=90):
+        """
+        Performs rollout on the Deployment and waits until complete.
+        Setting hard to true performs a direct pod deletion without grace period
+        """
+        with self.context:
+            if hard:
+                invoke("delete", ["pod", "--force", "--grace-period=0", "-l", f"app={self.get_label('app')}"])
+                self.wait_for_ready(timeout)
+            else:
+                invoke("rollout", ["restart", f"deployment/{self.name()}"])
+                invoke("rollout", ["status", f"deployment/{self.name()}", "--watch=true", f"--timeout={timeout}s"])

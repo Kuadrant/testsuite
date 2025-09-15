@@ -4,7 +4,8 @@ import dataclasses
 
 from openshift_client import selector
 
-from testsuite.kuadrant.authorino import Authorino
+from testsuite.kuadrant.authorino import Authorino, AuthorinoCR
+from testsuite.kuadrant.limitador import LimitadorCR
 from testsuite.kubernetes import CustomResource, modify
 from testsuite.kubernetes.deployment import Deployment
 from testsuite.utils import asdict
@@ -48,61 +49,22 @@ class KuadrantSection:
             raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{item}'") from exc
 
 
-class AuthorinoSection(KuadrantSection, Authorino):
-    """Authorino `spec.authorino` from KuadrantCR object"""
-
-    def wait_for_ready(self):
-        return super(KuadrantSection, self).wait_for_ready()
-
-    @property
-    def authorization_url(self):
-        """Return service endpoint for authorization"""
-        return f"{self.spec_name}-authorino-authorization.{self.namespace()}.svc.cluster.local"
-
-    @property
-    def oidc_url(self):
-        """Return authorino oidc endpoint"""
-        return f"{self.spec_name}-authorino-oidc.{self.namespace()}.svc.cluster.local"
-
-    @property
-    def metrics_service(self):
-        """Returns Authorino metrics service APIObject"""
-        with self.context:
-            return selector(f"service/{self.spec_name}-controller-metrics").object()
-
-
-class LimitadorSection(KuadrantSection):
-    """Limitador `spec.limitador` from KuadrantCR object"""
-
-    @property
-    def deployment(self) -> Deployment:
-        """Returns Deployment object for this Limitador"""
-        with self.context:
-            return selector(f"deployment/{self.name()}").object(cls=Deployment)
-
-    @property
-    def pod(self):
-        """Returns Pod object for this Limitadaor"""
-        with self.context:
-            return selector("pod", labels={"app": self.name()}).object()
-
-
 class KuadrantCR(CustomResource):
     """Represents Kuadrant CR objects"""
 
     @property
-    def authorino(self) -> AuthorinoSection:
-        """Returns spec.authorino from Kuadrant object"""
-        self.model.spec.setdefault("authorino", {})
-        return AuthorinoSection(self, "authorino")
-
-    @property
-    def limitador(self) -> LimitadorSection:
-        """Returns spec.limitador from Kuadrant object"""
-        self.model.spec.setdefault("limitador", {})
-        return LimitadorSection(self, "limitador")
+    def authorino(self) -> AuthorinoCR:
+        """Returns associated default AuthorinoCR object"""
+        with self.context:
+            return selector("authorino").object(cls=AuthorinoCR)
 
     @modify
     def set_observability(self, enabled: bool):
         """Enable observability"""
         self.model.spec["observability"] = {"enable": enabled} if enabled else None
+
+    @property
+    def limitador(self) -> LimitadorCR:
+        """Returns associated default LimitadorCR object"""
+        with self.context:
+            return selector("limitador").object(cls=LimitadorCR)
