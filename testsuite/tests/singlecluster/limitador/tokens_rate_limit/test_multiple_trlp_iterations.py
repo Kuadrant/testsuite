@@ -18,6 +18,8 @@ basic_request = {
     "usage": True,  # ensures `usage.total_tokens` is returned in the response
 }
 
+LIMIT = Limit(limit=50, window="20s")
+
 
 @pytest.fixture(scope="module")
 def authorization():
@@ -34,7 +36,7 @@ def token_rate_limit(request, cluster, blame, module_label):
         cluster, blame(f"trlp-{request.param}"), target_ref, labels={"testRun": module_label}
     )
 
-    policy.add_limit(name="limit", limits=[Limit(limit=10, window="10s")])
+    policy.add_limit(name="limit", limits=[LIMIT])
     return policy
 
 
@@ -42,25 +44,26 @@ def test_multiple_trlp_limit_iterations(client):
     """Ensures TRLP limit resets correctly over multiple iterations"""
     for i in range(10):
         total_tokens = 0
-        limit = 20
 
-        while total_tokens <= limit:
-            response = client.post("/v1/chat/completions", json={**basic_request, "max_tokens": 10})
+        while total_tokens < LIMIT.limit:
+            response = client.post("/v1/chat/completions", json={**basic_request})
             if response.status_code == 429:
                 break
             assert (
                 response.status_code == 200
-            ), f"Iteration {i+1}: Expected 200 before limit, got {response.status_code}"
+            ), f"Iteration {i+1}/10: Expected 200 on {total_tokens}/{LIMIT.limit} tokens, got {response.status_code}"
 
             tokens_used = response.json()["usage"]["total_tokens"]
-            assert tokens_used > 0, f"Got 0 tokens on iteration {i+1}"
+            assert tokens_used > 0, f"Got 0 tokens on iteration {i+1}/10"
             total_tokens += tokens_used
 
-        response = client.post("/v1/chat/completions", json={**basic_request, "max_tokens": 5})
+        response = client.post("/v1/chat/completions", json={**basic_request})
         assert (
             response.status_code == 429
-        ), f"Iteration {i+1}: Expected 429 after {total_tokens} tokens, but got {response.status_code}"
+        ), f"Iteration {i+1}/10: Expected 429 after {total_tokens}/{LIMIT.limit} tokens, but got {response.status_code}"
 
-        sleep(12)
-        response = client.post("/v1/chat/completions", json={**basic_request, "max_tokens": 5})
-        assert response.status_code == 200, f"Iteration {i+1}: Expected 200 after reset, but got {response.status_code}"
+        sleep(20)
+        response = client.post("/v1/chat/completions", json={**basic_request})
+        assert (
+            response.status_code == 200
+        ), f"Iteration {i+1}/10: Expected 200 after reset, but got {response.status_code}"
