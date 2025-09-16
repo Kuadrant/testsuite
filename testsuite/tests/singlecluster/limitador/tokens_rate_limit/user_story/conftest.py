@@ -9,6 +9,10 @@ from testsuite.kuadrant.policy.rate_limit import Limit
 from testsuite.kuadrant.policy.token_rate_limit import TokenRateLimitPolicy
 
 
+FREE_USER_LIMIT = Limit(limit=50, window="30s")
+PAID_USER_LIMIT = Limit(limit=100, window="60s")
+
+
 @pytest.fixture(scope="module")
 def user_label(blame):
     """Creates a label prefixed as user"""
@@ -78,7 +82,7 @@ def token_rate_limit(request, cluster, blame, module_label):
     # Free user limit - 50 tokens per 30s
     policy.add_limit(
         name="free",
-        limits=[Limit(limit=50, window="30s")],
+        limits=[FREE_USER_LIMIT],
         when=[
             CelPredicate('request.path == "/v1/chat/completions"'),
             CelPredicate('auth.identity.groups.split(",").exists(g, g == "free")'),
@@ -89,7 +93,7 @@ def token_rate_limit(request, cluster, blame, module_label):
     # Paid user limit - 100 tokens per 60s
     policy.add_limit(
         name="paid",
-        limits=[Limit(limit=100, window="60s")],
+        limits=[PAID_USER_LIMIT],
         when=[
             CelPredicate('request.path == "/v1/chat/completions"'),
             CelPredicate('auth.identity.groups.split(",").exists(g, g == "paid")'),
