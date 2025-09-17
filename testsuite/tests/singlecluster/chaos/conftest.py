@@ -44,5 +44,11 @@ def restart_operator(cluster):
 
 @pytest.fixture(autouse=True)
 def commit():
-    """Override commit fixture to do nothing."""
-    pass
+    """
+    Override commit fixture to do nothing.
+
+    In chaos testing, we don't want the standard commit behavior that
+    ensures all components are ready and stable before tests run.
+    Chaos tests need to control component lifecycle themselves.
+    """
+    pass  # pylint: disable=unnecessary-pass
