@@ -33,7 +33,7 @@ def test_operator_container_kill(cluster, kuadrant_operator_pod_chaos):
                         "msg": log_entry.get("msg", "Unknown error"),
                         "error": log_entry.get("error"),
                         "stacktrace": log_entry.get("stacktrace"),
-                        "timestamp": log_entry.get("ts")
+                        "timestamp": log_entry.get("ts"),
                     }
                     # Remove None values for cleaner output
                     error_details = {k: v for k, v in error_details.items() if v is not None}
