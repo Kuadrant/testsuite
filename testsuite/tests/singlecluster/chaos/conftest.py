@@ -40,3 +40,9 @@ def restart_operator(cluster):
         # Find and delete the operator pod
         pod = oc.selector("pod", labels={"app": "kuadrant"}).object()
         pod.delete()
+
+
+@pytest.fixture(autouse=True)
+def commit():
+    """Override commit fixture to do nothing."""
+    pass
