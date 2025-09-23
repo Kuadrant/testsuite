@@ -8,6 +8,7 @@ from openshift_client import Context, OpenShiftPythonException
 
 from testsuite.kubernetes.openshift.route import OpenshiftRoute
 from testsuite.kubernetes.service import Service
+from .service_account import ServiceAccount
 from .deployment import Deployment
 from .secret import Secret
 
@@ -53,6 +54,11 @@ class KubernetesClient:
     def token(self):
         """Returns real Kubernetes token"""
         return self._token or self.inspect_context(jsonpath="{.users[*].user.token}", raw=True)
+
+    def get_service_account(self, name: str):
+        """Select service account by the name and return testsuite ServiceAccount object wrapping it"""
+        with self.context:
+            return oc.selector(f"sa/{name}").object(cls=ServiceAccount)
 
     @cached_property
     def apps_url(self):
@@ -113,14 +119,12 @@ class KubernetesClient:
                 return oc.APIObject(string_to_model=result.out())
             return result
 
-    def inspect_context(self, jsonpath, raw=False):
+    def inspect_context(self, jsonpath=None, raw=False):
         """Returns jsonpath from the current context"""
-        return (
-            self.do_action("config", "view", f'--output=jsonpath="{jsonpath}"', f"--raw={raw}", "--minify=true")
-            .out()
-            .replace('"', "")
-            .strip()
-        )
+        action = ["config", "view", "--minify=true", f"--raw={raw}"]
+        if jsonpath:
+            action.append(f'--output=jsonpath="{jsonpath}"')
+        return self.do_action(*action).out().replace('"', "").strip()
 
     @property
     def project_exists(self):

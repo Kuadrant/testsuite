@@ -152,7 +152,10 @@ class Deployment(KubernetesObject):
 
     def wait_for_replicas(self, replicas: int, timeout=90):
         """Waits until Deployment has at least the given number of replicas"""
-        success = self.wait_until(lambda obj: obj.model.status["readyReplicas"] >= replicas, timelimit=timeout)
+        success = self.wait_until(
+            lambda obj: "readyReplicas" in obj.model.status and obj.model.status["readyReplicas"] >= replicas,
+            timelimit=timeout,
+        )
         assert success, f"Deployment {self.name()} did not get {replicas} replicas in time"
 
     @property
@@ -186,6 +189,13 @@ class Deployment(KubernetesObject):
         """Adds volume"""
         mounts = self.template.setdefault("volumes", [])
         mounts.append(asdict(volume))
+
+    def restart(self):
+        """Restarts the deployment by scaling replicas to 0 and back to original"""
+        original_replicas = self.replicas
+        self.set_replicas(0)
+        self.set_replicas(original_replicas)
+        self.wait_for_replicas(original_replicas)
 
     def rollout(self, hard=False, timeout=90):
         """
