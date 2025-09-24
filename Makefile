@@ -101,9 +101,14 @@ polish-junit:
 	# this deletes something it didn't create, dangerous!!!
 	-rm -f $(resultsdir)/junit-*.xml.gz
 
+component-metadata: ## Collect component metadata for Report Portal
+	$(RUNSCRIPT)collect-component-metadata --output $(resultsdir)/component-metadata.json --verbose
+
 reportportal: ## Upload results to reportportal. Appropriate variables for juni2reportportal must be set
 reportportal: polish-junit
-	$(RUNSCRIPT)junit2reportportal $(resultsdir)/junit-*.xml
+	@echo "Collecting component metadata..."
+	-$(RUNSCRIPT)collect-component-metadata --output $(resultsdir)/component-metadata.json
+	$(RUNSCRIPT)junit2reportportal --component-metadata $(resultsdir)/component-metadata.json $(resultsdir)/junit-*.xml
 
 .PHONY: help
 help: ## Display this help.

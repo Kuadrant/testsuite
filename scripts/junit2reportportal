@@ -35,6 +35,7 @@ aparser.add_argument(
     default=os.environ.get("OCP_VERSION"),
 )
 aparser.add_argument("--token-variable", help="env variable with auth token. default: RP_TOKEN", default="RP_TOKEN")
+aparser.add_argument("--component-metadata", help="JSON file with component metadata", default=None)
 aparser.add_argument("junitfile", nargs="+", help="junit file to import")
 args = aparser.parse_args()
 
@@ -76,7 +77,27 @@ launch_import_rq = {
     ],
     "description": args.launch_description,
 }
-launch_import_rq["attributes"].extend([{"key": "ocp", "value": args.ocp_version}] if args.ocp_version else [])
+
+# Add OCP version if provided
+if args.ocp_version:
+    launch_import_rq["attributes"].append({"key": "ocp", "value": args.ocp_version})
+
+# Add component metadata if provided
+if args.component_metadata and os.path.exists(args.component_metadata):
+    try:
+        with open(args.component_metadata, 'r') as f:
+            component_data = json.load(f)
+            for key, value in component_data.items():
+                launch_import_rq["attributes"].append({"key": key, "value": str(value)})
+        print(f"Added {len(component_data)} component metadata attributes")
+    except Exception as e:
+        print(f"Warning: Failed to load component metadata: {e}")
+
+# Add environment variables that start with COMPONENT_ as attributes
+for env_key, env_value in os.environ.items():
+    if env_key.startswith("COMPONENT_"):
+        attr_key = env_key.lower().replace("component_", "")
+        launch_import_rq["attributes"].append({"key": attr_key, "value": env_value})
 
 print(
     requests.post(
