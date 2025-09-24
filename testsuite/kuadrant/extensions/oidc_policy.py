@@ -3,8 +3,6 @@
 from dataclasses import dataclass
 from enum import Enum, auto
 from typing import Dict, Optional
-
-from enum import Enum, auto
 from testsuite.gateway import Referencable
 from testsuite.kubernetes import modify
 from testsuite.kubernetes.client import KubernetesClient
@@ -16,28 +14,12 @@ from testsuite.utils import asdict
 class Provider:
     """Provider defines the settings related to the Identity Provider (IDP)"""
 
-    issuer_url: str
-    client_id: str
-    client_secret: Optional[str] = None
-    authorization_endpoint: Optional[str] = None
-    redirect_uri: Optional[str] = None
-    token_endpoint: Optional[str] = None
-
-    def to_dict(self) -> Dict:
-        """Convert to dictionary for Kubernetes manifest"""
-        result = {
-            "issuerURL": self.issuer_url,
-            "clientID": self.client_id,
-        }
-        if self.client_secret:
-            result["clientSecret"] = self.client_secret
-        if self.authorization_endpoint:
-            result["authorizationEndpoint"] = self.authorization_endpoint
-        if self.redirect_uri:
-            result["redirectURI"] = self.redirect_uri
-        if self.token_endpoint:
-            result["tokenEndpoint"] = self.token_endpoint
-        return result
+    issuerURL: str  # pylint: disable=invalid-name
+    clientID: str  # pylint: disable=invalid-name
+    clientSecret: Optional[str] = None  # pylint: disable=invalid-name
+    authorizationEndpoint: Optional[str] = None  # pylint: disable=invalid-name
+    redirectURI: Optional[str] = None  # pylint: disable=invalid-name
+    tokenEndpoint: Optional[str] = None  # pylint: disable=invalid-name
 
 
 class CredentialsType(Enum):
@@ -56,9 +38,6 @@ class Named:
 
     name: str
 
-    def to_dict(self) -> Dict:
-        return {"name": self.name}
-
 
 @dataclass
 class Prefixed:
@@ -66,71 +45,42 @@ class Prefixed:
 
     prefix: Optional[str] = None
 
-    def to_dict(self) -> Dict:
-        result = {}
-        if self.prefix:
-            result["prefix"] = self.prefix
-        return result
-
 
 @dataclass
 class CustomHeader(Named):
     """CustomHeader represents a named header credential"""
 
-    def to_dict(self) -> Dict:
-        return super().to_dict()
+    pass
 
 
 @dataclass
 class Credentials:
     """Credentials configuration for token source"""
 
-    authorization_header: Optional[Prefixed] = None
-    custom_header: Optional[CustomHeader] = None
-    query_string: Optional[Named] = None
+    authorizationHeader: Optional[Prefixed] = None  # pylint: disable=invalid-name
+    customHeader: Optional[CustomHeader] = None  # pylint: disable=invalid-name
+    queryString: Optional[Named] = None  # pylint: disable=invalid-name
     cookie: Optional[Named] = None
 
     def get_type(self) -> CredentialsType:
         """Get the type of credentials being used"""
-        if self.authorization_header is not None:
+        if self.authorizationHeader is not None:
             return CredentialsType.AUTHORIZATION_HEADER
-        if self.custom_header is not None:
+        if self.customHeader is not None:
             return CredentialsType.CUSTOM_HEADER
-        if self.query_string is not None:
+        if self.queryString is not None:
             return CredentialsType.QUERY_STRING
         if self.cookie is not None:
             return CredentialsType.COOKIE
         return CredentialsType.UNKNOWN
-
-    def to_dict(self) -> Dict:
-        """Convert to dictionary for Kubernetes manifest"""
-        result = {}
-        if self.authorization_header:
-            result["authorizationHeader"] = self.authorization_header.to_dict()
-        if self.custom_header:
-            result["customHeader"] = self.custom_header.to_dict()
-        if self.query_string:
-            result["queryString"] = self.query_string.to_dict()
-        if self.cookie:
-            result["cookie"] = self.cookie.to_dict()
-        return result
 
 
 @dataclass
 class Auth:
     """Auth holds the information regarding AuthN/AuthZ"""
 
-    token_source: Optional[Credentials] = None
+    tokenSource: Optional[Credentials] = None  # pylint: disable=invalid-name
     claims: Optional[Dict[str, str]] = None
-
-    def to_dict(self) -> Dict:
-        """Convert to dictionary for Kubernetes manifest"""
-        result = {}
-        if self.token_source:
-            result["tokenSource"] = self.token_source.to_dict()
-        if self.claims:
-            result["claims"] = self.claims
-        return result
 
 
 class OIDCPolicy(Policy):
@@ -157,11 +107,11 @@ class OIDCPolicy(Policy):
             "metadata": {"name": name, "namespace": cluster.project, "labels": labels},
             "spec": {
                 "targetRef": target.reference,
-                "provider": provider.to_dict(),
+                "provider": asdict(provider),
             },
         }
         if auth:
-            model["spec"]["auth"] = auth.to_dict()
+            model["spec"]["auth"] = asdict(auth)
         if section_name:
             model["spec"]["targetRef"]["sectionName"] = section_name
 
@@ -170,12 +120,12 @@ class OIDCPolicy(Policy):
     @modify
     def set_provider(self, provider: Provider) -> None:
         """Set the OIDC provider configuration"""
-        self.model.spec["provider"] = provider.to_dict()
+        self.model.spec["provider"] = asdict(provider)
 
     @modify
     def set_auth(self, auth: Auth) -> None:
         """Set the authentication configuration"""
-        self.model.spec["auth"] = auth.to_dict()
+        self.model.spec["auth"] = asdict(auth)
 
     @modify
     def set_claims(self, claims: Dict[str, str]) -> None:

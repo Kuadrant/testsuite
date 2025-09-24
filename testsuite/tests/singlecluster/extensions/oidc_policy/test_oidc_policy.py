@@ -24,7 +24,7 @@ def test_public_client_flow(client, auth, oidc_client, gateway):
     assert response.status_code == 302
     assert "Location" in response.headers
     location = response.headers["Location"]
-    assert "response_type=code" in location  # Uses authorization  code flow
+    assert "response_type=code" in location  # Uses authorization code flow
     assert "scope=openid" in location  # Requests OpenID scope
     assert oidc_client.client_id in location  # Correct client ID in redirect
     assert (

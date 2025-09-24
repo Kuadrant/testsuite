@@ -34,7 +34,7 @@ def wildcard_domain(base_domain):
 
 @pytest.fixture(scope="module")
 def gateway(request, cluster, blame, label) -> Gateway:
-    """Returns the test target(gateway or route) with parametrized hostname"""
+    """Returns the test Gateway with parametrized hostname"""
     # Map parameter values to actual hostnames
     hostname = request.getfixturevalue(getattr(request, "param", "wildcard_domain"))
 
@@ -158,11 +158,11 @@ def oidc_client(request) -> KeycloakOpenID:
 def provider(oidc_provider, oidc_client):
     """Returns a Provider instance configured for the specified client type"""
     return Provider(
-        issuer_url=oidc_provider.well_known["issuer"],
-        client_id=oidc_client.client_id,
-        client_secret=oidc_client.client_secret_key,
-        authorization_endpoint=f"{oidc_provider.well_known['authorization_endpoint']}",
-        token_endpoint=f"{oidc_provider.well_known['token_endpoint']}",
+        issuerURL=oidc_provider.well_known["issuer"],
+        clientID=oidc_client.client_id,
+        clientSecret=oidc_client.client_secret_key,
+        authorizationEndpoint=f"{oidc_provider.well_known['authorization_endpoint']}",
+        tokenEndpoint=f"{oidc_provider.well_known['token_endpoint']}",
     )
 
 
@@ -194,8 +194,8 @@ def oidc_policy(request, cluster, blame, provider):
     # Create auth configuration to tell where to look for the token
     target_ref = request.getfixturevalue(getattr(request, "param", "gateway"))
 
-    credentials = Credentials(authorization_header=Prefixed(prefix="Bearer"))
-    auth = Auth(token_source=credentials)
+    credentials = Credentials(authorizationHeader=Prefixed(prefix="Bearer"))
+    auth = Auth(tokenSource=credentials)
 
     oidc_policy = OIDCPolicy.create_instance(cluster, blame("oidc-policy"), target_ref, provider=provider, auth=auth)
     request.addfinalizer(oidc_policy.delete)

@@ -61,7 +61,7 @@ kuadrant: ## Run all tests available on Kuadrant
 kuadrant: poetry-no-dev
 	$(PYTEST) -n4 -m 'not standalone_only and not multicluster and not disruptive and not extensions' --dist loadfile --enforce $(flags) testsuite/tests/singlecluster
 
-kuadrant-extensions: ## Run Kuadrant-only tests
+kuadrant-extensions: ## Run Kuadrant extension tests
 kuadrant-extensions: poetry-no-dev
 	$(PYTEST) -n4 -m 'not standalone_only and not multicluster and not disruptive and extensions' --dist loadfile --enforce $(flags) testsuite/tests/singlecluster
 
