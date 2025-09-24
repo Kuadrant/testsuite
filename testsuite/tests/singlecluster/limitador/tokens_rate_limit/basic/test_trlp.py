@@ -16,11 +16,10 @@ pytestmark = [pytest.mark.kuadrant_only, pytest.mark.limitador, pytest.mark.auth
 basic_request = {
     "model": "meta-llama/Llama-3.1-8B-Instruct",
     "messages": [{"role": "user", "content": "What is Kubernetes?"}],
-    "stream": False,  # TRLP only supports non-streaming currently
+    "stream": False,  # disable streaming (default)
     "usage": True,  # ensures `usage.total_tokens` is returned in the response
+    "max_tokens": 15,
 }
-
-MAX_TOKENS = 15
 
 
 def test_invalid_api_key(client):
@@ -40,9 +39,7 @@ def test_trlp_limit_and_reset_free_user(client, free_user_auth):
     total_tokens = 0
 
     # Check first request succeeds
-    first_response = client.post(
-        "/v1/chat/completions", auth=free_user_auth, json={**basic_request, "max_tokens": MAX_TOKENS}
-    )
+    first_response = client.post("/v1/chat/completions", auth=free_user_auth, json={**basic_request})
     assert first_response.status_code == 200, f"Expected status code 200, but got {first_response.status_code}"
     first_json = first_response.json()
     usage = first_json.get("usage")
@@ -53,9 +50,7 @@ def test_trlp_limit_and_reset_free_user(client, free_user_auth):
 
     # Keep sending requests while within token quota
     while total_tokens < FREE_USER_LIMIT.limit:
-        response = client.post(
-            "/v1/chat/completions", auth=free_user_auth, json={**basic_request, "max_tokens": MAX_TOKENS}
-        )
+        response = client.post("/v1/chat/completions", auth=free_user_auth, json={**basic_request})
         assert response.status_code == 200
         json_data = response.json()
         usage = json_data.get("usage")
@@ -65,18 +60,14 @@ def test_trlp_limit_and_reset_free_user(client, free_user_auth):
         total_tokens += tokens_used
 
     # Next request should be 429
-    response = client.post(
-        "/v1/chat/completions", auth=free_user_auth, json={**basic_request, "max_tokens": MAX_TOKENS}
-    )
+    response = client.post("/v1/chat/completions", auth=free_user_auth, json={**basic_request})
     assert (
         response.status_code == 429
     ), f"Expected 429 after {total_tokens}/{FREE_USER_LIMIT.limit} tokens, but got {response.status_code}"
 
     # Assert quota resets after wait period
     sleep(30)
-    response = client.post(
-        "/v1/chat/completions", auth=free_user_auth, json={**basic_request, "max_tokens": MAX_TOKENS}
-    )
+    response = client.post("/v1/chat/completions", auth=free_user_auth, json={**basic_request})
     assert response.status_code == 200, f"Expected 200 after reset, but got {response.status_code}"
 
 
@@ -84,9 +75,7 @@ def test_trlp_limit_and_reset_paid_user(client, paid_user_auth):
     """Ensures paid users are rate limited and limits reset correctly"""
     total_tokens = 0
 
-    first_response = client.post(
-        "/v1/chat/completions", auth=paid_user_auth, json={**basic_request, "max_tokens": MAX_TOKENS}
-    )
+    first_response = client.post("/v1/chat/completions", auth=paid_user_auth, json={**basic_request})
     assert first_response.status_code == 200, f"Expected status code 200, but got {first_response.status_code}"
     first_json = first_response.json()
     usage = first_json.get("usage")
@@ -96,9 +85,7 @@ def test_trlp_limit_and_reset_paid_user(client, paid_user_auth):
     total_tokens += tokens_used
 
     while total_tokens < PAID_USER_LIMIT.limit:
-        response = client.post(
-            "/v1/chat/completions", auth=paid_user_auth, json={**basic_request, "max_tokens": MAX_TOKENS}
-        )
+        response = client.post("/v1/chat/completions", auth=paid_user_auth, json={**basic_request})
         assert response.status_code == 200
         json_data = response.json()
         usage = json_data.get("usage")
@@ -107,15 +94,11 @@ def test_trlp_limit_and_reset_paid_user(client, paid_user_auth):
         assert tokens_used > 0 and tokens_used == usage["prompt_tokens"] + usage["completion_tokens"]
         total_tokens += tokens_used
 
-    response = client.post(
-        "/v1/chat/completions", auth=paid_user_auth, json={**basic_request, "max_tokens": MAX_TOKENS}
-    )
+    response = client.post("/v1/chat/completions", auth=paid_user_auth, json={**basic_request})
     assert (
         response.status_code == 429
     ), f"Expected 429 after {total_tokens}/{PAID_USER_LIMIT.limit} tokens, but got {response.status_code}"
 
     sleep(60)
-    response = client.post(
-        "/v1/chat/completions", auth=paid_user_auth, json={**basic_request, "max_tokens": MAX_TOKENS}
-    )
+    response = client.post("/v1/chat/completions", auth=paid_user_auth, json={**basic_request})
     assert response.status_code == 200, f"Expected 200 after reset, but got {response.status_code}"
