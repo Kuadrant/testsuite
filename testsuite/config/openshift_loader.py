@@ -43,3 +43,8 @@ def load(obj, env=None, silent=True, key=None, filename=None):
         obj["control_plane"]["cluster2"] = KubernetesClient(
             cluster2.get("project"), cluster2.get("api_url"), cluster2.get("token"), cluster2.get("kubeconfig_path")
         )
+
+    if cluster3 := control_plane.setdefault("cluster3", {}):
+        obj["control_plane"]["cluster3"] = KubernetesClient(
+            cluster3.get("project"), cluster3.get("api_url"), cluster3.get("token"), cluster3.get("kubeconfig_path")
+        )

@@ -66,6 +66,55 @@ class DNSHealthCheckProbe(KubernetesObject):
         assert success, "DNSHealthCheckProbe status wasn't ready in time"
 
 
+@dataclass
+class DNSRecordEndpoint:  # pylint: disable=invalid-name
+    """Spec for DNSRecord endpoint"""
+
+    dnsName: str
+    recordTTL: int
+    recordType: str
+    targets: list[str]
+
+
+class DNSRecord(KubernetesObject):
+    """DNSRecord object"""
+
+    @classmethod
+    def create_instance(
+        cls,
+        cluster: KubernetesClient,
+        name: str,
+        root_host: str,
+        endpoints: list[DNSRecordEndpoint] = None,
+        delegate: bool = None,
+        labels: dict[str, str] = None,
+    ):
+        """Creates new instance of DNSRecord"""
+
+        model: dict = {
+            "apiVersion": "kuadrant.io/v1alpha1",
+            "kind": "DNSRecord",
+            "metadata": {"name": name, "labels": labels},
+            "spec": {
+                "rootHost": root_host,
+                "endpoints": [asdict(ep) for ep in endpoints] if endpoints else None,
+            },
+        }
+
+        if delegate is not None:
+            model["spec"]["delegate"] = delegate
+
+        return cls(model, context=cluster.context)
+
+    def wait_for_ready(self):
+        """Waits until DNSRecord is ready"""
+        success = self.wait_until(
+            lambda obj: len(obj.model.status.conditions) > 0
+            and all(condition.status == "True" for condition in obj.model.status.conditions)
+        )
+        assert success, f"DNSRecord {self.name()} did not get ready in time"
+
+
 class DNSPolicy(Policy):
     """DNSPolicy object"""
 
@@ -76,6 +125,7 @@ class DNSPolicy(Policy):
         name: str,
         parent: Referencable,
         provider_secret_name: str,
+        delegate: bool = None,
         load_balancing: LoadBalancing = None,
         labels: dict[str, str] = None,
     ):
@@ -90,6 +140,9 @@ class DNSPolicy(Policy):
                 "providerRefs": [{"name": provider_secret_name}],
             },
         }
+
+        if delegate is not None:
+            model["spec"]["delegate"] = delegate
 
         if load_balancing:
             model["spec"]["loadBalancing"] = asdict(load_balancing)
