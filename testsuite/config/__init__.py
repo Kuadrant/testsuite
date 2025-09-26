@@ -78,6 +78,8 @@ settings = Dynaconf(
             "custom_metrics_apiserver.url",
             default=fetch_service_ip("custom-metrics-apiserver", protocol="http", port=8080),
         ),
+        DefaultValueValidator("spicedb.url", default=fetch_service_ip("spicedb", force_http=True, port=50051)),
+        DefaultValueValidator("spicedb.password", default=fetch_secret("spicedb-key", "SPICEDB_GRPC_PRESHARED_KEY")),
     ],
     validate_only=["authorino", "kuadrant", "default_exposer", "control_plane"],
     loaders=["dynaconf.loaders.env_loader", "testsuite.config.openshift_loader", "testsuite.config.exposer"],
