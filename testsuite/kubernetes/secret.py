@@ -16,7 +16,7 @@ class Secret(KubernetesObject):
         cluster,
         name,
         data: dict[str, str],
-        secret_type: Literal["kubernetes.io/tls", "kuadrant.io/aws", "Opaque"] = "Opaque",
+        secret_type: Literal["kubernetes.io/tls", "kuadrant.io/aws", "kuadrant.io/coredns", "Opaque"] = "Opaque",
         labels: dict[str, str] = None,
     ):
         """Creates new Secret"""
