@@ -14,6 +14,9 @@ def has_kuadrant():
     clusters = [settings["control_plane"]["cluster"]]
     if cluster2 := settings["control_plane"]["cluster2"]:
         clusters.append(cluster2)
+    if cluster3 := settings["control_plane"]["cluster3"]:
+        clusters.append(cluster3)
+
     for cluster in clusters:
         system_project = cluster.change_project(project)
         if not system_project.connected:
@@ -32,6 +35,8 @@ def kuadrant_version():
     clusters = [settings["control_plane"]["cluster"]]
     if cluster2 := settings["control_plane"]["cluster2"]:
         clusters.append(cluster2)
+    if cluster3 := settings["control_plane"]["cluster3"]:
+        clusters.append(cluster3)
     versions = []
     for cluster in clusters:
         project = cluster.change_project(settings["service_protection"]["system_project"])
