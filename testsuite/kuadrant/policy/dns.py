@@ -129,7 +129,7 @@ class DNSPolicy(Policy):
         cluster: KubernetesClient,
         name: str,
         parent: Referencable,
-        provider_secret_name: str,
+        provider_secret_name: str = None,
         delegate: bool = None,
         load_balancing: LoadBalancing = None,
         labels: dict[str, str] = None,
@@ -140,11 +140,11 @@ class DNSPolicy(Policy):
             "apiVersion": "kuadrant.io/v1",
             "kind": "DNSPolicy",
             "metadata": {"name": name, "labels": labels},
-            "spec": {
-                "targetRef": parent.reference,
-                "providerRefs": [{"name": provider_secret_name}],
-            },
+            "spec": {"targetRef": parent.reference},
         }
+
+        if provider_secret_name is not None:
+            model["spec"]["providerRefs"] = [{"name": provider_secret_name}]
 
         if delegate is not None:
             model["spec"]["delegate"] = delegate
