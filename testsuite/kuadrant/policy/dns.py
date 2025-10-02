@@ -114,6 +114,11 @@ class DNSRecord(KubernetesObject):
         )
         assert success, f"DNSRecord {self.name()} did not get ready in time"
 
+    def get_authoritative_dns_record(self) -> str:
+        """Returns the authoritative DNS record created by dns operator controller"""
+        with self.context:
+            return oc.selector(f"dnsrecords.kuadrant.io/{self.model.status.zoneID}").object(cls=DNSRecord)
+
 
 class DNSPolicy(Policy):
     """DNSPolicy object"""
@@ -124,7 +129,7 @@ class DNSPolicy(Policy):
         cluster: KubernetesClient,
         name: str,
         parent: Referencable,
-        provider_secret_name: str,
+        provider_secret_name: str = None,
         delegate: bool = None,
         load_balancing: LoadBalancing = None,
         labels: dict[str, str] = None,
@@ -135,11 +140,11 @@ class DNSPolicy(Policy):
             "apiVersion": "kuadrant.io/v1",
             "kind": "DNSPolicy",
             "metadata": {"name": name, "labels": labels},
-            "spec": {
-                "targetRef": parent.reference,
-                "providerRefs": [{"name": provider_secret_name}],
-            },
+            "spec": {"targetRef": parent.reference},
         }
+
+        if provider_secret_name is not None:
+            model["spec"]["providerRefs"] = [{"name": provider_secret_name}]
 
         if delegate is not None:
             model["spec"]["delegate"] = delegate
