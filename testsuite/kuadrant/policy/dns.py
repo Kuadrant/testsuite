@@ -114,6 +114,11 @@ class DNSRecord(KubernetesObject):
         )
         assert success, f"DNSRecord {self.name()} did not get ready in time"
 
+    def get_authoritative_dns_record(self) -> str:
+        """Returns the authoritative DNS record created by dns operator controller"""
+        with self.context:
+            return oc.selector(f"dnsrecords.kuadrant.io/{self.model.status.zoneID}").object(cls=DNSRecord)
+
 
 class DNSPolicy(Policy):
     """DNSPolicy object"""
