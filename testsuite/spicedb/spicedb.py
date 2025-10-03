@@ -119,7 +119,7 @@ class SpiceDBService:
         response = self.client.DeleteRelationships(request)
         return response
 
-    @backoff.on_predicate(backoff.constant, lambda x: x is False, max_tries=5, interval=3)
+    @backoff.on_predicate(backoff.constant, lambda x: x is False, max_tries=3, interval=5, jitter=None)
     def wait_for_relationship(self, schema_config: SchemaConfig, relationship_config: RelationshipConfig):
         """Check if the relationships are ready for use in SpiceDB."""
         check_request = CheckPermissionRequest(
