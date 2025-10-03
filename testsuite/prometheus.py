@@ -19,6 +19,15 @@ def _params(key: str = "", labels: dict[str, str] = None) -> dict[str, str]:
     return {"query": "%s{%s}" % (key, ",".join(f"{k}='{v}'" for k, v in labels.items()))}
 
 
+def has_label(label_name: str, label_value: str):
+    """Returns function, that returns True if given metric has specific label with specific value"""
+
+    def _has_label(metric):
+        return metric["metric"].get(label_name) == label_value
+
+    return _has_label
+
+
 class Metrics:
     """Interface to the returned Prometheus metrics"""
 
