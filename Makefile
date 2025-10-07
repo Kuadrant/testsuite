@@ -63,7 +63,7 @@ kuadrant-only: poetry-no-dev
 
 multicluster: ## Run Multicluster only tests
 multicluster: poetry-no-dev
-	$(PYTEST) -n2 -m 'multicluster' --dist loadfile --enforce $(flags) testsuite
+	$(PYTEST) -n2 -m 'multicluster and not disruptive' --dist loadfile --enforce $(flags) testsuite
 
 dnstls: ## Run DNS and TLS tests
 dnstls: poetry-no-dev
