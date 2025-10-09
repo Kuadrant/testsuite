@@ -1,8 +1,13 @@
 """Conftest for multicluster tests using a shared database storage."""
 
-import pytest
-from dynaconf import ValidationError
+from importlib import resources
+import time
 
+from dynaconf import ValidationError
+import httpx
+import pytest
+
+from testsuite.certificates import Certificate
 from testsuite.kubernetes.secret import Secret
 
 
@@ -36,3 +41,42 @@ def storage_secret2(testconfig, cluster2, blame, request, storage_service):
     request.addfinalizer(secret.delete)
     secret.commit()
     return secret
+
+
+@pytest.fixture(scope="module")
+def client1(hostname):
+    """Simple client 1"""
+    root_cert = resources.files("testsuite.resources").joinpath("kuadrant_qe_ca.crt").read_text()
+    client = hostname.client(verify=Certificate(certificate=root_cert, chain=root_cert, key=""))
+    yield client
+    client.close()
+
+
+@pytest.fixture(scope="module")
+def client2(hostname):
+    """Simple client 2"""
+    root_cert = resources.files("testsuite.resources").joinpath("kuadrant_qe_ca.crt").read_text()
+    client = hostname.client(verify=Certificate(certificate=root_cert, chain=root_cert, key=""))
+    yield client
+    client.close()
+
+
+@pytest.fixture(scope="module")
+def warm_up_clients(client1, client2):
+    """
+    Ensures that both clients can successfully connect to their gateways
+    before the actual test logic runs. This prevents flaky tests due to network readiness.
+    """
+    for client_name, client in [("client1", client1), ("client2", client2)]:
+        for i in range(10):
+            try:
+                response = client.get("/get", timeout=5)
+                if response.status_code == 200:
+                    break
+            except httpx.ConnectError as e:
+                print(f"Warm-up for {client_name} attempt {i+1} failed: {e}")
+
+            if i == 9:
+                pytest.fail(f"{client_name} warm-up failed after multiple retries.")
+
+            time.sleep(5)

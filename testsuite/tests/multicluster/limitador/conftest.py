@@ -1,10 +1,7 @@
-"""
-Conftest for general multicluster Limitador tests.
+""" " Conftest for general multicluster Limitador tests.
 
-This conftest is responsible for creating the necessary KuadrantCR instances
-in each cluster, as the multicluster test environment does not provide them
-by default. It then provides the base `limitador1` and `limitador2` fixtures.
-"""
+This conftest is responsible for retrieving the existing KuadrantCR instances
+in each cluster. It then provides the base `limitador1` and `limitador2` fixtures."""
 
 import pytest
 from openshift_client import selector
