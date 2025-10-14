@@ -1,12 +1,11 @@
-"""Test if update/delete changes on secondary DNSRecord are propagated to the authoritative DNS record"""
+"""Test if removal of DNSRecords will also clean them up on the provider"""
 
 import dns.resolver
 import pytest
 
-from testsuite.utils import asdict
+from testsuite.utils import is_nxdomain
 from testsuite.kubernetes.secret import Secret
 from testsuite.utils import sleep_ttl
-from testsuite.kuadrant.policy.dns import DNSRecordEndpoint
 from ..conftest import IP1, IP2
 
 pytestmark = [pytest.mark.multicluster, pytest.mark.disruptive]
@@ -30,28 +29,20 @@ def kubeconfig_secrets(testconfig, cluster, cluster2, blame, module_label):
     ]
 
 
-def test_update_secondary(testconfig, dnsrecord2):
-    """Test if update/delete changes on secondary DNSRecord are propagated to the authoritative DNS record"""
+def test_authoritative_record_removal_cleans_up_provider(testconfig, dnsrecord1, dnsrecord2):
+    """Delete DNSRecords from both primary and secondary clusters and check they are really cleaned up"""
     dns_ips = {ip.address for ip in dns.resolver.resolve(f'ns1.{testconfig["dns"]["coredns_zone"]}')}
     assert {IP1, IP2} == dns_ips, "CoreDNS should have returned both IP addresses in A record set"
 
-    new_ip = "79.1.35.254"
-    dnsrecord2.model.spec.endpoints = [
-        asdict(
-            DNSRecordEndpoint(
-                dnsName=f'ns1.{testconfig["dns"]["coredns_zone"]}', recordType="A", recordTTL=60, targets=[new_ip]
-            )
-        )
-    ]
-    dnsrecord2.apply()
-    dnsrecord2.wait_for_ready()
-    sleep_ttl(f'ns1.{testconfig["dns"]["coredns_zone"]}')
-
-    dns_ips = {ip.address for ip in dns.resolver.resolve(f'ns1.{testconfig["dns"]["coredns_zone"]}')}
-    assert {IP1, new_ip} == dns_ips
-
     dnsrecord2.delete()
     sleep_ttl(f'ns1.{testconfig["dns"]["coredns_zone"]}')
-
     dns_ips = {ip.address for ip in dns.resolver.resolve(f'ns1.{testconfig["dns"]["coredns_zone"]}')}
-    assert {IP1} == dns_ips
+    assert {IP1} == dns_ips, "CoreDNS should have only returned the primary IP address in A record set"
+
+    authoritative_record = dnsrecord1.get_authoritative_dns_record()
+    assert authoritative_record.exists()[0], "Authoritative DNSRecord should still exist"
+
+    dnsrecord1.delete()
+    sleep_ttl(f'ns1.{testconfig["dns"]["coredns_zone"]}')
+    assert not authoritative_record.exists()[0], "Authoritative DNSRecord should be cleaned up"
+    assert is_nxdomain(f'ns1.{testconfig["dns"]["coredns_zone"]}')
