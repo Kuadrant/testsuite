@@ -116,6 +116,7 @@ def telemetry_policy(cluster, blame, module_label, gateway):
 
     policy.add_label("user", "auth.identity.userid")
     policy.add_label("group", "auth.identity.groups")
+    policy.add_label("model", 'responseBodyJSON("/model")')
 
     return policy
 
