@@ -15,11 +15,15 @@ class Secret(KubernetesObject):
         cls,
         cluster,
         name,
-        data: dict[str, str],
+        stringData: dict[str, str] = None,  # pylint: disable=invalid-name
+        data: dict[str, str] = None,
         secret_type: Literal["kubernetes.io/tls", "kuadrant.io/aws", "kuadrant.io/coredns", "Opaque"] = "Opaque",
         labels: dict[str, str] = None,
     ):
         """Creates new Secret"""
+        if not (stringData is None) ^ (data is None):
+            raise AttributeError("Either `stringData` or `data` must be used for the secret creation")
+
         model: dict = {
             "kind": "Secret",
             "apiVersion": "v1",
@@ -27,9 +31,15 @@ class Secret(KubernetesObject):
                 "name": name,
                 "labels": labels,
             },
-            "stringData": data,
             "type": secret_type,
         }
+
+        if stringData:
+            model["stringData"] = stringData
+
+        if data:
+            model["data"] = data
+
         return cls(model, context=cluster.context)
 
     def __getitem__(self, name):
@@ -60,10 +70,10 @@ class TLSSecret(Secret):
         return super().create_instance(
             cluster,
             name,
-            {
+            stringData={
                 cert_name: certificate.chain,
                 key_name: certificate.key,
             },
-            secret_type,
-            labels,
+            secret_type=secret_type,
+            labels=labels,
         )
