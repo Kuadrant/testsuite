@@ -7,9 +7,13 @@ https://github.com/Kuadrant/kuadrant-operator/blob/a1ad64a2fb9230985230b57695ffa
 
 import pytest
 
+pytestmark = [pytest.mark.kuadrant_only, pytest.mark.limitador]
+
+USERS = ("free", "paid")
+MODEL_NAME = "meta-llama/Llama-3.1-8B-Instruct"
 
 basic_request = {
-    "model": "meta-llama/Llama-3.1-8B-Instruct",
+    "model": MODEL_NAME,
     "messages": [{"role": "user", "content": "What is Kubernetes?"}],
     "stream": False,  # disable streaming (default)
     "usage": True,  # ensures `usage.total_tokens` is returned in the response
@@ -18,46 +22,61 @@ basic_request = {
 
 
 @pytest.fixture(scope="module")
-def token_usage(prometheus, pod_monitor, client, free_user_auth, paid_user_auth):
-    """Send requests to generate metrics, trigger rate limiting and return token usage"""
-    # Free user requests
-    free_tokens = 0
-    for _ in range(10):
-        response = client.post("/v1/chat/completions", auth=free_user_auth, json={**basic_request})
-        if response.status_code == 200:
-            free_tokens += response.json().get("usage", {}).get("total_tokens", 0)
-        elif response.status_code == 429:
-            break  # stop once free user is rate-limited
+def user_data(free_user_api_key, paid_user_api_key, free_user_auth, paid_user_auth):
+    """Provides free/paid user data for parametrized tests"""
+    return {
+        "free": {
+            "api_key": free_user_api_key,
+            "auth": free_user_auth,
+            "group": "free",
+            "user_id": free_user_api_key.model.metadata.annotations["secret.kuadrant.io/user-id"],
+        },
+        "paid": {
+            "api_key": paid_user_api_key,
+            "auth": paid_user_auth,
+            "group": "paid",
+            "user_id": paid_user_api_key.model.metadata.annotations["secret.kuadrant.io/user-id"],
+        },
+    }
 
-    # Paid user requests
-    paid_tokens = 0
-    for _ in range(10):
-        response = client.post("/v1/chat/completions", auth=paid_user_auth, json={**basic_request})
-        if response.status_code == 200:
-            paid_tokens += response.json().get("usage", {}).get("total_tokens", 0)
-        elif response.status_code == 429:
-            break  # stop once paid user is rate-limited
+
+@pytest.fixture(scope="module")
+def token_usage(prometheus, pod_monitor, client, user_data):
+    """Send requests to generate metrics, trigger rate limiting and return token usage"""
+    usage_data = {}
+
+    for user_type, user_info in user_data.items():
+        tokens = 0
+        for _ in range(10):
+            response = client.post("/v1/chat/completions", auth=user_info["auth"], json={**basic_request})
+            if response.status_code == 200:
+                tokens += response.json().get("usage", {}).get("total_tokens", 0)
+            elif response.status_code == 429:
+                break  # stop once user is rate-limited
+
+        usage_data[f"{user_type}_total_tokens"] = tokens
 
     # Wait for metrics to propagate
     prometheus.wait_for_scrape(pod_monitor, "/metrics")
 
-    return {
-        "free_total_tokens": free_tokens,
-        "paid_total_tokens": paid_tokens,
-    }
+    return usage_data
 
 
-def test_authorized_hits_metric_exists_and_increments_free_user(
-    prometheus, limitador, route, pod_monitor, free_user_api_key, token_usage
+@pytest.mark.parametrize("user_type", USERS)
+def test_authorized_hits_metric_exists_and_increments(
+    prometheus, limitador, route, pod_monitor, user_data, token_usage, user_type
 ):
-    """Verify `authorized_hits` metric is emitted and accumulates tokens consumed for free user/group"""
+    """Verify `authorized_hits` metric is emitted, reported and accumulates tokens consumed for users/groups/models"""
+    user_info = user_data[user_type]
+
     metrics = prometheus.get_metrics(
         labels={
             "pod": limitador.pod.name(),
             "limitador_namespace": f"{route.namespace()}/{route.name()}",
             "job": f"{pod_monitor.namespace()}/{pod_monitor.name()}",
-            "user": free_user_api_key.model.metadata.annotations["secret.kuadrant.io/user-id"],
-            "group": "free",
+            "user": user_info["user_id"],
+            "group": user_info["group"],
+            "model": MODEL_NAME,
         }
     )
 
@@ -67,45 +86,23 @@ def test_authorized_hits_metric_exists_and_increments_free_user(
 
     # Verify the metric is accumulating tokens
     actual_hits = authorized_hits.values[0]
-    expected_tokens = token_usage["free_total_tokens"]
+    expected_tokens = token_usage[f"{user_type}_total_tokens"]
     assert actual_hits > 0, f"authorized_hits must be > 0, got {actual_hits}"
 
     # Verify the token metric value remains within the range of total tokens consumed
     # Token values will vary slightly due to timing of Prometheus scrapes, hence why exact matching is not asserted
     assert (
         actual_hits <= expected_tokens
-    ), f"authorized_hits ({actual_hits}) should not exceed tokens consumed ({expected_tokens}) for free user"
+    ), f"authorized_hits ({actual_hits}) should not exceed tokens consumed ({expected_tokens}) for {user_type} user"
 
 
-def test_authorized_hits_metric_exists_and_increments_paid_user(
-    prometheus, limitador, route, pod_monitor, paid_user_api_key, token_usage
-):
-    """Verify `authorized_hits` metric is emitted and accumulates tokens consumed for paid user/group"""
-    metrics = prometheus.get_metrics(
-        labels={
-            "pod": limitador.pod.name(),
-            "limitador_namespace": f"{route.namespace()}/{route.name()}",
-            "job": f"{pod_monitor.namespace()}/{pod_monitor.name()}",
-            "user": paid_user_api_key.model.metadata.annotations["secret.kuadrant.io/user-id"],
-            "group": "paid",
-        }
-    )
-
-    authorized_hits = metrics.filter(lambda x: x["metric"]["__name__"] == "authorized_hits")
-    assert len(authorized_hits.metrics) == 1
-
-    actual_hits = authorized_hits.values[0]
-    expected_tokens = token_usage["paid_total_tokens"]
-    assert actual_hits > 0, f"authorized_hits must be > 0, got {actual_hits}"
-    assert (
-        actual_hits <= expected_tokens
-    ), f"authorized_hits ({actual_hits}) should not exceed tokens consumed ({expected_tokens}) for paid user"
-
-
+@pytest.mark.parametrize("user_type", USERS)
 def test_metrics_reported_per_user_and_group(
-    prometheus, limitador, route, pod_monitor, free_user_api_key, paid_user_api_key, token_usage
+    prometheus, limitador, route, pod_monitor, user_data, token_usage, user_type
 ):  # pylint: disable=unused-argument
-    """Ensure 'authorized_hits', 'authorized_calls', and 'limited_calls' are reported separately per user/group"""
+    """Ensure 'authorized_calls', and 'limited_calls' are reported for user/group"""
+    user_info = user_data[user_type]
+
     metrics = prometheus.get_metrics(
         labels={
             "pod": limitador.pod.name(),
@@ -114,17 +111,10 @@ def test_metrics_reported_per_user_and_group(
         }
     )
 
-    for metric_name in ("authorized_hits", "authorized_calls", "limited_calls"):
-        free_metrics = metrics.filter(
-            lambda x, mn=metric_name: x["metric"]["__name__"] == mn
-            and x["metric"]["group"] == "free"
-            and x["metric"]["user"] == free_user_api_key.model.metadata.annotations["secret.kuadrant.io/user-id"]
+    for metric_name in ("authorized_calls", "limited_calls"):
+        user_metrics = metrics.filter(
+            lambda x, mn=metric_name, group=user_info["group"], user_id=user_info["user_id"]: (
+                x["metric"]["__name__"] == mn and x["metric"]["group"] == group and x["metric"]["user"] == user_id
+            )
         )
-        paid_metrics = metrics.filter(
-            lambda x, mn=metric_name: x["metric"]["__name__"] == mn
-            and x["metric"]["group"] == "paid"
-            and x["metric"]["user"] == paid_user_api_key.model.metadata.annotations["secret.kuadrant.io/user-id"]
-        )
-
-        assert len(free_metrics.metrics) == 1, f"{metric_name} metric not found with free user/group labels"
-        assert len(paid_metrics.metrics) == 1, f"{metric_name} metric not found with paid user/group labels"
+        assert len(user_metrics.metrics) == 1, f"{metric_name} metric not found with {user_type} user/group labels"
