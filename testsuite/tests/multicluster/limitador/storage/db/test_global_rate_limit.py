@@ -23,18 +23,13 @@ def storage2(storage_secret2):
 @pytest.fixture(scope="module")
 def limit():
     """Returns the specific Limit object for this test module."""
-    return Limit(5, "300s")
+    return Limit(5, "30s")
 
 
 def test_global_limit_is_shared(
     client1,
     client2,
-    configured_limitador1,
-    configured_limitador2,
     limit,
-    rate_limit_policy1,
-    rate_limit_policy2,
-    warm_up_clients,
 ):  # pylint: disable=unused-argument
     """
     Tests that the counter is shared between two clusters using a central Redis.

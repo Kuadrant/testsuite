@@ -24,25 +24,29 @@ def configured_limitador2(limitador2, request, storage2):
 
 
 @pytest.fixture(scope="function")
-def rate_limit_policy1(blame, routes, limit, cluster):
+def rate_limit_policy1(routes, limit, cluster, rate_limit_name):
     """Creates a RateLimitPolicy object for the first cluster."""
     route = routes[0]
-    rlp = RateLimitPolicy.create_instance(cluster, blame("rlp-1"), route)
+    rlp = RateLimitPolicy.create_instance(cluster, rate_limit_name, route)
     rlp.add_limit("global", [limit])
     return rlp
 
 
 @pytest.fixture(scope="function")
-def rate_limit_policy2(blame, routes, limit, cluster2):
+def rate_limit_policy2(routes, limit, cluster2, rate_limit_name):
     """Creates a RateLimitPolicy object for the second cluster."""
     route = routes[1]
-    rlp = RateLimitPolicy.create_instance(cluster2, blame("rlp-2"), route)
+    rlp = RateLimitPolicy.create_instance(cluster2, rate_limit_name, route)
     rlp.add_limit("global", [limit])
     return rlp
 
+@pytest.fixture(scope="function")
+def rate_limit_name(blame):
+    return blame("rlp")
+
 
 @pytest.fixture(scope="function", autouse=True)
-def commit_policies(request, rate_limit_policy1, rate_limit_policy2):
+def commit_policies(request, rate_limit_policy1, rate_limit_policy2, configured_limitador1, configured_limitador2):
     """Commits both RateLimitPolicies before the test runs and registers their cleanup."""
     request.addfinalizer(rate_limit_policy1.delete)
     request.addfinalizer(rate_limit_policy2.delete)
@@ -50,3 +54,4 @@ def commit_policies(request, rate_limit_policy1, rate_limit_policy2):
     rate_limit_policy2.commit()
     rate_limit_policy1.wait_for_ready()
     rate_limit_policy2.wait_for_ready()
+
