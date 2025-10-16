@@ -6,12 +6,13 @@ import yaml
 
 import pytest
 from pytest_metadata.plugin import metadata_key  # type: ignore
-from openshift_client import selector
 from dynaconf import ValidationError
 from keycloak import KeycloakAuthenticationError
+from openshift_client import OpenShiftPythonException, selector
 
 from testsuite.capabilities import has_kuadrant, kuadrant_version
 from testsuite.certificates import CFSSLClient
+from testsuite.component_metadata import ComponentMetadataCollector
 from testsuite.config import settings
 from testsuite.gateway import Exposer, CustomReference
 from testsuite.httpx import KuadrantClient
@@ -124,6 +125,23 @@ def pytest_collection_modifyitems(session, config, items):  # pylint: disable=un
         for marker in item.iter_markers(name="issue"):
             issue = marker.args[0]
             item.user_properties.append(("issue", issue))
+
+    # Add component metadata to every test case
+    try:
+        cluster = settings["control_plane"]["cluster"]
+        project = cluster.change_project(settings["service_protection"]["system_project"])
+
+        if project.connected:
+            collector = ComponentMetadataCollector(project)
+            component_metadata = collector.get_component_metadata_for_report_portal()
+
+            # Add to all test items (but only once per test session)
+            for item in items:
+                for key, value in component_metadata.items():
+                    item.user_properties.append((key, str(value)))
+
+    except (OpenShiftPythonException, AttributeError, KeyError, ValidationError) as e:
+        print(f"Warning: Component metadata collection failed: {e}")
 
 
 @pytest.fixture(scope="session")

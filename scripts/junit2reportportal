@@ -78,6 +78,22 @@ launch_import_rq = {
 }
 launch_import_rq["attributes"].extend([{"key": "ocp", "value": args.ocp_version}] if args.ocp_version else [])
 
+component_metadata_count = 0
+if xml is not None:
+    try:
+        global_properties = xml.xpath("//testcase/properties/property")
+        for prop in global_properties:
+            name = prop.get("name", "")
+            value = prop.get("value", "")
+            if name.endswith(("-sha", "-tag")) or name in ["Kuadrant", "kuadrant_image", "kuadrant_cluster"]:
+                launch_import_rq["attributes"].append({"key": name, "value": str(value)})
+                component_metadata_count += 1
+        
+        if component_metadata_count > 0:
+            print(f"Added {component_metadata_count} component metadata attributes from junit XML")
+    except Exception as e:
+        print(f"Warning: Failed to extract component metadata from junit XML: {e}")
+
 print(
     requests.post(
         launch_import,
