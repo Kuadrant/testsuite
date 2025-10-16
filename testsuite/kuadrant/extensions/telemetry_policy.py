@@ -44,7 +44,3 @@ class TelemetryPolicy(Policy):
         default = metrics.setdefault("default", {})
         labels = default.setdefault("labels", {})
         labels[label_name] = label_path
-
-    def wait_for_ready(self):
-        # TODO: Delete this method when TelemetryPolicy status is fixed.
-        pass
