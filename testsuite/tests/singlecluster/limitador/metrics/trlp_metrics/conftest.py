@@ -13,6 +13,9 @@ from testsuite.kuadrant.policy.token_rate_limit import TokenRateLimitPolicy
 FREE_USER_LIMIT = Limit(limit=15, window="30s")
 PAID_USER_LIMIT = Limit(limit=30, window="60s")
 
+USERS = ("free", "paid")
+MODEL_NAME = "meta-llama/Llama-3.1-8B-Instruct"
+
 
 @pytest.fixture(scope="module")
 def backend(request, cluster, blame, label, testconfig):
@@ -22,6 +25,25 @@ def backend(request, cluster, blame, label, testconfig):
     request.addfinalizer(llmsim.delete)
     llmsim.commit()
     return llmsim
+
+
+@pytest.fixture(scope="module")
+def user_data(free_user_api_key, paid_user_api_key, free_user_auth, paid_user_auth):
+    """Provides free/paid user data for parametrized tests"""
+    return {
+        "free": {
+            "api_key": free_user_api_key,
+            "auth": free_user_auth,
+            "group": "free",
+            "user_id": free_user_api_key.model.metadata.annotations["secret.kuadrant.io/user-id"],
+        },
+        "paid": {
+            "api_key": paid_user_api_key,
+            "auth": paid_user_auth,
+            "group": "paid",
+            "user_id": paid_user_api_key.model.metadata.annotations["secret.kuadrant.io/user-id"],
+        },
+    }
 
 
 @pytest.fixture(scope="module")
