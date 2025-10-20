@@ -29,7 +29,9 @@ def dns_provider_secret(request, cluster, module_label, blame):
         "AWS_SECRET_ACCESS_KEY": "abcdefg12345+",
     }
 
-    secret = Secret.create_instance(cluster, blame("creds"), creds, "kuadrant.io/aws", labels={"app": module_label})
+    secret = Secret.create_instance(
+        cluster, blame("creds"), creds, secret_type="kuadrant.io/aws", labels={"app": module_label}
+    )
     request.addfinalizer(secret.delete)
     secret.commit()
     return secret.name()
