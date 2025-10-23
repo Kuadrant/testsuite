@@ -9,7 +9,7 @@ from testsuite.utils import sleep_ttl
 from testsuite.kuadrant.policy.dns import DNSRecordEndpoint
 from ..conftest import IP1, IP2
 
-pytestmark = [pytest.mark.multicluster, pytest.mark.disruptive]
+pytestmark = [pytest.mark.coredns_one_primary]
 
 
 @pytest.fixture(scope="module")
@@ -30,28 +30,24 @@ def kubeconfig_secrets(testconfig, cluster, cluster2, blame, module_label):
     ]
 
 
-def test_update_secondary(testconfig, dnsrecord2):
+def test_update_secondary(hostname, dnsrecord2):
     """Test if update/delete changes on secondary DNSRecord are propagated to the authoritative DNS record"""
-    dns_ips = {ip.address for ip in dns.resolver.resolve(f'ns1.{testconfig["dns"]["coredns_zone"]}')}
+    dns_ips = {ip.address for ip in dns.resolver.resolve(hostname.hostname)}
     assert {IP1, IP2} == dns_ips, "CoreDNS should have returned both IP addresses in A record set"
 
     new_ip = "79.1.35.254"
     dnsrecord2.model.spec.endpoints = [
-        asdict(
-            DNSRecordEndpoint(
-                dnsName=f'ns1.{testconfig["dns"]["coredns_zone"]}', recordType="A", recordTTL=60, targets=[new_ip]
-            )
-        )
+        asdict(DNSRecordEndpoint(dnsName=hostname.hostname, recordType="A", recordTTL=60, targets=[new_ip]))
     ]
     dnsrecord2.apply()
     dnsrecord2.wait_for_ready()
-    sleep_ttl(f'ns1.{testconfig["dns"]["coredns_zone"]}')
+    sleep_ttl(hostname.hostname)
 
-    dns_ips = {ip.address for ip in dns.resolver.resolve(f'ns1.{testconfig["dns"]["coredns_zone"]}')}
+    dns_ips = {ip.address for ip in dns.resolver.resolve(hostname.hostname)}
     assert {IP1, new_ip} == dns_ips
 
     dnsrecord2.delete()
-    sleep_ttl(f'ns1.{testconfig["dns"]["coredns_zone"]}')
+    sleep_ttl(hostname.hostname)
 
-    dns_ips = {ip.address for ip in dns.resolver.resolve(f'ns1.{testconfig["dns"]["coredns_zone"]}')}
+    dns_ips = {ip.address for ip in dns.resolver.resolve(hostname.hostname)}
     assert {IP1} == dns_ips

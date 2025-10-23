@@ -60,17 +60,13 @@ def coredns_secrets(
 
 
 @pytest.fixture(scope="module")
-def dnsrecord3(cluster3, testconfig, blame, module_label):
+def dnsrecord3(cluster3, testconfig, hostname, blame, module_label):
     """Return a DNSRecord instance ready for commit"""
     return DNSRecord.create_instance(
         cluster3,
         blame("rcrd3"),
-        f'ns1.{testconfig["dns"]["coredns_zone"]}',
-        endpoints=[
-            DNSRecordEndpoint(
-                dnsName=f'ns1.{testconfig["dns"]["coredns_zone"]}', recordType="A", recordTTL=60, targets=[IP3]
-            )
-        ],
+        testconfig["dns"]["coredns_zone"],
+        endpoints=[DNSRecordEndpoint(dnsName=hostname.hostname, recordType="A", recordTTL=60, targets=[IP3])],
         delegate=True,
         labels={"app": module_label},
     )

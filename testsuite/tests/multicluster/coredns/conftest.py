@@ -2,12 +2,22 @@
 
 import pytest
 
+from testsuite.gateway.gateway_api.hostname import CoreDNSExposer
 from testsuite.kubernetes.secret import Secret
 from testsuite.kuadrant.policy.dns import DNSRecord, DNSRecordEndpoint
 
 # random test IPs for the DNS records
 IP1 = "91.16.35.100"
 IP2 = "172.6.13.223"
+
+
+@pytest.fixture(scope="session")
+def exposer(request, cluster):
+    """Expose using DNSPolicy"""
+    exposer = CoreDNSExposer(cluster)
+    request.addfinalizer(exposer.delete)
+    exposer.commit()
+    return exposer
 
 
 @pytest.fixture(scope="module")
@@ -34,34 +44,26 @@ def coredns_secrets(
 
 
 @pytest.fixture(scope="module")
-def dnsrecord1(cluster, testconfig, blame, module_label):
+def dnsrecord1(cluster, testconfig, hostname, blame, module_label):
     """Return a DNSRecord instance ready for commit"""
     return DNSRecord.create_instance(
         cluster,
         blame("rcrd1"),
-        f'ns1.{testconfig["dns"]["coredns_zone"]}',
-        endpoints=[
-            DNSRecordEndpoint(
-                dnsName=f'ns1.{testconfig["dns"]["coredns_zone"]}', recordType="A", recordTTL=60, targets=[IP1]
-            )
-        ],
+        testconfig["dns"]["coredns_zone"],
+        endpoints=[DNSRecordEndpoint(dnsName=hostname.hostname, recordType="A", recordTTL=60, targets=[IP1])],
         delegate=True,
         labels={"app": module_label},
     )
 
 
 @pytest.fixture(scope="module")
-def dnsrecord2(cluster2, testconfig, blame, module_label):
+def dnsrecord2(cluster2, testconfig, hostname, blame, module_label):
     """Return a DNSRecord instance ready for commit"""
     return DNSRecord.create_instance(
         cluster2,
         blame("rcrd2"),
-        f'ns1.{testconfig["dns"]["coredns_zone"]}',
-        endpoints=[
-            DNSRecordEndpoint(
-                dnsName=f'ns1.{testconfig["dns"]["coredns_zone"]}', recordType="A", recordTTL=60, targets=[IP2]
-            )
-        ],
+        testconfig["dns"]["coredns_zone"],
+        endpoints=[DNSRecordEndpoint(dnsName=hostname.hostname, recordType="A", recordTTL=60, targets=[IP2])],
         delegate=True,
         labels={"app": module_label},
     )

@@ -7,7 +7,7 @@ from testsuite.kubernetes.secret import Secret
 from ..conftest import IP1, IP2
 from .conftest import IP3
 
-pytestmark = [pytest.mark.multicluster, pytest.mark.disruptive]
+pytestmark = [pytest.mark.coredns_one_primary]
 
 
 @pytest.fixture(scope="module")
@@ -57,7 +57,7 @@ def kubeconfig_secrets(testconfig, cluster, cluster2, cluster3, blame, module_la
     return secrets
 
 
-def test_one_primary_two_secondary(testconfig):
+def test_one_primary_two_secondary(hostname):
     """IPs from 1 primary and 2 secondary clusters should return in DNS A record set"""
-    dns_ips = {ip.address for ip in dns.resolver.resolve(f'ns1.{testconfig["dns"]["coredns_zone"]}')}
+    dns_ips = {ip.address for ip in dns.resolver.resolve(hostname.hostname)}
     assert {IP1, IP2, IP3} == dns_ips, "CoreDNS should have returned all 3 IP addresses in A record set"

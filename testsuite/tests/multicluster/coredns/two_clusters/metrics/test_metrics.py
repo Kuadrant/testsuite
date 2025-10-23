@@ -4,7 +4,7 @@ import pytest
 
 from testsuite.prometheus import has_label
 
-pytestmark = [pytest.mark.multicluster, pytest.mark.disruptive]
+pytestmark = [pytest.mark.coredns_one_primary]
 
 
 @pytest.fixture(scope="module")
@@ -22,9 +22,7 @@ def test_authoritative_record_metrics(testconfig, dns_metrics, dnsrecord1):
         has_label("__name__", "dns_provider_record_ready") and has_label("dns_record_is_delegating", "false")
     )
     assert len(authoritative_record.metrics) == 1
-    assert (
-        authoritative_record.metrics[0]["metric"]["dns_record_root_host"] == f'ns1.{testconfig["dns"]["coredns_zone"]}'
-    )
+    assert authoritative_record.metrics[0]["metric"]["dns_record_root_host"] == testconfig["dns"]["coredns_zone"]
     assert authoritative_record.values[0] == 1.0
 
     dns_provider_authoritative_record_spec_info = authoritative_record_metrics.filter(
@@ -33,7 +31,7 @@ def test_authoritative_record_metrics(testconfig, dns_metrics, dnsrecord1):
     assert len(dns_provider_authoritative_record_spec_info.metrics) == 1
     assert (
         dns_provider_authoritative_record_spec_info.metrics[0]["metric"]["root_host"]
-        == f'ns1.{testconfig["dns"]["coredns_zone"]}'
+        == testconfig["dns"]["coredns_zone"]
     )
     assert dns_provider_authoritative_record_spec_info.values[0] == 1
 
@@ -47,9 +45,7 @@ def test_delegating_record_metrics(testconfig, dns_metrics, dnsrecord1, dnsrecor
 
         delegating_record = delegating_record_metrics.filter(has_label("dns_record_is_delegating", "true"))
         assert len(delegating_record.metrics) == 1
-        assert (
-            delegating_record.metrics[0]["metric"]["dns_record_root_host"] == f'ns1.{testconfig["dns"]["coredns_zone"]}'
-        )
+        assert delegating_record.metrics[0]["metric"]["dns_record_root_host"] == testconfig["dns"]["coredns_zone"]
         assert delegating_record.metrics[0]["metric"]["dns_record_namespace"] == rec.namespace()
         assert delegating_record.names[0] == "dns_provider_record_ready"
         assert delegating_record.values[0] == 1.0
