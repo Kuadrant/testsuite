@@ -60,6 +60,7 @@ settings = Dynaconf(
             Validator("letsencrypt.issuer.name", must_exist=True, ne=None)
             & Validator("letsencrypt.issuer.kind", must_exist=True, is_in={"Issuer", "ClusterIssuer"})
         ),
+        Validator("dns.coredns_zone", must_exist=True, ne=None),
         (
             Validator("dns.dns_server.address", must_exist=True, ne=None, cast=hostname_to_ip)
             & Validator("dns.dns_server.geo_code", must_exist=True, ne=None)
