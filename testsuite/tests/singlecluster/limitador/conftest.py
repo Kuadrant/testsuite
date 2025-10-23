@@ -7,6 +7,7 @@ import pytest
 # If not specified, all available components will be logged
 log_components = ["limitador", "limitador-operator", "gateway"]
 
+
 @pytest.fixture(scope="session")
 def limitador(kuadrant):
     """Returns Limitador CR"""
