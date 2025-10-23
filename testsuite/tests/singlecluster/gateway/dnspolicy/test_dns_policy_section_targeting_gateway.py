@@ -15,7 +15,6 @@ from testsuite.gateway import CustomReference, GatewayListener
 from testsuite.gateway.gateway_api.gateway import KuadrantGateway
 from testsuite.gateway.gateway_api.hostname import StaticHostname
 from testsuite.gateway.gateway_api.route import HTTPRoute
-from testsuite.httpx import KuadrantClient
 from testsuite.kuadrant.policy.dns import DNSPolicy
 from testsuite.utils import is_nxdomain
 
@@ -34,9 +33,15 @@ def authorization():
 
 
 @pytest.fixture(scope="module")
-def managed_client(gateway, managed_domain):
+def tls_policy():
+    """Disables the default creation of an TLSPolicy"""
+    return None
+
+
+@pytest.fixture(scope="module")
+def managed_client(managed_domain):
     """Returns a client for the successfully protected 'managed' endpoint."""
-    return StaticHostname(managed_domain, gateway.get_tls_cert).client()
+    return StaticHostname(managed_domain).client()
 
 
 @pytest.fixture(scope="module")
@@ -45,7 +50,7 @@ def unmanaged_client(unmanaged_domain):
     Returns a client for the unmanaged endpoint.
     This request is expected to fail with a DNS resolution error.
     """
-    return KuadrantClient(base_url=f"https://{unmanaged_domain}", verify=True)
+    return StaticHostname(unmanaged_domain).client()
 
 
 @pytest.fixture(scope="module")
@@ -65,11 +70,12 @@ def gateway(gateway: KuadrantGateway, managed_domain, unmanaged_domain):
     """
     Modifies the existing shared gateway for the purposes of this test module
     by adding two specific HTTP listeners (one for the managed and one for the
-    unmanaged domain).
+    unmanaged domain) and removing the default listener.
     """
 
     gateway.add_listener(GatewayListener(name=MANAGED_LISTENER_NAME, hostname=managed_domain))
     gateway.add_listener(GatewayListener(name=UNMANAGED_LISTENER_NAME, hostname=unmanaged_domain))
+    gateway.remove_listener(GatewayListener.name)
 
     gateway.wait_for_ready()
 
