@@ -193,14 +193,11 @@ def hostname_to_ip(address: str) -> str:
 
 def is_nxdomain(hostname: str):
     """
-    Returns True if hostname has no `A` record in DNS. False otherwise.
-    Will raise exception `dns.resolver.NoAnswer` if there exists different record type under the hostname.
+    Returns True if hostname has no `A` or `AAAA` records in DNS. False otherwise.
     """
-    try:
-        dns.resolver.resolve(hostname)
-    except dns.resolver.NXDOMAIN:
-        return True
-    return False
+    response_a = dns.resolver.resolve(hostname, rdtype=dns.rdatatype.A, raise_on_no_answer=False)
+    response_aaaa = dns.resolver.resolve(hostname, rdtype=dns.rdatatype.AAAA, raise_on_no_answer=False)
+    return response_a.rrset is None and response_aaaa.rrset is None
 
 
 def sleep_ttl(hostname: str):
