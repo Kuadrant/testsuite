@@ -47,6 +47,7 @@ markers = [
     "limitador: Test is using Limitador features",
     "tlspolicy: Test is using TLSPolicy",
     "dnspolicy: Test is using DNSPolicy",
+    "extensions: Test is using the extensions framework",
     "smoke: Build verification test",
     "disruptive: Test is disruptive",
     "multicluster: Test is specifc to Multicluster deployment",
