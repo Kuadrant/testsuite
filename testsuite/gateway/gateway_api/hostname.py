@@ -64,3 +64,12 @@ class DNSPolicyExposer(Exposer):
 
     def delete(self):
         pass
+
+
+class CoreDNSExposer(DNSPolicyExposer):
+    """CoreDNS exposer with hosted coredns zone for base domain"""
+
+    @cached_property
+    def base_domain(self) -> str:
+        settings.validators.validate(only="dns.coredns_zone")
+        return f'{generate_tail(5)}.{settings["dns"]["coredns_zone"]}'

@@ -63,7 +63,15 @@ kuadrant-only: poetry-no-dev
 
 multicluster: ## Run Multicluster only tests
 multicluster: poetry-no-dev
-	$(PYTEST) -n2 -m 'multicluster and not disruptive' --dist loadfile --enforce $(flags) testsuite
+	$(PYTEST) -n2 -m 'multicluster and not disruptive' --dist loadfile --enforce $(flags) testsuite/tests/multicluster/
+
+coredns_one_primary: ## Run coredns one primary tests
+coredns_one_primary: poetry-no-dev
+	$(PYTEST) -n1 -m 'coredns_one_primary' --dist loadfile --enforce $(flags) testsuite/tests/multicluster/coredns/
+
+coredns_two_primaries: ## Run coredns two primary tests
+coredns_two_primaries: poetry-no-dev
+	$(PYTEST) -n1 -m 'coredns_two_primaries' --dist loadfile --enforce $(flags) testsuite/tests/multicluster/coredns/
 
 dnstls: ## Run DNS and TLS tests
 dnstls: poetry-no-dev
