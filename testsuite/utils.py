@@ -195,9 +195,13 @@ def is_nxdomain(hostname: str):
     """
     Returns True if hostname has no `A` or `AAAA` records in DNS. False otherwise.
     """
-    response_a = dns.resolver.resolve(hostname, rdtype=dns.rdatatype.A, raise_on_no_answer=False)
-    response_aaaa = dns.resolver.resolve(hostname, rdtype=dns.rdatatype.AAAA, raise_on_no_answer=False)
-    return response_a.rrset is None and response_aaaa.rrset is None
+    try:
+        dns.resolver.resolve_name(hostname)
+    except dns.resolver.NXDOMAIN:
+        return True
+    except dns.resolver.NoAnswer:
+        return True
+    return False
 
 
 def sleep_ttl(hostname: str):
