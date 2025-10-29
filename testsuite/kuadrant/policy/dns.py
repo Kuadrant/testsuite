@@ -3,6 +3,7 @@
 from dataclasses import dataclass
 from typing import Optional, Literal
 
+import backoff
 import openshift_client as oc
 
 from testsuite.gateway import Referencable
@@ -154,22 +155,36 @@ class DNSPolicy(Policy):
 
         return cls(model, context=cluster.context)
 
+    def delete(self, ignore_not_found=True, cmd_args=None):
+        """
+        Deletes DNSPolicy and makes sure all child DNSRecord CR's
+        get deleted by dns-operator before returning
+        """
+        super().delete(ignore_not_found, cmd_args)
+
+        @backoff.on_predicate(backoff.fibo, lambda x: len(x) != 0, max_time=30)
+        def _wait_dnsrecord_deleted():
+            return self.get_dns_records()
+
+        _wait_dnsrecord_deleted()
+
     def set_health_check(self, health_check: HealthCheck):
         """Sets health check for DNSPolicy"""
         self.model["spec"]["healthCheck"] = asdict(health_check)
 
-    def _get_dns_record(self):
-        """Returns DNSRecord object for the created DNSPolicy"""
+    def get_dns_records(self) -> list[DNSRecord]:
+        """Returns DNSRecord objects for the created DNSPolicy"""
         with self.context:
-            assert self.wait_until(
-                lambda obj: len(obj.get_owned("dnsrecords.kuadrant.io")) > 0
-            ), "The corresponding DNSRecord object wasn't created in time"
-            dns_record = self.get_owned("dnsrecords.kuadrant.io")[0]
-        return KubernetesObject(dns_record.model, context=self.context)
+            dns_records = self.get_owned("dnsrecord.kuadrant.io")
+            return [DNSRecord(x.model, context=self.context) for x in dns_records]
 
     def get_dns_health_probe(self) -> DNSHealthCheckProbe:
         """Returns DNSHealthCheckProbe object for the created DNSPolicy"""
-        dns_record = self._get_dns_record()
+        assert self.wait_until(
+            lambda obj: len(self.get_dns_records()) > 0
+        ), "The corresponding DNSRecord object wasn't created in time"
+        dns_record = self.get_dns_records()[0]
+
         with self.context:
             assert dns_record.wait_until(
                 lambda obj: len(obj.get_owned("DNSHealthCheckProbe")) > 0
