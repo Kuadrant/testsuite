@@ -8,6 +8,7 @@ from testsuite.backend.httpbin import Httpbin
 from testsuite.certificates import Certificate
 from testsuite.gateway import Exposer, Hostname
 from testsuite.gateway import TLSGatewayListener
+from testsuite.gateway import GatewayListener
 from testsuite.gateway.gateway_api.gateway import KuadrantGateway
 from testsuite.gateway.gateway_api.hostname import DNSPolicyExposer
 from testsuite.gateway.gateway_api.route import HTTPRoute
@@ -86,12 +87,30 @@ def routes(request, gateway, gateway2, blame, hostname, backends, module_label) 
     return routes
 
 
+# @pytest.fixture(scope="module")
+# def gateway(cluster, blame, label, wildcard_domain):
+#     """Gateway to first Kubernetes cluster"""
+#     name = blame("gw")
+#     gw = KuadrantGateway.create_instance(cluster, name, {"app": label})
+#     gw.add_listener(TLSGatewayListener(hostname=wildcard_domain, gateway_name=name))
+#     return gw
+#
+#
+# @pytest.fixture(scope="module")
+# def gateway2(cluster2, blame, label, wildcard_domain):
+#     """Gateway to second Kubernetes cluster"""
+#     name = blame("gw")
+#     gw = KuadrantGateway.create_instance(cluster2, name, {"app": label})
+#     gw.add_listener(TLSGatewayListener(hostname=wildcard_domain, gateway_name=name))
+#     return gw
+
+
 @pytest.fixture(scope="module")
 def gateway(cluster, blame, label, wildcard_domain):
     """Gateway to first Kubernetes cluster"""
     name = blame("gw")
     gw = KuadrantGateway.create_instance(cluster, name, {"app": label})
-    gw.add_listener(TLSGatewayListener(hostname=wildcard_domain, gateway_name=name))
+    gw.add_listener(GatewayListener(port=80, protocol="HTTP", hostname=wildcard_domain))
     return gw
 
 
@@ -100,7 +119,7 @@ def gateway2(cluster2, blame, label, wildcard_domain):
     """Gateway to second Kubernetes cluster"""
     name = blame("gw")
     gw = KuadrantGateway.create_instance(cluster2, name, {"app": label})
-    gw.add_listener(TLSGatewayListener(hostname=wildcard_domain, gateway_name=name))
+    gw.add_listener(GatewayListener(port=80, protocol="HTTP", hostname=wildcard_domain))
     return gw
 
 
@@ -159,11 +178,10 @@ def commit(
     gateway2,
     dns_policy,
     dns_policy2,
-    tls_policy,
-    tls_policy2,
 ):  # pylint: disable=unused-argument
     """Commits gateways and all policies before tests"""
-    components = [gateway, gateway2, dns_policy, dns_policy2, tls_policy, tls_policy2]
+    # Only commit gateways and DNS policies for HTTP setup, skip TLS policies
+    components = [gateway, gateway2, dns_policy, dns_policy2]
     for component in components:
         request.addfinalizer(component.delete)
         component.commit()
