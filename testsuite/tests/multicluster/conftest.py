@@ -34,7 +34,7 @@ def hostname(gateway, exposer, blame) -> Hostname:
     return exposer.expose_hostname(blame("hostname"), gateway)
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def exposer(request, cluster) -> Exposer:
     """Expose using DNSPolicy"""
     exposer = DNSPolicyExposer(cluster)

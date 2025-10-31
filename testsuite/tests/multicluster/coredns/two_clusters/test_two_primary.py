@@ -6,7 +6,7 @@ import pytest
 from testsuite.kubernetes.secret import Secret
 from ..conftest import IP1, IP2
 
-pytestmark = [pytest.mark.multicluster]
+pytestmark = [pytest.mark.coredns_two_primaries]
 
 
 @pytest.fixture(scope="module")
@@ -39,7 +39,7 @@ def kubeconfig_secrets(testconfig, cluster, cluster2, blame, module_label):
     return secrets
 
 
-def test_two_primary(testconfig):
+def test_two_primary(hostname):
     """IPs from both primary clusters should return in DNS A record set"""
-    dns_ips = {ip.address for ip in dns.resolver.resolve(f'ns1.{testconfig["dns"]["coredns_zone"]}')}
+    dns_ips = {ip.address for ip in dns.resolver.resolve(hostname.hostname)}
     assert {IP1, IP2} == dns_ips, "CoreDNS should have returned both IP addresses in A record set"

@@ -50,6 +50,8 @@ markers = [
     "smoke: Build verification test",
     "disruptive: Test is disruptive",
     "multicluster: Test is specifc to Multicluster deployment",
+    "coredns_one_primary: CoreDNS multicluster tests using one primary cluster",
+    "coredns_two_primaries: CoreDNS multicluster tests using two primary clusters",
 ]
 filterwarnings = [
     "ignore: WARNING the new order is not taken into account:UserWarning",
