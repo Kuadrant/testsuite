@@ -3,15 +3,16 @@ SpiceDB by AuthZed is an authorization-only database
 inspired by Google Zanzibar, used for managing and checking fine-grained access permissions
 through a schema-defined relationship model.
 https://authzed.com/
-Note: Authentication is not handled by SpiceDB and must be implemented separately. Therefore, this tests doesn't
-cover authentication and are is only focused on authorization.
+Note: Authentication is not handled by SpiceDB and must be implemented separately. Therefore, these tests don't
+cover authentication and are only focused on authorization.
 """
 
 import pytest
-from dynaconf import ValidationError
 
-from testsuite.spicedb.spicedb import SpiceDBService, SchemaConfig, RelationshipConfig
+from testsuite.gateway.exposers import LoadBalancerServiceExposer
+from testsuite.kubernetes.openshift.route import OpenshiftRoute
 from testsuite.kubernetes.secret import Secret
+from testsuite.spicedb.spicedb import SpiceDB, SchemaConfig, RelationshipConfig
 
 pytestmark = [pytest.mark.authorino]
 
@@ -19,7 +20,7 @@ pytestmark = [pytest.mark.authorino]
 @pytest.fixture(scope="module")
 def schema_config():
     """Create schema config with custom data."""
-    schema_config = SchemaConfig(
+    return SchemaConfig(
         subject_type="user",
         resource_type="document",
         permission1="read",
@@ -27,46 +28,68 @@ def schema_config():
         relation1="reader",
         relation2="writer",
     )
-    return schema_config
 
 
 @pytest.fixture(scope="module")
 def relationship_config():
     """Create relationship config with custom data."""
-    relationship_config = RelationshipConfig(
+    return RelationshipConfig(
         subject_type="user",
         resource_type="document",
         relations=["writer", "reader"],
         resource_id="document1",
         subject_ids=["admin", "some_user"],
     )
-    return relationship_config
 
 
 @pytest.fixture(scope="module")
-def spicedb_info(testconfig, skip_or_fail):
+def spicedb(request, cluster, blame, module_label, testconfig):
     """
-    Validates that only the 'spicedb' section of the test config is used,
-    and returns the relevant configuration (e.g., URL, secret, etc.).
+    Deploy SpiceDB instance and manage its lifecycle.
     """
-    try:
-        testconfig.validators.validate(only="spicedb")
-    except (KeyError, ValidationError) as exc:
-        skip_or_fail(f"Spicedb configuration item is missing: {exc}")
-    return testconfig["spicedb"]
+    spicedb = SpiceDB(
+        cluster,
+        blame("spicedb"),
+        module_label,
+        image=testconfig["spicedb"]["image"],
+    )
+    request.addfinalizer(spicedb.delete)
+    spicedb.commit()
+    spicedb.wait_for_ready()
+
+    yield spicedb
 
 
 @pytest.fixture(scope="module")
-def create_secret(request, cluster, blame, spicedb_info, module_label, testconfig, kuadrant):
-    """Create a secret for Authorino to use in authorization with SpiceDB. Secret mut be created in namespace where
-    Authorino is deployed."""
+def spicedb_route(exposer, request, spicedb, blame, cluster):
+    """
+    Create an OpenShift Route to SpiceDB for external access from test suite.
+    """
+    if isinstance(exposer, LoadBalancerServiceExposer):
+        pytest.skip("raw_http is not available on Kind")
+
+    route = OpenshiftRoute.create_instance(cluster, blame("spicedb"), service_name=spicedb.name, target_port="http")
+    request.addfinalizer(route.delete)
+    route.commit()
+
+    spicedb.set_http_url(f"http://{route.hostname}")
+
+    return route
+
+
+@pytest.fixture(scope="module")
+def secret_name(request, cluster, module_label, kuadrant, blame, testconfig, spicedb):
+    """
+    Creates a secret containing the SpiceDB preshared key for Authorino to use.
+    The secret is created in Authorino's namespace.
+    """
     secret_name = blame("spicedb")
     if kuadrant:
         cluster = cluster.change_project(testconfig["service_protection"]["system_project"])
     secret = Secret.create_instance(
         cluster,
         secret_name,
-        {"grpc-preshared-key": spicedb_info["password"]},
+        stringData={"grpc-preshared-key": spicedb.preshared_key},
         labels={"app": module_label},
     )
     request.addfinalizer(secret.delete)
@@ -74,25 +97,25 @@ def create_secret(request, cluster, blame, spicedb_info, module_label, testconfi
     return secret_name
 
 
-@pytest.fixture(scope="module")
-def spicedb(spicedb_info, schema_config):
+@pytest.fixture(scope="module", autouse=True)
+def spicedb_query(spicedb, spicedb_route, schema_config, relationship_config):  # pylint: disable=unused-argument
     """
-    Creates a SpiceDB service instance used for sending authorization requests.
-    After the tests, it clears all relationships.
+    Prepares a test schema and sample relationships in SpiceDB for authorization tests.
+    Checks if the relationships are ready for authorization in SpiceDB.
     """
-    service = SpiceDBService(spicedb_info["url"], spicedb_info["password"])
-    yield service
-    service.clear_all_relationships(schema_config)
+    spicedb.client.create_schema(schema_config)
+    spicedb.client.create_relationship(relationship_config)
+    spicedb.client.wait_for_relationship(schema_config, relationship_config)
 
 
 @pytest.fixture(scope="module")
-def authorization(authorization, create_secret, spicedb_info, schema_config):
-    """Clear all identity in the AuthConfig and add the spiceDB spec into authorization part."""
+def authorization(authorization, spicedb, schema_config, secret_name):
+    """Clear all identity in the AuthConfig and add the SpiceDB spec into the authorization section."""
     authorization.identity.clear_all()
     authorization.authorization.add_spicedb(
         "spicedb-spicedb",
-        spicedb_info["url"],
-        create_secret,
+        spicedb.grpc_url,
+        secret_name,
         subject_type=schema_config.subject_type,
         resource_type=schema_config.resource_type,
         permission1=("GET", schema_config.permission1),
@@ -101,18 +124,6 @@ def authorization(authorization, create_secret, spicedb_info, schema_config):
         subject_selector="context.request.http.headers.username",
     )
     return authorization
-
-
-@pytest.fixture(scope="module", autouse=True)
-def spicedb_query(spicedb, schema_config, relationship_config):
-    """
-    Prepares a test schema and sample relationships in SpiceDB for authorization tests.
-    Check if the relationships are ready for authorization in SpiceDB.
-    Returns the created schema and relationship objects for use in tests.
-    """
-    spicedb.create_schema(schema_config)
-    spicedb.create_relationship(relationship_config)
-    spicedb.wait_for_relationship(schema_config, relationship_config)
 
 
 def test_spicedb(client):
