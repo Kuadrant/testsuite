@@ -14,8 +14,7 @@
 #      username: "testUser"
 #      password: "testPassword"
 #  spicedb:
-#    url: "SPICEDB_URL"
-#    password: "SPICEDB_PASSWORD"
+#    image: "SPICEDB_IMAGE"
 #  auth0:
 #    client_id: "CLIENT_ID"
 #    client_secret: "CLIENT_SECRET"
