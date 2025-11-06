@@ -123,6 +123,25 @@ class Client:
             resource["ownerManagedAccess"] = True
         return self.admin.create_client_authz_resource(self.client_id, resource)
 
+    def add_user_attribute_mapper(
+        self, attribute_name, token_claim_name, add_to_access_token=True, add_to_id_token=True
+    ):
+        """Adds a user attribute mapper that includes custom user attributes in JWT tokens"""
+        mapper_config = {
+            "name": f"{attribute_name}-mapper",
+            "protocol": "openid-connect",
+            "protocolMapper": "oidc-usermodel-attribute-mapper",
+            "config": {
+                "user.attribute": attribute_name,
+                "claim.name": token_claim_name,
+                "jsonType.label": "String",
+                "id.token.claim": add_to_id_token,
+                "access.token.claim": add_to_access_token,
+                "userinfo.token.claim": "true",
+            },
+        }
+        return self.admin.add_mapper_to_client(self.client_id, mapper_config)
+
 
 class User:
     """Wrapper object for User object in Keycloak"""
