@@ -43,11 +43,15 @@ smoke: poetry-no-dev
 
 authorino: ## Run only authorino related tests
 authorino: poetry-no-dev
-	$(PYTEST) -n4 -m 'authorino and not multicluster' --dist loadfile --enforce $(flags) testsuite/tests/singlecluster
+	$(PYTEST) -n4 -m 'authorino and not multicluster and not extensions' --dist loadfile --enforce $(flags) testsuite/tests/singlecluster
+
+authorino-extensions: ## Run only authorino related tests
+authorino-extensions: poetry-no-dev
+	$(PYTEST) -n4 -m 'authorino and not multicluster and extensions' --dist loadfile --enforce $(flags) testsuite/tests/singlecluster
 
 authorino-standalone: ## Run only test capable of running with standalone Authorino
 authorino-standalone: poetry-no-dev
-	$(PYTEST) -n4 -m 'authorino and not kuadrant_only' --dist loadfile --enforce --standalone $(flags) testsuite/tests/singlecluster/authorino
+	$(PYTEST) -n4 -m 'authorino and not kuadrant_only and not extensions' --dist loadfile --enforce --standalone $(flags) testsuite/tests/singlecluster/authorino
 
 limitador: ## Run only Limitador related tests
 limitador: poetry-no-dev
@@ -55,11 +59,19 @@ limitador: poetry-no-dev
 
 kuadrant: ## Run all tests available on Kuadrant
 kuadrant: poetry-no-dev
-	$(PYTEST) -n4 -m 'not standalone_only and not multicluster and not disruptive' --dist loadfile --enforce $(flags) testsuite/tests/singlecluster
+	$(PYTEST) -n4 -m 'not standalone_only and not multicluster and not disruptive and not extensions' --dist loadfile --enforce $(flags) testsuite/tests/singlecluster
+
+kuadrant-extensions: ## Run Kuadrant extension tests
+kuadrant-extensions: poetry-no-dev
+	$(PYTEST) -n4 -m 'not standalone_only and not multicluster and not disruptive and extensions' --dist loadfile --enforce $(flags) testsuite/tests/singlecluster
 
 kuadrant-only: ## Run Kuadrant-only tests
 kuadrant-only: poetry-no-dev
-	$(PYTEST) -n4 -m 'kuadrant_only and not standalone_only and not disruptive and not multicluster' --dist loadfile --enforce $(flags) testsuite/tests/singlecluster
+	$(PYTEST) -n4 -m 'kuadrant_only and not standalone_only and not disruptive and not multicluster and not extensions' --dist loadfile --enforce $(flags) testsuite/tests/singlecluster
+
+kuadrant-only-extensions: ## Run Kuadrant-only tests
+kuadrant-only-extensions: poetry-no-dev
+	$(PYTEST) -n4 -m 'kuadrant_only and not standalone_only and not disruptive and not multicluster and extensions' --dist loadfile --enforce $(flags) testsuite/tests/singlecluster
 
 multicluster: ## Run Multicluster only tests
 multicluster: poetry-no-dev
@@ -136,8 +148,9 @@ wasmplugins.extensions.istio.io,$\
 servicemonitors.monitoring.coreos.com,$\
 podmonitors.monitoring.coreos.com,$\
 apiservices.apiregistration.k8s.io,$\
-horizontalpodautoscalers.autoscaling
-
+horizontalpodautoscalers.autoscaling,$\
+oidcpolicies.extensions.kuadrant.io,$\
+planpolicies.extensions.kuadrant.io
 
 clean: ## Clean all objects on cluster created by running this testsuite. Set the env variable USER to delete after someone else
 	@echo "Deleting objects for user: $(USER)"
