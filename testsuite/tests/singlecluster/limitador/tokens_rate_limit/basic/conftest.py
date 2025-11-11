@@ -20,16 +20,16 @@ def user_label(blame):
 
 
 @pytest.fixture(scope="module")
-def free_user_api_key(create_api_key, user_label, blame):
+def free_user_api_key(create_api_key, user_label, blame, module_label):
     """Creates API key Secret for a free user"""
-    annotations = {"kuadrant.io/groups": "free", "secret.kuadrant.io/user-id": blame("free-user")}
+    annotations = {"kuadrant.io/groups": "free", "secret.kuadrant.io/user-id": f"{blame('free-user')}-{module_label}"}
     return create_api_key("api-key", user_label, "iamafreeuser", annotations=annotations)
 
 
 @pytest.fixture(scope="module")
-def paid_user_api_key(create_api_key, user_label, blame):
+def paid_user_api_key(create_api_key, user_label, blame, module_label):
     """Creates API key Secret for a paid user"""
-    annotations = {"kuadrant.io/groups": "paid", "secret.kuadrant.io/user-id": blame("paid-user")}
+    annotations = {"kuadrant.io/groups": "paid", "secret.kuadrant.io/user-id": f"{blame('paid-user')}-{module_label}"}
     return create_api_key("api-key", user_label, "iamapaiduser", annotations=annotations)
 
 
