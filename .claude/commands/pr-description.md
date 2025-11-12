@@ -2,6 +2,44 @@
 description: Generate a comprehensive PR description based on git diff and commit history
 ---
 
+## PR Title Format (Conventional Commits)
+
+Since PRs are squash-merged, the PR title becomes the commit message. All PR titles **must** follow conventional commit format:
+
+```
+<type>[optional scope]: <description>
+```
+
+**Examples:**
+```
+feat: add rate limiting policy for gateways
+fix: resolve authorization timeout issue
+test: add tests for DNS policy reconciliation
+docs: update installation guide
+refactor(authorino): simplify identity verification
+```
+
+**Allowed types:**
+- `feat` - New feature
+- `fix` - Bug fix
+- `docs` - Documentation changes
+- `style` - Code style changes (formatting, no logic change)
+- `refactor` - Code refactoring
+- `perf` - Performance improvements
+- `test` - Adding or updating tests
+- `build` - Build system changes
+- `ci` - CI/CD changes
+- `chore` - Other changes (dependencies, tooling)
+- `revert` - Revert a previous commit
+
+**Optional scopes:** `authorino`, `limitador`, `gateway`, `dns`, `tls`, `multicluster`, `ci`, `docs`, `chore`, `perf`, `refactor`, `style`, `test`
+
+The GitHub workflow `.github/workflows/validate-pr-title.yml` validates PR titles automatically.
+
+---
+
+## Generating PR Description
+
 Analyze the current branch and generate a comprehensive pull request description.
 
 Follow these steps to minimize token usage:

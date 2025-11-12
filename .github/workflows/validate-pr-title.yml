@@ -1,0 +1,63 @@
+name: Lint PR
+
+on:
+  pull_request:
+    types:
+      - opened
+      - edited
+      - synchronize
+      - reopened
+
+permissions:
+  pull-requests: write
+  statuses: write
+
+jobs:
+  main:
+    name: Validate PR Title
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    steps:
+      - uses: amannn/action-semantic-pull-request@v6
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # Configure which types are allowed
+          types: |
+            feat
+            fix
+            docs
+            style
+            refactor
+            perf
+            test
+            build
+            ci
+            chore
+            revert
+
+          # Configure which scopes are allowed
+          scopes: |
+            authorino
+            chore
+            ci
+            dns
+            docs
+            gateway
+            limitador
+            multicluster
+            perf
+            refactor
+            style
+            test
+            tls
+
+          # Require a scope (set to true to make scopes mandatory)
+          requireScope: false
+
+          validateSingleCommit: false
+
+          # Ignore merge commits
+          ignoreLabels: |
+            ignore-semantic-pull-request

@@ -51,6 +51,10 @@ make mypy                # Run type checking
 make clean               # Delete all test-created resources (uses USER env var)
 ```
 
+## Pull Request Guidelines
+
+For PR title format and commit conventions, see `.claude/commands/pr-description.md` or use the `/pr-description` command.
+
 ## Configuration
 
 Template with all configuration options: `config/settings.local.yaml.tpl`
