@@ -37,23 +37,7 @@ jobs:
             chore
             revert
 
-          # Configure which scopes are allowed
-          scopes: |
-            authorino
-            chore
-            ci
-            dns
-            docs
-            gateway
-            limitador
-            multicluster
-            perf
-            refactor
-            style
-            test
-            tls
-
-          # Require a scope (set to true to make scopes mandatory)
+          # Scope requirement: currently optional (set to true to make mandatory
           requireScope: false
 
           validateSingleCommit: false
