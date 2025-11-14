@@ -88,6 +88,7 @@ class DNSRecord(KubernetesObject):
         root_host: str,
         endpoints: list[DNSRecordEndpoint] = None,
         delegate: bool = None,
+        provider_ref_name: str = None,
         labels: dict[str, str] = None,
     ):
         """Creates new instance of DNSRecord"""
@@ -104,6 +105,9 @@ class DNSRecord(KubernetesObject):
 
         if delegate is not None:
             model["spec"]["delegate"] = delegate
+
+        if provider_ref_name is not None:
+            model["spec"]["providerRef"] = {"name": provider_ref_name}
 
         return cls(model, context=cluster.context)
 
