@@ -1,6 +1,9 @@
 #default:
 #  tester: "someuser"                          # Optional: name of the user, who is running the tests, defaults to whoami/uid
 #  kuadrantctl: kuadrantctl
+#  console:
+#    username: "CONSOLE_USERNAME"              # OpenShift console username for UI test login
+#    password: "CONSOLE_PASSWORD"              # OpenShift console password for UI tests login
 #  tools:
 #    project: "tools"                          # Optional: Kubernetes project, where external tools are located
 #  keycloak:
