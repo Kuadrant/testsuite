@@ -9,7 +9,7 @@ import pytest
 
 from .conftest import MODEL_NAME, USERS
 
-pytestmark = [pytest.mark.kuadrant_only, pytest.mark.limitador]
+pytestmark = [pytest.mark.observability, pytest.mark.limitador]
 
 
 basic_request = {

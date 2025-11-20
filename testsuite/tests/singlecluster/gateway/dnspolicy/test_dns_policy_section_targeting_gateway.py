@@ -19,7 +19,7 @@ from testsuite.kuadrant.policy.dns import DNSPolicy
 from testsuite.utils import is_nxdomain
 
 
-pytestmark = [pytest.mark.kuadrant_only, pytest.mark.dnspolicy]
+pytestmark = [pytest.mark.dnspolicy]
 
 
 MANAGED_LISTENER_NAME = "managed-listener"

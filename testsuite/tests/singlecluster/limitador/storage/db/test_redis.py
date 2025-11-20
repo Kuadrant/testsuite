@@ -5,7 +5,7 @@ import pytest
 from testsuite.kuadrant.limitador import Redis
 from ..conftest import LIMIT
 
-pytestmark = [pytest.mark.kuadrant_only, pytest.mark.limitador, pytest.mark.disruptive]
+pytestmark = [pytest.mark.limitador, pytest.mark.disruptive]
 
 
 @pytest.fixture(scope="module")

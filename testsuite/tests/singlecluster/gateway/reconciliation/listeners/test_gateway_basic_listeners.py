@@ -11,7 +11,7 @@ from testsuite.gateway import TLSGatewayListener
 from testsuite.utils import is_nxdomain
 
 
-pytestmark = [pytest.mark.kuadrant_only, pytest.mark.dnspolicy, pytest.mark.tlspolicy]
+pytestmark = [pytest.mark.dnspolicy, pytest.mark.tlspolicy]
 
 LISTENER_NAME = "api-second"
 

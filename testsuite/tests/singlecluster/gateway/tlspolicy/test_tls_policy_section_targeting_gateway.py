@@ -12,7 +12,7 @@ from testsuite.httpx import KuadrantClient
 from testsuite.kuadrant.policy.dns import DNSPolicy
 from testsuite.kuadrant.policy.tls import TLSPolicy
 
-pytestmark = [pytest.mark.kuadrant_only]
+pytestmark = [pytest.mark.dnspolicy, pytest.mark.tlspolicy]
 
 MANAGED_LISTENER_NAME = "managed-listener"
 UNMANAGED_LISTENER_NAME = "unmanaged-listener"

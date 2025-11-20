@@ -6,7 +6,7 @@ from testsuite.gateway import GatewayListener
 from testsuite.gateway.gateway_api.gateway import KuadrantGateway
 from testsuite.kuadrant.policy.dns import HealthCheck
 
-pytestmark = [pytest.mark.kuadrant_only, pytest.mark.dnspolicy]
+pytestmark = [pytest.mark.dnspolicy]
 
 
 @pytest.fixture(scope="module")
