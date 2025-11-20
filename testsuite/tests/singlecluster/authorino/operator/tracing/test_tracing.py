@@ -4,7 +4,7 @@ import pytest
 
 from testsuite.utils import extract_response
 
-pytestmark = [pytest.mark.authorino, pytest.mark.standalone_only]
+pytestmark = [pytest.mark.observability, pytest.mark.authorino, pytest.mark.standalone_only]
 
 
 def test_tracing(client, auth, tracing):

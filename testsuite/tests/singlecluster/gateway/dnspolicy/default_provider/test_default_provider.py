@@ -9,7 +9,7 @@ from testsuite.kubernetes.secret import Secret
 from testsuite.gateway.gateway_api.gateway import KuadrantGateway
 from testsuite.kuadrant.policy.dns import DNSPolicy
 
-pytestmark = [pytest.mark.kuadrant_only, pytest.mark.dnspolicy, pytest.mark.disruptive]
+pytestmark = [pytest.mark.dnspolicy, pytest.mark.disruptive]
 
 
 @pytest.fixture(scope="module")

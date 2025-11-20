@@ -6,7 +6,7 @@ from openshift_client import OpenShiftPythonException
 from testsuite.kuadrant.policy.authorization.auth_policy import AuthPolicy
 from testsuite.kuadrant.policy.rate_limit import RateLimitPolicy, Limit
 
-pytestmark = [pytest.mark.kuadrant_only, pytest.mark.limitador]
+pytestmark = [pytest.mark.defaults_overrides, pytest.mark.kuadrant_only]
 
 
 @pytest.fixture(scope="module")
@@ -15,6 +15,7 @@ def commit():
     return None
 
 
+@pytest.mark.authorino
 @pytest.mark.issue("https://github.com/Kuadrant/kuadrant-operator/issues/775")
 def test_rules_exclusivity_implicit_authorization(cluster, route, oidc_provider, module_label, blame):
     """Test that server will reject an AuthPolicy with overrides and implicit defaults defined simultaneously"""
@@ -28,6 +29,7 @@ def test_rules_exclusivity_implicit_authorization(cluster, route, oidc_provider,
         authorization.commit()
 
 
+@pytest.mark.authorino
 @pytest.mark.issue("https://github.com/Kuadrant/kuadrant-operator/issues/775")
 def test_rules_exclusivity_explicit_authorization(cluster, route, oidc_provider, module_label, blame):
     """Test that server will reject an AuthPolicy with overrides and implicit defaults defined simultaneously"""
@@ -41,6 +43,7 @@ def test_rules_exclusivity_explicit_authorization(cluster, route, oidc_provider,
         authorization.commit()
 
 
+@pytest.mark.limitador
 @pytest.mark.issue("https://github.com/Kuadrant/kuadrant-operator/issues/775")
 def test_rules_exclusivity_implicit_rate_limit(cluster, route, module_label, blame):
     """Test that server will reject a RateLimitPolicy with overrides and implicit defaults defined simultaneously"""
@@ -52,6 +55,7 @@ def test_rules_exclusivity_implicit_rate_limit(cluster, route, module_label, bla
         rate_limit.commit()
 
 
+@pytest.mark.limitador
 @pytest.mark.issue("https://github.com/Kuadrant/kuadrant-operator/issues/775")
 def test_rules_exclusivity_explicit_rate_limit(cluster, route, module_label, blame):
     """Test that server will reject a RateLimitPolicy with overrides and explicit defaults defined simultaneously"""

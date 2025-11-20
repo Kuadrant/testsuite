@@ -51,8 +51,10 @@ def pytest_runtest_setup(item):
     skip_or_fail = pytest.fail if item.config.getoption("--enforce") else pytest.skip
     standalone = item.config.getoption("--standalone")
     if standalone:
+        if "authorino" not in marks:
+            skip_or_fail("Only Authorino tests are supported in Standalone mode currently")
         if "kuadrant_only" in marks:
-            skip_or_fail("Unable to run Kuadrant Only tests: Standalone mode is enabled")
+            skip_or_fail("This test can run as a part of the Kuadrant only, please remove --standalone flag")
     else:
         if "standalone_only" in marks:
             skip_or_fail(

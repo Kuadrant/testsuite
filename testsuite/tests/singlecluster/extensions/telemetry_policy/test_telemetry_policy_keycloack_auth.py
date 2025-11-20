@@ -12,7 +12,7 @@ from testsuite.kuadrant.policy.authorization import JsonResponse, ValueFrom
 from testsuite.prometheus import has_label
 
 
-pytestmark = [pytest.mark.kuadrant_only, pytest.mark.limitador, pytest.mark.extensions]
+pytestmark = [pytest.mark.observability, pytest.mark.limitador, pytest.mark.extensions]
 
 
 @pytest.fixture(scope="module")

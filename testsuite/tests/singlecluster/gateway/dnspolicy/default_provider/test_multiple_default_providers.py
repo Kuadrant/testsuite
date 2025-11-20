@@ -8,7 +8,7 @@ from testsuite.kubernetes.secret import Secret
 from testsuite.kuadrant.policy import has_condition
 from testsuite.kuadrant.policy.dns import DNSPolicy, has_record_condition
 
-pytestmark = [pytest.mark.kuadrant_only, pytest.mark.dnspolicy, pytest.mark.disruptive]
+pytestmark = [pytest.mark.dnspolicy, pytest.mark.disruptive]
 
 
 @pytest.fixture(scope="module")

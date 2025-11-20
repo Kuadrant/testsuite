@@ -9,7 +9,7 @@ from testsuite.kuadrant.policy.rate_limit import Limit, RateLimitPolicy
 FIRST_LIMIT = Limit(3, "5s")
 SECOND_LIMIT = Limit(6, "5s")
 
-pytestmark = [pytest.mark.kuadrant_only, pytest.mark.limitador]
+pytestmark = [pytest.mark.limitador]
 
 
 @pytest.fixture(scope="module")

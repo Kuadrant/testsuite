@@ -42,8 +42,8 @@ line-length = 120
 markers = [
     "issue: Reference to covered issue",
     "authorino: Test is using Authorino features",
-    "standalone_only: Test is using features available only in standalone mode, without Kuadrant",
-    "kuadrant_only: Test is using features available only in Kuadrant mode",
+    "standalone_only: Component test that can only run by itself, without Kuadrant",
+    "kuadrant_only: Component test that can only run as a part of Kuadrant",
     "limitador: Test is using Limitador features",
     "tlspolicy: Test is using TLSPolicy",
     "dnspolicy: Test is using DNSPolicy",
@@ -53,6 +53,8 @@ markers = [
     "multicluster: Test is specifc to Multicluster deployment",
     "coredns_one_primary: CoreDNS multicluster tests using one primary cluster",
     "coredns_two_primaries: CoreDNS multicluster tests using two primary clusters",
+    "defaults_overrides: Defaults and Overrides feature tests",
+    "observability: Tracing, metrics and logging tests",
 ]
 filterwarnings = [
     "ignore: WARNING the new order is not taken into account:UserWarning",

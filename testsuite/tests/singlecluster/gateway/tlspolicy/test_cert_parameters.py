@@ -6,7 +6,7 @@ import pytest
 from cryptography import x509
 from cryptography.hazmat.primitives.asymmetric.ec import EllipticCurvePublicKey
 
-pytestmark = [pytest.mark.kuadrant_only, pytest.mark.tlspolicy]
+pytestmark = [pytest.mark.tlspolicy]
 
 
 @pytest.fixture(scope="module")

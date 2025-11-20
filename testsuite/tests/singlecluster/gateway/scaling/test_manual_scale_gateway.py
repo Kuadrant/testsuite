@@ -2,13 +2,12 @@
 This module contains tests for scaling the gateway deployment by manually increasing the replicas in the deployment spec
 """
 
-import time
-
 import pytest
+import time
 
 from testsuite.tests.singlecluster.gateway.scaling.conftest import LIMIT
 
-pytestmark = [pytest.mark.kuadrant_only]
+pytestmark = [pytest.mark.limitador, pytest.mark.authorino, pytest.mark.kuadrant_only]
 
 
 def test_scale_gateway(gateway, client, auth):
