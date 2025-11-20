@@ -4,7 +4,7 @@ import pytest
 
 from testsuite.kuadrant.policy.dns import HealthCheck
 
-pytestmark = [pytest.mark.kuadrant_only, pytest.mark.dnspolicy, pytest.mark.tlspolicy]
+pytestmark = [pytest.mark.dnspolicy, pytest.mark.tlspolicy]
 
 
 @pytest.fixture(scope="module")

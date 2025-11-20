@@ -5,7 +5,7 @@ import pytest
 from testsuite.kuadrant.policy import has_condition
 from testsuite.kuadrant.policy.dns import HealthCheck, has_record_condition
 
-pytestmark = [pytest.mark.kuadrant_only, pytest.mark.dnspolicy, pytest.mark.tlspolicy]
+pytestmark = [pytest.mark.dnspolicy, pytest.mark.tlspolicy]
 
 
 @pytest.fixture(scope="module")

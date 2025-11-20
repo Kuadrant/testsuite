@@ -6,7 +6,7 @@ from openshift_client import OpenShiftPythonException
 from testsuite.kuadrant.policy.authorization.auth_policy import AuthPolicy
 from testsuite.kuadrant.policy.rate_limit import RateLimitPolicy, Limit
 
-pytestmark = [pytest.mark.kuadrant_only, pytest.mark.limitador]
+pytestmark = [pytest.mark.defaults_overrides, pytest.mark.limitador]
 
 
 @pytest.fixture(scope="module")

@@ -11,7 +11,7 @@ from testsuite.gateway.gateway_api.gateway import KuadrantGateway
 from testsuite.gateway.gateway_api.hostname import StaticHostname
 from testsuite.httpx import KuadrantClient
 
-pytestmark = [pytest.mark.kuadrant_only, pytest.mark.dnspolicy, pytest.mark.tlspolicy]
+pytestmark = [pytest.mark.dnspolicy, pytest.mark.tlspolicy]
 
 
 @pytest.fixture(scope="module")

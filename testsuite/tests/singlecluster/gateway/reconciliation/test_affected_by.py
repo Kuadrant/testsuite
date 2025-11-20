@@ -4,8 +4,6 @@ import pytest
 
 from testsuite.kuadrant.policy.rate_limit import RateLimitPolicy, Limit
 
-pytestmark = [pytest.mark.kuadrant_only]
-
 
 @pytest.fixture(scope="module")
 def rate_limit(cluster, blame, module_label, route):

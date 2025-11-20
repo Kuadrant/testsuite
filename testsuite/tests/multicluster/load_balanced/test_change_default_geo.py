@@ -9,7 +9,7 @@ from testsuite.config import settings
 pytestmark = [pytest.mark.multicluster]
 
 
-@pytest.mark.xfail(
+@pytest.mark.skipif(
     settings["control_plane"]["provider_secret"].startswith("gcp"),
     reason="Default geo not supported on GCP",
 )

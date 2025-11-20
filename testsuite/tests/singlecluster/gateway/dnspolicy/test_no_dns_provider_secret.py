@@ -6,7 +6,7 @@ from testsuite.kuadrant.policy import has_condition
 from testsuite.kuadrant.policy.dns import has_record_condition
 from testsuite.kuadrant.policy.dns import DNSPolicy
 
-pytestmark = [pytest.mark.kuadrant_only, pytest.mark.dnspolicy]
+pytestmark = [pytest.mark.dnspolicy]
 
 NON_EXISTING_SECRET = "should-not-exist"
 
