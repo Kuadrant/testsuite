@@ -7,25 +7,13 @@ from testsuite.kuadrant.policy.dns import DNSPolicy, LoadBalancing
 
 
 @pytest.fixture(scope="package")
-def dns_config(testconfig, skip_or_fail):
-    """Configuration for DNS tests"""
+def dns_server2(testconfig, skip_or_fail):
+    """DNS server in the second geo region"""
     try:
-        testconfig.validators.validate(only=["dns.dns_server", "dns.dns_server2"])
-        return testconfig["dns"]
+        testconfig.validators.validate(only=["dns.dns_server2"])
+        return testconfig["dns"]["dns_server2"]
     except ValidationError as exc:
         return skip_or_fail(f"DNS servers configuration is missing: {exc}")
-
-
-@pytest.fixture(scope="package")
-def dns_server(dns_config):
-    """DNS server in the first geo region"""
-    return dns_config["dns_server"]
-
-
-@pytest.fixture(scope="package")
-def dns_server2(dns_config):
-    """DNS server in the second geo region"""
-    return dns_config["dns_server2"]
 
 
 @pytest.fixture(scope="session")
