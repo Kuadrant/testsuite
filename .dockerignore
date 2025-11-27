@@ -4,3 +4,5 @@
 .mypy_cache
 .pytest_cache
 .poetry.lock
+config/*.local.*
+!config/*.tpl
