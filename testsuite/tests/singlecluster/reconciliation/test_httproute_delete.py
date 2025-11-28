@@ -4,7 +4,7 @@ import pytest
 
 from testsuite.kuadrant.policy import has_condition
 
-pytestmark = [pytest.mark.kuadrant_only]
+pytestmark = [pytest.mark.authorino, pytest.mark.kuadrant_only]
 
 
 @pytest.mark.issue("https://github.com/Kuadrant/kuadrant-operator/issues/124")

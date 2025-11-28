@@ -7,7 +7,7 @@ import pytest
 
 from testsuite.gateway import GatewayListener
 
-pytestmark = [pytest.mark.kuadrant_only, pytest.mark.dnspolicy]
+pytestmark = [pytest.mark.dnspolicy]
 
 
 def test_update_dns_policy_target_ref(

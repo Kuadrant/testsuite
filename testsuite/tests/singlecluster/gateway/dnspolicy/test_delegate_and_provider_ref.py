@@ -6,7 +6,7 @@ from openshift_client import OpenShiftPythonException
 
 from testsuite.kuadrant.policy.dns import DNSPolicy
 
-pytestmark = [pytest.mark.kuadrant_only, pytest.mark.dnspolicy]
+pytestmark = [pytest.mark.dnspolicy]
 
 
 @pytest.fixture(scope="module")

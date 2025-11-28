@@ -3,12 +3,11 @@ This module contains tests for scaling the gateway deployment by manually increa
 """
 
 import time
-
 import pytest
 
 from testsuite.tests.singlecluster.gateway.scaling.conftest import LIMIT
 
-pytestmark = [pytest.mark.kuadrant_only]
+pytestmark = [pytest.mark.limitador, pytest.mark.authorino, pytest.mark.kuadrant_only]
 
 
 def test_scale_gateway(gateway, client, auth):

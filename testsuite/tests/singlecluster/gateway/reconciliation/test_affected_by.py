@@ -18,6 +18,8 @@ def rate_limit(cluster, blame, module_label, route):
     return policy
 
 
+@pytest.mark.authorino
+@pytest.mark.limitador
 def test_route_status(route, rate_limit, authorization):
     """Tests affected by status for HTTPRoute"""
     route.refresh()

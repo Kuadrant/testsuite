@@ -7,7 +7,7 @@ from testsuite.kuadrant.policy import CelPredicate
 from testsuite.kuadrant.policy.authorization import JsonResponse, ValueFrom
 from testsuite.kuadrant.policy.rate_limit import Limit
 
-pytestmark = [pytest.mark.kuadrant_only, pytest.mark.limitador]
+pytestmark = [pytest.mark.limitador, pytest.mark.authorino, pytest.mark.kuadrant_only]
 
 
 @pytest.fixture(scope="module")
