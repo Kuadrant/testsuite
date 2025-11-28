@@ -27,7 +27,7 @@ class TLSPolicy(Policy):
         model = {
             "apiVersion": "kuadrant.io/v1",
             "kind": "TLSPolicy",
-            "metadata": {"name": name, "labels": labels},
+            "metadata": {"name": name, "namespace": cluster.project, "labels": labels},
             "spec": {
                 "targetRef": parent.reference,
                 "issuerRef": issuer.reference,

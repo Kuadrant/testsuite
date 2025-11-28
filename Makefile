@@ -1,4 +1,4 @@
-.PHONY: commit-acceptance pylint mypy black reformat test authorino poetry poetry-no-dev mgc container-image polish-junit reportportal authorino-standalone limitador kuadrant kuadrant-only disruptive kuadrantctl multicluster
+.PHONY: commit-acceptance pylint mypy black reformat test authorino poetry poetry-no-dev mgc container-image polish-junit reportportal authorino-standalone limitador kuadrant kuadrant-only disruptive kuadrantctl multicluster playwright-install
 
 TB ?= short
 LOGLEVEL ?= INFO
@@ -59,7 +59,7 @@ limitador: poetry-no-dev
 
 kuadrant: ## Run all tests available on Kuadrant
 kuadrant: poetry-no-dev
-	$(PYTEST) -n4 -m 'not standalone_only and not multicluster and not disruptive and not extensions' --dist loadfile --enforce $(flags) testsuite/tests/singlecluster
+	$(PYTEST) -n4 -m 'not standalone_only and not multicluster and not disruptive and not extensions and not ui' --dist loadfile --enforce $(flags) testsuite/tests/singlecluster
 
 kuadrant-extensions: ## Run Kuadrant extension tests
 kuadrant-extensions: poetry-no-dev
@@ -93,6 +93,10 @@ disruptive: ## Run disruptive tests
 disruptive: poetry-no-dev
 	$(PYTEST) -m 'disruptive' $(flags) testsuite
 
+ui: ## Run UI (console plugin) tests
+ui: playwright-install
+	$(PYTEST) -n4 -m 'ui' --dist loadfile --enforce $(flags) testsuite/tests/singlecluster/ui/
+
 kuadrantctl: ## Run Kuadrantctl tests
 kuadrantctl: poetry-no-dev
 	$(PYTEST) -n4 --dist loadfile --enforce $(flags) testsuite/tests/kuadrantctl
@@ -108,10 +112,20 @@ poetry.lock: pyproject.toml
 	@if [ -z "$(poetry env list)" -o -n "${force}" ]; then poetry sync --without dev; fi
 	@ touch .make-poetry-sync-no-dev
 
+.make-playwright-install: .make-poetry-sync-no-dev
+	@if poetry run playwright install --check >/dev/null 2>&1; then \
+	    echo "Playwright browsers already installed"; \
+	else \
+	    echo "Installing all Playwright browsers..."; \
+	    poetry run playwright install --with-deps; \
+	fi
+	@touch .make-playwright-install
 
 poetry: .make-poetry-sync ## Installs poetry with all dependencies
 
 poetry-no-dev: .make-poetry-sync-no-dev ## Installs poetry without development dependencies
+
+playwright-install: .make-playwright-install ## Install Playwright browser binaries
 
 polish-junit: ## Remove skipped tests and logs from passing tests
 polish-junit:
