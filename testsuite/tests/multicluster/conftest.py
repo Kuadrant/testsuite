@@ -3,6 +3,7 @@
 from importlib import resources
 
 import pytest
+from dynaconf import ValidationError
 
 from testsuite.backend.httpbin import Httpbin
 from testsuite.certificates import Certificate
@@ -13,6 +14,16 @@ from testsuite.gateway.gateway_api.hostname import DNSPolicyExposer
 from testsuite.gateway.gateway_api.route import HTTPRoute
 from testsuite.kuadrant.policy.dns import DNSPolicy
 from testsuite.kuadrant.policy.tls import TLSPolicy
+
+
+@pytest.fixture(scope="package")
+def dns_server(testconfig, skip_or_fail):
+    """DNS server in the first geo region"""
+    try:
+        testconfig.validators.validate(only=["dns.dns_server"])
+        return testconfig["dns"]["dns_server"]
+    except ValidationError as exc:
+        return skip_or_fail(f"DNS servers configuration is missing: {exc}")
 
 
 @pytest.fixture(scope="session")
