@@ -2,7 +2,7 @@
 
 import pytest
 
-pytestmark = [pytest.mark.authorino]
+pytestmark = [pytest.mark.observability, pytest.mark.authorino]
 
 METRICS = [
     "controller_runtime_reconcile_total",

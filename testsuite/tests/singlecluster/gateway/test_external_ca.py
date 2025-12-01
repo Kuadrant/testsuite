@@ -38,7 +38,7 @@ from openshift_client.model import OpenShiftPythonException
 from testsuite.gateway import CustomReference
 from testsuite.httpx import create_tmp_file
 
-pytestmark = [pytest.mark.kuadrant_only, pytest.mark.dnspolicy, pytest.mark.tlspolicy]
+pytestmark = [pytest.mark.dnspolicy, pytest.mark.tlspolicy]
 
 
 @pytest.fixture(scope="module")

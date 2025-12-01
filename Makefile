@@ -20,114 +20,86 @@ ifdef html
 PYTEST += --html=$(resultsdir)/report-$(@F).html --self-contained-html
 endif
 
-commit-acceptance: black pylint mypy ## Runs pre-commit linting checks
 
-pylint mypy: poetry
-	poetry run $@ $(flags) testsuite
-
-black: poetry
-	poetry run black --check testsuite --diff
-
-reformat: poetry  ## Reformats testsuite with black
-	poetry run black testsuite
+##@ Single-cluster Testing
 
 # pattern to run individual testfile or all testfiles in directory
 testsuite/%: FORCE poetry-no-dev
 	$(PYTEST) -v $(flags) $@
 
-test: ## Run all non mgc tests
-test pytest tests: kuadrant
+test pytest tests singlecluster: kuadrant  ## Run all single-cluster tests
 
-smoke: poetry-no-dev
-	$(PYTEST) -n4 -m 'smoke' --dist loadfile --enforce $(flags) testsuite/tests
+smoke: poetry-no-dev  ## Run a small amount of selected tests to verify basic functionality
+	$(PYTEST) -n4 -m 'smoke' --dist loadfile --enforce $(flags) testsuite/tests/
 
-authorino: ## Run only authorino related tests
-authorino: poetry-no-dev
-	$(PYTEST) -n4 -m 'authorino and not multicluster and not extensions' --dist loadfile --enforce $(flags) testsuite/tests/singlecluster
+kuadrant: poetry-no-dev  ## Run all tests available on Kuadrant
+	$(PYTEST) -n4 -m 'not standalone_only and not disruptive' --dist loadfile --enforce $(flags) testsuite/tests/singlecluster
 
-authorino-extensions: ## Run only authorino related tests
-authorino-extensions: poetry-no-dev
-	$(PYTEST) -n4 -m 'authorino and not multicluster and extensions' --dist loadfile --enforce $(flags) testsuite/tests/singlecluster
+authorino: poetry-no-dev  ## Run only Authorino related tests
+	$(PYTEST) -n4 -m 'authorino and not disruptive' --dist loadfile --enforce $(flags) testsuite/tests/singlecluster/
 
-authorino-standalone: ## Run only test capable of running with standalone Authorino
-authorino-standalone: poetry-no-dev
-	$(PYTEST) -n4 -m 'authorino and not kuadrant_only and not extensions' --dist loadfile --enforce --standalone $(flags) testsuite/tests/singlecluster/authorino
+authorino-standalone: poetry-no-dev  ## Run only test capable of running with standalone Authorino
+	$(PYTEST) -n4 -m 'authorino and not kuadrant_only and not disruptive' --dist loadfile --enforce --standalone $(flags) testsuite/tests/singlecluster/authorino/
 
-limitador: ## Run only Limitador related tests
-limitador: poetry-no-dev
-	$(PYTEST) -n4 -m 'limitador and not multicluster' --dist loadfile --enforce $(flags) testsuite/tests/singlecluster
+limitador: poetry-no-dev  ## Run only Limitador related tests
+	$(PYTEST) -n4 -m 'limitador and not disruptive' --dist loadfile --enforce $(flags) testsuite/tests/singlecluster/
 
-kuadrant: ## Run all tests available on Kuadrant
-kuadrant: poetry-no-dev
-	$(PYTEST) -n4 -m 'not standalone_only and not multicluster and not disruptive and not extensions' --dist loadfile --enforce $(flags) testsuite/tests/singlecluster
+dnstls: poetry-no-dev  ## Run DNS and TLS tests
+	$(PYTEST) -n4 -m '(dnspolicy or tlspolicy) and not disruptive' --dist loadfile --enforce $(flags) testsuite/tests/singlecluster/
 
-kuadrant-extensions: ## Run Kuadrant extension tests
-kuadrant-extensions: poetry-no-dev
-	$(PYTEST) -n4 -m 'not standalone_only and not multicluster and not disruptive and extensions' --dist loadfile --enforce $(flags) testsuite/tests/singlecluster
+extensions: poetry-no-dev  ## Run extensions tests
+	$(PYTEST) -n4 -m 'extensions and not disruptive' --dist loadfile --enforce $(flags) testsuite/tests/singlecluster/
 
-kuadrant-only: ## Run Kuadrant-only tests
-kuadrant-only: poetry-no-dev
-	$(PYTEST) -n4 -m 'kuadrant_only and not standalone_only and not disruptive and not multicluster and not extensions' --dist loadfile --enforce $(flags) testsuite/tests/singlecluster
+observability: poetry-no-dev  ## Run metrics, tracing and logging tests
+	$(PYTEST) -n4 -m 'observability and not disruptive' --dist loadfile --enforce $(flags) testsuite/tests/singlecluster/
 
-kuadrant-only-extensions: ## Run Kuadrant-only tests
-kuadrant-only-extensions: poetry-no-dev
-	$(PYTEST) -n4 -m 'kuadrant_only and not standalone_only and not disruptive and not multicluster and extensions' --dist loadfile --enforce $(flags) testsuite/tests/singlecluster
+defaults_overrides: poetry-no-dev  ## Run Defaults and Overrides tests
+	$(PYTEST) -n4 -m 'defaults_overrides and not disruptive' --dist loadfile --enforce $(flags) testsuite/tests/singlecluster/
 
-multicluster: ## Run Multicluster only tests
-multicluster: poetry-no-dev
-	$(PYTEST) -n2 -m 'multicluster and not disruptive' --dist loadfile --enforce $(flags) testsuite/tests/multicluster/
+disruptive: poetry-no-dev  ## Run disruptive tests
+	$(PYTEST) -m 'disruptive' $(flags) testsuite/tests/
 
-coredns_one_primary: ## Run coredns one primary tests
-coredns_one_primary: poetry-no-dev
+kuadrantctl: poetry-no-dev  ## Run Kuadrantctl tests
+	$(PYTEST) -n4 --dist loadfile --enforce $(flags) testsuite/tests/kuadrantctl/
+
+##@ Multi-cluster Testing
+
+multicluster: poetry-no-dev  ## Run Multicluster only tests
+	$(PYTEST) -n2 -m 'multicluster' --dist loadfile --enforce $(flags) testsuite/tests/multicluster/
+
+coredns_one_primary: poetry-no-dev  ## Run coredns one primary tests
 	$(PYTEST) -n1 -m 'coredns_one_primary' --dist loadfile --enforce $(flags) testsuite/tests/multicluster/coredns/
 
-coredns_two_primaries: ## Run coredns two primary tests
-coredns_two_primaries: poetry-no-dev
+coredns_two_primaries: poetry-no-dev  ## Run coredns two primary tests
 	$(PYTEST) -n1 -m 'coredns_two_primaries' --dist loadfile --enforce $(flags) testsuite/tests/multicluster/coredns/
 
-dnstls: ## Run DNS and TLS tests
-dnstls: poetry-no-dev
-	$(PYTEST) -n4 -m 'dnspolicy or tlspolicy' --dist loadfile --enforce $(flags) testsuite
 
-disruptive: ## Run disruptive tests
-disruptive: poetry-no-dev
-	$(PYTEST) -m 'disruptive' $(flags) testsuite
+##@ Misc
 
-kuadrantctl: ## Run Kuadrantctl tests
-kuadrantctl: poetry-no-dev
-	$(PYTEST) -n4 --dist loadfile --enforce $(flags) testsuite/tests/kuadrantctl
+commit-acceptance: black pylint mypy  ## Runs pre-commit linting checks
 
-poetry.lock: pyproject.toml
-	poetry lock
+pylint mypy: poetry  ## Checks testsuite formatting with pylint/mypy
+	poetry run $@ $(flags) testsuite
 
-.make-poetry-sync: poetry.lock
-	@if [ -z "$(poetry env list)" -o -n "${force}" ]; then poetry sync; fi
-	@ touch .make-poetry-sync .make-poetry-sync-no-dev
+black: poetry  ## Checks testsuite formatting with Black
+	poetry run black --check testsuite --diff
 
-.make-poetry-sync-no-dev: poetry.lock
-	@if [ -z "$(poetry env list)" -o -n "${force}" ]; then poetry sync --without dev; fi
-	@ touch .make-poetry-sync-no-dev
+reformat: poetry  ## Reformats testsuite with black
+	poetry run black testsuite
 
-
-poetry: .make-poetry-sync ## Installs poetry with all dependencies
-
-poetry-no-dev: .make-poetry-sync-no-dev ## Installs poetry without development dependencies
-
-polish-junit: ## Remove skipped tests and logs from passing tests
-polish-junit:
+polish-junit:  ## Remove skipped tests and logs from passing tests
 	gzip -f $(resultsdir)/junit-*.xml
 	# 'cat' on next line is neessary to avoid wipe of the files
 	for file in $(resultsdir)/junit-*.xml.gz; do zcat $$file | $(RUNSCRIPT)xslt-apply ./xslt/polish-junit.xsl >$${file%.gz}; done  # bashism!!!
 	# this deletes something it didn't create, dangerous!!!
 	-rm -f $(resultsdir)/junit-*.xml.gz
 
-reportportal: ## Upload results to reportportal. Appropriate variables for juni2reportportal must be set
-reportportal: polish-junit
+reportportal: polish-junit  ## Upload results to reportportal. Appropriate variables for juni2reportportal must be set
 	$(RUNSCRIPT)junit2reportportal $(resultsdir)/junit-*.xml
 
 .PHONY: help
 help: ## Display this help.
-	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_0-9-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
+	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_0-9-]+:.*?##/ { printf "  \033[36m%-30s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
 
 CR_NAMES = $\
 authorinos.operator.authorino.kuadrant.io,$\
@@ -163,8 +135,26 @@ clean: ## Clean all objects on cluster created by running this testsuite. Set th
 	kubectl get --chunk-size=0 -n kuadrant -o name "$$CR" \
 	| grep "$(USER)" \
 	| xargs --no-run-if-empty -P 20 -n 1 kubectl delete --ignore-not-found -n kuadrant
-# this ensures dependent target is run everytime
-FORCE:
+
+
+##@ Dependency Management
+
+poetry.lock: pyproject.toml
+	poetry lock
+
+.make-poetry-sync: poetry.lock
+	@if [ -z "$(poetry env list)" -o -n "${force}" ]; then poetry sync; fi
+	@ touch .make-poetry-sync .make-poetry-sync-no-dev
+
+.make-poetry-sync-no-dev: poetry.lock
+	@if [ -z "$(poetry env list)" -o -n "${force}" ]; then poetry sync --without dev; fi
+	@ touch .make-poetry-sync-no-dev
+
+
+poetry: .make-poetry-sync ## Installs poetry with all dependencies
+
+poetry-no-dev: .make-poetry-sync-no-dev ## Installs poetry without development dependencies
+
 
 ##@ Scale Testing
 
@@ -183,6 +173,7 @@ test-scale-dnspolicy: KUBEBURNER_WORKLOAD := namespaced-dns-operator-deployments
 test-scale-dnspolicy: kube-burner ## Run DNSPolicy scale tests.
 	@echo "test-scale-dnspolicy: KUBEBURNER_WORKLOAD=${KUBEBURNER_WORKLOAD} JOB_ITERATIONS=${JOB_ITERATIONS} KUADRANT_ZONE_ROOT_DOMAIN=${KUADRANT_ZONE_ROOT_DOMAIN} DNS_PROVIDER=${DNS_PROVIDER} PROMETHEUS_URL=${PROMETHEUS_URL} PROMETHEUS_TOKEN=${PROMETHEUS_TOKEN}"
 	cd scale_test/dnspolicy && $(KUBE_BURNER) init -c ${KUBEBURNER_WORKLOAD} --log-level debug
+
 
 ##@ Build Dependencies
 
@@ -210,3 +201,6 @@ $(KUBE_BURNER):
 	chmod +x $(KUBE_BURNER) ;\
 	rm -rf $${OS}-$${ARCH} kube-burner.tar.gz ;\
 	}
+
+# this ensures dependent target is run everytime
+FORCE:

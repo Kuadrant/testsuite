@@ -1,10 +1,6 @@
 """Tests that HTTPRoute spec.routes.matches changes are reconciled when changed."""
 
-import pytest
-
 from testsuite.gateway import RouteMatch, PathMatch
-
-pytestmark = [pytest.mark.kuadrant_only]
 
 
 def test_matches(client, backend, route, hostname):

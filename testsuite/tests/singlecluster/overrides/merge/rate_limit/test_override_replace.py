@@ -5,7 +5,7 @@ import pytest
 from testsuite.kuadrant.policy import CelPredicate, has_condition
 from testsuite.tests.singlecluster.overrides.merge.rate_limit.conftest import LIMIT, OVERRIDE_LIMIT2, OVERRIDE_LIMIT
 
-pytestmark = [pytest.mark.kuadrant_only, pytest.mark.limitador]
+pytestmark = [pytest.mark.defaults_overrides, pytest.mark.limitador]
 
 
 @pytest.fixture(scope="module")

@@ -3,9 +3,15 @@
 import pytest
 import dns.resolver
 
+from testsuite.config import settings
+
 pytestmark = [pytest.mark.multicluster]
 
 
+@pytest.mark.skipif(
+    settings["control_plane"]["provider_secret"].startswith("gcp"),
+    reason="Default geo not supported on GCP",
+)
 def test_load_balanced_geo(client, hostname, gateway, gateway2, dns_server, dns_server2, dns_default_geo_server):
     """
     - Verify that request to the hostname is successful

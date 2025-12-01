@@ -10,7 +10,7 @@ import pytest
 from testsuite.kuadrant.policy import has_condition
 from testsuite.kuadrant.policy.authorization.auth_policy import AuthPolicy
 
-pytestmark = [pytest.mark.kuadrant_only]
+pytestmark = [pytest.mark.authorino, pytest.mark.kuadrant_only]
 
 
 @pytest.fixture(scope="module")
