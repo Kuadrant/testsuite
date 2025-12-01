@@ -1,10 +1,9 @@
 """Test for modification of default geolocation in DNSPolicy"""
 
-from time import sleep
-
 import pytest
 import dns.resolver
 from testsuite.config import settings
+from testsuite.utils import wait_for_dns
 
 pytestmark = [pytest.mark.multicluster]
 
@@ -28,5 +27,6 @@ def test_change_default_geo(hostname, gateway, gateway2, dns_policy, dns_policy2
     dns_policy2.apply()
     dns_policy2.wait_for_ready()
 
-    sleep(300)  # wait for DNS propagation on providers
-    assert resolver.resolve(hostname.hostname)[0].address == gateway2.external_ip().split(":")[0]
+    answer = wait_for_dns(hostname.hostname, gateway2.external_ip().split(":")[0], resolver=resolver)
+    assert gateway2.external_ip().split(":")[0] in answer.addresses()
+    assert gateway.external_ip().split(":")[0] not in answer.addresses()
