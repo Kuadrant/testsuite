@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass
 from typing import List
+import logging
 import backoff
 
 from authzed.api.v1 import (
@@ -78,8 +79,21 @@ class SpiceDBClient:
     def __init__(self, server_url: str, token: str):
         self._client = InsecureClient(server_url, token)
 
+    @backoff.on_exception(
+        backoff.constant,
+        Exception,
+        max_tries=6,
+        interval=60,
+        jitter=None,
+    )
     def create_schema(self, schema_config: SchemaConfig):
-        """Write a schema defining objects, roles, and permissions in SpiceDB."""
+        """
+        Write a schema defining objects, roles, and permissions in SpiceDB.
+
+        Retries up to 6 times with 60-second intervals if SpiceDB is temporarily unavailable.
+        This is necessary because the LoadBalancer external IP may take time to become accessible
+        after deployment, especially in OpenStack environments with slow LoadBalancer provisioning.
+        """
         schema_str = f"""
         definition {schema_config.subject_type} {{}}
         definition {schema_config.resource_type} {{
@@ -91,8 +105,7 @@ class SpiceDBClient:
         }}
         """
         request = WriteSchemaRequest(schema=schema_str)
-        response = self._client.WriteSchema(request)
-        return response
+        return self._client.WriteSchema(request)
 
     def create_relationship(self, relationship_config: RelationshipConfig):
         """Create relationships between subjects and a resource with given roles."""
@@ -161,6 +174,7 @@ class SpiceDB(LifecycleObject):
         self.deployment = None
         self.service = None
         self._client = None
+        self.logger = logging.getLogger(__name__)
 
     @property
     def grpc_port(self):
@@ -188,7 +202,7 @@ class SpiceDB(LifecycleObject):
             self.name,
             container_name="spicedb",
             image=self.image,
-            ports={"grpc": 50051},
+            ports={"grpc": 50051, "http": 8443},
             selector=Selector(matchLabels=match_labels),
             labels={"app": self.label},
             command_args=[
@@ -197,6 +211,9 @@ class SpiceDB(LifecycleObject):
                 self.preshared_key,
             ],
         )
+        env_vars = self.deployment.container.setdefault("env", [])
+        env_vars.append({"name": "SPICEDB_HTTP_ENABLED", "value": "true"})
+        env_vars.append({"name": "SPICEDB_LOG_LEVEL", "value": "debug"})
         self.deployment.commit()
         self.deployment.wait_for_ready()
 
@@ -206,6 +223,7 @@ class SpiceDB(LifecycleObject):
             selector=match_labels,
             ports=[
                 ServicePort(name="grpc", port=50051, targetPort="grpc"),
+                ServicePort(name="http", port=8443, targetPort="http"),
             ],
             labels={"app": self.label},
             service_type="LoadBalancer",
@@ -220,6 +238,6 @@ class SpiceDB(LifecycleObject):
             self.service.delete()
 
     def wait_for_ready(self, timeout=60 * 5):
-        """Waits until Deployment and Service is marked as ready"""
+        """Waits until Deployment and Service are marked as ready"""
         self.deployment.wait_for_ready(timeout)
         self.service.wait_for_ready(timeout, settings["control_plane"]["slow_loadbalancers"])
