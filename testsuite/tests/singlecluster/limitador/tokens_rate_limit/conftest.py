@@ -16,10 +16,15 @@ def backend(request, cluster, blame, label, testconfig):
 
 
 @pytest.fixture(scope="module", autouse=True)
-def commit(request, authorization, token_rate_limit):
+def commit(request, route, authorization, token_rate_limit):
     """Commits policies"""
-    components = [c for c in [authorization, token_rate_limit] if c is not None]
+    # Ensure route is ready first
+    if hasattr(route, "wait_for_ready"):
+        route.wait_for_ready()
+
+    components = [authorization, token_rate_limit]
     for component in components:
-        request.addfinalizer(component.delete)
-        component.commit()
-        component.wait_for_ready()
+        if component:
+            request.addfinalizer(component.delete)
+            component.commit()
+            component.wait_for_ready()
