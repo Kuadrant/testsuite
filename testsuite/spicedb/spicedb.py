@@ -1,9 +1,10 @@
-"""Module for interacting with SpiceDB to manage object schemas, roles, permissions,
-and access control relationships."""
+"""SpiceDB authorization service implementation"""
 
 from dataclasses import dataclass
 from typing import List
-from urllib.parse import urlparse
+import logging
+import backoff
+
 from authzed.api.v1 import (
     InsecureClient,
     RelationshipUpdate,
@@ -17,7 +18,12 @@ from authzed.api.v1 import (
     CheckPermissionRequest,
 )
 
-import backoff
+from testsuite.config import settings
+from testsuite.kubernetes import Selector
+from testsuite.kubernetes.client import KubernetesClient
+from testsuite.kubernetes.deployment import Deployment
+from testsuite.kubernetes.service import Service, ServicePort
+from testsuite.lifecycle import LifecycleObject
 
 
 @dataclass
@@ -62,19 +68,32 @@ class RelationshipConfig:
     subject_ids: List[str]
 
 
-class SpiceDBService:
+class SpiceDBClient:
     """
-    This class provides methods to connect to a SpiceDB instance and perform
-    schema and relationship operations. IT provides a high-level interface to
-    interact with SpiceDB using the official Authzed Python client
-    (https://github.com/authzed/authzed-py).
+    Client for interacting with SpiceDB to manage schemas, relationships, and permissions.
+
+    This class provides a high-level interface to interact with SpiceDB using the official
+    Authzed Python client (https://github.com/authzed/authzed-py).
     """
 
-    def __init__(self, server_url: str, token):
-        self.client = InsecureClient(urlparse(server_url).netloc, token)
+    def __init__(self, server_url: str, token: str):
+        self._client = InsecureClient(server_url, token)
 
+    @backoff.on_exception(
+        backoff.constant,
+        Exception,
+        max_tries=6,
+        interval=60,
+        jitter=None,
+    )
     def create_schema(self, schema_config: SchemaConfig):
-        """Write a schema defining objects, roles, and permissions in SpiceDB."""
+        """
+        Write a schema defining objects, roles, and permissions in SpiceDB.
+
+        Retries up to 6 times with 60-second intervals if SpiceDB is temporarily unavailable.
+        This is necessary because the LoadBalancer external IP may take time to become accessible
+        after deployment, especially in OpenStack environments with slow LoadBalancer provisioning.
+        """
         schema_str = f"""
         definition {schema_config.subject_type} {{}}
         definition {schema_config.resource_type} {{
@@ -86,8 +105,7 @@ class SpiceDBService:
         }}
         """
         request = WriteSchemaRequest(schema=schema_str)
-        response = self.client.WriteSchema(request)
-        return response
+        return self._client.WriteSchema(request)
 
     def create_relationship(self, relationship_config: RelationshipConfig):
         """Create relationships between subjects and a resource with given roles."""
@@ -108,7 +126,7 @@ class SpiceDBService:
                 )
             )
         request = WriteRelationshipsRequest(updates=updates)
-        response = self.client.WriteRelationships(request)
+        response = self._client.WriteRelationships(request)
         return response
 
     def clear_all_relationships(self, schema_config: SchemaConfig):
@@ -116,7 +134,7 @@ class SpiceDBService:
         request = DeleteRelationshipsRequest(
             relationship_filter=RelationshipFilter(resource_type=schema_config.resource_type)
         )
-        response = self.client.DeleteRelationships(request)
+        response = self._client.DeleteRelationships(request)
         return response
 
     @backoff.on_predicate(backoff.constant, lambda x: x is False, max_tries=3, interval=5, jitter=None)
@@ -133,5 +151,93 @@ class SpiceDBService:
                 )
             ),
         )
-        response = self.client.CheckPermission(check_request)
+        response = self._client.CheckPermission(check_request)
         return response.permissionship == response.PERMISSIONSHIP_HAS_PERMISSION
+
+
+# pylint: disable=too-many-instance-attributes
+class SpiceDB(LifecycleObject):
+    """
+    SpiceDB authorization service deployed in Kubernetes.
+
+    This class handles the Kubernetes deployment and provides access to a SpiceDB client
+    for managing schemas and relationships.
+    """
+
+    def __init__(self, cluster: KubernetesClient, name, label, image, preshared_key="secret", replicas=1) -> None:
+        self.cluster = cluster
+        self.name = name
+        self.label = label
+        self.replicas = replicas
+        self.image = image
+        self.preshared_key = preshared_key
+        self.deployment = None
+        self.service = None
+        self._client = None
+        self.logger = logging.getLogger(__name__)
+
+    @property
+    def grpc_port(self):
+        """Returns the gRPC port number"""
+        return self.service.get_port("grpc").port
+
+    @property
+    def grpc_url(self):
+        """Returns the external gRPC URL for SpiceDB"""
+        return f"{self.service.external_ip}:{self.grpc_port}"
+
+    @property
+    def client(self):
+        """Lazy-initialized SpiceDB client for managing schemas and relationships"""
+        if self._client is None:
+            self._client = SpiceDBClient(self.grpc_url, self.preshared_key)
+        return self._client
+
+    def commit(self):
+        """Deploy SpiceDB to Kubernetes"""
+        match_labels = {"app": self.label, "deployment": self.name}
+
+        self.deployment = Deployment.create_instance(
+            self.cluster,
+            self.name,
+            container_name="spicedb",
+            image=self.image,
+            ports={"grpc": 50051, "http": 8443},
+            selector=Selector(matchLabels=match_labels),
+            labels={"app": self.label},
+            command_args=[
+                "serve",
+                "--grpc-preshared-key",
+                self.preshared_key,
+            ],
+        )
+        env_vars = self.deployment.container.setdefault("env", [])
+        env_vars.append({"name": "SPICEDB_HTTP_ENABLED", "value": "true"})
+        env_vars.append({"name": "SPICEDB_LOG_LEVEL", "value": "debug"})
+        self.deployment.commit()
+        self.deployment.wait_for_ready()
+
+        self.service = Service.create_instance(
+            self.cluster,
+            self.name,
+            selector=match_labels,
+            ports=[
+                ServicePort(name="grpc", port=50051, targetPort="grpc"),
+                ServicePort(name="http", port=8443, targetPort="http"),
+            ],
+            labels={"app": self.label},
+            service_type="LoadBalancer",
+        )
+        self.service.commit()
+
+    def delete(self):
+        """Delete SpiceDB deployment and service from Kubernetes"""
+        if self.deployment:
+            self.deployment.delete()
+        if self.service:
+            self.service.delete()
+
+    def wait_for_ready(self, timeout=60 * 5):
+        """Waits until Deployment and Service are marked as ready"""
+        self.deployment.wait_for_ready(timeout)
+        self.service.wait_for_ready(timeout, settings["control_plane"]["slow_loadbalancers"])

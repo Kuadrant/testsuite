@@ -30,6 +30,7 @@ authzed = "*"
 mypy = "*"
 pylint = "*"
 types-PyYAML = "*"
+types-grpcio = "*"
 black = {version = "*", extras = ["d"]}
 
 
