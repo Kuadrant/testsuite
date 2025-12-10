@@ -2,8 +2,6 @@
 
 import pytest
 
-pytestmark = [pytest.mark.kuadrant_only]
-
 
 @pytest.fixture
 def second_hostname(exposer, gateway, blame):

@@ -6,7 +6,7 @@ from testsuite.httpx.auth import HttpxOidcClientAuth
 from testsuite.kuadrant.extensions.plan_policy import PlanPolicy, Plan
 
 
-pytestmark = [pytest.mark.kuadrant_only, pytest.mark.authorino, pytest.mark.extensions]
+pytestmark = [pytest.mark.authorino, pytest.mark.kuadrant_only, pytest.mark.extensions]
 
 PLANS = {
     "gold": Plan(

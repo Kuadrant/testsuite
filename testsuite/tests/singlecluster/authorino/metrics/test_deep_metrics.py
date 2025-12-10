@@ -4,7 +4,7 @@ import pytest
 
 from testsuite.kuadrant.policy.authorization import Value, JsonResponse
 
-pytestmark = [pytest.mark.authorino, pytest.mark.standalone_only]
+pytestmark = [pytest.mark.observability, pytest.mark.authorino, pytest.mark.standalone_only]
 
 
 @pytest.fixture(scope="module")

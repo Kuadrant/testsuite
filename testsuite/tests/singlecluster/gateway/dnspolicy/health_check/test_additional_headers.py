@@ -10,7 +10,7 @@ from testsuite.kubernetes.secret import Secret
 from testsuite.kuadrant.policy.dns import HealthCheck, AdditionalHeadersRef
 from testsuite.backend.mockserver import MockserverBackend
 
-pytestmark = [pytest.mark.kuadrant_only, pytest.mark.dnspolicy]
+pytestmark = [pytest.mark.dnspolicy]
 
 HEADER_NAME = "test-header"
 HEADER_VALUE = "test-value"

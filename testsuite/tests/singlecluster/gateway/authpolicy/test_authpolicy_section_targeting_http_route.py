@@ -6,7 +6,7 @@ an HTTPRoute, protecting only the traffic handled by that named rule.
 import pytest
 from testsuite.kuadrant.policy.authorization.auth_policy import AuthPolicy
 
-pytestmark = [pytest.mark.kuadrant_only, pytest.mark.authorino]
+pytestmark = [pytest.mark.authorino, pytest.mark.kuadrant_only]
 
 
 @pytest.fixture(scope="module")

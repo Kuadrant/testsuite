@@ -6,7 +6,7 @@ from testsuite.kuadrant.policy.tls import TLSPolicy
 from testsuite.kuadrant.policy.dns import DNSPolicy
 from testsuite.kuadrant.policy import has_condition
 
-pytestmark = [pytest.mark.kuadrant_only]
+pytestmark = [pytest.mark.authorino, pytest.mark.kuadrant_only]
 
 
 @pytest.mark.parametrize(

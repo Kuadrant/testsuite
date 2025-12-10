@@ -10,7 +10,7 @@ import pytest
 from testsuite.kubernetes.horizontal_pod_autoscaler import HorizontalPodAutoscaler
 from testsuite.tests.singlecluster.gateway.scaling.conftest import LIMIT
 
-pytestmark = [pytest.mark.kuadrant_only]
+pytestmark = [pytest.mark.limitador, pytest.mark.authorino, pytest.mark.kuadrant_only]
 
 METRIC_NAME = "mocked_metric"
 

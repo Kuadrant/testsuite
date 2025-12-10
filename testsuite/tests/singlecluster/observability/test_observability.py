@@ -2,7 +2,7 @@
 
 import pytest
 
-pytestmark = [pytest.mark.kuadrant_only, pytest.mark.disruptive]
+pytestmark = [pytest.mark.observability, pytest.mark.disruptive]
 
 SERVICE_MONITOR_METRICS = [
     "controller_runtime_active_workers",

@@ -10,7 +10,7 @@ import pytest
 
 from .conftest import LIMIT
 
-pytestmark = [pytest.mark.kuadrant_only, pytest.mark.limitador]
+pytestmark = [pytest.mark.limitador]
 
 
 streaming_request = {
