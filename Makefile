@@ -50,8 +50,8 @@ dnstls: poetry-no-dev  ## Run DNS and TLS tests
 extensions: poetry-no-dev  ## Run extensions tests
 	$(PYTEST) -n4 -m 'extensions and not disruptive' --dist loadfile --enforce $(flags) testsuite/tests/singlecluster/
 
-observability: poetry-no-dev  ## Run metrics, tracing and logging tests
-	$(PYTEST) -n4 -m 'observability and not disruptive' --dist loadfile --enforce $(flags) testsuite/tests/singlecluster/
+observability: poetry-no-dev  ## Run metrics, tracing and logging tests (add `flags=--standalone` to only run tests capable of running with standalone Authorino)
+	$(PYTEST) -n4 -m 'observability and not disruptive' --dist loadfile $(flags) testsuite/tests/singlecluster/
 
 defaults_overrides: poetry-no-dev  ## Run Defaults and Overrides tests
 	$(PYTEST) -n4 -m 'defaults_overrides and not disruptive' --dist loadfile --enforce $(flags) testsuite/tests/singlecluster/
