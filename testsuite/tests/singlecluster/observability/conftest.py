@@ -48,17 +48,17 @@ def enable_observability(kuadrant, request, prometheus):
 
 @pytest.fixture(scope="module")
 def service_monitors(cluster, testconfig):
-    """Return all 4 expected ServiceMonitors created by enabling observability"""
+    """Return all 5 expected ServiceMonitors created by enabling observability"""
     context = cluster.change_project(testconfig["service_protection"]["system_project"]).context
 
-    @backoff.on_predicate(backoff.constant, lambda x: len(x) == 4, interval=5, max_tries=12, jitter=None)
+    @backoff.on_predicate(backoff.constant, lambda x: len(x) == 5, interval=5, max_tries=12, jitter=None)
     def wait_for_monitors():
         return selector("ServiceMonitor", labels={"kuadrant.io/observability": "true"}, static_context=context).objects(
             cls=ServiceMonitor
         )
 
     all_monitors = wait_for_monitors()
-    assert len(all_monitors) == 4, "Expected ServiceMonitors were not found"
+    assert len(all_monitors) == 5, "Expected ServiceMonitors were not found"
 
     return all_monitors
 
