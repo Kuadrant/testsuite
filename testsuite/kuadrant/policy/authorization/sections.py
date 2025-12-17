@@ -1,7 +1,6 @@
 """Sections inside of AuthConfig"""
 
 from typing import Literal, Iterable, TYPE_CHECKING, Union
-from urllib.parse import urlparse
 
 from testsuite.kuadrant.policy.authorization import (
     Credentials,
@@ -353,7 +352,7 @@ class AuthorizationSection(Section):
             name,
             {
                 "spicedb": {
-                    "endpoint": urlparse(endpoint).netloc,
+                    "endpoint": endpoint,
                     "insecure": True,
                     "sharedSecretRef": {"name": credentials_secret, "key": key},
                     "subject": {
