@@ -1,4 +1,4 @@
-.PHONY: commit-acceptance pylint mypy black reformat test authorino poetry poetry-no-dev mgc container-image polish-junit reportportal authorino-standalone limitador kuadrant kuadrant-only disruptive kuadrantctl multicluster
+.PHONY: commit-acceptance pylint mypy black reformat test authorino poetry poetry-no-dev mgc container-image polish-junit reportportal authorino-standalone limitador kuadrant kuadrant-only disruptive kuadrantctl multicluster ui playwright-install
 
 TB ?= short
 LOGLEVEL ?= INFO
@@ -33,7 +33,7 @@ smoke: poetry-no-dev  ## Run a small amount of selected tests to verify basic fu
 	$(PYTEST) -n4 -m 'smoke' --dist loadfile --enforce $(flags) testsuite/tests/
 
 kuadrant: poetry-no-dev  ## Run all tests available on Kuadrant
-	$(PYTEST) -n4 -m 'not standalone_only and not disruptive' --dist loadfile --enforce $(flags) testsuite/tests/singlecluster
+	$(PYTEST) -n4 -m 'not standalone_only and not disruptive and not ui' --dist loadfile --enforce $(flags) testsuite/tests/singlecluster
 
 authorino: poetry-no-dev  ## Run only Authorino related tests
 	$(PYTEST) -n4 -m 'authorino and not disruptive' --dist loadfile --enforce $(flags) testsuite/tests/singlecluster/
@@ -55,6 +55,9 @@ observability: poetry-no-dev  ## Run metrics, tracing and logging tests (add `fl
 
 defaults_overrides: poetry-no-dev  ## Run Defaults and Overrides tests
 	$(PYTEST) -n4 -m 'defaults_overrides and not disruptive' --dist loadfile --enforce $(flags) testsuite/tests/singlecluster/
+
+ui: playwright-install ## Run UI (console plugin) tests
+	$(PYTEST) -n4 -m 'ui' --dist loadfile --enforce $(flags) testsuite/tests/singlecluster/ui/
 
 disruptive: poetry-no-dev  ## Run disruptive tests
 	$(PYTEST) -m 'disruptive' $(flags) testsuite/tests/
@@ -150,11 +153,16 @@ poetry.lock: pyproject.toml
 	@if [ -z "$(poetry env list)" -o -n "${force}" ]; then poetry sync --without dev; fi
 	@ touch .make-poetry-sync-no-dev
 
+.make-playwright-install: .make-poetry-sync-no-dev
+	@echo "Installing Playwright browsers..."
+	@poetry run playwright install --with-deps
+	@touch .make-playwright-install
 
 poetry: .make-poetry-sync ## Installs poetry with all dependencies
 
 poetry-no-dev: .make-poetry-sync-no-dev ## Installs poetry without development dependencies
 
+playwright-install: .make-playwright-install ## Install Playwright browser binaries
 
 ##@ Scale Testing
 
