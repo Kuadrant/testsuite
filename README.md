@@ -1,21 +1,87 @@
 # Kuadrant E2E testsuite
 
-This repository contains end-to-end tests for Kuadrant project. It supports running tests either against standalone Authorino and Authorino Operator, or the entire Kuadrant, both Service Protection and MGC. For more information about Kuadrant, please visit https://kuadrant.io/
+This repository contains end-to-end tests for the [Kuadrant](https://kuadrant.io/) project, intended for
+contributors and maintainers to validate Kuadrant behavior across single- and
+multi-cluster environments.
 
-## Requirements
+**What's tested:**
+* AuthPolicy
+* RateLimitPolicy
+* TokenRateLimitPolicy
+* DNSPolicy
+* TLSPolicy
+* Policy extensions (OIDCPolicy, PlanPolicy, TelemetryPolicy)
+* Policy behavior (defaults, overrides, reconciliation)
+* Observability (metrics, tracing)
+* Multi-cluster (load balancing, global rate limiting, CoreDNS delegation)
+* Console Plugin
 
-### Authorino standalone tests
-* Kubernetes cluster
-* Authorino Operator installed
-* Use `authorino-standalone` make target
+## Prerequisites
 
-### Service Protection tests
-* Kubernetes cluster
-* Kuadrant Operator installed
-* Use `test` make target
+### Local Development
+* [Python 3.11+](https://www.python.org/downloads/) and [Poetry](https://python-poetry.org/docs/)
+* [kubectl](https://kubernetes.io/docs/tasks/tools/) or [oc](https://docs.redhat.com/en/documentation/openshift_container_platform/4.11/html/cli_tools/openshift-cli-oc) (OpenShift CLI)
+* [CFSSL](https://github.com/cloudflare/cfssl)
+* [git](https://git-scm.com/downloads)
+* Access to one or more Kubernetes clusters with Kuadrant deployed
 
-### DNSPolicy tests
-* Existing DNS provider Secret named `aws-credentials` (name defined in `control_plane.provider_secret`) with annotation containing the base domain. Example AWS provider Secret:
+Once all prerequisites are installed, run:
+```shell
+make poetry  # Install dependencies and create virtual environment
+```
+
+### Container-based Testing
+* Container runtime ([podman](https://podman.io/docs/installation) or [docker](https://www.docker.com/get-started/))
+* Access to one or more Kubernetes clusters with Kuadrant deployed
+
+> **Note:** For instructions on setting up Kuadrant and the required tools on a cluster, see [Deploying Kuadrant via OLM](https://github.com/Kuadrant/helm-charts-olm/blob/main/README.md).
+
+## Configuration
+
+The Kuadrant testsuite uses [Dynaconf](https://www.dynaconf.com/) for configuration.
+
+### Settings Files
+For local development, create a YAML configuration file: **`config/settings.local.yaml`**.
+See [config/settings.local.yaml.tpl](https://github.com/Kuadrant/testsuite/blob/main/config/settings.local.yaml.tpl) for all available configuration options.
+
+### Environment Variables
+Settings can also be configured using environment variables. All variables use the `KUADRANT` prefix, for example:
+
+```bash
+export KUADRANT_RHSSO__url="https://my-sso.net"
+```
+
+For more details, see the [Dynaconf wiki page](https://www.dynaconf.com/envvars/).
+
+### Kubernetes Auto-Fetching
+Some configuration options can be auto-discovered from Kubernetes. Use the [tools project](https://github.com/3scale-qe/tools) to easily deploy helper services (e.g., Keycloak, Jaeger, MockServer):
+
+```bash
+oc apply -k overlays/kuadrant/ --namespace tools
+```
+
+## Test Requirements
+
+### Single-cluster tests
+
+| Test Type                | Requirements                                                                    | Make Target                    |
+|--------------------------|---------------------------------------------------------------------------------|--------------------------------|
+| **Kuadrant**             | Kuadrant Operator + Gateway API + cert-manager + DNS Secret + TLS ClusterIssuer | `make test` or `make kuadrant` |
+| **Authorino standalone** | Authorino Operator                                                              | `make authorino-standalone`    |
+| **DNSPolicy**            | Kuadrant Operator + Gateway API + DNS Secret                                    | `make dnstls`                  |
+| **TLSPolicy**            | Kuadrant Operator + Gateway API + cert-manager + TLS ClusterIssuer              | `make dnstls`                  |
+| **Console Plugin**       | OpenShift + Kuadrant Console Plugin enabled + HTPasswd auth                     | `make ui`                      |
+
+> **Note:**
+> * **Keycloak** is required for most test targets (AuthPolicy testing). Deploy via [tools project](https://github.com/3scale-qe/tools) or configure manually via settings file or environment variables.
+> * **Auth0** is optional and only needed for Auth0-specific tests.
+> * **DNS Secret** requires `base_domain` annotation and type `kuadrant.io/aws|gcp|azure`.
+> * **TLS ClusterIssuer** can be the self-signed CA ClusterIssuer from [helm-charts-olm](https://github.com/Kuadrant/helm-charts-olm/tree/4ffbb308f798a790445f1e30ff18a4cc2496fa30/charts/kuadrant-instances/templates/cert-manager) or an existing Let's Encrypt issuer named `letsencrypt-staging-issuer`.
+> * **UI tests** use `console.username`/`console.password` or `KUBE_USER`/`KUBE_PASSWORD` env vars.
+
+<details>
+<summary><b>DNS Provider Secret example (click to expand)</b></summary>
+
 ```yaml
 kind: Secret
 apiVersion: v1
@@ -30,92 +96,113 @@ data:
   AWS_SECRET_ACCESS_KEY: <key>
 type: kuadrant.io/aws
 ```
+</details>
 
-### TLSPolicy tests
-* Kuadrant QE self-signed CA ClusterIssuer which can be found here [kuadrant-helm-install](https://github.com/azgabur/kuadrant-helm-install/tree/main/instances/templates/cert-manager)
-* (Optional) Existing lets-encrypt ClusterIssuer or Issuer, named `letsencrypt-staging-issuer` (name defined in `letsencrypt.issuer.name`)
+### Multi-cluster tests
 
-## Configuration
+**Base requirements:** 2+ clusters (`cluster2` required, `cluster3` optional), matching namespaces on all clusters, DNS Secret + TLS ClusterIssuer on all clusters.
 
-Kuadrant testsuite uses [Dynaconf](https://www.dynaconf.com/) for configuration, which means you can specify the configuration through either settings files in `config` directory or through environmental variables. 
-All the required and possible configuration options can be found in `config/settings.local.yaml.tpl`
+| Test Type                | Additional Requirements                                                                                                                                                                     | Make Target                                                |
+|--------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------|
+| **Load balancing**       | DNS servers with geo-codes                                                                                                                                                                  | `make multicluster`                                        |
+| **CoreDNS delegation**   | CoreDNS zone + [CoreDNS tools](https://github.com/Kuadrant/helm-charts-olm/tree/4ffbb308f798a790445f1e30ff18a4cc2496fa30/charts/tools-instances/templates/coredns) deployed on all clusters | `make coredns_one_primary` or `make coredns_two_primaries` |
+| **Global rate limiting** | Shared storage (Redis/Dragonfly/Valkey)                                                                                                                                                     | `make multicluster`                                        |
 
-### Kubernetes auto-fetching
+> **Namespaces:**
+> The default namespaces are `kuadrant` for resources and `kuadrant-system` for operators.
+> If your installation uses different namespaces, update your configuration accordingly.
 
-Some configuration options can be fetched from Kubernetes if there are correctly deployed [tools](https://github.com/3scale-qe/tools).
-Tools can be deployed by using `overlays/kuadrant` overlay like this:
-```bash
-oc apply -k overlays/kuadrant/ --namespace tools
+## Running the Tests
+
+### Locally
+
+For development and debugging, running the tests locally is recommended.
+
+Once everything is set up and configured, start by running a quick smoke test to verify your environment and cluster configuration:
+
+```shell
+make smoke
 ```
 
-### Settings files
+You can run the full testsuite with:
 
-Settings files are located at `config` directory and are in `yaml` format. To use them for local development, you can create `settings.local.yaml` and put all settings there.
-
-### Environmental variables
-
-You can also configure all the settings through environmental variables as well. We use prefix `KUADRANT` so the variables can look like this:
-```bash
-export KUADRANT_RHSSO__url="https://my-sso.net"
-```
-You can find more info on the [Dynaconf wiki page](https://www.dynaconf.com/envvars/)
-
-## Usage
-
-You can run and manage environment for testsuite with the included Makefile, but the recommended way how to run the testsuite is from Container image
-
-### Local development setup
-
-Requirements:
-* Python 3.11+
-* [poetry](https://python-poetry.org/)
-* [CFSSL](https://github.com/cloudflare/cfssl)
-* [kubectl](https://kubernetes.io/docs/reference/kubectl/) (kubectl)
-
-If you have all of those, you can run ```make poetry``` to install virtual environment and all dependencies
-To run all tests you can then use ```make test```
-
-### Running from container
-
-For just running tests, the container image is the easiest option, you can log in to Kubernetes and then run it like this
-
-If you omit any options, Testsuite will run only subset of tests that don't require that variable e.g. not providing Auth0 will result in skipping Auth0 tests.
-
-NOTE: For binding kubeconfig file, the "others" need to have permission to read, otherwise it will not work.
-The results and reports will be saved in `/test-run-results` in the container.
-
-#### With tools setup
-
-```bash
-podman run \
-	-v $HOME/.kube/config:/run/kubeconfig:z \
-	-e KUADRANT_SERVICE_PROTECTION__PROJECT=authorino \
-	-e KUADRANT_SERVICE_PROTECTION__PROJECT2=authorino2 \
-	-e KUADRANT_AUTH0__url="AUTH0_URL" \
-	-e KUADRANT_AUTH0__client_id="AUTH0_CLIENT_ID" \
-	-e KUADRANT_AUTH0__client_secret="AUTH0_CLIENT_SECRET" \	
-	quay.io/kuadrant/testsuite:latest
+```shell
+make test
 ```
 
-#### Without tools
+Or run specific tests with:
 
+```shell
+make <test-path>
+# or
+poetry run pytest -v <test-path>
+```
+
+You can also run tests in parallel:
+
+```shell
+poetry run pytest -n4
+```
+
+> **Note:** Most `make` targets already run tests in parallel by default (`-n4` or `-n2`).
+
+See [Makefile](https://github.com/Kuadrant/testsuite/blob/main/Makefile) for other available `make` targets.
+
+### From a Container
+
+For just running tests without local setup, use the container image. Ensure you're logged into your cluster(s) first, then run the container with your kubeconfig mounted.
+
+> **Note:** Ensure your kubeconfig has appropriate read permissions for the container to access it.
+
+Environment variables are optional, and omitting a variable (e.g., Auth0 credentials) will skip related tests. Test results are saved to `/test-run-results` in the container (mount a local directory to persist them).
+
+**Integration tests** - `quay.io/kuadrant/testsuite:latest`
+
+With tools setup:
 ```bash
 podman run \
-	-v $HOME/.kube/config:/run/kubeconfig:z \
-	-e KUADRANT_SERVICE_PROTECTION__PROJECT=authorino \
-	-e KUADRANT_SERVICE_PROTECTION__PROJECT2=authorino2 \
-	-e KUADRANT_KEYCLOAK__url="https://my-sso.net" \
-	-e KUADRANT_KEYCLOAK__password="ADMIN_PASSWORD" \
-	-e KUADRANT_KEYCLOAK__username="ADMIN_USERNAME" \
-	-e KUADRANT_AUTH0__url="AUTH0_URL" \
-	-e KUADRANT_AUTH0__client_id="AUTH0_CLIENT_ID" \
-	-e KUADRANT_AUTH0__client_secret="AUTH0_CLIENT_SECRET" \
-	quay.io/kuadrant/testsuite:latest
+  -v $HOME/.kube/config:/run/kubeconfig:z \
+  -v $(pwd)/test-run-results:/test-run-results:z \
+  -e KUADRANT_SERVICE_PROTECTION__PROJECT=authorino \
+  -e KUADRANT_SERVICE_PROTECTION__PROJECT2=authorino2 \
+  -e KUADRANT_AUTH0__url="AUTH0_URL" \
+  -e KUADRANT_AUTH0__client_id="AUTH0_CLIENT_ID" \
+  -e KUADRANT_AUTH0__client_secret="AUTH0_CLIENT_SECRET" \
+  quay.io/kuadrant/testsuite:latest
 ```
 
-## Developing tests
+Without tools (manual Keycloak config):
+```bash
+podman run \
+  -v $HOME/.kube/config:/run/kubeconfig:z \
+  -v $(pwd)/test-run-results:/test-run-results:z \
+  -e KUADRANT_SERVICE_PROTECTION__PROJECT=authorino \
+  -e KUADRANT_SERVICE_PROTECTION__PROJECT2=authorino2 \
+  -e KUADRANT_KEYCLOAK__url="https://my-sso.net" \
+  -e KUADRANT_KEYCLOAK__password="ADMIN_PASSWORD" \
+  -e KUADRANT_KEYCLOAK__username="ADMIN_USERNAME" \
+  -e KUADRANT_AUTH0__url="AUTH0_URL" \
+  -e KUADRANT_AUTH0__client_id="AUTH0_CLIENT_ID" \
+  -e KUADRANT_AUTH0__client_secret="AUTH0_CLIENT_SECRET" \
+  quay.io/kuadrant/testsuite:latest
+```
 
-For developing tests for Authorino you might need to know content of the authorization JSON, you can do that through this AuthConfig, which will return all the context in the response
+**UI tests** - `quay.io/kuadrant/testsuite-ui:latest`
+
+```bash
+podman run --rm \
+  -v $HOME/.kube/config:/run/kubeconfig:z \
+  -v $(pwd)/test-run-results:/test-run-results:z \
+  -v $(pwd)/settings.local.yaml:/run/secrets.yaml:Z \
+  quay.io/kuadrant/testsuite-ui:latest
+```
+
+## Developing Tests
+
+When developing Authorino tests, you may need to inspect the full authorization JSON returned by Authorino.
+
+<details>
+<summary>AuthConfig example for returning full authorization context</summary>
 
 ```yaml
 apiVersion: authorino.kuadrant.io/v1beta3
@@ -137,4 +224,10 @@ spec:
                 selector: context
 ```
 
-Another thing which might helpful is using playground for developing OPA policies https://play.openpolicyagent.org/.
+</details>
+
+Another useful tool is the [OPA Playground](https://play.openpolicyagent.org/) for developing and validating OPA policies.
+
+## Contributing
+
+See the [Kuadrant Testsuite Contribution Guide](https://github.com/Kuadrant/testsuite/blob/main/CONTRIBUTING.md) for information on how to contribute to the Kuadrant testsuite.
