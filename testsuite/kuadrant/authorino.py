@@ -6,7 +6,7 @@ from typing import Any, Optional, Dict, List
 
 from openshift_client import selector
 
-from testsuite.kubernetes import CustomResource, modify
+from testsuite.kubernetes import CustomResource
 from testsuite.kubernetes.client import KubernetesClient
 from testsuite.kubernetes.deployment import Deployment
 from testsuite.utils import asdict
@@ -85,16 +85,6 @@ class AuthorinoCR(CustomResource, Authorino):
 
         with cluster.context:
             return cls(model)
-
-    @modify
-    def set_tracing(self, tracing: TracingOptions):
-        """Sets tracing configuration"""
-        self.model.spec["tracing"] = asdict(tracing)
-
-    @modify
-    def reset_tracing(self):
-        """Resets tracing configuration"""
-        self.model.spec.tracing = None
 
     @property
     def deployment(self):

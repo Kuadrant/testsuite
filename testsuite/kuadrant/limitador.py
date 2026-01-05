@@ -12,13 +12,6 @@ from testsuite.utils import asdict
 
 
 @dataclass
-class TracingOptions:
-    """Dataclass containing limitador tracing specification"""
-
-    endpoint: str
-
-
-@dataclass
 class ABCStorage(ABC):
     """
     Abstract storage class
@@ -109,16 +102,6 @@ class LimitadorCR(CustomResource):
     def reset_storage(self):
         """Resets external counter storage option back to default in-memory storage"""
         self.model.spec.storage = None
-
-    @modify
-    def set_tracing(self, tracing: TracingOptions):
-        """Sets tracing configuration"""
-        self.model.spec["tracing"] = asdict(tracing)
-
-    @modify
-    def reset_tracing(self):
-        """Resets tracing configuration"""
-        self.model.spec.tracing = None
 
     @property
     def deployment(self) -> Deployment:

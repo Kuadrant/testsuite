@@ -1,8 +1,6 @@
 """Kuadrant CR"""
 
 import dataclasses
-from dataclasses import dataclass
-from typing import Optional
 
 from openshift_client import selector
 
@@ -11,38 +9,6 @@ from testsuite.kuadrant.limitador import LimitadorCR
 from testsuite.kubernetes import CustomResource, modify
 from testsuite.kubernetes.deployment import Deployment
 from testsuite.utils import asdict
-
-
-@dataclass
-class ObservabilityTracingOptions:
-    """Dataclass for observability tracing configuration"""
-
-    defaultEndpoint: str  # pylint: disable=invalid-name
-    insecure: Optional[bool] = None
-
-
-@dataclass
-class DataPlaneDefaultLevels:
-    """Dataclass for data plane default levels"""
-
-    debug: str
-
-
-@dataclass
-class DataPlaneOptions:
-    """Dataclass for data plane configuration"""
-
-    defaultLevels: list[DataPlaneDefaultLevels]  # pylint: disable=invalid-name
-    httpHeaderIdentifier: str  # pylint: disable=invalid-name
-
-
-@dataclass
-class ObservabilityOptions:
-    """Dataclass for observability configuration"""
-
-    enable: bool
-    tracing: Optional[ObservabilityTracingOptions] = None
-    dataPlane: Optional[DataPlaneOptions] = None  # pylint: disable=invalid-name
 
 
 class KuadrantSection:
@@ -93,19 +59,9 @@ class KuadrantCR(CustomResource):
             return selector("authorino").object(cls=AuthorinoCR)
 
     @modify
-    def set_observability(self, observability):
-        """Enable observability with optional configuration.
-
-        Args:
-            observability: Either a bool (simple enable/disable) or ObservabilityOptions
-                         (full configuration with tracing, dataPlane, etc.)
-        """
-        if observability is False or observability is None:
-            self.model.spec["observability"] = None
-        elif observability is True:
-            self.model.spec["observability"] = {"enable": True}
-        else:
-            self.model.spec["observability"] = asdict(observability)
+    def set_observability(self, enabled: bool):
+        """Enable observability"""
+        self.model.spec["observability"] = {"enable": enabled} if enabled else None
 
     @property
     def limitador(self) -> LimitadorCR:
