@@ -67,7 +67,11 @@ class Result:
 
     def has_tls_error(self):
         """True, if the result failed due to TLS failure"""
-        return self.has_error("SSL: UNEXPECTED_EOF_WHILE_READING") or self.has_error("Connection refused")
+        return (
+            self.has_error("SSL: UNEXPECTED_EOF_WHILE_READING")
+            or self.has_error("Connection refused")
+            or self.has_error("Connection reset by peer")
+        )
 
     def has_cert_verify_error(self):
         """True, if the result failed due to TLS certificate verification failure"""
