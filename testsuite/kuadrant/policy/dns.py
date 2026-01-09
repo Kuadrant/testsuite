@@ -140,7 +140,7 @@ class DNSPolicy(Policy):
         model: dict = {
             "apiVersion": "kuadrant.io/v1",
             "kind": "DNSPolicy",
-            "metadata": {"name": name, "labels": labels},
+            "metadata": {"name": name, "namespace": cluster.project, "labels": labels},
             "spec": {"targetRef": parent.reference},
         }
 
