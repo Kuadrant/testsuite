@@ -4,9 +4,7 @@ from dataclasses import dataclass
 from typing import Optional, Literal
 
 import backoff
-import dns.resolver
 import openshift_client as oc
-
 from testsuite.gateway import Referencable
 from testsuite.kubernetes import KubernetesObject
 from testsuite.kubernetes.client import KubernetesClient
@@ -115,36 +113,6 @@ class DNSRecord(KubernetesObject):
             and all(condition.status == "True" for condition in obj.model.status.conditions)
         )
         assert success, f"DNSRecord {self.name()} did not get ready in time"
-
-    def wait_for_endpoints_merged(self, expected_ips: set[str]):
-        """Waits until the specified IPs are present in the DNSRecord endpoints list"""
-
-        def _check_endpoints(obj):
-            current_endpoints = obj.model.spec.endpoints or []
-            found_ips = {target for ep in current_endpoints for target in ep.targets}
-            return expected_ips.issubset(found_ips)
-
-        success = self.wait_until(_check_endpoints)
-        if not success:
-            raise AssertionError(
-                f"Endpoints merge failed for {self.name()}. "
-                f"Expected subset: {expected_ips}. Current: {self.model.spec.endpoints}"
-            )
-
-    def wait_until_resolves(self, hostname: str, expected_ip: str):
-        """Waits until the hostname resolves to the expected IP using external DNS"""
-
-        def _check_dns(_):
-            try:
-                resolver = dns.resolver.Resolver()
-                answers = resolver.resolve(hostname, "A")
-                found_ips = {ip.to_text() for ip in answers}
-                return expected_ip in found_ips
-            except Exception:  # pylint: disable=broad-exception-caught
-                return False
-
-        success = self.wait_until(_check_dns)
-        assert success, f"DNS resolution failed for {hostname}. Expected: {expected_ip}"
 
     def get_authoritative_dns_record(self) -> str:
         """Returns the authoritative DNS record created by dns operator controller"""
