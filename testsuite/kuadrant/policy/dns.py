@@ -140,7 +140,7 @@ class DNSRecord(KubernetesObject):
                 answers = resolver.resolve(hostname, "A")
                 found_ips = {ip.to_text() for ip in answers}
                 return expected_ip in found_ips
-            except Exception:  # pylint: disable=broad-exception-caught
+            except (dns.resolver.NXDOMAIN, dns.resolver.NoAnswer, dns.resolver.Timeout):
                 return False
 
         success = self.wait_until(_check_dns)
