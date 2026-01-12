@@ -71,6 +71,7 @@ class Result:
             self.has_error("SSL: UNEXPECTED_EOF_WHILE_READING")
             or self.has_error("Connection refused")
             or self.has_error("Connection reset by peer")
+            or self.has_error("The handshake operation timed out")
         )
 
     def has_cert_verify_error(self):
