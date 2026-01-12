@@ -56,6 +56,7 @@ markers = [
     "defaults_overrides: Defaults and Overrides feature tests",
     "observability: Tracing, metrics and logging tests",
     "ui: Test uses browser automation via Playwright to test the console plugin UI",
+    "cli: Test is using CLI tools (kubectl-dns, kuadrantctl)",
 ]
 filterwarnings = [
     "ignore: WARNING the new order is not taken into account:UserWarning",
