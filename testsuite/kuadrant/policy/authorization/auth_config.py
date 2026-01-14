@@ -6,11 +6,12 @@ from typing import Dict
 from testsuite.utils import asdict
 from testsuite.kubernetes import KubernetesObject, modify
 from testsuite.kubernetes.client import KubernetesClient
+from testsuite.kuadrant.policy import EnvoyWaitMixin
 from .sections import AuthorizationSection, IdentitySection, MetadataSection, ResponseSection
 from . import Rule, Pattern
 
 
-class AuthConfig(KubernetesObject):
+class AuthConfig(EnvoyWaitMixin, KubernetesObject):
     """Represents AuthConfig CR from Authorino"""
 
     @property
@@ -79,6 +80,10 @@ class AuthConfig(KubernetesObject):
             and all(x.status == "True" for x in obj.model.status.conditions)
         )
         assert success, f"{self.kind()} didn't reach required state, instead it was: {self.model.status.conditions}"
+
+        # Automatically wait for Envoy application if metrics_route was set
+        if self._metrics_route is not None:
+            self.wait_for_envoy_applied()
 
     @modify
     def add_rule(self, when: list[Rule]):

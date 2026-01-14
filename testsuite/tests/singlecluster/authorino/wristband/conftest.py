@@ -128,7 +128,7 @@ def wristband_authorization(
 
 
 @pytest.fixture(scope="module", autouse=True)
-def commit(request, commit, wristband_authorization):  # pylint: disable=unused-argument
+def commit(request, wristband_authorization):  # pylint: disable=unused-argument
     """Commits all important stuff before tests"""
     request.addfinalizer(wristband_authorization.delete)
     wristband_authorization.commit()

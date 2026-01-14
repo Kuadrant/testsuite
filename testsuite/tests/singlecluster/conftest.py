@@ -1,6 +1,7 @@
 """Configure all the components through Kuadrant,
 all methods are placeholders for now since we do not work with Kuadrant"""
 
+import time
 import pytest
 from openshift_client import selector
 
@@ -15,6 +16,7 @@ from testsuite.kuadrant.policy.authorization.auth_policy import AuthPolicy
 from testsuite.kuadrant.policy.rate_limit import RateLimitPolicy
 from testsuite.kubernetes.api_key import APIKey
 from testsuite.kubernetes.client import KubernetesClient
+from testsuite.kubernetes.openshift.route import OpenshiftRoute
 
 
 @pytest.fixture(scope="session")
@@ -36,17 +38,19 @@ def authorization_name(blame):
 
 
 @pytest.fixture(scope="module")
-def authorization(request, kuadrant, route, gateway, blame, cluster, label):  # pylint: disable=unused-argument
+def authorization(request, kuadrant, route, gateway, blame, cluster, label, metrics_route):  # pylint: disable=unused-argument
     """Authorization object (In case of Kuadrant AuthPolicy)"""
     target_ref = request.getfixturevalue(getattr(request, "param", "route"))
 
     if kuadrant:
-        return AuthPolicy.create_instance(cluster, blame("authz"), target_ref, labels={"testRun": label})
+        policy = AuthPolicy.create_instance(cluster, blame("authz"), target_ref, labels={"testRun": label})
+        policy.set_metrics_route(metrics_route)
+        return policy
     return None
 
 
 @pytest.fixture(scope="module")
-def rate_limit(kuadrant, cluster, blame, request, module_label, route, gateway):  # pylint: disable=unused-argument
+def rate_limit(kuadrant, cluster, blame, request, module_label, route, gateway, metrics_route):  # pylint: disable=unused-argument
     """
     Rate limit object.
     Request is used for indirect parametrization, with two possible parameters:
@@ -56,7 +60,9 @@ def rate_limit(kuadrant, cluster, blame, request, module_label, route, gateway):
     target_ref = request.getfixturevalue(getattr(request, "param", "route"))
 
     if kuadrant:
-        return RateLimitPolicy.create_instance(cluster, blame("limit"), target_ref, labels={"testRun": module_label})
+        policy = RateLimitPolicy.create_instance(cluster, blame("limit"), target_ref, labels={"testRun": module_label})
+        policy.set_metrics_route(metrics_route)
+        return policy
     return None
 
 
@@ -67,7 +73,7 @@ def commit(request, authorization, rate_limit):
         if component is not None:
             request.addfinalizer(component.delete)
             component.commit()
-            component.wait_for_ready()
+            component.wait_for_ready()  # Automatically waits for Envoy!
 
 
 @pytest.fixture(scope="session")
@@ -115,6 +121,114 @@ def gateway(request, kuadrant, cluster, blame, label, testconfig, wildcard_domai
     gw.commit()
     gw.wait_for_ready()
     return gw
+
+
+@pytest.fixture(scope="session")
+def metrics_route(request, gateway, cluster, blame, kuadrant):
+    """Create OpenShift Route to expose gateway metrics, bypassing Gateway/OIDC/AuthPolicy.
+
+    Only created for Kuadrant gateways. Allows checking when WASM configs are actually loaded.
+    """
+    if not kuadrant:
+        return None
+
+    route = OpenshiftRoute.create_instance(
+        cluster,
+        blame("metrics"),
+        f"{gateway.name()}-metrics",  # Service name
+        "metrics",  # Target port name
+    )
+
+    request.addfinalizer(route.delete)
+    route.commit()
+
+    return route
+
+
+def get_kuadrant_configs_value(metrics_route):
+    """Get the current value of kuadrant_configs metric.
+
+    Args:
+        metrics_route: OpenShift Route to metrics service
+
+    Returns:
+        Integer value of kuadrant_configs metric, or 0 if not found
+    """
+    if metrics_route is None:
+        return 0
+
+    try:
+        metrics_client = metrics_route.client()
+        response = metrics_client.get("/stats/prometheus")
+        if response.status_code == 200:
+            # Parse the metric value from lines like: kuadrant_configs{} 1
+            for line in response.text.split("\n"):
+                if line.startswith("kuadrant_configs{}"):
+                    return int(line.split()[1])
+    except Exception:  # pylint: disable=broad-exception-caught
+        pass
+    return 0
+
+
+def wait_for_policy_applied_to_envoy(metrics_route, initial_value, timeout=120, interval=5):
+    """Wait for policy to be applied in Envoy by checking for kuadrant_configs metric change.
+
+    Uses metrics OpenShift Route which bypasses Gateway and policy enforcement.
+
+    Args:
+        metrics_route: OpenShift Route to metrics service
+        initial_value: Initial value of kuadrant_configs before policy was committed
+        timeout: Maximum time to wait in seconds (default: 120)
+        interval: Polling interval in seconds (default: 5)
+
+    Returns:
+        True if policy is applied (kuadrant_configs increased), False if timeout reached
+    """
+    if metrics_route is None:
+        # No metrics route available (e.g., standalone mode), skip waiting
+        return True
+
+    start_time = time.time()
+
+    while time.time() - start_time < timeout:
+        try:
+            current_value = get_kuadrant_configs_value(metrics_route)
+            # Check if metric exists and has increased from initial value
+            if current_value is not None and current_value > (initial_value or 0):
+                return True
+        except Exception:  # pylint: disable=broad-exception-caught
+            pass  # Ignore connection errors and continue polling
+
+        time.sleep(interval)
+
+    return False
+
+
+def commit_and_wait(request, metrics_route, *policies):
+    """Helper to commit multiple policies and wait for them to be applied in Envoy.
+
+    This is a convenience function that:
+    1. Sets up cleanup (delete) for each policy
+    2. Sets metrics_route for Envoy waiting
+    3. Commits the policy
+    4. Waits for K8s ready + Envoy application
+
+    Args:
+        request: pytest request fixture (for finalizers)
+        metrics_route: OpenShift Route to gateway metrics
+        *policies: Variable number of policy objects to commit
+
+    Example:
+        @pytest.fixture(scope="module", autouse=True)
+        def commit(request, metrics_route, authorization, rate_limit):
+            commit_and_wait(request, metrics_route, authorization, rate_limit)
+    """
+    for policy in policies:
+        if policy is not None:
+            request.addfinalizer(policy.delete)
+            policy.set_metrics_route(metrics_route)
+            policy.commit()
+            policy.wait_for_ready()
 
 
 @pytest.fixture(scope="module")
