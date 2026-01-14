@@ -14,6 +14,7 @@ def commit(request, route, authorization, global_authorization):  # pylint: disa
         request.addfinalizer(policy.delete)
         policy.commit()
         policy.wait_for_accepted()
+        policy.wait_for_ready()
 
 
 @pytest.mark.parametrize(
