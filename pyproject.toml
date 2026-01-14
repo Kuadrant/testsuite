@@ -23,7 +23,6 @@ httpx = { version = "*", extras = ["http2"] }
 openshift-client = ">=2"
 apyproxy = "*"
 weakget = "*"
-authzed = "*"
 pytest-playwright = "*"
 
 [tool.poetry.group.dev.dependencies]
@@ -55,7 +54,6 @@ markers = [
     "coredns_two_primaries: CoreDNS multicluster tests using two primary clusters",
     "defaults_overrides: Defaults and Overrides feature tests",
     "observability: Tracing, metrics and logging tests",
-    "ui: Test uses browser automation via Playwright to test the console plugin UI",
 ]
 filterwarnings = [
     "ignore: WARNING the new order is not taken into account:UserWarning",
