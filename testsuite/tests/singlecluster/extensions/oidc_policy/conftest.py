@@ -10,6 +10,7 @@ import pytest
 
 from testsuite.gateway import Gateway, GatewayListener
 from testsuite.gateway.gateway_api.gateway import KuadrantGateway
+from testsuite.kubernetes.openshift.route import OpenshiftRoute
 from testsuite.kuadrant.extensions.oidc_policy import OIDCPolicy
 
 
@@ -23,6 +24,23 @@ def gateway(request, domain_name, base_domain, cluster, blame, label) -> Gateway
     gw.commit()
     gw.wait_for_ready()
     return gw
+
+
+@pytest.fixture(scope="module")
+def metrics_route(request, gateway, cluster, blame):
+    """Create OpenShift Route to expose gateway metrics, bypassing Gateway/OIDC."""
+    # Create OpenShift Route directly to metrics service (bypasses Gateway and OIDC)
+    route = OpenshiftRoute.create_instance(
+        cluster,
+        blame("metrics"),
+        f"{gateway.name()}-metrics",  # Service name
+        "metrics",  # Target port name
+    )
+
+    request.addfinalizer(route.delete)
+    route.commit()
+
+    return route
 
 
 # JWT Cookie Helper fixture
@@ -44,21 +62,23 @@ def oidc_policy_provider_config(oidc_provider, test_client):
 
 
 @pytest.fixture(scope="module")
-def oidc_policy(cluster, blame, oidc_policy_provider_config, gateway):
+def oidc_policy(cluster, blame, oidc_policy_provider_config, gateway, metrics_route):
     """Create OIDC policy instance for testing.
 
     Note: This fixture depends on 'provider' which should be defined in each test file
     with the appropriate client-specific configuration.
     """
-    oidc_policy = OIDCPolicy.create_instance(
-        cluster, blame("oidc-policy"), gateway, provider=oidc_policy_provider_config
-    )
-    return oidc_policy
+    policy = OIDCPolicy.create_instance(cluster, blame("oidc-policy"), gateway, provider=oidc_policy_provider_config)
+    policy.set_metrics_route(metrics_route)
+    return policy
 
 
 @pytest.fixture(scope="module", autouse=True)
-def commit(request, oidc_policy):
-    """Commit and wait for OIDC policy to be ready."""
+def commit(request, route, oidc_policy):  # pylint: disable=unused-argument
+    """Commit and wait for OIDC policy to be ready (including Envoy application).
+
+    Depends on route to ensure proper ordering: route must exist before policy is applied.
+    """
     request.addfinalizer(oidc_policy.delete)
     oidc_policy.commit()
     oidc_policy.wait_for_ready()

@@ -12,6 +12,7 @@ from testsuite.kubernetes.client import KubernetesClient
 from testsuite.kubernetes import KubernetesObject, modify
 from testsuite.kuadrant.policy import Policy
 from testsuite.kubernetes.deployment import Deployment
+from testsuite.kubernetes.service import Service, ServicePort
 from testsuite.utils import check_condition, asdict, domain_match
 
 
@@ -20,6 +21,10 @@ class KuadrantGateway(KubernetesObject, Gateway):
 
     # Name of the GatewayClass that is to be used for all the instances
     cached_gw_class_name = None
+
+    def __init__(self, dict_to_model=None, string_to_model=None, context=None):
+        super().__init__(dict_to_model, string_to_model, context)
+        self.metrics_service = None
 
     @classmethod
     def create_instance(cls, cluster: KubernetesClient, name, labels):
@@ -36,6 +41,21 @@ class KuadrantGateway(KubernetesObject, Gateway):
         }
         gateway = cls(model, context=cluster.context)
         return gateway
+
+    def commit(self):
+        """Creates Gateway and automatically creates a metrics service for port 15020."""
+        result = super().commit()
+
+        # Create metrics service that exposes port 15020 from the gateway pods
+        self.metrics_service = Service.create_instance(
+            self.cluster,
+            f"{self.name()}-metrics",
+            selector={"gateway.networking.k8s.io/gateway-name": self.name()},
+            ports=[ServicePort(name="metrics", port=15020, targetPort=15020)],
+        )
+        self.metrics_service.commit()
+
+        return result
 
     @modify
     def add_listener(self, listener: GatewayListener):
@@ -131,6 +151,10 @@ class KuadrantGateway(KubernetesObject, Gateway):
                 yield listener
 
     def delete(self, ignore_not_found=True, cmd_args=None):
+        # Delete metrics service if it exists
+        if self.metrics_service is not None:
+            self.metrics_service.delete(ignore_not_found=True)
+
         res = super().delete(ignore_not_found, cmd_args)
         with self.cluster.context:
             # TLSPolicy does not delete certificates it creates

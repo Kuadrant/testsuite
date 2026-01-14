@@ -22,9 +22,6 @@ class Plan:
 class PlanPolicy(Policy):
     """PlanPolicy object, used for applying plan-based policies to a Gateway/HTTPRoute"""
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
     @classmethod
     def create_instance(
         cls,
