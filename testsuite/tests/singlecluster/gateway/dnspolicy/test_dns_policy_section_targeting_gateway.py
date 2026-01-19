@@ -18,7 +18,6 @@ from testsuite.gateway.gateway_api.route import HTTPRoute
 from testsuite.kuadrant.policy.dns import DNSPolicy
 from testsuite.utils import is_nxdomain
 
-
 pytestmark = [pytest.mark.dnspolicy]
 
 

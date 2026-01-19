@@ -5,7 +5,6 @@ import pytest
 from testsuite.kuadrant.policy.rate_limit import Limit
 from testsuite.kuadrant.policy.token_rate_limit import TokenRateLimitPolicy
 
-
 LIMIT = Limit(limit=50, window="20s")
 
 

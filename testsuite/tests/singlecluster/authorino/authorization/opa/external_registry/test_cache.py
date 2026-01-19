@@ -9,7 +9,6 @@ import pytest
 
 from testsuite.utils import rego_allow_header
 
-
 pytestmark = [pytest.mark.authorino]
 
 

@@ -10,7 +10,6 @@ import pytest
 
 from testsuite.kuadrant.policy.rate_limit import RateLimitPolicy, Limit
 
-
 pytestmark = [pytest.mark.limitador]
 
 LIMIT = Limit(2, "10s")

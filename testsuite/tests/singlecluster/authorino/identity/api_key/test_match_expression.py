@@ -8,7 +8,6 @@ import pytest
 
 from testsuite.kubernetes import Selector, MatchExpression
 
-
 pytestmark = [pytest.mark.authorino]
 
 

@@ -11,7 +11,6 @@ from testsuite.prometheus import has_label
 from testsuite.httpx.auth import HeaderApiKeyAuth
 from testsuite.kuadrant.policy.authorization import JsonResponse, ValueFrom
 
-
 pytestmark = [pytest.mark.observability, pytest.mark.limitador, pytest.mark.extensions]
 
 

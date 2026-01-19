@@ -4,7 +4,6 @@ import pytest
 from testsuite.kuadrant.limitador import Redis
 from testsuite.kuadrant.policy.rate_limit import Limit
 
-
 pytestmark = [pytest.mark.multicluster, pytest.mark.limitador, pytest.mark.disruptive]
 
 

@@ -5,7 +5,6 @@ import pytest
 from testsuite.kuadrant.policy import has_condition, CelPredicate
 from testsuite.kuadrant.policy.rate_limit import Limit, RateLimitPolicy
 
-
 FIRST_LIMIT = Limit(3, "5s")
 SECOND_LIMIT = Limit(6, "5s")
 

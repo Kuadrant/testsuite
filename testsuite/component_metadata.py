@@ -9,7 +9,6 @@ import openshift_client as oc
 from testsuite.config import settings
 from testsuite.kubernetes.client import KubernetesClient
 
-
 logger = logging.getLogger(__name__)
 
 

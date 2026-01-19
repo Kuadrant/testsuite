@@ -15,7 +15,6 @@ from testsuite.httpx.auth import HttpxOidcClientAuth
 from testsuite.oidc.test_client import OIDCTestClient
 from testsuite.tests.singlecluster.extensions.oidc_policy.conftest import set_jwt_cookie
 
-
 pytestmark = [pytest.mark.authorino, pytest.mark.kuadrant_only, pytest.mark.extensions]
 
 

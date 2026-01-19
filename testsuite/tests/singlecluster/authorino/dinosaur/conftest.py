@@ -228,15 +228,13 @@ allow { method == "DELETE"; roles[_] == "admin-full" }
     authorization.responses.set_unauthorized(
         DenyResponse(
             headers={"content-type": Value("application/json")},
-            body=Value(
-                """{
+            body=Value("""{
   "kind": "Error",
   "id": "403",
   "href": "/api/dinosaurs_mgmt/v1/errors/403",
   "code": "DINOSAURS-MGMT-403",
   "reason": "Forbidden"
-}"""
-            ),
+}"""),
         )
     )
 

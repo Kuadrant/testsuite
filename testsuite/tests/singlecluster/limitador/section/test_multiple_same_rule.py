@@ -4,7 +4,6 @@ import pytest
 
 from testsuite.kuadrant.policy.rate_limit import Limit, RateLimitPolicy
 
-
 pytestmark = [pytest.mark.limitador]
 
 
