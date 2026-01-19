@@ -6,7 +6,6 @@ from testsuite.backend import Backend
 from testsuite.kubernetes import modify
 from testsuite.kubernetes.config_map import ConfigMap
 
-
 BASE_CONFIG = """
       static_resources:
         listeners:

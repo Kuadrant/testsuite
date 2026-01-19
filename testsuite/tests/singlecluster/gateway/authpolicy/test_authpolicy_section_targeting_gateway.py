@@ -12,7 +12,6 @@ from testsuite.gateway.gateway_api.hostname import StaticHostname
 from testsuite.gateway.gateway_api.route import HTTPRoute
 from testsuite.kuadrant.policy.authorization.auth_policy import AuthPolicy
 
-
 pytestmark = [pytest.mark.authorino, pytest.mark.kuadrant_only]
 
 MANAGED_LISTENER_NAME = "managed-listener"

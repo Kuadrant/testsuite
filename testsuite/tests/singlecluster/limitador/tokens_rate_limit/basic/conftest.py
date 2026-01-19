@@ -8,7 +8,6 @@ from testsuite.kuadrant.policy.authorization import JsonResponse, ValueFrom
 from testsuite.kuadrant.policy.rate_limit import Limit
 from testsuite.kuadrant.policy.token_rate_limit import TokenRateLimitPolicy
 
-
 FREE_USER_LIMIT = Limit(limit=50, window="30s")
 PAID_USER_LIMIT = Limit(limit=100, window="60s")
 

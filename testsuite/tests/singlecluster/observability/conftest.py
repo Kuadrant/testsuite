@@ -7,7 +7,6 @@ from openshift_client import selector
 from testsuite.kubernetes.monitoring.pod_monitor import PodMonitor
 from testsuite.kubernetes.monitoring.service_monitor import ServiceMonitor
 
-
 SERVICE_MONITOR_SERVICES = [
     "kuadrant-operator-metrics",
     "dns-operator-controller-manager-metrics-service",

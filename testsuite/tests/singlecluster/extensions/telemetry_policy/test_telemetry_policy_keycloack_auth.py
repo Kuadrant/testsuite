@@ -11,7 +11,6 @@ from testsuite.httpx.auth import HttpxOidcClientAuth
 from testsuite.kuadrant.policy.authorization import JsonResponse, ValueFrom
 from testsuite.prometheus import has_label
 
-
 pytestmark = [pytest.mark.observability, pytest.mark.limitador, pytest.mark.extensions]
 
 
