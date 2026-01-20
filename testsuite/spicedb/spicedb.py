@@ -3,9 +3,9 @@
 from dataclasses import dataclass
 from typing import List
 import backoff
-import httpx
 
 from testsuite.backend import Backend
+from testsuite.httpx import KuadrantClient
 from testsuite.kubernetes import Selector
 from testsuite.kubernetes.client import KubernetesClient
 from testsuite.kubernetes.deployment import Deployment
@@ -63,11 +63,10 @@ class SpiceDBClient:
     def __init__(self, server_url: str, token: str):
         """
         Initialize HTTP client for SpiceDB.
-
         """
         self.server_url = server_url.rstrip("/")
         self.token = token
-        self.client = httpx.Client(
+        self.client = KuadrantClient(
             base_url=self.server_url,
             headers={"Authorization": f"Bearer {token}"},
             timeout=30.0,
@@ -144,7 +143,7 @@ class SpiceDBClient:
         interval=5,
         jitter=None,
         on_giveup=lambda details: (_ for _ in ()).throw(
-            TimeoutError(f"SpiceDB relationships not ready after {details['tries']} tries. ")
+            TimeoutError(f"SpiceDB relationships not ready after {details['tries']} tries.")
         ),
     )
     def wait_for_relationship(self, schema_config: SchemaConfig, relationship_config: RelationshipConfig):
