@@ -9,6 +9,7 @@ from testsuite.httpx.auth import HttpxOidcClientAuth
 from testsuite.kuadrant.policy.authorization.auth_policy import AuthPolicy
 from testsuite.kuadrant.policy.dns import DNSPolicy
 from testsuite.kuadrant.policy.tls import TLSPolicy
+from testsuite.kubernetes.openshift.route import OpenshiftRoute
 
 
 @pytest.fixture(scope="module")
@@ -25,6 +26,23 @@ def gateway(request, cluster, blame, wildcard_domain, module_label):
     gw.commit()
     gw.wait_for_ready()
     return gw
+
+
+@pytest.fixture(scope="module")
+def metrics_route(request, gateway, cluster, blame):
+    """Create OpenShift Route to expose gateway metrics, bypassing Gateway/OIDC."""
+    # Create OpenShift Route directly to metrics service (bypasses Gateway and OIDC)
+    route = OpenshiftRoute.create_instance(
+        cluster,
+        blame("metrics"),
+        f"{gateway.name()}-metrics",  # Service name
+        "metrics",  # Target port name
+    )
+
+    request.addfinalizer(route.delete)
+    route.commit()
+
+    return route
 
 
 @pytest.fixture(scope="module")

@@ -18,7 +18,7 @@ def route(backend, route):
 
 
 @pytest.fixture(scope="module")
-def global_rate_limit(request, cluster, blame, module_label):
+def global_rate_limit(request, metrics_route, cluster, blame, module_label):
     """Create a RateLimitPolicy with default policies and a merge strategy."""
     target_ref = request.getfixturevalue(getattr(request, "param", "gateway"))
 
@@ -26,6 +26,7 @@ def global_rate_limit(request, cluster, blame, module_label):
     policy.defaults.add_limit("get_limit", [MERGE_LIMIT], when=[CelPredicate("request.path == '/get'")])
     policy.defaults.add_limit("anything_limit", [MERGE_LIMIT2], when=[CelPredicate("request.path == '/anything'")])
     policy.defaults.strategy(Strategy.MERGE)
+    policy.set_metrics_route(metrics_route)
     return policy
 
 

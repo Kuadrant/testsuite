@@ -54,7 +54,7 @@ def auth(oidc_provider):
 
 
 @pytest.fixture(scope="module")
-def global_authorization(request, cluster, blame, admin_label, admin_api_key):
+def global_authorization(request, metrics_route, cluster, blame, admin_label, admin_api_key):
     """
     Create an AuthPolicy with authentication for an admin with same target as one default.
     Also adds authorization for only admins.
@@ -70,6 +70,7 @@ def global_authorization(request, cluster, blame, admin_label, admin_api_key):
                 allow { groups[_] != "" }""",
     )
     auth_policy.defaults.strategy(Strategy.MERGE)
+    auth_policy.set_metrics_route(metrics_route)
     return auth_policy
 
 
