@@ -12,7 +12,7 @@ from openshift_client import OpenShiftPythonException, selector
 
 from testsuite.capabilities import has_kuadrant, kuadrant_version
 from testsuite.certificates import CFSSLClient
-from testsuite.component_metadata import ComponentMetadataCollector
+from testsuite.component_metadata import ReportPortalMetadataCollector
 from testsuite.config import settings
 from testsuite.gateway import Exposer, CustomReference
 from testsuite.httpx import KuadrantClient
@@ -113,35 +113,11 @@ def term_handler():
 
 
 def pytest_collection_modifyitems(session, config, items):  # pylint: disable=unused-argument
-    """
-    Add user properties to testcases for xml output
-
-    This adds issue and issue-id properties to junit output, utilizes
-    pytest.mark.issue marker.
-
-    This is copied from pytest examples to record custom properties in junit
-    https://docs.pytest.org/en/stable/usage.html
-    """
-
-    for item in items:
-        for marker in item.iter_markers(name="issue"):
-            issue = marker.args[0]
-            item.user_properties.append(("issue", issue))
-
-    # Add component metadata to every test case
+    """Add cluster metadata to test items for ReportPortal integration."""
     try:
-        cluster = settings["control_plane"]["cluster"]
-        project = cluster.change_project(settings["service_protection"]["system_project"])
-
-        if project.connected:
-            collector = ComponentMetadataCollector(project)
-            component_metadata = collector.get_component_metadata_for_report_portal()
-
-            # Add to all test items (but only once per test session)
-            for item in items:
-                for key, value in component_metadata.items():
-                    item.user_properties.append((key, str(value)))
-
+        collector = ReportPortalMetadataCollector()
+        collector.collect_all_clusters()
+        collector.add_properties_to_items(items)
     except (OpenShiftPythonException, AttributeError, KeyError, ValidationError) as e:
         print(f"Warning: Component metadata collection failed: {e}")
 
