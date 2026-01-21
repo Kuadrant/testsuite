@@ -1,6 +1,7 @@
 """Root conftest"""
 
 import signal
+from datetime import datetime, timezone
 from urllib.parse import urlparse
 import yaml
 
@@ -16,6 +17,7 @@ from testsuite.component_metadata import ComponentMetadataCollector
 from testsuite.config import settings
 from testsuite.gateway import Exposer, CustomReference
 from testsuite.httpx import KuadrantClient
+from testsuite.log_collection import collect_failure_artifacts
 from testsuite.mockserver import Mockserver
 from testsuite.oidc import OIDCProvider
 from testsuite.oidc.auth0 import Auth0Provider
@@ -65,9 +67,22 @@ def pytest_runtest_setup(item):
             skip_or_fail(f"Unable to locate Kuadrant installation: {error}")
 
 
+@pytest.fixture(scope="function", autouse=True)
+def test_tracker(request):
+    """
+    Track test execution for log collection.
+
+    This fixture records the start time of each test, which is used
+    to filter logs when collecting artifacts from failed tests.
+    """
+    start_time = datetime.now(timezone.utc)
+    request.node.test_start_time = start_time
+    yield
+
+
 @pytest.hookimpl(hookwrapper=True)
 def pytest_runtest_makereport(item, call):  # pylint: disable=unused-argument
-    """Add jira link to html report"""
+    """Add jira link to html report and collect logs on test failure"""
     pytest_html = item.config.pluginmanager.getplugin("html")
     outcome = yield
     report = outcome.get_result()
@@ -82,6 +97,17 @@ def pytest_runtest_makereport(item, call):  # pylint: disable=unused-argument
                 label = issue
             extra.append(pytest_html.extras.url(issue, name=label))
         report.extra = extra
+
+    # Collect logs on test failure
+    if report.when == "call" and report.failed:
+        # Get the test start time
+        start_time = getattr(item, "test_start_time", datetime.now(timezone.utc))
+
+        # Get cluster fixture if available
+        if "cluster" in item.fixturenames:
+            cluster = item.funcargs.get("cluster")
+            if cluster:
+                collect_failure_artifacts(item, cluster, start_time)
 
 
 def pytest_report_header(config):
