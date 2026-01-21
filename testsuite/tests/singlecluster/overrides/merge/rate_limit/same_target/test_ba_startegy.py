@@ -15,7 +15,7 @@ def commit(request, route, rate_limit, global_rate_limit):  # pylint: disable=un
         request.addfinalizer(policy.delete)
         policy.commit()
         policy.wait_for_accepted()
-        policy.wait_for_ready()
+        policy.wait_for_ready(fully_enforced=False)
 
 
 @pytest.mark.parametrize(

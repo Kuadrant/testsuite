@@ -118,12 +118,15 @@ def is_affected_by(policy: "Policy"):
 class Policy(EnvoyWaitMixin, KubernetesObject):
     """Base class with common functionality for all policies"""
 
-    def wait_for_ready(self):
+    def wait_for_ready(self, fully_enforced=True):
         """Wait for a Policy to be ready"""
         self.refresh()
         success = self.wait_until(has_observed_generation(self.generation))
         assert success, f"{self.kind()} did not reach observed generation in time"
-        self.wait_for_full_enforced()
+        if fully_enforced:
+            self.wait_for_full_enforced()
+        else:
+            self.wait_for_partial_enforced()
 
         # Automatically wait for Envoy application if metrics_route was set
         if self._metrics_route is not None:
