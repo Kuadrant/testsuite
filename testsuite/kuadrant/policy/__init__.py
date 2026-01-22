@@ -18,17 +18,17 @@ class EnvoyWaitMixin:
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._initial_kuadrant_configs = None
-        self._metrics_route = None
+        self._gateway_metrics_service = None
 
-    def set_metrics_route(self, metrics_route):
+    def set_gateway_metrics_service(self, gateway_metrics_service):
         """Store metrics route for Envoy waiting. Call before commit().
 
         Args:
-            metrics_route: OpenShift Route to gateway metrics service
+            gateway_metrics_service: OpenShift Route to gateway metrics service
         """
-        self._metrics_route = metrics_route
-        if metrics_route is not None:
-            self._initial_kuadrant_configs = get_kuadrant_configs_value(metrics_route)
+        self._gateway_metrics_service = gateway_metrics_service
+        if gateway_metrics_service is not None:
+            self._initial_kuadrant_configs = get_kuadrant_configs_value(gateway_metrics_service)
 
     def wait_for_envoy_applied(self, timeout=120):
         """Wait for configuration to be actually applied in Envoy (WASM config loaded).
@@ -42,11 +42,13 @@ class EnvoyWaitMixin:
         Returns:
             True if applied, False if no metrics_route was set
         """
-        if self._metrics_route is None:
+        if self._gateway_metrics_service is None:
             # No metrics route configured, skip waiting
             return False
 
-        success = wait_for_policy_applied_to_envoy(self._metrics_route, self._initial_kuadrant_configs, timeout=timeout)
+        success = wait_for_policy_applied_to_envoy(
+            self._gateway_metrics_service, self._initial_kuadrant_configs, timeout=timeout
+        )
         assert success, (
             f"{self.__class__.__name__} was ready in K8s but did not get applied in Envoy within {timeout}s "
             f"(initial kuadrant_configs: {self._initial_kuadrant_configs})"
@@ -125,8 +127,7 @@ class Policy(EnvoyWaitMixin, KubernetesObject):
         assert success, f"{self.kind()} did not reach observed generation in time"
         self.wait_for_full_enforced()
 
-        # Automatically wait for Envoy application if metrics_route was set
-        if self._metrics_route is not None:
+        if self._gateway_metrics_service is not None:
             self.wait_for_envoy_applied()
 
     def wait_for_accepted(self):

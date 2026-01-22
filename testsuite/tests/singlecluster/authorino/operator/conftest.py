@@ -9,7 +9,7 @@ from testsuite.kuadrant.authorino import AuthorinoCR, Authorino
 @pytest.fixture(scope="module")
 def gateway(request, authorino, cluster, blame, label, testconfig) -> Envoy:
     """Deploys Envoy that wires up the Backend behind the reverse-proxy and Authorino instance"""
-    gw = Envoy(
+    gw = Envoy(  # pylint: disable=abstract-class-instantiated
         cluster,
         blame("gw"),
         authorino,

@@ -81,8 +81,7 @@ class AuthConfig(EnvoyWaitMixin, KubernetesObject):
         )
         assert success, f"{self.kind()} didn't reach required state, instead it was: {self.model.status.conditions}"
 
-        # Automatically wait for Envoy application if metrics_route was set
-        if self._metrics_route is not None:
+        if self._gateway_metrics_service is not None:
             self.wait_for_envoy_applied()
 
     @modify

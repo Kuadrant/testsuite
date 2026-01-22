@@ -15,7 +15,7 @@ def setup_gateway(request, cluster, blame, testconfig, module_label):
     """Factory method for creating Gateways in the test run"""
 
     def _envoy(auth):
-        gw = Envoy(
+        gw = Envoy(  # pylint: disable=abstract-class-instantiated
             cluster,
             blame("gw"),
             auth,

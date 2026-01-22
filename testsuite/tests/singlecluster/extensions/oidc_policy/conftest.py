@@ -10,8 +10,9 @@ import pytest
 
 from testsuite.gateway import Gateway, GatewayListener
 from testsuite.gateway.gateway_api.gateway import KuadrantGateway
-from testsuite.kubernetes.openshift.route import OpenshiftRoute
+from testsuite.gateway.gateway_api.metrics_gateway import MetricsServiceGateway
 from testsuite.kuadrant.extensions.oidc_policy import OIDCPolicy
+from testsuite.kubernetes.service import ServicePort
 
 
 @pytest.fixture(scope="module")
@@ -27,20 +28,22 @@ def gateway(request, domain_name, base_domain, cluster, blame, label) -> Gateway
 
 
 @pytest.fixture(scope="module")
-def metrics_route(request, gateway, cluster, blame):
+def gateway_metrics_service(request, gateway, cluster, blame, label, exposer):  # pylint: disable=unused-argument
     """Create OpenShift Route to expose gateway metrics, bypassing Gateway/OIDC."""
     # Create OpenShift Route directly to metrics service (bypasses Gateway and OIDC)
-    route = OpenshiftRoute.create_instance(
+    metrics_service = MetricsServiceGateway.create_instance(
         cluster,
         blame("metrics"),
-        f"{gateway.name()}-metrics",  # Service name
-        "metrics",  # Target port name
+        selector={"gateway.networking.k8s.io/gateway-name": gateway.name()},
+        ports=[ServicePort(name="api", port=15020, targetPort=15020)],
+        labels={"app": label},
+        service_type="LoadBalancer",
     )
 
-    request.addfinalizer(route.delete)
-    route.commit()
+    metrics_service.commit()
+    metrics_service.wait_for_ready()
 
-    return route
+    return exposer.expose_hostname(blame("metrics"), metrics_service)
 
 
 # JWT Cookie Helper fixture
@@ -62,14 +65,14 @@ def oidc_policy_provider_config(oidc_provider, test_client):
 
 
 @pytest.fixture(scope="module")
-def oidc_policy(cluster, blame, oidc_policy_provider_config, gateway, metrics_route):
+def oidc_policy(cluster, blame, oidc_policy_provider_config, gateway, gateway_metrics_service):
     """Create OIDC policy instance for testing.
 
     Note: This fixture depends on 'provider' which should be defined in each test file
     with the appropriate client-specific configuration.
     """
     policy = OIDCPolicy.create_instance(cluster, blame("oidc-policy"), gateway, provider=oidc_policy_provider_config)
-    policy.set_metrics_route(metrics_route)
+    policy.set_gateway_metrics_service(gateway_metrics_service)
     return policy
 
 
