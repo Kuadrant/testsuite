@@ -15,6 +15,7 @@ from io import StringIO
 from typing import Dict, Union
 from urllib.parse import urlparse, ParseResult
 
+import backoff
 import dns.resolver
 from weakget import weakget
 
@@ -227,3 +228,44 @@ def domain_match(first: str, second: str):
     if second[0] == "*":
         return second[2:] == ".".join(first.split(".")[1:])
     return False
+
+
+def wait_for_dns(
+    hostname: str,
+    value: str,
+    not_in: bool = False,
+    resolver: dns.resolver.Resolver = dns.resolver.get_default_resolver(),
+) -> dns.resolver.HostAnswers:
+    """This method returns dns answer from dns.resolver.resolve_name(hostname) but has backoff functionality
+    to retry on common errors such as NXDOMAIN or NoAnswer. Additionally retries until specified value is in the DNS
+    answer. This can be used when a change to a zone is expected and to assert the change.
+
+    :param hostname: Hostname for DNS query
+    :param value: Expected value in answer
+    :param not_in: Default false; If true, the method will wait until the value is not in the DNS answer
+    :param resolver: Default dns.resolver; Specify your own resolver class
+
+    :return: HostAnswers class containing answers for A and AAAA queries
+    """
+    # pylint: disable=unnecessary-lambda-assignment
+    # it is indeed necessary so it can be overridden
+    backoff_function = lambda answer: value not in answer.addresses()
+    if not_in:
+        backoff_function = lambda answer: value in answer.addresses()
+
+    @backoff.on_predicate(
+        backoff.runtime,
+        backoff_function,
+        value=lambda answer: min(map(lambda rrset: rrset.ttl, answer.values())),
+        max_time=300,
+    )
+    @backoff.on_exception(
+        backoff.constant,
+        (dns.resolver.NoAnswer, dns.resolver.NXDOMAIN, dns.resolver.NoNameservers),
+        interval=5,
+        max_time=300,
+    )
+    def _assert_dns():
+        return resolver.resolve_name(hostname)
+
+    return _assert_dns()
