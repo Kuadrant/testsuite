@@ -8,7 +8,7 @@ from testsuite.backend.httpbin import Httpbin
 from testsuite.gateway import GatewayRoute, Gateway, Hostname, GatewayListener
 from testsuite.gateway.envoy import Envoy
 from testsuite.gateway.envoy.route import EnvoyVirtualRoute
-from testsuite.gateway.exposers import OpenShiftExposer, LoadBalancerServiceExposer
+from testsuite.gateway.exposers import LoadBalancerServiceExposer
 from testsuite.gateway.gateway_api.gateway import KuadrantGateway
 from testsuite.gateway.gateway_api.metrics_gateway import MetricsServiceGateway
 from testsuite.gateway.gateway_api.route import HTTPRoute
