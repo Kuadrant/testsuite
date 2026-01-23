@@ -8,6 +8,7 @@ from testsuite.backend.httpbin import Httpbin
 from testsuite.gateway import GatewayRoute, Gateway, Hostname, GatewayListener
 from testsuite.gateway.envoy import Envoy
 from testsuite.gateway.envoy.route import EnvoyVirtualRoute
+from testsuite.gateway.exposers import OpenShiftExposer, LoadBalancerServiceExposer
 from testsuite.gateway.gateway_api.gateway import KuadrantGateway
 from testsuite.gateway.gateway_api.metrics_gateway import MetricsServiceGateway
 from testsuite.gateway.gateway_api.route import HTTPRoute
@@ -138,13 +139,18 @@ def gateway_metrics_service(
     if not kuadrant:
         return None
 
+    if isinstance(exposer, LoadBalancerServiceExposer):
+        service_type = "LoadBalancer"
+    else:
+        service_type = "ClusterIP"
+
     metrics_service = MetricsServiceGateway.create_instance(
         cluster,
         blame("metrics"),
         selector={"gateway.networking.k8s.io/gateway-name": gateway.name()},
         ports=[ServicePort(name="api", port=15020, targetPort=15020)],
         labels={"app": label},
-        service_type="LoadBalancer",
+        service_type=service_type,
     )
 
     metrics_service.commit()
