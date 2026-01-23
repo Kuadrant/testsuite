@@ -32,7 +32,7 @@ class MetricsServiceGateway(Service, Gateway):
     def external_ip(self) -> str:  # pylint: disable=invalid-overridden-method
         """Returns LoadBalancer IP and port to access this Gateway"""
         with self.context:
-            return f"{self.refresh().model.status.addresses[0].value}:80"
+            return f"{self.refresh().model.status.loadBalancer.ingress[0].ip}:15020"
 
     def wait_for_ready(self, timeout: int = 90, slow_loadbalancers=False):
         """Waits until the LoadBalancer service gets an external IP"""
