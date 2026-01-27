@@ -29,6 +29,7 @@ def gateway(request, cluster, blame, wildcard_domain, module_label):
     gw.wait_for_ready()
     return gw
 
+
 @pytest.fixture(scope="module")
 def gateway_metrics_service(
     request, gateway, cluster, blame, kuadrant, exposer, label
