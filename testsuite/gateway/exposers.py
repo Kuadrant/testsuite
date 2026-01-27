@@ -45,8 +45,8 @@ class StaticLocalHostname(Hostname):
 
     def __init__(self, hostname, ip_getter, verify: Certificate = None, force_https: bool = False):
         self._hostname = hostname
-        self.verify = verify
         self.ip_getter = ip_getter
+        self.verify = verify
         self.force_https = force_https
 
     def client(self, **kwargs) -> KuadrantClient:

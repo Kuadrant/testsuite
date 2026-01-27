@@ -50,7 +50,7 @@ def auth(oidc_provider):
 
 
 @pytest.fixture(scope="module", autouse=True)
-def commit(request, authorization):
+def commit(request, route, authorization):  # pylint: disable=unused-argument
     """Commits all important stuff before tests"""
     request.addfinalizer(authorization.delete)
     authorization.commit()
