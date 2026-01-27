@@ -3,12 +3,15 @@
 import pytest
 
 from testsuite.gateway import Exposer, TLSGatewayListener
+from testsuite.gateway.exposers import LoadBalancerServiceExposer
 from testsuite.gateway.gateway_api.gateway import KuadrantGateway
 from testsuite.gateway.gateway_api.hostname import DNSPolicyExposer
+from testsuite.gateway.gateway_api.metrics_gateway import MetricsServiceGateway
 from testsuite.httpx.auth import HttpxOidcClientAuth
 from testsuite.kuadrant.policy.authorization.auth_policy import AuthPolicy
 from testsuite.kuadrant.policy.dns import DNSPolicy
 from testsuite.kuadrant.policy.tls import TLSPolicy
+from testsuite.kubernetes.service import ServicePort
 
 
 @pytest.fixture(scope="module")
@@ -25,6 +28,36 @@ def gateway(request, cluster, blame, wildcard_domain, module_label):
     gw.commit()
     gw.wait_for_ready()
     return gw
+
+@pytest.fixture(scope="module")
+def gateway_metrics_service(
+    request, gateway, cluster, blame, kuadrant, exposer, label
+):  # pylint: disable=unused-argument
+    """Create OpenShift Route to expose gateway metrics, bypassing Gateway/OIDC/AuthPolicy.
+
+    Only created for Kuadrant gateways. Allows checking when WASM configs are actually loaded.
+    """
+    if not kuadrant:
+        return None
+
+    if isinstance(exposer, LoadBalancerServiceExposer):
+        service_type = "LoadBalancer"
+    else:
+        service_type = "ClusterIP"
+
+    metrics_service = MetricsServiceGateway.create_instance(
+        cluster,
+        blame("metrics"),
+        selector={"gateway.networking.k8s.io/gateway-name": gateway.name()},
+        ports=[ServicePort(name="api", port=15020, targetPort=15020)],
+        labels={"app": label},
+        service_type=service_type,
+    )
+
+    metrics_service.commit()
+    metrics_service.wait_for_ready()
+
+    return exposer.expose_hostname(blame("metrics"), metrics_service)
 
 
 @pytest.fixture(scope="module")
