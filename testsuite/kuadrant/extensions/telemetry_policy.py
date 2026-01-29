@@ -11,9 +11,6 @@ from testsuite.kuadrant.policy import Policy
 class TelemetryPolicy(Policy):
     """TelemetryPolicy for configuring telemetry metrics labels"""
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
     @classmethod
     def create_instance(
         cls,

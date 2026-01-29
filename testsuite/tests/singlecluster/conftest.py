@@ -8,13 +8,16 @@ from testsuite.backend.httpbin import Httpbin
 from testsuite.gateway import GatewayRoute, Gateway, Hostname, GatewayListener
 from testsuite.gateway.envoy import Envoy
 from testsuite.gateway.envoy.route import EnvoyVirtualRoute
+from testsuite.gateway.exposers import LoadBalancerServiceExposer
 from testsuite.gateway.gateway_api.gateway import KuadrantGateway
+from testsuite.gateway.gateway_api.metrics_gateway import MetricsServiceGateway
 from testsuite.gateway.gateway_api.route import HTTPRoute
 from testsuite.kuadrant import KuadrantCR
 from testsuite.kuadrant.policy.authorization.auth_policy import AuthPolicy
 from testsuite.kuadrant.policy.rate_limit import RateLimitPolicy
 from testsuite.kubernetes.api_key import APIKey
 from testsuite.kubernetes.client import KubernetesClient
+from testsuite.kubernetes.service import ServicePort
 
 
 @pytest.fixture(scope="session")
@@ -36,17 +39,23 @@ def authorization_name(blame):
 
 
 @pytest.fixture(scope="module")
-def authorization(request, kuadrant, route, gateway, blame, cluster, label):  # pylint: disable=unused-argument
+def authorization(
+    request, kuadrant, route, gateway, blame, cluster, label, gateway_metrics_service
+):  # pylint: disable=unused-argument
     """Authorization object (In case of Kuadrant AuthPolicy)"""
     target_ref = request.getfixturevalue(getattr(request, "param", "route"))
 
     if kuadrant:
-        return AuthPolicy.create_instance(cluster, blame("authz"), target_ref, labels={"testRun": label})
+        policy = AuthPolicy.create_instance(cluster, blame("authz"), target_ref, labels={"testRun": label})
+        policy.set_gateway_metrics_service(gateway_metrics_service)
+        return policy
     return None
 
 
 @pytest.fixture(scope="module")
-def rate_limit(kuadrant, cluster, blame, request, module_label, route, gateway):  # pylint: disable=unused-argument
+def rate_limit(
+    kuadrant, cluster, blame, request, module_label, route, gateway, gateway_metrics_service
+):  # pylint: disable=unused-argument
     """
     Rate limit object.
     Request is used for indirect parametrization, with two possible parameters:
@@ -56,7 +65,9 @@ def rate_limit(kuadrant, cluster, blame, request, module_label, route, gateway):
     target_ref = request.getfixturevalue(getattr(request, "param", "route"))
 
     if kuadrant:
-        return RateLimitPolicy.create_instance(cluster, blame("limit"), target_ref, labels={"testRun": module_label})
+        policy = RateLimitPolicy.create_instance(cluster, blame("limit"), target_ref, labels={"testRun": module_label})
+        policy.set_gateway_metrics_service(gateway_metrics_service)
+        return policy
     return None
 
 
@@ -104,7 +115,7 @@ def gateway(request, kuadrant, cluster, blame, label, testconfig, wildcard_domai
         gw.add_listener(GatewayListener(hostname=wildcard_domain))
     else:
         authorino = request.getfixturevalue("authorino")
-        gw = Envoy(
+        gw = Envoy(  # pylint: disable=abstract-class-instantiated
             cluster,
             blame("gw"),
             authorino,
@@ -115,6 +126,37 @@ def gateway(request, kuadrant, cluster, blame, label, testconfig, wildcard_domai
     gw.commit()
     gw.wait_for_ready()
     return gw
+
+
+@pytest.fixture(scope="session")
+def gateway_metrics_service(
+    request, gateway, cluster, blame, kuadrant, exposer, label
+):  # pylint: disable=unused-argument
+    """Create OpenShift Route to expose gateway metrics, bypassing Gateway/OIDC/AuthPolicy.
+
+    Only created for Kuadrant gateways. Allows checking when WASM configs are actually loaded.
+    """
+    if not kuadrant:
+        return None
+
+    if isinstance(exposer, LoadBalancerServiceExposer):
+        service_type = "LoadBalancer"
+    else:
+        service_type = "ClusterIP"
+
+    metrics_service = MetricsServiceGateway.create_instance(
+        cluster,
+        blame("metrics"),
+        selector={"gateway.networking.k8s.io/gateway-name": gateway.name()},
+        ports=[ServicePort(name="api", port=15020, targetPort=15020)],
+        labels={"app": label},
+        service_type=service_type,
+    )
+
+    metrics_service.commit()
+    metrics_service.wait_for_ready()
+
+    return exposer.expose_hostname(blame("metrics"), metrics_service)
 
 
 @pytest.fixture(scope="module")
@@ -131,7 +173,16 @@ def hostname(gateway, exposer, domain_name) -> Hostname:
 
 
 @pytest.fixture(scope="module")
-def route(request, kuadrant, gateway, blame, hostname, backend, module_label) -> GatewayRoute:
+def route(
+    request,
+    kuadrant,
+    gateway,
+    blame,
+    hostname,
+    backend,
+    module_label,
+    gateway_metrics_service,  # pylint: disable=unused-argument
+) -> GatewayRoute:
     """Route object"""
     if kuadrant:
         route = HTTPRoute.create_instance(gateway.cluster, blame("route"), gateway, {"app": module_label})
