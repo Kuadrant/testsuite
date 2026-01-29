@@ -32,7 +32,7 @@ def wrong_auth(oidc_provider, auth0, keycloak):
 
 @pytest.mark.parametrize(
     "oidc_provider",
-    [pytest.param("keycloak", marks=[pytest.mark.smoke]), pytest.param("auth0")],
+    [pytest.param("keycloak"), pytest.param("auth0")],
     indirect=True,
 )
 def test_auth_identity(client, auth, wrong_auth):
