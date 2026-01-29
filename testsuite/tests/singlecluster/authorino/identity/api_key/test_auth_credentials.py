@@ -22,6 +22,11 @@ def authorization(authorization, api_key, credentials):
     return authorization
 
 
+@pytest.mark.parametrize(
+    "credentials",
+    [pytest.param("authorizationHeader", marks=pytest.mark.smoke), "customHeader", "queryString", "cookie"],
+    indirect=True,
+)
 def test_custom_selector(client, auth, credentials):
     """Test if auth credentials are stored in right place"""
     response = client.get("/get", headers={"authorization": "APIKEY " + auth.api_key})
