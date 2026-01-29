@@ -136,3 +136,6 @@ logs/*
 
 # macOS system files
 .DS_Store
+
+# Playwright authentication state (contains sensitive session data)
+.playwright-auth/
