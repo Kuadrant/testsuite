@@ -91,11 +91,18 @@ reformat: poetry  ## Reformats testsuite with black
 	poetry run black testsuite
 
 polish-junit:  ## Remove skipped tests and logs from passing tests
-	gzip -f $(resultsdir)/junit-*.xml
-	# 'cat' on next line is neessary to avoid wipe of the files
-	for file in $(resultsdir)/junit-*.xml.gz; do zcat $$file | $(RUNSCRIPT)xslt-apply ./xslt/polish-junit.xsl >$${file%.gz}; done  # bashism!!!
-	# this deletes something it didn't create, dangerous!!!
-	-rm -f $(resultsdir)/junit-*.xml.gz
+	@if ls $(resultsdir)/junit-*.xml >/dev/null 2>&1; then \
+	   gzip -f $(resultsdir)/junit-*.xml; \
+	   for file in $(resultsdir)/junit-*.xml.gz; do \
+	      if [ -f "$$file" ]; then \
+	         gunzip -c "$$file" | $(RUNSCRIPT)xslt-apply ./xslt/polish-junit.xsl > "$${file%.gz}"; \
+	      fi; \
+	   done; \
+	   rm -f $(resultsdir)/junit-*.xml.gz; \
+	else \
+	   echo "No junit XML files found in $(resultsdir)"; \
+	   exit 1; \
+	fi
 
 reportportal: polish-junit  ## Upload results to reportportal. Appropriate variables for juni2reportportal must be set
 	$(RUNSCRIPT)junit2reportportal $(resultsdir)/junit-*.xml
