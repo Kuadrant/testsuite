@@ -36,6 +36,6 @@ def test_default_secret_provider_not_found(dns_policy):
             "Ready",
             "False",
             "DNSProviderError",
-            f'The dns provider could not be loaded: Secret "{NON_EXISTING_SECRET}" not found',
+            f'The dns provider could not be loaded: secrets "{NON_EXISTING_SECRET}" not found',
         )
     ), f"DNSPolicy did not reach expected record status, instead it was: {dns_policy.model.status.recordConditions}"
