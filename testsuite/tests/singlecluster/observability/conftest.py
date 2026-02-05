@@ -26,28 +26,16 @@ def commit():
 
 
 @pytest.fixture(scope="module", autouse=True)
-def enable_observability(kuadrant, request, prometheus):
-    """Enable / reset observability and verify that no relevant observability targets are active"""
-
-    def _reset():
-        kuadrant.set_observability(False)
-
-    request.addfinalizer(_reset)
-
-    assert prometheus.verify_no_observability_targets(
-        label_filters={
-            "service": SERVICE_MONITOR_SERVICES,
-            "job": POD_MONITOR_JOB,
-        }
-    ), "Observability targets still present in Prometheus before enabling observability"
-
-    kuadrant.set_observability(True)
-    kuadrant.wait_for_ready()
+def require_observability_enabled(kuadrant, skip_or_fail):
+    """Skip or fail tests if observability is not enabled in the Kuadrant CR"""
+    observability_spec = kuadrant.model.spec.get("observability")
+    if observability_spec is None or observability_spec.get("enable") is not True:
+        skip_or_fail("Observability is not enabled in Kuadrant CR")
 
 
 @pytest.fixture(scope="module")
 def service_monitors(cluster, testconfig):
-    """Return all 5 expected ServiceMonitors created by enabling observability"""
+    """Return all 5 expected ServiceMonitors created when observability is enabled"""
     context = cluster.change_project(testconfig["service_protection"]["system_project"]).context
 
     @backoff.on_predicate(backoff.constant, lambda x: len(x) == 5, interval=5, max_tries=12, jitter=None)
@@ -64,7 +52,7 @@ def service_monitors(cluster, testconfig):
 
 @pytest.fixture(scope="module")
 def pod_monitor(cluster):
-    """Return PodMonitor created by enabling observability"""
+    """Return PodMonitor created when observability is enabled"""
 
     @backoff.on_predicate(backoff.constant, lambda x: len(x) == 1, interval=5, max_tries=12, jitter=None)
     def wait_for_monitor():
