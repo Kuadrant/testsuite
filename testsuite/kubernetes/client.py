@@ -66,6 +66,11 @@ class KubernetesClient:
         hostname = urlparse(self.api_url).hostname
         return "apps." + hostname.split(".", 1)[1]
 
+    @cached_property
+    def console_url(self):
+        """Return URL of the OpenShift console"""
+        return f"https://console-openshift-console.{self.apps_url}"
+
     @property
     def project(self):
         """Returns real Kubernetes namespace name"""

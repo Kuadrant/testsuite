@@ -54,6 +54,7 @@ markers = [
     "coredns_two_primaries: CoreDNS multicluster tests using two primary clusters",
     "defaults_overrides: Defaults and Overrides feature tests",
     "observability: Tracing, metrics and logging tests",
+    "ui: Test uses browser automation via Playwright to test the console plugin UI",
 ]
 filterwarnings = [
     "ignore: WARNING the new order is not taken into account:UserWarning",
