@@ -77,6 +77,20 @@ coredns_two_primaries: poetry-no-dev  ## Run coredns two primary tests
 	$(PYTEST) -n1 -m 'coredns_two_primaries' --dist loadfile --enforce $(flags) testsuite/tests/multicluster/coredns/
 
 
+##@ Local Development
+
+local-env-setup:  ## Create local KIND cluster with full Kuadrant setup (replicates CI environment)
+	./bin/setup-ci-env.sh
+
+local-env-setup-minimal:  ## Create local KIND cluster without testsuite tools (faster setup)
+	./bin/setup-ci-env.sh --skip-tools
+
+local-env-status:  ## Check status of local environment
+	./bin/setup-ci-env.sh --status
+
+local-env-cleanup:  ## Delete local KIND cluster
+	./bin/setup-ci-env.sh --cleanup
+
 ##@ Misc
 
 commit-acceptance: black pylint mypy  ## Runs pre-commit linting checks
