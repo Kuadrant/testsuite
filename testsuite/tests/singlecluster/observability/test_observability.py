@@ -1,8 +1,8 @@
-"""Tests the enabling of observability configuration via the Kuadrant CR"""
+"""Tests observability metrics collection from ServiceMonitors and PodMonitors"""
 
 import pytest
 
-pytestmark = [pytest.mark.observability, pytest.mark.disruptive]
+pytestmark = [pytest.mark.observability]
 
 SERVICE_MONITOR_METRICS = [
     "controller_runtime_active_workers",
