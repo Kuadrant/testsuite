@@ -22,5 +22,5 @@ class TracingClient(abc.ABC):
         """Returns URL for application to deposit traces"""
 
     @abc.abstractmethod
-    def search(self, request_id: str, service: str, tags: dict) -> list:
-        """Search traces in tracing client by tags service name, `authorino.request_id` and tag"""
+    def get_trace(self, request_id: str, service: str, tag_name: str, tags: dict = None) -> list:
+        """Search traces in tracing client by service name and tag."""
