@@ -45,31 +45,44 @@ def authorization(authorization, api_key):
     return authorization
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="module")
 def rate_limit(rate_limit):
     """Configures rate limit policy with CEL-based user targeting."""
     rate_limit.add_limit("testuser", [Limit(3, "10s")], when=[CelPredicate("auth.identity.user == 'testuser'")])
     return rate_limit
 
 
-@pytest.fixture(scope="function", autouse=True)
-def commit(request, authorization, rate_limit):
+@pytest.fixture(scope="module")
+def trace(client, auth):
     """
-    Commits authorization and rate limit policies before each test.
+    Sends requests producing 200, 429, and 401 responses.
 
-    Function-scoped to work with the function-scoped rate_limit fixture,
-    ensuring each test has a fresh rate limit policy. Authorization is
-    re-committed to guarantee it's enforced before rate_limit (which depends
-    on auth.identity.user in its CEL expression).
+    Returns a dict mapping status code to request_id for trace lookups.
+    The 200 request includes a traceparent header to link gateway/istio traces
+    with wasm-shim traces in a single distributed trace.
     """
-    for component in [authorization, rate_limit]:
-        if component is not None:
-            request.addfinalizer(component.delete)
-            component.commit()
-            component.wait_for_ready()
+    response_200 = client.get(
+        "/get", auth=auth, headers={"Traceparent": f"00-{os.urandom(16).hex()}-{os.urandom(8).hex()}-01"}
+    )
+    assert response_200.status_code == 200
+
+    responses = client.get_many("/get", 2, auth=auth)
+    responses.assert_all(200)
+
+    response_429 = client.get("/get", auth=auth)
+    assert response_429.status_code == 429
+
+    response_401 = client.get("/get")
+    assert response_401.status_code == 401
+
+    return {
+        200: response_200.headers.get("x-request-id"),
+        429: response_429.headers.get("x-request-id"),
+        401: response_401.headers.get("x-request-id"),
+    }
 
 
-def test_trace_includes_all_kuadrant_services(client, auth, tracing, label):
+def test_trace_includes_all_kuadrant_services(trace, tracing, label):
     """
     Test that distributed tracing captures all Kuadrant components in a single trace.
 
@@ -79,27 +92,16 @@ def test_trace_includes_all_kuadrant_services(client, auth, tracing, label):
     - authorino: Authorization service
     - limitador: Rate limiting service
     - gateway: Istio/Envoy gateway service
-
-    Note: traceparent header is required to link gateway/istio traces with wasm-shim traces
-    in a single distributed trace. Without it, wasm-shim starts its own trace (with authorino
-    and limitador as children), but the gateway trace remains separate due to Istio not passing
-    its trace ID to the WASM plugin
     """
-    response = client.get(
-        "/get", auth=auth, headers={"Traceparent": f"00-{os.urandom(16).hex()}-{os.urandom(8).hex()}-01"}
-    )
-    request_id = response.headers.get("x-request-id")
-    assert response.status_code == 200
 
     @backoff.on_predicate(backoff.fibo, lambda x: len(x) == 0 or len(x[0]["processes"]) < 4, max_tries=5, jitter=None)
     def get_full_trace():
-        """Get trace and retry until all 4 processes are present"""
-        return tracing.get_trace(service="wasm-shim", request_id=request_id, tag_name="request_id")
+        return tracing.get_trace(service="wasm-shim", request_id=trace[200], tag_name="request_id")
 
-    trace = get_full_trace()
-    assert len(trace) == 1, f"No trace was found in tracing backend with request_id: {request_id}"
+    traces = get_full_trace()
+    assert len(traces) == 1, f"No trace was found in tracing backend with request_id: {trace[200]}"
 
-    processes = trace[0]["processes"]
+    processes = traces[0]["processes"]
     process_services = {process["serviceName"] for process in processes.values()}
 
     services = ["wasm-shim", "authorino", "limitador", f"{label}.kuadrant"]
@@ -114,9 +116,7 @@ def test_trace_includes_all_kuadrant_services(client, auth, tracing, label):
         ("ratelimit", "rate_limit", "ratelimitpolicy"),
     ],
 )
-def test_spans_have_correct_policy_source_references(
-    client, auth, tracing, operation_name, policy, policy_kind, request
-):
+def test_spans_have_correct_policy_source_references(trace, tracing, operation_name, policy, policy_kind, request):
     """
     Test that trace spans contain correct policy source references.
 
@@ -129,12 +129,8 @@ def test_spans_have_correct_policy_source_references(
     - auth spans → AuthPolicy source reference
     - ratelimit spans → RateLimitPolicy source reference
     """
-    response = client.get("/get", auth=auth)
-    request_id = response.headers.get("x-request-id")
-    assert response.status_code == 200
-
     policy_spans = tracing.get_spans_by_operation(
-        request_id=request_id, service="wasm-shim", operation_name=operation_name, tag_name="request_id"
+        request_id=trace[200], service="wasm-shim", operation_name=operation_name, tag_name="request_id"
     )
     assert len(policy_spans) > 0, f"No {operation_name} span found in trace"
 
@@ -146,14 +142,8 @@ def test_spans_have_correct_policy_source_references(
     assert sources_value == expected_sources, f"Expected sources to be '{expected_sources}' but got '{sources_value}'"
 
 
-@pytest.mark.parametrize(
-    "expected_status_code, scenario",
-    [
-        (429, "rate_limit"),
-        (401, "auth_failure"),
-    ],
-)
-def test_send_reply_span_on_request_rejection(client, auth, tracing, expected_status_code, scenario):
+@pytest.mark.parametrize("expected_status_code", [429, 401])
+def test_send_reply_span_on_request_rejection(trace, tracing, expected_status_code):
     """
     Test that send_reply spans capture correct metadata for request rejections.
 
@@ -166,30 +156,13 @@ def test_send_reply_span_on_request_rejection(client, auth, tracing, expected_st
     - 429 rate_limit: Request exceeds rate limit (after 3 successful requests)
     - 401 auth_failure: Request without valid authentication
     """
-    if scenario == "rate_limit":
-        responses = client.get_many(
-            "/get",
-            3,
-            auth=auth,
-        )
-        responses.assert_all(200)
-        response = client.get("/get", auth=auth)
-    else:
-        response = client.get(
-            "/get",
-        )
-
-    assert response.status_code == expected_status_code
-    request_id = response.headers.get("x-request-id")
-
     send_reply_spans = tracing.get_spans_by_operation(
-        request_id=request_id, service="wasm-shim", operation_name="send_reply", tag_name="request_id"
+        request_id=trace[expected_status_code], service="wasm-shim", operation_name="send_reply", tag_name="request_id"
     )
     assert len(send_reply_spans) > 0
 
     span = send_reply_spans[0]
     tags = tracing.get_tags_dict(span)
-    status_code_tag = tags["status_code"]
-    assert str(status_code_tag) == str(
+    assert str(tags["status_code"]) == str(
         expected_status_code
     ), f"Expected status_code {expected_status_code} in send_reply span, got {tags['status_code']}"
