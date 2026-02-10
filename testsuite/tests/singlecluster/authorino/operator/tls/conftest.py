@@ -164,7 +164,7 @@ def gateway(
     envoy_ca_secret = create_secret(envoy_authority, "backendca", labels=authorino_labels)
     envoy_secret = create_secret(envoy_cert, "envoycert")
 
-    envoy = TLSEnvoy(
+    envoy = TLSEnvoy(  # pylint: disable=abstract-class-instantiated
         cluster,
         blame("gw"),
         authorino,

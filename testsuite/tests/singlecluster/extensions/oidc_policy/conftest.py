@@ -10,7 +10,9 @@ import pytest
 
 from testsuite.gateway import Gateway, GatewayListener
 from testsuite.gateway.gateway_api.gateway import KuadrantGateway
+from testsuite.gateway.gateway_api.metrics_gateway import MetricsServiceGateway
 from testsuite.kuadrant.extensions.oidc_policy import OIDCPolicy
+from testsuite.kubernetes.service import ServicePort
 
 
 @pytest.fixture(scope="module")
@@ -23,6 +25,25 @@ def gateway(request, domain_name, base_domain, cluster, blame, label) -> Gateway
     gw.commit()
     gw.wait_for_ready()
     return gw
+
+
+@pytest.fixture(scope="module")
+def gateway_metrics_service(request, gateway, cluster, blame, label, exposer):  # pylint: disable=unused-argument
+    """Create OpenShift Route to expose gateway metrics, bypassing Gateway/OIDC."""
+    # Create OpenShift Route directly to metrics service (bypasses Gateway and OIDC)
+    metrics_service = MetricsServiceGateway.create_instance(
+        cluster,
+        blame("metrics"),
+        selector={"gateway.networking.k8s.io/gateway-name": gateway.name()},
+        ports=[ServicePort(name="api", port=15020, targetPort=15020)],
+        labels={"app": label},
+        service_type="LoadBalancer",
+    )
+
+    metrics_service.commit()
+    metrics_service.wait_for_ready()
+
+    return exposer.expose_hostname(blame("metrics"), metrics_service)
 
 
 # JWT Cookie Helper fixture
@@ -44,21 +65,23 @@ def oidc_policy_provider_config(oidc_provider, test_client):
 
 
 @pytest.fixture(scope="module")
-def oidc_policy(cluster, blame, oidc_policy_provider_config, gateway):
+def oidc_policy(cluster, blame, oidc_policy_provider_config, gateway, gateway_metrics_service):
     """Create OIDC policy instance for testing.
 
     Note: This fixture depends on 'provider' which should be defined in each test file
     with the appropriate client-specific configuration.
     """
-    oidc_policy = OIDCPolicy.create_instance(
-        cluster, blame("oidc-policy"), gateway, provider=oidc_policy_provider_config
-    )
-    return oidc_policy
+    policy = OIDCPolicy.create_instance(cluster, blame("oidc-policy"), gateway, provider=oidc_policy_provider_config)
+    policy.set_gateway_metrics_service(gateway_metrics_service)
+    return policy
 
 
 @pytest.fixture(scope="module", autouse=True)
-def commit(request, oidc_policy):
-    """Commit and wait for OIDC policy to be ready."""
+def commit(request, route, oidc_policy):  # pylint: disable=unused-argument
+    """Commit and wait for OIDC policy to be ready (including Envoy application).
+
+    Depends on route to ensure proper ordering: route must exist before policy is applied.
+    """
     request.addfinalizer(oidc_policy.delete)
     oidc_policy.commit()
     oidc_policy.wait_for_ready()
