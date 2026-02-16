@@ -21,7 +21,7 @@ def auth_state_file(browser, cluster, testconfig, request):
     request.addfinalizer(state_file.close)
 
     # Create temporary context for login
-    temp_context = browser.new_context()
+    temp_context = browser.new_context(ignore_https_errors=True)
     page = temp_context.new_page()
 
     # Perform login
@@ -57,6 +57,7 @@ def browser_context_args(browser_context_args, auth_state_file):
     return {
         **browser_context_args,
         "storage_state": auth_state_file,  # Load cookies/session from file
+        "ignore_https_errors": True,
     }
 
 
