@@ -24,6 +24,7 @@ openshift-client = ">=2"
 apyproxy = "*"
 weakget = "*"
 pytest-playwright = "*"
+playwright = "1.57.0"
 
 [tool.poetry.group.dev.dependencies]
 mypy = "*"
