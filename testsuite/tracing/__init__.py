@@ -24,3 +24,9 @@ class TracingClient(abc.ABC):
     @abc.abstractmethod
     def get_trace(self, request_id: str, service: str, tag_name: str, tags: dict = None) -> list:
         """Search traces in tracing client by service name and tag."""
+
+    @abc.abstractmethod
+    def get_full_trace(
+        self, request_id: str, service: str, min_processes: int, tag_name: str = "request_id", tags: dict = None
+    ) -> list:
+        """Gets trace, retrying until at least `min_processes` service processes are present."""

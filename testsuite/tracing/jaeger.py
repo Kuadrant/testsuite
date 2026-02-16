@@ -51,7 +51,29 @@ class JaegerClient(TracingClient):
         spans = self.get_spans(request_id=request_id, service=service, tag_name=tag_name, tags=tags)
         return [span for span in spans if span.get("operationName") == operation_name]
 
+    def get_full_trace(self, request_id, service, min_processes, tag_name="request_id", tags=None):
+        """Gets trace, retrying until at least `min_processes` service processes are present."""
+
+        @backoff.on_predicate(
+            backoff.fibo,
+            lambda x: len(x) == 0 or len(x[0]["processes"]) < min_processes,
+            max_tries=5,
+            jitter=None,
+        )
+        def _fetch():
+            return self.get_trace(request_id=request_id, service=service, tag_name=tag_name, tags=tags)
+
+        return _fetch()
+
     @staticmethod
     def get_tags_dict(span):
         """Converts span tags list to dictionary for easier access."""
         return {tag["key"]: tag["value"] for tag in span.get("tags", [])}
+
+    @staticmethod
+    def get_parent_id(span):
+        """Extracts parent span ID from the CHILD_OF reference. Returns None if no parent."""
+        for ref in span.get("references", []):
+            if ref["refType"] == "CHILD_OF":
+                return ref["spanID"]
+        return None
