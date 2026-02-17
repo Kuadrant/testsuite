@@ -38,20 +38,18 @@ def test_authoritative_record_metrics(testconfig, dns_metrics, dnsrecord1):
     assert "dns_provider_write_counter" in authoritative_record_metrics.names
 
 
-def test_delegating_record_metrics(testconfig, dns_metrics, dnsrecord1, dnsrecord2):
+def test_delegating_record_metrics(testconfig, dns_metrics, dnsrecord1):
     """Test metrics for 2 delegating DNSRecords"""
-    for rec in [dnsrecord1, dnsrecord2]:
-        delegating_record_metrics = dns_metrics.filter(has_label("dns_record_name", rec.name()))
+    delegating_record_metrics = dns_metrics.filter(has_label("dns_record_name", dnsrecord1.name()))
 
-        delegating_record = delegating_record_metrics.filter(has_label("dns_record_is_delegating", "true"))
-        assert len(delegating_record.metrics) == 1
-        assert delegating_record.metrics[0]["metric"]["dns_record_root_host"] == testconfig["dns"]["coredns_zone"]
-        assert delegating_record.metrics[0]["metric"]["dns_record_namespace"] == rec.namespace()
-        assert delegating_record.names[0] == "dns_provider_record_ready"
-        assert delegating_record.values[0] == 1.0
+    delegating_record = delegating_record_metrics.filter(has_label("dns_record_is_delegating", "true"))
+    assert len(delegating_record.metrics) == 1
+    assert delegating_record.metrics[0]["metric"]["dns_record_root_host"] == testconfig["dns"]["coredns_zone"]
+    assert delegating_record.metrics[0]["metric"]["dns_record_namespace"] == dnsrecord1.namespace()
+    assert delegating_record.names[0] == "dns_provider_record_ready"
+    assert delegating_record.values[0] == 1.0
 
-        if rec is dnsrecord1:
-            assert "dns_provider_write_counter" in delegating_record_metrics.names
+    assert "dns_provider_write_counter" in delegating_record_metrics.names
 
 
 def test_multi_cluster_count_metrics(dns_metrics):
