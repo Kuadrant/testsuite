@@ -2,6 +2,8 @@
 
 from functools import cached_property
 from urllib.parse import urlparse
+import tempfile
+import yaml
 
 import openshift_client as oc
 from openshift_client import Context, OpenShiftPythonException
@@ -44,6 +46,13 @@ class KubernetesClient:
         context.kubeconfig_path = self._kubeconfig_path
 
         return context
+
+    @property
+    def current_context_name(self) -> str:
+        """Returns the current context name from the kubeconfig"""
+        if self._kubeconfig_path is None:
+            raise ValueError("Kubeconfig path is not set")
+        return self.do_action("config", "current-context").out().strip()
 
     @property
     def api_url(self):
@@ -147,3 +156,25 @@ class KubernetesClient:
             obj = selector.object(cls=cls)
             obj.context = self.context
         return obj
+
+    def create_merged_kubeconfig(self, cluster2: "KubernetesClient") -> str:
+        """
+        Creates a merged kubeconfig from this instance and another KubernetesClient instance.
+        Returns the path to the temporary kubeconfig file.
+        """
+        with self.context:
+            config1_yaml = oc.invoke("config", ["view", "--minify=true", "--flatten=true"]).out()
+        with cluster2.context:
+            config2_yaml = oc.invoke("config", ["view", "--minify=true", "--flatten=true"]).out()
+
+        config1 = yaml.safe_load(config1_yaml)
+        config2 = yaml.safe_load(config2_yaml)
+
+        merged_config = config1.copy()
+        merged_config["clusters"].extend(config2.get("clusters", []))
+        merged_config["contexts"].extend(config2.get("contexts", []))
+        merged_config["users"].extend(config2.get("users", []))
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".kubeconfig", delete=False) as temp_file:
+            yaml.safe_dump(merged_config, temp_file)
+            return temp_file.name

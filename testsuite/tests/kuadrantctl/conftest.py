@@ -10,7 +10,7 @@ from testsuite.backend.httpbin import Httpbin
 from testsuite.gateway.gateway_api.gateway import KuadrantGateway
 from testsuite.gateway.gateway_api.route import HTTPRoute
 from testsuite.gateway import Gateway, GatewayListener, Hostname
-from testsuite.kuadrantctl import KuadrantCTL
+from testsuite.cli.kuadrantctl import KuadrantCTL
 from testsuite.oas import OASWrapper
 
 
