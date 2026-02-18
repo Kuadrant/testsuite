@@ -78,21 +78,40 @@ launch_import_rq = {
 }
 launch_import_rq["attributes"].extend([{"key": "ocp", "value": args.ocp_version}] if args.ocp_version else [])
 
-component_metadata_count = 0
-if xml is not None:
+cluster_info = {}
+
+for junitfile in args.junitfile:
     try:
-        global_properties = xml.xpath("//testcase/properties/property")
-        for prop in global_properties:
+        xml = etree.parse(junitfile)
+        properties = xml.xpath("//testcase/properties/property")
+        for prop in properties:
             name = prop.get("name", "")
             value = prop.get("value", "")
-            if name.endswith(("-sha", "-tag")) or name in ["Kuadrant", "kuadrant_image", "kuadrant_cluster"]:
-                launch_import_rq["attributes"].append({"key": name, "value": str(value)})
-                component_metadata_count += 1
-        
-        if component_metadata_count > 0:
-            print(f"Added {component_metadata_count} component metadata attributes from junit XML")
+
+        if name.startswith("https://"):
+            parts = value.split("|")
+            cluster_kubeconfig = None
+            cluster_entry_parts = []
+            for part in parts:
+                if ":" in part:
+                    key, val = part.split(":", 1)
+                    if key == "Name":
+                        cluster_kubeconfig = val
+                    else:
+                        cluster_entry_parts.append(f"  - {key}: `{val}`\n")
+            header = f"- {name} ({cluster_kubeconfig})\n" if cluster_kubeconfig else f"- {name}\n"
+            cluster_entry = header + "".join(cluster_entry_parts)
+            cluster_info[name] = cluster_entry.rstrip()
     except Exception as e:
-        print(f"Warning: Failed to extract component metadata from junit XML: {e}")
+        print(f"Warning: Failed to extract metadata from {junitfile}: {e}")
+
+if cluster_info:
+    count = len(cluster_info)
+    cluster_section = f"\n\n**Cluster Information ({count} cluster{'s' if count != 1 else ''}):**\n" + "\n".join(cluster_info.values())
+    if launch_import_rq["description"]:
+        launch_import_rq["description"] += cluster_section
+    else:
+        launch_import_rq["description"] = cluster_section.strip()
 
 print(
     requests.post(
