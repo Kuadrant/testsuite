@@ -75,7 +75,7 @@ def authorization(authorization, realm_role, mockserver_expectation):
 @pytest.fixture(scope="module")
 def gateway(request, authorino, cluster, blame, module_label, testconfig, keycloak):
     """Deploys Envoy with additional JWT plain identity test setup."""
-    envoy = JwtEnvoy(
+    envoy = JwtEnvoy(  # pylint: disable=abstract-class-instantiated
         cluster,
         blame("gw"),
         authorino,
