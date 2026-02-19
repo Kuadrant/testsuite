@@ -22,5 +22,9 @@ class TracingClient(abc.ABC):
         """Returns URL for application to deposit traces"""
 
     @abc.abstractmethod
-    def search(self, request_id: str, service: str, tags: dict) -> list:
-        """Search traces in tracing client by tags service name, `authorino.request_id` and tag"""
+    def get_trace(self, service: str, tags: dict) -> list:
+        """Search traces in tracing client by service name and tags."""
+
+    @abc.abstractmethod
+    def get_full_trace(self, service: str, min_processes: int, tags: dict) -> list:
+        """Gets trace, retrying until at least `min_processes` service processes are present."""
