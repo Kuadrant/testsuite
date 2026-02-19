@@ -22,11 +22,9 @@ class TracingClient(abc.ABC):
         """Returns URL for application to deposit traces"""
 
     @abc.abstractmethod
-    def get_trace(self, request_id: str, service: str, tag_name: str, tags: dict = None) -> list:
-        """Search traces in tracing client by service name and tag."""
+    def get_trace(self, service: str, tags: dict) -> list:
+        """Search traces in tracing client by service name and tags."""
 
     @abc.abstractmethod
-    def get_full_trace(
-        self, request_id: str, service: str, min_processes: int, tag_name: str = "request_id", tags: dict = None
-    ) -> list:
+    def get_full_trace(self, service: str, min_processes: int, tags: dict) -> list:
         """Gets trace, retrying until at least `min_processes` service processes are present."""

@@ -1,5 +1,7 @@
 """Jaeger Tracing client"""
 
+import json
+
 import backoff
 from apyproxy import ApyProxy
 from httpx import Client
@@ -29,29 +31,24 @@ class JaegerClient(TracingClient):
         return self._query_url
 
     @backoff.on_predicate(backoff.fibo, lambda x: x == [], max_tries=7, jitter=None)
-    def get_trace(self, request_id: str, service: str, tag_name: str, tags=None):
+    def get_trace(self, service: str, tags: dict):
         """Gets trace from tracing backend Tempo or Jaeger."""
-        if tags is None:
-            tags = {}
+        params = {"service": service, "tags": json.dumps(tags)}
+        return self.query.api.traces.get(params=params).json()["data"]
 
-        tags.update({"service": service, "tags": f'{{"{tag_name}":"{request_id}"}}'})
-        return self.query.api.traces.get(params=tags).json()["data"]
-
-    def get_spans(self, request_id: str, service: str, tag_name: str = "request_id", tags=None):
+    def get_spans(self, service: str, tags: dict):
         """Gets spans from trace. Returns list of spans or empty list if trace not found."""
-        trace = self.get_trace(request_id=request_id, service=service, tag_name=tag_name, tags=tags)
+        trace = self.get_trace(service=service, tags=tags)
         if not trace:
             return []
         return trace[0].get("spans", [])
 
-    def get_spans_by_operation(
-        self, request_id: str, service: str, operation_name: str, tag_name: str = "request_id", tags=None
-    ):
+    def get_spans_by_operation(self, service: str, operation_name: str, tags: dict):
         """Gets spans filtered by operation name from trace."""
-        spans = self.get_spans(request_id=request_id, service=service, tag_name=tag_name, tags=tags)
+        spans = self.get_spans(service=service, tags=tags)
         return [span for span in spans if span.get("operationName") == operation_name]
 
-    def get_full_trace(self, request_id, service, min_processes, tag_name="request_id", tags=None):
+    def get_full_trace(self, service: str, min_processes: int, tags: dict):
         """Gets trace, retrying until at least `min_processes` service processes are present."""
 
         @backoff.on_predicate(
@@ -61,7 +58,7 @@ class JaegerClient(TracingClient):
             jitter=None,
         )
         def _fetch():
-            return self.get_trace(request_id=request_id, service=service, tag_name=tag_name, tags=tags)
+            return self.get_trace(service=service, tags=tags)
 
         return _fetch()
 

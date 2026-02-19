@@ -95,7 +95,7 @@ def test_trace_includes_all_kuadrant_services(trace, tracing, label):
     - gateway: Istio/Envoy gateway service
     """
 
-    traces = tracing.get_full_trace(request_id=trace[200], service="wasm-shim", min_processes=4)
+    traces = tracing.get_full_trace(service="wasm-shim", min_processes=4, tags={"request_id": trace[200]})
     assert len(traces) == 1, f"No trace was found in tracing backend with request_id: {trace[200]}"
 
     processes = traces[0]["processes"]
@@ -115,7 +115,7 @@ def test_relevant_services_on_auth_denied(trace, tracing, label):
     Note: gateway service is not included since the request was sent without traceparent header.
     """
 
-    traces = tracing.get_full_trace(request_id=trace[401], service="wasm-shim", min_processes=3)
+    traces = tracing.get_full_trace(service="wasm-shim", min_processes=3, tags={"request_id": trace[401]})
     assert len(traces) == 1, f"No trace was found in tracing backend with request_id: {trace[401]}"
 
     processes = traces[0]["processes"]
@@ -151,7 +151,7 @@ def test_spans_have_correct_policy_source_references(trace, tracing, operation_n
     - ratelimit spans → RateLimitPolicy source reference
     """
     policy_spans = tracing.get_spans_by_operation(
-        request_id=trace[200], service="wasm-shim", operation_name=operation_name, tag_name="request_id"
+        service="wasm-shim", operation_name=operation_name, tags={"request_id": trace[200]}
     )
     assert len(policy_spans) > 0, f"No {operation_name} span found in trace"
 
@@ -178,7 +178,7 @@ def test_send_reply_span_on_request_rejection(trace, tracing, expected_status_co
     - 401 auth_failure: Request without valid authentication
     """
     send_reply_spans = tracing.get_spans_by_operation(
-        request_id=trace[expected_status_code], service="wasm-shim", operation_name="send_reply", tag_name="request_id"
+        service="wasm-shim", operation_name="send_reply", tags={"request_id": trace[expected_status_code]}
     )
     assert len(send_reply_spans) > 0
 
@@ -198,7 +198,7 @@ def test_send_reply_span_not_on_successful_response(trace, tracing):
     no send_reply span should be emitted.
     """
     send_reply_spans = tracing.get_spans_by_operation(
-        request_id=trace[200], service="wasm-shim", operation_name="send_reply", tag_name="request_id"
+        service="wasm-shim", operation_name="send_reply", tags={"request_id": trace[200]}
     )
     assert (
         len(send_reply_spans) == 0
@@ -213,7 +213,7 @@ def test_span_hierarchy(trace, tracing):
     parent-child relationships between spans across wasm-shim, authorino, and limitador.
     """
 
-    traces = tracing.get_full_trace(request_id=trace[200], service="wasm-shim", min_processes=4)
+    traces = tracing.get_full_trace(service="wasm-shim", min_processes=4, tags={"request_id": trace[200]})
     assert len(traces) == 1, f"No trace was found in tracing backend with request_id: {trace[200]}"
 
     spans = traces[0]["spans"]

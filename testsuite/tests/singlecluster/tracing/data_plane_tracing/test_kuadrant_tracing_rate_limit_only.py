@@ -49,7 +49,7 @@ def test_relevant_services_rate_limit_only(trace, tracing, label):
     Trace should not contain authorino since no authorization is involved.
     """
 
-    traces = tracing.get_full_trace(request_id=trace, service="wasm-shim", min_processes=3)
+    traces = tracing.get_full_trace(service="wasm-shim", min_processes=3, tags={"request_id": trace})
     assert len(traces) == 1, f"No trace was found in tracing backend with request_id: {trace}"
 
     processes = traces[0]["processes"]
