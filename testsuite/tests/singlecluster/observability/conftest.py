@@ -4,6 +4,7 @@ import backoff
 import pytest
 from openshift_client import selector
 
+from testsuite.config import settings
 from testsuite.kubernetes.monitoring.pod_monitor import PodMonitor
 from testsuite.kubernetes.monitoring.service_monitor import ServiceMonitor
 
@@ -64,6 +65,14 @@ def pod_monitor(cluster):
     assert len(monitor) == 1, "PodMonitor 'istio-pod-monitor' not found"
 
     return monitor[0]
+
+
+@pytest.fixture(scope="module")
+def operator_metrics(prometheus):
+    """Return all metrics from the Kuadrant operator metrics endpoint"""
+    return prometheus.get_metrics(
+        labels={"service": "kuadrant-operator-metrics", "namespace": settings["service_protection"]["system_project"]}
+    )
 
 
 @pytest.fixture(scope="module")
