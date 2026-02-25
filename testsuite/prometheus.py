@@ -41,6 +41,9 @@ class Metrics:
         After the filtering, new Metrics object will be returned."""
         return Metrics([m for m in self.metrics if func(m)])
 
+    def __len__(self):
+        return len(self.metrics)
+
     @property
     def names(self) -> list[str]:
         """Return list of metrics names"""
