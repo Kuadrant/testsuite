@@ -31,10 +31,14 @@ class JaegerClient(TracingClient):
         return self._query_url
 
     @backoff.on_predicate(backoff.fibo, lambda x: x == [], max_tries=7, jitter=None)
-    def get_trace(self, service: str, tags: dict):
-        """Gets trace from tracing backend Tempo or Jaeger."""
+    def get_trace(self, service: str, tags: dict, min_processes: int = 0):
+        """Gets trace from tracing backend Tempo or Jaeger.
+        If min_processes is set, retries until at least that many service processes are present."""
         params = {"service": service, "tags": json.dumps(tags)}
-        return self.query.api.traces.get(params=params).json()["data"]
+        traces = self.query.api.traces.get(params=params).json()["data"]
+        if not traces or (min_processes and len(traces[0]["processes"]) < min_processes):
+            return []
+        return traces
 
     def get_spans(self, service: str, tags: dict):
         """Gets spans from trace. Returns list of spans or empty list if trace not found."""
@@ -47,20 +51,6 @@ class JaegerClient(TracingClient):
         """Gets spans filtered by operation name from trace."""
         spans = self.get_spans(service=service, tags=tags)
         return [span for span in spans if span.get("operationName") == operation_name]
-
-    def get_full_trace(self, service: str, min_processes: int, tags: dict):
-        """Gets trace, retrying until at least `min_processes` service processes are present."""
-
-        @backoff.on_predicate(
-            backoff.fibo,
-            lambda x: len(x) == 0 or len(x[0]["processes"]) < min_processes,
-            max_tries=5,
-            jitter=None,
-        )
-        def _fetch():
-            return self.get_trace(service=service, tags=tags)
-
-        return _fetch()
 
     @staticmethod
     def get_tags_dict(span):

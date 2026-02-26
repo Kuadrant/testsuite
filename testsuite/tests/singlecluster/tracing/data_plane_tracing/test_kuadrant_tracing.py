@@ -83,7 +83,15 @@ def trace(client, auth):
     }
 
 
-def test_trace_includes_all_kuadrant_services(trace, tracing, label):
+@pytest.fixture(scope="module")
+def wasm_trace_200(trace, tracing):
+    """Fetches and caches the full wasm-shim trace for the 200 response."""
+    traces = tracing.get_trace(service="wasm-shim", min_processes=4, tags={"request_id": trace[200]})
+    assert len(traces) == 1, f"No trace was found in tracing backend with request_id: {trace[200]}"
+    return traces[0]
+
+
+def test_trace_includes_all_kuadrant_services(wasm_trace_200, label):
     """
     Test that distributed tracing captures all Kuadrant components in a single trace.
 
@@ -95,10 +103,7 @@ def test_trace_includes_all_kuadrant_services(trace, tracing, label):
     - gateway: Istio/Envoy gateway service
     """
 
-    traces = tracing.get_full_trace(service="wasm-shim", min_processes=4, tags={"request_id": trace[200]})
-    assert len(traces) == 1, f"No trace was found in tracing backend with request_id: {trace[200]}"
-
-    processes = traces[0]["processes"]
+    processes = wasm_trace_200["processes"]
     process_services = {process["serviceName"] for process in processes.values()}
 
     services = ["wasm-shim", "authorino", "limitador", f"{label}.kuadrant"]
@@ -115,7 +120,7 @@ def test_relevant_services_on_auth_denied(trace, tracing, label):
     Note: gateway service is not included since the request was sent without traceparent header.
     """
 
-    traces = tracing.get_full_trace(service="wasm-shim", min_processes=3, tags={"request_id": trace[401]})
+    traces = tracing.get_trace(service="wasm-shim", min_processes=3, tags={"request_id": trace[401]})
     assert len(traces) == 1, f"No trace was found in tracing backend with request_id: {trace[401]}"
 
     processes = traces[0]["processes"]
@@ -137,7 +142,9 @@ def test_relevant_services_on_auth_denied(trace, tracing, label):
         ("ratelimit", "rate_limit", "ratelimitpolicy"),
     ],
 )
-def test_spans_have_correct_policy_source_references(trace, tracing, operation_name, policy, policy_kind, request):
+def test_spans_have_correct_policy_source_references(
+    wasm_trace_200, tracing, operation_name, policy, policy_kind, request
+):
     """
     Test that trace spans contain correct policy source references.
 
@@ -150,9 +157,7 @@ def test_spans_have_correct_policy_source_references(trace, tracing, operation_n
     - auth spans → AuthPolicy source reference
     - ratelimit spans → RateLimitPolicy source reference
     """
-    policy_spans = tracing.get_spans_by_operation(
-        service="wasm-shim", operation_name=operation_name, tags={"request_id": trace[200]}
-    )
+    policy_spans = [span for span in wasm_trace_200["spans"] if span["operationName"] == operation_name]
     assert len(policy_spans) > 0, f"No {operation_name} span found in trace"
 
     span = policy_spans[0]
@@ -189,7 +194,7 @@ def test_send_reply_span_on_request_rejection(trace, tracing, expected_status_co
     ), f"Expected status_code {expected_status_code} in send_reply span, got {tags['status_code']}"
 
 
-def test_send_reply_span_not_on_successful_response(trace, tracing):
+def test_send_reply_span_not_on_successful_response(wasm_trace_200):
     """
     Test that send_reply span is not present for successful (200) responses.
 
@@ -197,15 +202,13 @@ def test_send_reply_span_not_on_successful_response(trace, tracing):
     (e.g., 401 or 429). For successful responses that pass through all policies,
     no send_reply span should be emitted.
     """
-    send_reply_spans = tracing.get_spans_by_operation(
-        service="wasm-shim", operation_name="send_reply", tags={"request_id": trace[200]}
-    )
+    send_reply_spans = [span for span in wasm_trace_200["spans"] if span["operationName"] == "send_reply"]
     assert (
         len(send_reply_spans) == 0
     ), f"Expected no send_reply spans for successful response, but found {len(send_reply_spans)}"
 
 
-def test_span_hierarchy(trace, tracing):
+def test_span_hierarchy(wasm_trace_200, tracing):
     """
     Test that spans in a successful (200) trace form the expected parent-child hierarchy.
 
@@ -213,10 +216,7 @@ def test_span_hierarchy(trace, tracing):
     parent-child relationships between spans across wasm-shim, authorino, and limitador.
     """
 
-    traces = tracing.get_full_trace(service="wasm-shim", min_processes=4, tags={"request_id": trace[200]})
-    assert len(traces) == 1, f"No trace was found in tracing backend with request_id: {trace[200]}"
-
-    spans = traces[0]["spans"]
+    spans = wasm_trace_200["spans"]
     assert len(spans) > 0, "No spans found in trace"
 
     span_by_id = {span["spanID"]: span for span in spans}
