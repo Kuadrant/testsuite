@@ -24,12 +24,10 @@ def test_basic(client):
 def test_durability(client, limitador, rate_limit):
     """
     Basic test checking that after Limitador pod restart, counters are preserved.
-    'hard' rollout is required due to pod getting stuck in graceful rollout
-        see https://github.com/Kuadrant/limitador-operator/issues/196
     """
     responses = client.get_many("/get", LIMIT.limit)
     responses.assert_all(status_code=200)
-    limitador.deployment.rollout(hard=True)
+    limitador.deployment.rollout()
     limitador.wait_for_ready()
     rate_limit.wait_for_ready()
     assert client.get("/get").status_code == 429
