@@ -26,13 +26,10 @@ def commit(request, rate_limit):
 
 
 @pytest.fixture(scope="module")
-def trace(client):
+def trace_429(client, tracing):
     """
-    Sends requests to exhaust the rate limit and produce a 429 response.
-
-    Returns the request_id of the 429 response for trace lookups.
-    The 429 request includes a traceparent header to link gateway/istio traces
-    with wasm-shim traces in a single distributed trace.
+    Sends requests to exhaust the rate limit, produces a 429 response,
+    and fetches the full wasm-shim trace.
     """
     responses = client.get_many("/get", 3)
     responses.assert_all(200)
@@ -40,19 +37,19 @@ def trace(client):
     response_429 = client.get("/get", headers={"Traceparent": f"00-{os.urandom(16).hex()}-{os.urandom(8).hex()}-01"})
     assert response_429.status_code == 429
 
-    return response_429.headers.get("x-request-id")
+    request_id = response_429.headers.get("x-request-id")
+    traces = tracing.get_trace(service="wasm-shim", min_processes=3, tags={"request_id": request_id})
+    assert len(traces) == 1, f"No trace was found in tracing backend with request_id: {request_id}"
+    return traces[0]
 
 
-def test_relevant_services_rate_limit_only(trace, tracing, label):
+def test_relevant_services_rate_limit_only(trace_429, label):
     """
     Test that traces with only a RateLimitPolicy include all relevant services (wasm-shim, limitador, and gateway).
     Trace should not contain authorino since no authorization is involved.
     """
 
-    traces = tracing.get_trace(service="wasm-shim", min_processes=3, tags={"request_id": trace})
-    assert len(traces) == 1, f"No trace was found in tracing backend with request_id: {trace}"
-
-    processes = traces[0]["processes"]
+    processes = trace_429["processes"]
     process_services = {process["serviceName"] for process in processes.values()}
 
     services = ["wasm-shim", "limitador", f"{label}.kuadrant"]

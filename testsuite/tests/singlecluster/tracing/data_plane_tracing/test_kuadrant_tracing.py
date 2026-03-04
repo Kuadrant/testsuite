@@ -52,13 +52,12 @@ def rate_limit(rate_limit):
 
 
 @pytest.fixture(scope="module")
-def trace(client, auth):
+def trace_request_ids(client, auth):
     """
-    Sends requests producing 200, 429, and 401 responses.
+    Sends requests producing 200 and 429 responses.
 
-    Returns a dict mapping status code to request_id for trace lookups.
-    The 200 request includes a traceparent header to link gateway/istio traces
-    with wasm-shim traces in a single distributed trace.
+    Both are generated together because they share rate limit state:
+    the 200 request consumes 1 of 3 allowed, 2 more exhaust the limit, and the next triggers 429.
     """
     response_200 = client.get(
         "/get", auth=auth, headers={"Traceparent": f"00-{os.urandom(16).hex()}-{os.urandom(8).hex()}-01"}
@@ -73,25 +72,44 @@ def trace(client, auth):
     )
     assert response_429.status_code == 429
 
-    response_401 = client.get("/get", headers={"Traceparent": f"00-{os.urandom(16).hex()}-{os.urandom(8).hex()}-01"})
-    assert response_401.status_code == 401
-
-    return {
-        200: response_200.headers.get("x-request-id"),
-        429: response_429.headers.get("x-request-id"),
-        401: response_401.headers.get("x-request-id"),
-    }
+    return (
+        response_200.headers.get("x-request-id"),
+        response_429.headers.get("x-request-id"),
+    )
 
 
 @pytest.fixture(scope="module")
-def wasm_trace_200(trace, tracing):
+def trace_200(trace_request_ids, tracing):
     """Fetches and caches the full wasm-shim trace for the 200 response."""
-    traces = tracing.get_trace(service="wasm-shim", min_processes=4, tags={"request_id": trace[200]})
-    assert len(traces) == 1, f"No trace was found in tracing backend with request_id: {trace[200]}"
+    request_id = trace_request_ids[0]
+    traces = tracing.get_trace(service="wasm-shim", min_processes=4, tags={"request_id": request_id})
+    assert len(traces) == 1, f"No trace was found in tracing backend with request_id: {request_id}"
     return traces[0]
 
 
-def test_trace_includes_all_kuadrant_services(wasm_trace_200, label):
+@pytest.fixture(scope="module")
+def trace_429(trace_request_ids, tracing):
+    """Fetches and caches the full wasm-shim trace for the 429 response."""
+    request_id = trace_request_ids[1]
+    traces = tracing.get_trace(service="wasm-shim", min_processes=4, tags={"request_id": request_id})
+    assert len(traces) == 1, f"No trace was found in tracing backend with request_id: {request_id}"
+    return traces[0]
+
+
+@pytest.fixture(scope="module")
+def trace_401(client, tracing):
+    """
+    Sends request producing 401 response and fetches the full wasm-shim trace"""
+    response_401 = client.get("/get", headers={"Traceparent": f"00-{os.urandom(16).hex()}-{os.urandom(8).hex()}-01"})
+    assert response_401.status_code == 401
+
+    request_id = response_401.headers.get("x-request-id")
+    traces = tracing.get_trace(service="wasm-shim", min_processes=3, tags={"request_id": request_id})
+    assert len(traces) == 1, f"No trace was found in tracing backend with request_id: {request_id}"
+    return traces[0]
+
+
+def test_trace_includes_all_kuadrant_services(trace_200, label):
     """
     Test that distributed tracing captures all Kuadrant components in a single trace.
 
@@ -103,7 +121,7 @@ def test_trace_includes_all_kuadrant_services(wasm_trace_200, label):
     - gateway: Istio/Envoy gateway service
     """
 
-    processes = wasm_trace_200["processes"]
+    processes = trace_200["processes"]
     process_services = {process["serviceName"] for process in processes.values()}
 
     services = ["wasm-shim", "authorino", "limitador", f"{label}.kuadrant"]
@@ -111,7 +129,7 @@ def test_trace_includes_all_kuadrant_services(wasm_trace_200, label):
         assert service in process_services, f"Service '{service}' not found in trace processes: {process_services}"
 
 
-def test_relevant_services_on_auth_denied(trace, tracing, label):
+def test_relevant_services_on_auth_denied(trace_401, label):
     """
     Test that auth-denied traces only include services up to the authorization step.
 
@@ -120,10 +138,7 @@ def test_relevant_services_on_auth_denied(trace, tracing, label):
     Note: gateway service is not included since the request was sent without traceparent header.
     """
 
-    traces = tracing.get_trace(service="wasm-shim", min_processes=3, tags={"request_id": trace[401]})
-    assert len(traces) == 1, f"No trace was found in tracing backend with request_id: {trace[401]}"
-
-    processes = traces[0]["processes"]
+    processes = trace_401["processes"]
     process_services = {process["serviceName"] for process in processes.values()}
 
     services = ["wasm-shim", "authorino", f"{label}.kuadrant"]
@@ -142,9 +157,7 @@ def test_relevant_services_on_auth_denied(trace, tracing, label):
         ("ratelimit", "rate_limit", "ratelimitpolicy"),
     ],
 )
-def test_spans_have_correct_policy_source_references(
-    wasm_trace_200, tracing, operation_name, policy, policy_kind, request
-):
+def test_spans_have_correct_policy_source_references(trace_200, tracing, operation_name, policy, policy_kind, request):
     """
     Test that trace spans contain correct policy source references.
 
@@ -157,19 +170,16 @@ def test_spans_have_correct_policy_source_references(
     - auth spans → AuthPolicy source reference
     - ratelimit spans → RateLimitPolicy source reference
     """
-    policy_spans = [span for span in wasm_trace_200["spans"] if span["operationName"] == operation_name]
-    assert len(policy_spans) > 0, f"No {operation_name} span found in trace"
-
-    span = policy_spans[0]
-    tags = tracing.get_tags_dict(span)
-    sources_value = tags["sources"].strip('[]"')
     policy_obj = request.getfixturevalue(policy)
     expected_sources = f"{policy_kind}.kuadrant.io:kuadrant/{policy_obj.model.metadata['name']}"
-    assert sources_value == expected_sources, f"Expected sources to be '{expected_sources}' but got '{sources_value}'"
+    policy_spans = tracing.filter_spans(
+        trace_200["spans"], operation_name=operation_name, tags={"sources": expected_sources}
+    )
+    assert len(policy_spans) > 0, f"No {operation_name} span with sources '{expected_sources}' found in trace"
 
 
-@pytest.mark.parametrize("expected_status_code", [429, 401])
-def test_send_reply_span_on_request_rejection(trace, tracing, expected_status_code):
+@pytest.mark.parametrize("expected_status_code, trace_fixture", [(429, "trace_429"), (401, "trace_401")])
+def test_send_reply_span_on_request_rejection(tracing, expected_status_code, trace_fixture, request):
     """
     Test that send_reply spans capture correct metadata for request rejections.
 
@@ -182,19 +192,14 @@ def test_send_reply_span_on_request_rejection(trace, tracing, expected_status_co
     - 429 rate_limit: Request exceeds rate limit (after 3 successful requests)
     - 401 auth_failure: Request without valid authentication
     """
-    send_reply_spans = tracing.get_spans_by_operation(
-        service="wasm-shim", operation_name="send_reply", tags={"request_id": trace[expected_status_code]}
+    trace = request.getfixturevalue(trace_fixture)
+    send_reply_spans = tracing.filter_spans(
+        trace["spans"], operation_name="send_reply", tags={"status_code": expected_status_code}
     )
-    assert len(send_reply_spans) > 0
-
-    span = send_reply_spans[0]
-    tags = tracing.get_tags_dict(span)
-    assert str(tags["status_code"]) == str(
-        expected_status_code
-    ), f"Expected status_code {expected_status_code} in send_reply span, got {tags['status_code']}"
+    assert len(send_reply_spans) > 0, f"No send_reply span with status_code {expected_status_code} found in trace"
 
 
-def test_send_reply_span_not_on_successful_response(wasm_trace_200):
+def test_send_reply_span_not_on_successful_response(trace_200, tracing):
     """
     Test that send_reply span is not present for successful (200) responses.
 
@@ -202,59 +207,47 @@ def test_send_reply_span_not_on_successful_response(wasm_trace_200):
     (e.g., 401 or 429). For successful responses that pass through all policies,
     no send_reply span should be emitted.
     """
-    send_reply_spans = [span for span in wasm_trace_200["spans"] if span["operationName"] == "send_reply"]
+    send_reply_spans = tracing.filter_spans(trace_200["spans"], operation_name="send_reply")
     assert (
         len(send_reply_spans) == 0
     ), f"Expected no send_reply spans for successful response, but found {len(send_reply_spans)}"
 
 
-def test_span_hierarchy(wasm_trace_200, tracing):
+def assert_parent_child(tracing, spans, parent_op, child_op):
+    """Assert that child_op span is a direct child of parent_op span."""
+    parent_span = tracing.filter_spans(spans, operation_name=parent_op)[0]
+    child_span = tracing.filter_spans(spans, operation_name=child_op)[0]
+    actual_parent_id = tracing.get_parent_id(child_span)
+    assert (
+        actual_parent_id == parent_span["spanID"]
+    ), f"Expected '{child_op}' to be a child of '{parent_op}', but got parent {actual_parent_id}"
+
+
+def test_span_hierarchy(trace_200, tracing):
     """
     Test that spans in a successful (200) trace form the expected parent-child hierarchy.
-
-    Waits for the full distributed trace (all 4 service processes) and validates
-    parent-child relationships between spans across wasm-shim, authorino, and limitador.
+    Validates parent-child relationships between spans across wasm-shim, authorino, and limitador.
     """
 
-    spans = wasm_trace_200["spans"]
+    spans = trace_200["spans"]
     assert len(spans) > 0, "No spans found in trace"
 
-    span_by_id = {span["spanID"]: span for span in spans}
-
-    spans_by_operation = {}
-    for span in spans:
-        spans_by_operation.setdefault(span["operationName"], []).append(span)
-
-    expected_operations = [
-        "kuadrant_filter",
-        "auth",
-        "auth_request",
-        "auth_response",
-        "ratelimit",
-        "ratelimit_request",
-        "ratelimit_response",
-        "envoy.service.auth.v3.Authorization/Check",
-        "Check",
-        "should_rate_limit",
-        "check_and_update",
-    ]
-    for op in expected_operations:
-        assert op in spans_by_operation, f"Expected operation '{op}' not found in trace spans"
-
-    expected_children = {
-        spans_by_operation["kuadrant_filter"][0]["spanID"]: ["auth", "ratelimit"],
-        spans_by_operation["auth"][0]["spanID"]: ["auth_request", "auth_response"],
-        spans_by_operation["ratelimit"][0]["spanID"]: ["ratelimit_request", "ratelimit_response"],
-        spans_by_operation["auth_request"][0]["spanID"]: ["envoy.service.auth.v3.Authorization/Check"],
-        spans_by_operation["envoy.service.auth.v3.Authorization/Check"][0]["spanID"]: ["Check"],
-        spans_by_operation["ratelimit_request"][0]["spanID"]: ["should_rate_limit"],
-        spans_by_operation["should_rate_limit"][0]["spanID"]: ["check_and_update"],
+    expected_operations_hierarchy = {
+        "kuadrant_filter": ["auth", "ratelimit"],
+        "auth": ["auth_request", "auth_response"],
+        "ratelimit": ["ratelimit_request", "ratelimit_response"],
+        "auth_request": ["envoy.service.auth.v3.Authorization/Check"],
+        "envoy.service.auth.v3.Authorization/Check": ["Check"],
+        "ratelimit_request": ["should_rate_limit"],
+        "should_rate_limit": ["check_and_update"],
     }
-    for expected_parent_id, child_operations in expected_children.items():
-        for child_op in child_operations:
-            child_span = spans_by_operation[child_op][0]
-            actual_parent_id = tracing.get_parent_id(child_span)
-            assert actual_parent_id == expected_parent_id, (
-                f"Expected '{child_op}' parent to be '{span_by_id[expected_parent_id]['operationName']}' "
-                f"({expected_parent_id}), but got {actual_parent_id}"
-            )
+
+    for parent_op, child_ops in expected_operations_hierarchy.items():
+        assert tracing.filter_spans(
+            spans, operation_name=parent_op
+        ), f"Expected operation '{parent_op}' not found in trace spans"
+        for child_op in child_ops:
+            assert tracing.filter_spans(
+                spans, operation_name=child_op
+            ), f"Expected operation '{child_op}' not found in trace spans"
+            assert_parent_child(tracing, spans, parent_op, child_op)

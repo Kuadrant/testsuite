@@ -40,17 +40,21 @@ class JaegerClient(TracingClient):
             return []
         return traces
 
-    def get_spans(self, service: str, tags: dict):
-        """Gets spans from trace. Returns list of spans or empty list if trace not found."""
-        trace = self.get_trace(service=service, tags=tags)
-        if not trace:
-            return []
-        return trace[0].get("spans", [])
-
-    def get_spans_by_operation(self, service: str, operation_name: str, tags: dict):
-        """Gets spans filtered by operation name from trace."""
-        spans = self.get_spans(service=service, tags=tags)
-        return [span for span in spans if span.get("operationName") == operation_name]
+    @staticmethod
+    def filter_spans(spans, operation_name=None, tags=None):
+        """Filters spans by operation name and/or tag values.
+        Tag matching checks if the expected value is contained in the span's tag value."""
+        result = spans
+        if operation_name:
+            result = [span for span in result if span.get("operationName") == operation_name]
+        if tags:
+            for key, expected_value in tags.items():
+                result = [
+                    span
+                    for span in result
+                    if any(str(expected_value) in str(t["value"]) for t in span.get("tags", []) if t["key"] == key)
+                ]
+        return result
 
     @staticmethod
     def get_tags_dict(span):
