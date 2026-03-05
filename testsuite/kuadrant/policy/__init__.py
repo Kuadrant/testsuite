@@ -178,6 +178,11 @@ class Section:
 class Policy(KubernetesObject):
     """Base class with common functionality for all policies"""
 
+    @property
+    def _topology(self):
+        """Get the global topology registry"""
+        from testsuite.gateway.topology import get_topology
+        return get_topology()
 
     def commit(self):
         """
@@ -185,10 +190,32 @@ class Policy(KubernetesObject):
         Captures the current kuadrant_configs metric from the gateway before committing.
         """
         # Capture initial metric before commit
-        gw = get_topology().get_gateway_for_policy(self)
-        c = gw.metrics.get_kuadrant_configs()
+        initial_metric = None
+        policy_name = None
 
-        super().commit()
+        if self._topology:
+            # Get policy name from model directly (avoid property access)
+            policy_name = self.model.metadata.name
+
+            # Get gateway from target reference
+            if hasattr(self.model.spec, 'targetRef'):
+                gateway = self._topology.get_gateway_for_target_ref(self.model.spec.targetRef)
+                if gateway and hasattr(gateway, 'metrics'):
+                    try:
+                        initial_metric = gateway.metrics.get_kuadrant_configs()
+                    except Exception:  # pylint: disable=broad-except
+                        pass
+
+        # Commit the policy
+        result = super().commit()
+
+        # Store the initial metric in topology (using policy name, not object)
+        if initial_metric is not None and policy_name and self._topology:
+            policy_node = self._topology.get_node(policy_name)
+            if policy_node:
+                policy_node.metadata['initial_kuadrant_configs'] = initial_metric
+
+        return result
 
     def wait_for_ready(self):
         """
