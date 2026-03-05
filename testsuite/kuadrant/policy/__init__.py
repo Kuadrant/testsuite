@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from enum import Enum
 
-from testsuite.kubernetes import KubernetesObject
+from testsuite.kubernetes import KubernetesObject, modify
 from testsuite.utils import check_condition
 
 
@@ -66,6 +66,30 @@ def is_affected_by(policy: "Policy"):
         return False
 
     return _check
+
+
+class SectionContext:
+    """
+    Base context for working within a defaults/overrides section of a policy.
+
+    Subclasses should add specific methods like add_limit, or inherit from
+    other classes like AuthConfig to get their methods.
+    """
+
+    def __init__(self, policy, section_name: str):
+        self._policy = policy
+        self._section_name = section_name
+
+    @property
+    def committed(self):
+        """Delegate to policy's committed status"""
+        return self._policy.committed
+
+    def strategy(self, strategy: Strategy):
+        """Add strategy type to this section"""
+        target = self._policy.model.spec.setdefault(self._section_name, {})
+        target["strategy"] = strategy.value
+        return self
 
 
 class Policy(KubernetesObject):

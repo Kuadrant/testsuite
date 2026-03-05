@@ -9,16 +9,26 @@ from testsuite.kubernetes.client import KubernetesClient
 from testsuite.utils import asdict
 from .auth_config import AuthConfig
 from .sections import ResponseSection
-from .. import Policy, CelPredicate, Strategy
+from .. import Policy, CelPredicate, SectionContext
 from . import Pattern
+
+
+class AuthPolicySectionContext(SectionContext, AuthConfig):
+    """Context for working within a defaults/overrides section of AuthPolicy"""
+
+    @property
+    def model(self):
+        """Delegate to policy's model"""
+        return self._policy.model
+
+    @property
+    def auth_section(self):
+        """Override to point to the defaults/overrides section"""
+        return self.model.spec.setdefault(self._section_name, {}).setdefault("rules", {})
 
 
 class AuthPolicy(Policy, AuthConfig):
     """AuthPolicy object, it serves as Kuadrants AuthConfig"""
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.spec_section = None
 
     @classmethod
     def create_instance(
@@ -43,46 +53,31 @@ class AuthPolicy(Policy, AuthConfig):
 
         return cls(model, context=cluster.context)
 
+    @property
+    def defaults(self):
+        """Work within the defaults section"""
+        return AuthPolicySectionContext(self, "defaults")
+
+    @property
+    def overrides(self):
+        """Work within the overrides section"""
+        return AuthPolicySectionContext(self, "overrides")
+
     @modify
     def add_rule(self, when: list[CelPredicate]):
         """Add rule for the skip of entire AuthPolicy"""
         self.model.spec.setdefault("when", [])
         self.model.spec["when"].extend([asdict(x) for x in when])
 
-    @modify
-    def strategy(self, strategy: Strategy) -> None:
-        """Add strategy type to default or overrides spec"""
-        if self.spec_section is None:
-            raise TypeError("Strategy can only be set on defaults or overrides")
-
-        self.spec_section["strategy"] = strategy.value
-        self.spec_section = None
-
     @property
     def auth_section(self):
-        if self.spec_section is None:
-            self.spec_section = self.model.spec
-
-        spec_section = self.spec_section
-        self.spec_section = None
-        return spec_section.setdefault("rules", {})
+        """Rules section for top-level spec (implicit defaults)"""
+        return self.model.spec.setdefault("rules", {})
 
     @cached_property
     def responses(self) -> ResponseSection:
         """Gives access to response settings"""
         return ResponseSection(self, "response", "filters")
-
-    @property
-    def defaults(self):
-        """Add new rule into the `defaults` AuthPolicy section"""
-        self.spec_section = self.model.spec.setdefault("defaults", {})
-        return self
-
-    @property
-    def overrides(self):
-        """Add new rule into the `overrides` AuthPolicy section"""
-        self.spec_section = self.model.spec.setdefault("overrides", {})
-        return self
 
     @modify
     def add_patterns(self, patterns: dict[str, list[Pattern]]):
