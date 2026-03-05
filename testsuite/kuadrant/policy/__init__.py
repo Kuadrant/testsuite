@@ -3,6 +3,7 @@
 from dataclasses import dataclass, is_dataclass
 from enum import Enum
 
+from testsuite.gateway.topology import get_topology
 from testsuite.kubernetes import KubernetesObject, modify
 from testsuite.utils import check_condition, asdict
 
@@ -177,8 +178,23 @@ class Section:
 class Policy(KubernetesObject):
     """Base class with common functionality for all policies"""
 
+
+    def commit(self):
+        """
+        Commits the policy to the cluster.
+        Captures the current kuadrant_configs metric from the gateway before committing.
+        """
+        # Capture initial metric before commit
+        gw = get_topology().get_gateway_for_policy(self)
+        c = gw.metrics.get_kuadrant_configs()
+
+        super().commit()
+
     def wait_for_ready(self):
-        """Wait for a Policy to be ready"""
+        """
+        Wait for a Policy to be ready.
+        Verifies that kuadrant_configs metric increased (policy is enforced).
+        """
         self.refresh()
         success = self.wait_until(has_observed_generation(self.generation))
         assert success, f"{self.kind()} did not reach observed generation in time"

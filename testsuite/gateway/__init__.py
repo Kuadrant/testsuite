@@ -138,6 +138,16 @@ class Gateway(LifecycleObject, Referencable):
     def get_tls_cert(self, hostname: str) -> Optional[Certificate]:
         """Returns TLS cert bound to this Gateway, if the Gateway does not use TLS, returns None"""
 
+    @property
+    @abstractmethod
+    def class_name(self):
+        """Returns the classname"""
+
+    @property
+    @abstractmethod
+    def metrics(self):
+        """Returns GatewayMetrics instance for querying metrics"""
+
 
 class GatewayRoute(LifecycleObject, Referencable):
     """

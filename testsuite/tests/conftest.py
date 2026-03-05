@@ -102,6 +102,20 @@ def skip_or_fail(request):
 
 
 @pytest.fixture(scope="session", autouse=True)
+def topology():
+    """Global topology registry for Gateway API resources and policies"""
+    from testsuite.gateway.topology import TopologyRegistry, set_topology, clear_topology
+
+    registry = TopologyRegistry()
+    set_topology(registry)  # Set as global singleton
+
+    yield registry
+
+    # Cleanup on session end
+    clear_topology()
+
+
+@pytest.fixture(scope="session", autouse=True)
 def term_handler():
     """
     This will handle ^C, cleanup won't be skipped

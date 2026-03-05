@@ -1,7 +1,7 @@
 """Module containing all gateway classes"""
 
 from time import sleep
-from typing import Any
+from typing import Any, Literal
 
 import openshift_client as oc
 
@@ -57,6 +57,11 @@ class KuadrantGateway(KubernetesObject, Gateway):
     @property
     def service_name(self) -> str:
         return f"{self.name()}-{self.cached_gw_class_name}"
+
+    @property
+    def metrics_service_name(self):
+        """Returns the metrics service"""
+        return f"{self.name()}-metrics"
 
     def external_ip(self) -> str:
         with self.context:
@@ -130,7 +135,41 @@ class KuadrantGateway(KubernetesObject, Gateway):
             if "tls" in listener:
                 yield listener
 
+    def _create_metrics_service(
+        self, service_type: Literal["ClusterIP", "LoadBalancer", "NodePort", "ExternalName"] = "ClusterIP"
+    ):
+        """Creates a metrics service to expose gateway metrics on port 15020"""
+        from testsuite.kubernetes.service import Service, ServicePort
+
+        metrics_service = Service.create_instance(
+            self.cluster,
+            self.metrics_service_name,
+            selector={"gateway.networking.k8s.io/gateway-name": self.name()},
+            ports=[ServicePort(name="metrics", port=15020, targetPort=15020)],
+            labels=self.model.metadata.get("labels", {}),
+            service_type=service_type,
+        )
+
+        self._metrics_service = metrics_service
+        return metrics_service
+
+    def commit(self):
+        """Commits gateway and creates metrics service"""
+        result = super().commit()
+
+        # Always create metrics service
+        metrics_service = self._create_metrics_service(service_type="LoadBalancer")
+        metrics_service.commit()
+        metrics_service.wait_for_ready()
+
+        return result
+
     def delete(self, ignore_not_found=True, cmd_args=None):
+        # Delete metrics service if it exists
+        if self._metrics_service is not None:
+            self._metrics_service.delete(ignore_not_found=True)
+            self._metrics_service = None
+
         res = super().delete(ignore_not_found, cmd_args)
         with self.cluster.context:
             # TLSPolicy does not delete certificates it creates
@@ -168,3 +207,14 @@ class KuadrantGateway(KubernetesObject, Gateway):
     def deployment(self) -> Deployment:
         """Retrieve the managed deployment resource"""
         return self.cluster.get_deployment(self.service_name)
+
+    @property
+    def class_name(self):
+        return self.cached_gw_class_name
+
+    @property
+    def metrics(self):
+        """Returns GatewayMetrics instance for querying metrics"""
+        from testsuite.gateway.metrics import GatewayMetrics
+
+        return GatewayMetrics(self._metrics_service)

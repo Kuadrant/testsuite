@@ -10,6 +10,7 @@ from testsuite.gateway.envoy import Envoy
 from testsuite.gateway.envoy.route import EnvoyVirtualRoute
 from testsuite.gateway.gateway_api.gateway import KuadrantGateway
 from testsuite.gateway.gateway_api.route import HTTPRoute
+from testsuite.gateway.topology import topology
 from testsuite.kuadrant import KuadrantCR
 from testsuite.kuadrant.policy.authorization.auth_policy import AuthPolicy
 from testsuite.kuadrant.policy.rate_limit import RateLimitPolicy
@@ -36,6 +37,7 @@ def authorization_name(blame):
 
 
 @pytest.fixture(scope="module")
+@topology
 def authorization(request, kuadrant, route, gateway, blame, cluster, label):  # pylint: disable=unused-argument
     """Authorization object (In case of Kuadrant AuthPolicy)"""
     target_ref = request.getfixturevalue(getattr(request, "param", "route"))
@@ -46,6 +48,7 @@ def authorization(request, kuadrant, route, gateway, blame, cluster, label):  # 
 
 
 @pytest.fixture(scope="module")
+@topology
 def rate_limit(kuadrant, cluster, blame, request, module_label, route, gateway):  # pylint: disable=unused-argument
     """
     Rate limit object.
@@ -97,6 +100,7 @@ def backend(request, cluster, blame, label, testconfig):
 
 
 @pytest.fixture(scope="session")
+@topology
 def gateway(request, kuadrant, cluster, blame, label, testconfig, wildcard_domain) -> Gateway:
     """Deploys Gateway that wires up the Backend behind the reverse-proxy and Authorino instance"""
     if kuadrant:
@@ -124,13 +128,7 @@ def domain_name(blame) -> str:
 
 
 @pytest.fixture(scope="module")
-def hostname(gateway, exposer, domain_name) -> Hostname:
-    """Exposed Hostname object"""
-    hostname = exposer.expose_hostname(domain_name, gateway)
-    return hostname
-
-
-@pytest.fixture(scope="module")
+@topology
 def route(request, kuadrant, gateway, blame, hostname, backend, module_label) -> GatewayRoute:
     """Route object"""
     if kuadrant:
@@ -142,6 +140,13 @@ def route(request, kuadrant, gateway, blame, hostname, backend, module_label) ->
     request.addfinalizer(route.delete)
     route.commit()
     return route
+
+
+@pytest.fixture(scope="module")
+def hostname(gateway, exposer, domain_name) -> Hostname:
+    """Exposed Hostname object"""
+    hostname = exposer.expose_hostname(domain_name, gateway)
+    return hostname
 
 
 @pytest.fixture(scope="module")

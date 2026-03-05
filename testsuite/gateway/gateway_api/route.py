@@ -18,6 +18,10 @@ if typing.TYPE_CHECKING:
 class HTTPRoute(KubernetesObject, GatewayRoute):
     """HTTPRoute object, serves as replacement for Routes and Ingresses"""
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._gateway = None
+
     def client(self, **kwargs) -> Client:
         """Returns HTTPX client"""
         return KuadrantClient(base_url=f"http://{self.hostnames[0]}", **kwargs)
@@ -42,7 +46,14 @@ class HTTPRoute(KubernetesObject, GatewayRoute):
             },
         }
 
-        return cls(model, context=cluster.context)
+        route = cls(model, context=cluster.context)
+        route._gateway = gateway  # Store the gateway instance
+        return route
+
+    @property
+    def gateway(self):
+        """Returns the gateway this route is attached to"""
+        return self._gateway
 
     def is_affected_by(self, policy: Policy):
         """Returns True, if affected by status is found within the object for the specific policy"""
