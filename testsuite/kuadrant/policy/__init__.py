@@ -140,7 +140,6 @@ class Section:
 
         return self.obj.modify_and_apply(_new_modifier, retries, cmd_args)
 
-    @modify
     def strategy(self, strategy: Strategy):
         """Add strategy type to this section"""
         target = self.get_section()

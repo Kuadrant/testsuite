@@ -22,7 +22,6 @@ class Limit:
 class RateLimitSection(Section):
     """Section for rate limit policies - adds rate limit specific methods"""
 
-    @modify
     def add_limit(
         self,
         name,
