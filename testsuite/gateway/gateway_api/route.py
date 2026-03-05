@@ -6,6 +6,7 @@ from httpx import Client
 
 from testsuite.httpx import KuadrantClient
 from testsuite.gateway import Gateway, GatewayRoute, PathMatch, MatchType, RouteMatch
+from testsuite.gateway.gateway_api import GatewayAPIKind
 from testsuite.kubernetes.client import KubernetesClient
 from testsuite.kubernetes import KubernetesObject, modify
 from testsuite.kuadrant.policy import Policy
@@ -17,6 +18,10 @@ if typing.TYPE_CHECKING:
 
 class HTTPRoute(KubernetesObject, GatewayRoute):
     """HTTPRoute object, serves as replacement for Routes and Ingresses"""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._gateway = None
 
     def client(self, **kwargs) -> Client:
         """Returns HTTPX client"""
@@ -33,7 +38,7 @@ class HTTPRoute(KubernetesObject, GatewayRoute):
         """Creates new instance of HTTPRoute"""
         model = {
             "apiVersion": "gateway.networking.k8s.io/v1beta1",
-            "kind": "HTTPRoute",
+            "kind": GatewayAPIKind.HTTPROUTE,
             "metadata": {"name": name, "namespace": cluster.project, "labels": labels},
             "spec": {
                 "parentRefs": [gateway.reference],
@@ -42,7 +47,14 @@ class HTTPRoute(KubernetesObject, GatewayRoute):
             },
         }
 
-        return cls(model, context=cluster.context)
+        route = cls(model, context=cluster.context)
+        route._gateway = gateway  # Store the gateway instance
+        return route
+
+    @property
+    def gateway(self):
+        """Returns the gateway this route is attached to"""
+        return self._gateway
 
     def is_affected_by(self, policy: Policy):
         """Returns True, if affected by status is found within the object for the specific policy"""
@@ -64,7 +76,7 @@ class HTTPRoute(KubernetesObject, GatewayRoute):
     def reference(self):
         return {
             "group": "gateway.networking.k8s.io",
-            "kind": "HTTPRoute",
+            "kind": GatewayAPIKind.HTTPROUTE,
             "name": self.name(),
         }
 

@@ -2,6 +2,7 @@
 
 import pytest
 
+from testsuite.core.topology import topology
 from testsuite.httpx.auth import HeaderApiKeyAuth, HttpxOidcClientAuth
 from testsuite.kuadrant.policy import Strategy
 from testsuite.kuadrant.policy.authorization.auth_policy import AuthPolicy
@@ -54,6 +55,7 @@ def auth(oidc_provider):
 
 
 @pytest.fixture(scope="module")
+@topology
 def global_authorization(request, cluster, blame, admin_label, admin_api_key):
     """
     Create an AuthPolicy with authentication for an admin with same target as one default.

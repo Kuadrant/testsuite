@@ -2,6 +2,7 @@
 
 import pytest
 
+from testsuite.core.topology import topology
 from testsuite.httpx.auth import HttpxOidcClientAuth
 from testsuite.kuadrant.policy.authorization.auth_policy import AuthPolicy
 from testsuite.kuadrant.policy.rate_limit import RateLimitPolicy, Limit
@@ -34,6 +35,7 @@ def authorization(cluster, target, route, oidc_provider, module_label, blame):  
 
 
 @pytest.fixture(scope="module")
+@topology
 def rate_limit(cluster, target, route, module_label, blame):  # pylint: disable=unused-argument
     """Add a RateLimitPolicy targeting specific section"""
     rate_limit = RateLimitPolicy.create_instance(

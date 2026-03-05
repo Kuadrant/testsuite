@@ -8,6 +8,7 @@ from testsuite.kuadrant.policy.rate_limit import Limit
 from testsuite.kuadrant.policy import CelPredicate
 from testsuite.kubernetes.monitoring import MetricsEndpoint
 from testsuite.kubernetes.monitoring.service_monitor import ServiceMonitor
+from testsuite.core.topology import topology
 
 
 @pytest.fixture(scope="package")
@@ -29,6 +30,7 @@ def wait_for_active_targets(prometheus, service_monitor):
 
 
 @pytest.fixture(scope="module")
+@topology
 def telemetry_policy(cluster, blame, gateway):
     """Creates TelemetryPolicy with user and group labels"""
     telemetry_policy = TelemetryPolicy.create_instance(cluster, blame("tp"), gateway)

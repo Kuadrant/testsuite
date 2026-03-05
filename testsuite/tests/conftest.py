@@ -14,15 +14,16 @@ from testsuite.capabilities import has_kuadrant, kuadrant_version
 from testsuite.certificates import CFSSLClient
 from testsuite.component_metadata import ComponentMetadataCollector
 from testsuite.config import settings
+from testsuite.core.topology import TopologyRegistry, clear_topology, set_topology
 from testsuite.gateway import Exposer, CustomReference
 from testsuite.httpx import KuadrantClient
+from testsuite.kubernetes.config_map import ConfigMap
 from testsuite.mockserver import Mockserver
 from testsuite.oidc import OIDCProvider
 from testsuite.oidc.auth0 import Auth0Provider
-from testsuite.prometheus import Prometheus
 from testsuite.oidc.keycloak import Keycloak
+from testsuite.prometheus import Prometheus
 from testsuite.tracing.jaeger import JaegerClient
-from testsuite.kubernetes.config_map import ConfigMap
 from testsuite.tracing.tempo import RemoteTempoClient
 from testsuite.utils import randomize, _whoami
 
@@ -99,6 +100,18 @@ def pytest_report_header(config):
 def skip_or_fail(request):
     """Skips or fails tests depending on --enforce option"""
     return pytest.fail if request.config.getoption("--enforce") else pytest.skip
+
+
+@pytest.fixture(scope="session", autouse=True)
+def topology():
+    """Global topology registry for Gateway API resources and policies"""
+    registry = TopologyRegistry()
+    set_topology(registry)  # Set as global singleton
+
+    yield registry
+
+    # Cleanup on session end
+    clear_topology()
 
 
 @pytest.fixture(scope="session", autouse=True)

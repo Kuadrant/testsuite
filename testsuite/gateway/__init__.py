@@ -8,6 +8,7 @@ from typing import Any, Optional, TYPE_CHECKING, Literal, List
 from httpx import Client
 
 from testsuite.certificates import Certificate
+from testsuite.gateway.metrics import GatewayMetrics
 from testsuite.httpx import KuadrantClient
 from testsuite.lifecycle import LifecycleObject
 from testsuite.utils import asdict
@@ -137,6 +138,21 @@ class Gateway(LifecycleObject, Referencable):
     @abstractmethod
     def get_tls_cert(self, hostname: str) -> Optional[Certificate]:
         """Returns TLS cert bound to this Gateway, if the Gateway does not use TLS, returns None"""
+
+    @property
+    @abstractmethod
+    def class_name(self):
+        """Returns the classname"""
+
+    @property
+    @abstractmethod
+    def metrics(self):
+        """Returns GatewayMetrics instance for querying metrics"""
+
+    @property
+    @abstractmethod
+    def metrics_service_name(self):
+        """Returns the name of the service that exposes the metrics"""
 
 
 class GatewayRoute(LifecycleObject, Referencable):

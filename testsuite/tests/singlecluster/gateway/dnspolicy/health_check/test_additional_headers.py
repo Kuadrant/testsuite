@@ -62,7 +62,7 @@ def headers_secret(request, cluster, blame):
 @pytest.fixture(scope="module")
 def mockserver_client(backend):
     """Returns Mockserver client from load-balanced service IP"""
-    return Mockserver(KuadrantClient(base_url=f"http://{backend.service.refresh().external_ip}: 8080"))
+    return Mockserver(KuadrantClient(base_url=f"http://{backend.service.refresh().external_ip}:8080"))
 
 
 @pytest.fixture(scope="module")

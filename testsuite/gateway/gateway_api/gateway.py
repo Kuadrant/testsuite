@@ -8,11 +8,13 @@ import openshift_client as oc
 from testsuite.config import settings
 from testsuite.certificates import Certificate
 from testsuite.gateway import Gateway, GatewayListener
+from testsuite.gateway.gateway_api import GatewayAPIKind
 from testsuite.kubernetes.client import KubernetesClient
 from testsuite.kubernetes import KubernetesObject, modify
 from testsuite.kuadrant.policy import Policy
 from testsuite.kubernetes.deployment import Deployment
 from testsuite.utils import check_condition, asdict, domain_match
+from testsuite.core.metrics_factory import create_gateway_metrics
 
 
 class KuadrantGateway(KubernetesObject, Gateway):
@@ -20,6 +22,10 @@ class KuadrantGateway(KubernetesObject, Gateway):
 
     # Name of the GatewayClass that is to be used for all the instances
     cached_gw_class_name = None
+
+    def __init__(self, dict_to_model=None, string_to_model=None, context=None):
+        super().__init__(dict_to_model, string_to_model, context)
+        self._metrics = None
 
     @classmethod
     def create_instance(cls, cluster: KubernetesClient, name, labels):
@@ -30,7 +36,7 @@ class KuadrantGateway(KubernetesObject, Gateway):
 
         model: dict[Any, Any] = {
             "apiVersion": "gateway.networking.k8s.io/v1beta1",
-            "kind": "Gateway",
+            "kind": GatewayAPIKind.GATEWAY,
             "metadata": {"name": name, "labels": labels},
             "spec": {"gatewayClassName": cls.cached_gw_class_name, "listeners": []},
         }
@@ -57,6 +63,11 @@ class KuadrantGateway(KubernetesObject, Gateway):
     @property
     def service_name(self) -> str:
         return f"{self.name()}-{self.cached_gw_class_name}"
+
+    @property
+    def metrics_service_name(self):
+        """Returns the metrics service"""
+        return f"{self.name()}-metrics"
 
     def external_ip(self) -> str:
         with self.context:
@@ -110,7 +121,7 @@ class KuadrantGateway(KubernetesObject, Gateway):
     def get_tls_secret(self, hostname):
         """Returns the TLS secret for the matching listener hostname, or None if not found"""
         tls_cert_secret_name = None
-        for listener in self.all_tls_listeners():
+        for listener in self._all_tls_listeners():
             if domain_match(hostname, listener.hostname):
                 tls_cert_secret_name = listener.tls.certificateRefs[0].name
 
@@ -124,13 +135,28 @@ class KuadrantGateway(KubernetesObject, Gateway):
                 raise oc.OpenShiftPythonException("TLS secret was not created") from None
             raise e
 
-    def all_tls_listeners(self):
+    def _all_tls_listeners(self):
         """Yields all listeners in gateway that support 'tls'"""
         for listener in self.model.spec.listeners:
             if "tls" in listener:
                 yield listener
 
+    def _expose_metrics(self):
+        """Expose metrics endpoint using the configured exposer"""
+        exposer = settings["default_exposer"](self.cluster)
+        self._metrics = create_gateway_metrics(exposer, self)
+
+    def commit(self):
+        """Commits gateway and exposes metrics endpoint"""
+        result = super().commit()
+        self._expose_metrics()
+        return result
+
     def delete(self, ignore_not_found=True, cmd_args=None):
+        # Delete metrics resources if they exist
+        if hasattr(self, "_metrics") and self._metrics:
+            self._metrics.delete()
+
         res = super().delete(ignore_not_found, cmd_args)
         with self.cluster.context:
             # TLSPolicy does not delete certificates it creates
@@ -168,3 +194,15 @@ class KuadrantGateway(KubernetesObject, Gateway):
     def deployment(self) -> Deployment:
         """Retrieve the managed deployment resource"""
         return self.cluster.get_deployment(self.service_name)
+
+    @property
+    def class_name(self):
+        return self.cached_gw_class_name
+
+    @property
+    def metrics(self):
+        """Returns GatewayMetrics instance for querying metrics"""
+        if not hasattr(self, "_metrics"):
+            raise RuntimeError("Gateway metrics not available. Call commit() first to expose metrics endpoint.")
+
+        return self._metrics
