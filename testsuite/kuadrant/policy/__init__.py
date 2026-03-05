@@ -3,9 +3,8 @@
 from dataclasses import dataclass, is_dataclass
 from enum import Enum
 
-from testsuite.gateway.topology import get_topology
 from testsuite.kubernetes import KubernetesObject, modify
-from testsuite.utils import check_condition, asdict
+from testsuite.utils import check_condition
 
 
 class Strategy(Enum):
@@ -178,50 +177,8 @@ class Section:
 class Policy(KubernetesObject):
     """Base class with common functionality for all policies"""
 
-    @property
-    def _topology(self):
-        """Get the global topology registry"""
-        from testsuite.gateway.topology import get_topology
-        return get_topology()
-
-    def commit(self):
-        """
-        Commits the policy to the cluster.
-        Captures the current kuadrant_configs metric from the gateway before committing.
-        """
-        # Capture initial metric before commit
-        initial_metric = None
-        policy_name = None
-
-        if self._topology:
-            # Get policy name from model directly (avoid property access)
-            policy_name = self.model.metadata.name
-
-            # Get gateway from target reference
-            if hasattr(self.model.spec, 'targetRef'):
-                gateway = self._topology.get_gateway_for_target_ref(self.model.spec.targetRef)
-                if gateway and hasattr(gateway, 'metrics'):
-                    try:
-                        initial_metric = gateway.metrics.get_kuadrant_configs()
-                    except Exception:  # pylint: disable=broad-except
-                        pass
-
-        # Commit the policy
-        result = super().commit()
-
-        # Store the initial metric in topology (using policy name, not object)
-        if initial_metric is not None and policy_name and self._topology:
-            policy_node = self._topology.get_node(policy_name)
-            if policy_node:
-                policy_node.metadata['initial_kuadrant_configs'] = initial_metric
-
-        return result
-
     def wait_for_ready(self):
-        """
-        Wait for a Policy to be ready.
-        Verifies that kuadrant_configs metric increased (policy is enforced).
-        """
+        """Wait for a Policy to be ready"""
         self.refresh()
         success = self.wait_until(has_observed_generation(self.generation))
         assert success, f"{self.kind()} did not reach observed generation in time"

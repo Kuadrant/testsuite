@@ -160,7 +160,9 @@ class DNSPolicy(Policy):
         if load_balancing:
             model["spec"]["loadBalancing"] = asdict(load_balancing)
 
-        return cls(model, context=cluster.context)
+        policy = cls(model, context=cluster.context)
+        policy._inject_gateway_from_target(parent)
+        return policy
 
     def delete(self, ignore_not_found=True, cmd_args=None):
         """

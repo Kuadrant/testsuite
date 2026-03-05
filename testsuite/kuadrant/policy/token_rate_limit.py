@@ -32,4 +32,7 @@ class TokenRateLimitPolicy(RateLimitPolicy):
         }
         if section_name:
             model["spec"]["targetRef"]["sectionName"] = section_name
-        return cls(model, context=cluster.context)
+
+        policy = cls(model, context=cluster.context)
+        policy._inject_gateway_from_target(target)
+        return policy
