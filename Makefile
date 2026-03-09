@@ -190,6 +190,9 @@ test-scale-dnspolicy: kube-burner ## Run DNSPolicy scale tests.
 	cd scale_test/dnspolicy && $(KUBE_BURNER) init -c ${KUBEBURNER_WORKLOAD} --log-level debug
 
 
+# Include local environment setup modules
+include ./make/*.mk
+
 ##@ Build Dependencies
 
 ## Location to install dependencies to
