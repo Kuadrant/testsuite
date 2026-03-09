@@ -154,19 +154,33 @@ class KuadrantGateway(KubernetesObject, Gateway):
         return metrics_service
 
     def commit(self):
-        """Commits gateway and creates metrics service"""
+        """Commits gateway and creates metrics service + route"""
         result = super().commit()
 
-        # Always create metrics service
-        metrics_service = self._create_metrics_service(service_type="LoadBalancer")
+        # Create ClusterIP service for metrics (fast)
+        metrics_service = self._create_metrics_service(service_type="ClusterIP")
         metrics_service.commit()
-        metrics_service.wait_for_ready()
+
+        # Create OpenShift Route to expose metrics
+        from testsuite.kubernetes.openshift.route import OpenshiftRoute
+        metrics_route = OpenshiftRoute.create_instance(
+            self.cluster,
+            self.metrics_service_name,
+            self.metrics_service_name,
+            target_port="metrics",
+            tls=False
+        )
+        metrics_route.commit()
+        self._metrics_route = metrics_route
 
         return result
 
     def delete(self, ignore_not_found=True, cmd_args=None):
-        # Delete metrics service if it exists
-        if self._metrics_service is not None:
+        # Delete metrics route and service if they exist
+        if hasattr(self, '_metrics_route') and self._metrics_route is not None:
+            self._metrics_route.delete(ignore_not_found=True)
+            self._metrics_route = None
+        if hasattr(self, '_metrics_service') and self._metrics_service is not None:
             self._metrics_service.delete(ignore_not_found=True)
             self._metrics_service = None
 
@@ -217,4 +231,4 @@ class KuadrantGateway(KubernetesObject, Gateway):
         """Returns GatewayMetrics instance for querying metrics"""
         from testsuite.gateway.metrics import GatewayMetrics
 
-        return GatewayMetrics(self._metrics_service)
+        return GatewayMetrics(self._metrics_route if hasattr(self, '_metrics_route') else None)

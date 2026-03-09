@@ -71,6 +71,18 @@ class Service(KubernetesObject):
 
         return ip
 
+    def get_node_port(self, port_name: str) -> int:
+        """Returns the NodePort for a specific port"""
+        if self.model.spec.type != "NodePort":
+            raise AttributeError("NodePort can only be used with NodePort services")
+
+        port = self.get_port(port_name)
+        node_port = port.get("nodePort")
+        if not node_port:
+            raise AttributeError(f"NodePort not assigned for port {port_name}")
+
+        return node_port
+
     def delete(self, ignore_not_found=True, cmd_args=None):
         """Deletes Service, introduces bigger waiting times due to LoadBalancer type"""
         with timeout(10 * 60):

@@ -178,27 +178,55 @@ class Section:
 class Policy(KubernetesObject):
     """Base class with common functionality for all policies"""
 
+    @property
+    def _topology(self):
+        """Get the global topology registry"""
+        from testsuite.gateway.topology import get_topology
+        return get_topology()
 
     def commit(self):
         """
         Commits the policy to the cluster.
-        Captures the current kuadrant_configs metric from the gateway before committing.
+        Captures the current kuadrant_configs metric before committing for later validation.
         """
         # Capture initial metric before commit
-        gw = get_topology().get_gateway_for_policy(self)
-        c = gw.metrics.get_kuadrant_configs()
+        if self._topology and hasattr(self.model.spec, 'targetRef'):
+            gateway = self._topology.get_gateway_for_target_ref(self.model.spec.targetRef)
+            if gateway and hasattr(gateway, 'metrics'):
+                try:
+                    initial_metric = gateway.metrics.get_kuadrant_configs()
+                except Exception:  # pylint: disable=broad-except
+                    initial_metric = 0
 
-        super().commit()
+                # Store initial metric in topology for validation in wait_for_ready()
+                self._topology.set_policy_metadata(self, 'initial_kuadrant_configs', initial_metric)
+                self._topology.set_policy_metadata(self, 'gateway_name', gateway.name())
+
+        return super().commit()
+
+    def _validate_wasm_config_metric(self):
+        """Validate that kuadrant_configs metric didn't decrease after policy commit."""
+        if not self._topology:
+            return
+
+        initial_metric = self._topology.get_policy_metadata(self, 'initial_kuadrant_configs')
+        gateway_name = self._topology.get_policy_metadata(self, 'gateway_name')
+
+        if initial_metric is not None and gateway_name:
+            gateway = self._topology.get_gateway(gateway_name)
+            if gateway and hasattr(gateway, 'metrics'):
+                gateway.metrics.wait_for_kuadrant_config_increase(initial_metric)
 
     def wait_for_ready(self):
         """
         Wait for a Policy to be ready.
-        Verifies that kuadrant_configs metric increased (policy is enforced).
+        Verifies observedGeneration, Enforced status, and kuadrant_configs metric.
         """
         self.refresh()
         success = self.wait_until(has_observed_generation(self.generation))
         assert success, f"{self.kind()} did not reach observed generation in time"
         self.wait_for_full_enforced()
+        self._validate_wasm_config_metric()
 
     def wait_for_accepted(self):
         """Wait for a Policy to be Accepted"""
