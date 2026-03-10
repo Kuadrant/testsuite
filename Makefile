@@ -191,7 +191,9 @@ test-scale-dnspolicy: kube-burner ## Run DNSPolicy scale tests.
 
 
 # Include local environment setup modules
-include ./make/*.mk
+# Load variables first, then all other modules
+include ./make/vars.mk
+include $(filter-out ./make/vars.mk,$(wildcard ./make/*.mk))
 
 ##@ Build Dependencies
 

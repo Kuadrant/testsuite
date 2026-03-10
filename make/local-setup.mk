@@ -1,10 +1,14 @@
 
 ##@ Local Environment Setup
 
-GATEWAYAPI_PROVIDER ?= istio
-
 .PHONY: local-setup
 local-setup: ## Complete local environment setup (kind cluster + all dependencies)
+	@# Validate GATEWAYAPI_PROVIDER
+	@if [ "$(GATEWAYAPI_PROVIDER)" != "istio" ] && [ "$(GATEWAYAPI_PROVIDER)" != "envoygateway" ]; then \
+		echo "ERROR: Invalid GATEWAYAPI_PROVIDER='$(GATEWAYAPI_PROVIDER)'"; \
+		echo "Valid values: istio, envoygateway"; \
+		exit 1; \
+	fi
 	$(MAKE) kind-delete-cluster
 	$(MAKE) kind-create-cluster
 	$(MAKE) install-metrics-server

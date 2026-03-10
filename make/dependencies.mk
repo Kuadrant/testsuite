@@ -1,10 +1,6 @@
 
 ##@ Core Dependencies
 
-CERT_MANAGER_VERSION ?= v1.18.2
-METALLB_VERSION ?= v0.15.2
-GATEWAY_API_VERSION ?= v1.3.0
-
 .PHONY: install-metrics-server
 install-metrics-server: ## Install metrics-server
 	@echo "Installing metrics-server..."
@@ -16,8 +12,8 @@ install-metrics-server: ## Install metrics-server
 install-metallb: ## Install MetalLB for LoadBalancer services
 	@echo "Installing MetalLB $(METALLB_VERSION)..."
 	kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/$(METALLB_VERSION)/config/manifests/metallb-native.yaml
-	kubectl wait --namespace metallb-system --for=condition=Available deployment/controller --timeout=90s
-	kubectl wait --namespace metallb-system --for=condition=ready pod --selector=component=controller --timeout=90s
+	kubectl wait --namespace metallb-system --for=condition=Available deployment/controller --timeout=$(METALLB_TIMEOUT)
+	kubectl wait --namespace metallb-system --for=condition=ready pod --selector=component=controller --timeout=$(METALLB_TIMEOUT)
 	@echo "Configuring MetalLB IP pool..."
 	@printf '%s\n' \
 		'apiVersion: metallb.io/v1beta1' \
@@ -48,5 +44,5 @@ gateway-api-install: ## Install Gateway API CRDs
 install-cert-manager: ## Install cert-manager
 	@echo "Installing cert-manager $(CERT_MANAGER_VERSION)..."
 	kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/$(CERT_MANAGER_VERSION)/cert-manager.yaml
-	kubectl wait --namespace cert-manager --for=condition=Available deployment/cert-manager --timeout=120s
+	kubectl wait --namespace cert-manager --for=condition=Available deployment/cert-manager --timeout=$(CERT_MANAGER_TIMEOUT)
 	@echo "✅ cert-manager installed"
