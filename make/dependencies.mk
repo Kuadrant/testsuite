@@ -46,3 +46,16 @@ install-cert-manager: ## Install cert-manager
 	kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/$(CERT_MANAGER_VERSION)/cert-manager.yaml
 	kubectl wait --namespace cert-manager --for=condition=Available deployment/cert-manager --timeout=$(CERT_MANAGER_TIMEOUT)
 	@echo "✅ cert-manager installed"
+
+.PHONY: create-cluster-issuer
+create-cluster-issuer: ## Create self-signed ClusterIssuer for TLS testing
+	@echo "Creating self-signed ClusterIssuer..."
+	@printf '%s\n' \
+		'apiVersion: cert-manager.io/v1' \
+		'kind: ClusterIssuer' \
+		'metadata:' \
+		'  name: kuadrant-qe-issuer' \
+		'spec:' \
+		'  selfSigned: {}' \
+		| kubectl apply -f -
+	@echo "✅ ClusterIssuer 'kuadrant-qe-issuer' created"
