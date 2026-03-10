@@ -63,20 +63,24 @@ create-cluster-issuer: ## Create self-signed ClusterIssuer for TLS testing
 	@echo "✅ ClusterIssuer 'kuadrant-qe-issuer' created"
 
 .PHONY: create-aws-credentials
-create-aws-credentials: ## Create AWS credentials secret for DNS testing
-	@echo "Creating AWS credentials secret..."
-	@printf '%s\n' \
-		'apiVersion: v1' \
-		'kind: Secret' \
-		'metadata:' \
-		'  name: aws-credentials' \
-		'  namespace: kuadrant' \
-		'  annotations:' \
-		'    base_domain: $(AWS_BASE_DOMAIN)' \
-		'stringData:' \
-		'  AWS_ACCESS_KEY_ID: $(AWS_ACCESS_KEY_ID)' \
-		'  AWS_REGION: $(AWS_REGION)' \
-		'  AWS_SECRET_ACCESS_KEY: $(AWS_SECRET_ACCESS_KEY)' \
-		'type: kuadrant.io/aws' \
-		| kubectl apply -f -
-	@echo "✅ AWS credentials secret created in kuadrant namespace"
+create-aws-credentials: ## Create AWS credentials secret for DNS testing (only if credentials provided)
+	@if [ -n "$(AWS_ACCESS_KEY_ID)" ] && [ -n "$(AWS_SECRET_ACCESS_KEY)" ] && [ -n "$(AWS_REGION)" ] && [ -n "$(AWS_BASE_DOMAIN)" ]; then \
+		echo "Creating AWS credentials secret..."; \
+		printf '%s\n' \
+			'apiVersion: v1' \
+			'kind: Secret' \
+			'metadata:' \
+			'  name: aws-credentials' \
+			'  namespace: kuadrant' \
+			'  annotations:' \
+			'    base_domain: $(AWS_BASE_DOMAIN)' \
+			'stringData:' \
+			'  AWS_ACCESS_KEY_ID: $(AWS_ACCESS_KEY_ID)' \
+			'  AWS_REGION: $(AWS_REGION)' \
+			'  AWS_SECRET_ACCESS_KEY: $(AWS_SECRET_ACCESS_KEY)' \
+			'type: kuadrant.io/aws' \
+			| kubectl apply -f -; \
+		echo "✅ AWS credentials secret created in kuadrant namespace"; \
+	else \
+		echo "⏭️  Skipping AWS credentials secret (requires AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION, and AWS_BASE_DOMAIN)"; \
+	fi

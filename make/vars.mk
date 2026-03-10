@@ -23,7 +23,7 @@ KUADRANT_OPERATOR_IMAGE ?=
 RH_REGISTRY_USERNAME ?=
 RH_REGISTRY_PASSWORD ?=
 
-# AWS credentials for DNS testing (optional - defaults to dummy values)
+# AWS credentials for DNS testing (optional - secret only created if provided)
 AWS_ACCESS_KEY_ID ?=
 AWS_SECRET_ACCESS_KEY ?=
 AWS_REGION ?=
