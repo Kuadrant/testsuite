@@ -64,12 +64,13 @@ def wait_for_injected_pod(cluster, testconfig):
             pods = selector("pods", labels={f"{component_label}-resource": component_label}).objects()
             for pod in pods:
                 labels = pod.model.metadata.labels
+                # Check both spec.containers (Istio <1.27) and spec.initContainers (native sidecars in Istio 1.27+)
                 containers = [c.name for c in pod.model.spec.containers]
-
+                init_containers = [c.name for c in pod.model.spec.get("initContainers", [])]
                 if (
                     labels.get("sidecar.istio.io/inject") == "true"
                     and labels.get("kuadrant.io/managed") == "true"
-                    and "istio-proxy" in containers
+                    and ("istio-proxy" in containers or "istio-proxy" in init_containers)
                 ):
                     return pod
         return None
