@@ -15,6 +15,7 @@ local-setup: ## Complete local environment setup (kind cluster + all dependencie
 	$(MAKE) install-metallb
 	$(MAKE) gateway-api-install
 	$(MAKE) install-cert-manager
+	$(MAKE) create-cluster-issuer
 	$(MAKE) $(GATEWAYAPI_PROVIDER)-install
 	$(MAKE) create-test-namespaces
 	$(MAKE) deploy-kuadrant-operator
