@@ -54,13 +54,17 @@ def test_pods_have_istio_sidecar_and_labels(
         assert pod is not None, f"No pod with sidecar found for component '{comp}'"
         pod_name = pod.name()
         pod_labels = pod.model.metadata.labels
+        # Check both spec.containers (Istio <1.27) and spec.initContainers (native sidecars in Istio 1.27+)
         container_names = [c.name for c in pod.model.spec.containers]
+        init_container_names = [c.name for c in pod.model.spec.get("initContainers", [])]
 
         assert (
             pod_labels.get("sidecar.istio.io/inject") == "true"
         ), f"{pod_name} missing label 'sidecar.istio.io/inject: true'"
         assert pod_labels.get("kuadrant.io/managed") == "true", f"{pod_name} missing label 'kuadrant.io/managed: true'"
-        assert "istio-proxy" in container_names, f"{pod_name} does not have 'istio-proxy' sidecar container"
+        assert (
+            "istio-proxy" in container_names or "istio-proxy" in init_container_names
+        ), f"{pod_name} does not have 'istio-proxy' sidecar (checked both containers and initContainers)"
 
 
 @pytest.mark.parametrize("component", component_cases, indirect=True)
