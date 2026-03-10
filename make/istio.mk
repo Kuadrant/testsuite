@@ -1,9 +1,6 @@
 
 ##@ Istio
 
-ISTIO_VERSION ?= v1.26-latest
-SAIL_OPERATOR_VERSION ?= v1.26-latest
-
 .PHONY: istio-install
 istio-install: ## Install Istio via SAIL operator
 	@echo "Installing Sail Operator $(SAIL_OPERATOR_VERSION)..."
@@ -12,7 +9,7 @@ istio-install: ## Install Istio via SAIL operator
 		--create-namespace \
 		--namespace istio-system \
 		--wait \
-		--timeout=300s \
+		--timeout=$(HELM_TIMEOUT) \
 		sail-operator/sail-operator \
 		--version $(SAIL_OPERATOR_VERSION)
 	@echo "Creating Istio CR..."

@@ -1,9 +1,6 @@
 
 ##@ Testsuite Tools
 
-RH_REGISTRY_USERNAME ?=
-RH_REGISTRY_PASSWORD ?=
-
 .PHONY: deploy-testsuite-tools
 deploy-testsuite-tools: ## Deploy testsuite tools (Keycloak, etc.)
 	@echo "Deploying testsuite tools..."
@@ -27,6 +24,6 @@ deploy-testsuite-tools: ## Deploy testsuite tools (Keycloak, etc.)
 		--set=tools.coredns.enable=false \
 		--debug \
 		--wait \
-		--timeout=10m0s \
+		--timeout=$(TOOLS_TIMEOUT) \
 		tools kuadrant-olm/tools-instances
 	@echo "✅ Testsuite tools deployed"

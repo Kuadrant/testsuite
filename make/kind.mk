@@ -1,8 +1,6 @@
 
 ##@ Kind Cluster
 
-KIND_CLUSTER_NAME ?= kuadrant-local
-
 .PHONY: kind-create-cluster
 kind-create-cluster: ## Create kind cluster
 	@echo "Creating kind cluster '$(KIND_CLUSTER_NAME)'..."
