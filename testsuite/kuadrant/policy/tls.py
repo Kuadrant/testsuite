@@ -41,9 +41,7 @@ class TLSPolicy(Policy):
             },
         }
 
-        policy = cls(model, context=cluster.context)
-        policy._inject_gateway_from_target(parent)
-        return policy
+        return cls(model, context=cluster.context)
 
     def __setitem__(self, key, value):
         self.model.spec[key] = value

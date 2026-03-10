@@ -7,17 +7,19 @@ import httpx
 
 class GatewayMetrics:
     """
-    Handles querying metrics from a Gateway via OpenShift Route.
+    Handles querying metrics from a Gateway via OpenShift Route or LoadBalancer Service.
     """
 
-    def __init__(self, metrics_route):
+    def __init__(self, metrics_route, metrics_service=None):
         """
-        Initialize GatewayMetrics with a metrics route.
+        Initialize GatewayMetrics with metrics route or service.
 
         Args:
-            metrics_route: The OpenshiftRoute object exposing gateway metrics
+            metrics_route: The OpenshiftRoute object (OpenShift) or None (Kind)
+            metrics_service: The Service object (for LoadBalancer on Kind/Kubernetes)
         """
         self.metrics_route = metrics_route
+        self.metrics_service = metrics_service
 
     @backoff.on_exception(
         backoff.constant,
@@ -34,11 +36,25 @@ class GatewayMetrics:
         Returns:
             int: The metric value, or 0 if metric not found or route unavailable
         """
-        if self.metrics_route is None:
+        if self.metrics_route is not None:
+            # OpenShift: Use Route
+            metrics_url = f"http://{self.metrics_route.hostname}/stats/prometheus"
+        elif self.metrics_service is not None:
+            # Kind/Kubernetes: Use LoadBalancer service
+            # Get the external IP from the service status
+            service_model = self.metrics_service.refresh().model
+            if hasattr(service_model.status, 'loadBalancer') and service_model.status.loadBalancer.ingress:
+                ingress = service_model.status.loadBalancer.ingress[0]
+                # Could be either 'ip' or 'hostname' depending on the platform
+                external_address = getattr(ingress, 'ip', None) or getattr(ingress, 'hostname', None)
+                if external_address:
+                    metrics_url = f"http://{external_address}:15020/stats/prometheus"
+                else:
+                    return 0
+            else:
+                return 0
+        else:
             return 0
-
-        # Access metrics via route hostname
-        metrics_url = f"http://{self.metrics_route.hostname}/stats/prometheus"
 
         # Query the metrics endpoint
         response = httpx.get(metrics_url, timeout=5.0)

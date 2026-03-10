@@ -154,25 +154,35 @@ class KuadrantGateway(KubernetesObject, Gateway):
         return metrics_service
 
     def commit(self):
-        """Commits gateway and creates metrics service + route"""
+        """Commits gateway and creates metrics service + route/loadbalancer"""
         result = super().commit()
 
-        # Create ClusterIP service for metrics (fast)
-        metrics_service = self._create_metrics_service(service_type="ClusterIP")
-        metrics_service.commit()
+        # Detect cluster type using exposer
+        from testsuite.gateway.exposers import OpenShiftExposer
 
-        # Create OpenShift Route to expose metrics
-        from testsuite.kubernetes.openshift.route import OpenshiftRoute
-        metrics_route = OpenshiftRoute.create_instance(
-            self.cluster,
-            self.metrics_service_name,
-            self.metrics_service_name,
-            target_port="metrics",
-            tls=False
-        )
-        metrics_route.commit()
-        self._metrics_route = metrics_route
+        if settings["default_exposer"] == OpenShiftExposer:
+            # OpenShift: ClusterIP + Route
+            metrics_service = self._create_metrics_service(service_type="ClusterIP")
+            metrics_service.commit()
 
+            from testsuite.kubernetes.openshift.route import OpenshiftRoute
+            metrics_route = OpenshiftRoute.create_instance(
+                self.cluster,
+                self.metrics_service_name,
+                self.metrics_service_name,
+                target_port="metrics",
+                tls=False
+            )
+            metrics_route.commit()
+            self._metrics_route = metrics_route
+        else:
+            # Kind/Kubernetes: LoadBalancer
+            metrics_service = self._create_metrics_service(service_type="LoadBalancer")
+            metrics_service.commit()
+            metrics_service.wait_for_ready()
+            self._metrics_route = None
+
+        self._metrics_service = metrics_service
         return result
 
     def delete(self, ignore_not_found=True, cmd_args=None):
@@ -231,4 +241,7 @@ class KuadrantGateway(KubernetesObject, Gateway):
         """Returns GatewayMetrics instance for querying metrics"""
         from testsuite.gateway.metrics import GatewayMetrics
 
-        return GatewayMetrics(self._metrics_route if hasattr(self, '_metrics_route') else None)
+        return GatewayMetrics(
+            self._metrics_route if hasattr(self, '_metrics_route') else None,
+            self._metrics_service if hasattr(self, '_metrics_service') else None
+        )
