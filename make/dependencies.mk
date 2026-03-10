@@ -61,3 +61,22 @@ create-cluster-issuer: ## Create self-signed ClusterIssuer for TLS testing
 		'  selfSigned: {}' \
 		| kubectl apply -f -
 	@echo "✅ ClusterIssuer 'kuadrant-qe-issuer' created"
+
+.PHONY: create-aws-credentials
+create-aws-credentials: ## Create AWS credentials secret for DNS testing
+	@echo "Creating AWS credentials secret..."
+	@printf '%s\n' \
+		'apiVersion: v1' \
+		'kind: Secret' \
+		'metadata:' \
+		'  name: aws-credentials' \
+		'  namespace: kuadrant' \
+		'  annotations:' \
+		'    base_domain: $(AWS_BASE_DOMAIN)' \
+		'stringData:' \
+		'  AWS_ACCESS_KEY_ID: $(AWS_ACCESS_KEY_ID)' \
+		'  AWS_REGION: $(AWS_REGION)' \
+		'  AWS_SECRET_ACCESS_KEY: $(AWS_SECRET_ACCESS_KEY)' \
+		'type: kuadrant.io/aws' \
+		| kubectl apply -f -
+	@echo "✅ AWS credentials secret created in kuadrant namespace"

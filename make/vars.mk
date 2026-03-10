@@ -19,9 +19,15 @@ KUADRANT_NAMESPACE ?= kuadrant-system
 KUADRANT_OPERATOR_VERSION ?= latest
 KUADRANT_OPERATOR_IMAGE ?=
 
-# Red Hat registry credentials (optional)
+# Red Hat registry credentials
 RH_REGISTRY_USERNAME ?=
 RH_REGISTRY_PASSWORD ?=
+
+# AWS credentials for DNS testing (optional - defaults to dummy values)
+AWS_ACCESS_KEY_ID ?=
+AWS_SECRET_ACCESS_KEY ?=
+AWS_REGION ?=
+AWS_BASE_DOMAIN ?=
 
 # Timeout configurations (in seconds)
 KUBECTL_TIMEOUT ?= 300s

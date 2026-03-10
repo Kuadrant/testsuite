@@ -18,6 +18,7 @@ local-setup: ## Complete local environment setup (kind cluster + all dependencie
 	$(MAKE) create-cluster-issuer
 	$(MAKE) $(GATEWAYAPI_PROVIDER)-install
 	$(MAKE) create-test-namespaces
+	$(MAKE) create-aws-credentials
 	$(MAKE) deploy-kuadrant-operator
 	$(MAKE) deploy-kuadrant-cr
 	$(MAKE) deploy-testsuite-tools
