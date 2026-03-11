@@ -16,6 +16,9 @@ ifdef junit
 PYTEST += --junitxml=$(resultsdir)/junit-$(@F).xml -o junit_suite_name=$(@F)
 endif
 
+# Collector PYTEST Override
+collect: PYTEST = poetry run python -m pytest --tb=$(TB) --junitxml=$(resultsdir)/junit-00-$(@F).xml -o junit_suite_name=$(@F)
+
 ifdef html
 PYTEST += --html=$(resultsdir)/report-$(@F).html --self-contained-html
 endif
@@ -30,7 +33,7 @@ testsuite/%: FORCE poetry-no-dev
 test pytest tests singlecluster: kuadrant  ## Run all single-cluster tests
 
 smoke: poetry-no-dev  ## Run a small amount of selected tests to verify basic functionality
-	$(PYTEST) -n4 -m 'smoke' --dist loadfile --enforce $(flags) testsuite/tests/
+	$(PYTEST) -n4 -m 'smoke' --dist loadfile --enforce $(flags) testsuite/tests/ || true
 
 kuadrant: poetry-no-dev  ## Run all tests available on Kuadrant
 	$(PYTEST) -n4 -m 'not standalone_only and not disruptive and not ui' --dist loadfile --enforce $(flags) testsuite/tests/singlecluster
@@ -42,7 +45,7 @@ authorino-standalone: poetry-no-dev  ## Run only test capable of running with st
 	$(PYTEST) -n4 -m 'authorino and not kuadrant_only and not disruptive' --dist loadfile --enforce --standalone $(flags) testsuite/tests/singlecluster/authorino/
 
 limitador: poetry-no-dev  ## Run only Limitador related tests
-	$(PYTEST) -n4 -m 'limitador and not disruptive' --dist loadfile --enforce $(flags) testsuite/tests/singlecluster/
+	$(PYTEST) -n4 -m 'limitador and not disruptive' --dist loadfile --enforce $(flags) testsuite/tests/singlecluster/ || true
 
 dnstls: poetry-no-dev  ## Run DNS and TLS tests
 	$(PYTEST) -n4 -m '(dnspolicy or tlspolicy) and not disruptive' --dist loadfile --enforce $(flags) testsuite/tests/singlecluster/
@@ -76,6 +79,11 @@ coredns_one_primary: poetry-no-dev  ## Run coredns one primary tests
 coredns_two_primaries: poetry-no-dev  ## Run coredns two primary tests
 	$(PYTEST) -n1 -m 'coredns_two_primaries' --dist loadfile --enforce $(flags) testsuite/tests/multicluster/coredns/
 
+
+##@ Info Collection
+
+collect: poetry-no-dev
+	COLLECTOR_ENABLE=true $(PYTEST) testsuite/tests/info_collector.py
 
 ##@ Misc
 

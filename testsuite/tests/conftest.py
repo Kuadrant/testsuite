@@ -4,6 +4,8 @@ import signal
 from urllib.parse import urlparse
 import yaml
 
+import os
+
 import pytest
 from pytest_metadata.plugin import metadata_key  # type: ignore
 from dynaconf import ValidationError
@@ -113,13 +115,42 @@ def term_handler():
 
 
 def pytest_collection_modifyitems(session, config, items):  # pylint: disable=unused-argument
-    """Add cluster metadata to test items for ReportPortal integration."""
+    """
+    Add user properties to testcases for xml output
+
+    Add cluster metadata to test items for ReportPortal integration.
+
+
+    This adds issue and issue-id properties to junit output, utilizes
+    pytest.mark.issue marker.
+
+    This is copied from pytest examples to record custom properties in junit
+    https://docs.pytest.org/en/stable/usage.html
+    """
+
+    for item in items:
+        for marker in item.iter_markers(name="issue"):
+            issue = marker.args[0]
+            item.user_properties.append(("issue", issue))
+
+                    ## extracting test's docstring for RP
+        item.user_properties.append(['__rp_case_description', item._obj.__doc__])
+
+    """"""
     try:
         collector = ReportPortalMetadataCollector()
         collector.collect_all_clusters()
         collector.add_properties_to_items(items)
     except (OpenShiftPythonException, AttributeError, KeyError, ValidationError) as e:
         print(f"Warning: Component metadata collection failed: {e}")
+
+def pytest_configure(config):
+    """Pytest post-execution configuration tuning"""
+
+    ## Overriding junit_suite_name for collector
+    if os.environ.get('COLLECTOR_ENABLE'):
+        config.inicfg['junit_suite_name'] = 'info-collector'
+        # config.inicfg['junit_suite_name'] = junit_suite_name
 
 
 @pytest.fixture(scope="session")
