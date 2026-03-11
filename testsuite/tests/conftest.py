@@ -133,8 +133,9 @@ def pytest_collection_modifyitems(session, config, items):  # pylint: disable=un
             issue = marker.args[0]
             item.user_properties.append(("issue", issue))
 
-                    ## extracting test's docstring for RP
-        item.user_properties.append(['__rp_case_description', item._obj.__doc__])
+        ## extracting test's docstring for RP
+        if item._obj.__doc__:
+            item.user_properties.append(['__rp_case_description', item._obj.__doc__])
 
     """"""
     try:
