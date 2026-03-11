@@ -146,9 +146,13 @@ def pytest_collection_modifyitems(session, config, items):  # pylint: disable=un
         print(f"Warning: Component metadata collection failed: {e}")
 
 def pytest_configure(config):
+<<<<<<< HEAD
     """Pytest post-execution configuration tuning"""
+=======
+    """pytest config post-launch customization"""
+>>>>>>> 173af15 (DOC: adding docstring to pytest_configure)
 
-    ## Overriding junit_suite_name for collector
+    ## Overriding junit_suite_name for collector only
     if os.environ.get('COLLECTOR_ENABLE'):
         config.inicfg['junit_suite_name'] = 'info-collector'
         # config.inicfg['junit_suite_name'] = junit_suite_name
