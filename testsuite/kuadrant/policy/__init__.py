@@ -1,11 +1,46 @@
-"""Contains Base class for policies"""
+"""
+Contains Base class for policies
+
+Metric Validation Mechanism:
+----------------------------
+Policies track the kuadrant_configs Prometheus metric to verify WASM config propagation to Envoy.
+
+Key Behaviors:
+- Each Gateway gets ONE WASM PluginConfiguration (regardless of number of policies)
+- First policy on a gateway: metric increases by EXPECTED_METRIC_INCREASE (default: +4)
+- Subsequent policies: merged into existing config, metric stays constant (increase: 0)
+- Metric persists even after policies are deleted (WASM config remains in Envoy)
+
+Detection Logic:
+- Uses metric value as source of truth (if metric > 0, config exists)
+- No persistent flags needed - metric itself indicates WASM config presence
+- Handles parametrized tests where policies are created/deleted between runs
+
+Assumptions & Limitations:
+- Assumes kuadrant_configs metric accurately reflects WASM config count
+- Envoy restarts reset metric to 0 (may cause validation failures)
+- No cleanup path when gateway is deleted and recreated with same name
+- Race conditions possible if policies commit simultaneously (rare in tests)
+- Prometheus scrape interval may cause stale metrics (usually negligible)
+
+Usage:
+    class MyPolicy(Policy):
+        # Override if your policy has different metric behavior
+        EXPECTED_METRIC_INCREASE = 4
+
+        def wait_for_ready(self):
+            super().wait_for_ready()  # Includes metric validation
+"""
 
 from dataclasses import dataclass, is_dataclass
 from enum import Enum
+import logging
 
 from testsuite.gateway.topology import get_topology
 from testsuite.kubernetes import KubernetesObject, modify
 from testsuite.utils import check_condition
+
+logger = logging.getLogger(__name__)
 
 
 class Strategy(Enum):
@@ -178,6 +213,12 @@ class Section:
 class Policy(KubernetesObject):
     """Base class with common functionality for all policies"""
 
+    # Default metric increase for regular policies (AuthPolicy, RateLimitPolicy, etc.)
+    # Each policy creates 1 PluginConfiguration in Envoy's WASM shim
+    # Empirically, this increases kuadrant_configs metric by 4
+    # Note: Multiple policies targeting the same gateway share one WASM config
+    EXPECTED_METRIC_INCREASE = 4
+
     @property
     def _topology(self):
         """Get the global topology registry"""
@@ -188,6 +229,11 @@ class Policy(KubernetesObject):
         """
         Commits the policy to the cluster.
         Captures the current kuadrant_configs metric before committing for later validation.
+
+        Assumptions:
+        - kuadrant_configs metric increases once per gateway when first policy is created
+        - Subsequent policies on the same gateway are merged into existing WASM config (no metric increase)
+        - Metric persists even after policies are deleted (WASM config remains in Envoy)
         """
         # Capture initial metric before commit
         if self._topology and hasattr(self.model.spec, 'targetRef'):
@@ -195,27 +241,88 @@ class Policy(KubernetesObject):
             if gateway and hasattr(gateway, 'metrics'):
                 try:
                     initial_metric = gateway.metrics.get_kuadrant_configs()
-                except Exception:  # pylint: disable=broad-except
-                    initial_metric = 0
+                except Exception as e:  # pylint: disable=broad-except
+                    logger.warning(
+                        f"Failed to fetch initial metric for policy {self.name()} on gateway "
+                        f"{gateway.name()}: {e}. Skipping metric validation."
+                    )
+                    return super().commit()
 
-                # Store initial metric in topology for validation in wait_for_ready()
+                # Use metric as source of truth for WASM config existence
+                # If metric > 0, WASM config already exists on this gateway
+                # If metric == 0, this is the first policy creating WASM config
+                wasm_config_exists = initial_metric > 0
+                expected_increase = 0 if wasm_config_exists else self.EXPECTED_METRIC_INCREASE
+
+                logger.debug(
+                    f"Policy {self.name()} committing to gateway {gateway.name()}: "
+                    f"initial_metric={initial_metric}, wasm_config_exists={wasm_config_exists}, "
+                    f"expected_increase={expected_increase}"
+                )
+
+                # Store metadata for validation in wait_for_ready()
                 self._topology.set_policy_metadata(self, 'initial_kuadrant_configs', initial_metric)
                 self._topology.set_policy_metadata(self, 'gateway_name', gateway.name())
+                self._topology.set_policy_metadata(self, 'expected_metric_increase', expected_increase)
 
         return super().commit()
 
     def _validate_wasm_config_metric(self):
-        """Validate that kuadrant_configs metric didn't decrease after policy commit."""
+        """
+        Validate that kuadrant_configs metric increased by the expected amount.
+
+        For first policy on gateway: expects metric to increase by EXPECTED_METRIC_INCREASE
+        For subsequent policies: expects metric to remain unchanged (policies share WASM config)
+        """
         if not self._topology:
+            logger.warning(
+                f"Topology not available for policy {self.name()}, skipping metric validation"
+            )
             return
 
         initial_metric = self._topology.get_policy_metadata(self, 'initial_kuadrant_configs')
         gateway_name = self._topology.get_policy_metadata(self, 'gateway_name')
+        expected_increase = self._topology.get_policy_metadata(self, 'expected_metric_increase')
+
+        # If expected_increase not set (backwards compatibility), use class default
+        if expected_increase is None:
+            logger.debug(
+                f"expected_metric_increase not set for policy {self.name()}, "
+                f"using class default {self.EXPECTED_METRIC_INCREASE}"
+            )
+            expected_increase = self.EXPECTED_METRIC_INCREASE
 
         if initial_metric is not None and gateway_name:
             gateway = self._topology.get_gateway(gateway_name)
             if gateway and hasattr(gateway, 'metrics'):
-                gateway.metrics.wait_for_kuadrant_config_increase(initial_metric)
+                expected_metric = initial_metric + expected_increase
+
+                if expected_increase == 0:
+                    # Policy shares existing WASM config - metric should NOT change
+                    current = gateway.metrics.get_kuadrant_configs()
+                    logger.debug(
+                        f"Policy {self.name()}: validating metric unchanged "
+                        f"(expected={initial_metric}, current={current})"
+                    )
+
+                    if current != initial_metric:
+                        raise AssertionError(
+                            f"kuadrant_configs metric should not have changed for policy {self.name()}. "
+                            f"Expected: {initial_metric}, Actual: {current}. "
+                            f"This policy should be merged into existing WASM config."
+                        )
+                else:
+                    # First policy on gateway - metric should increase
+                    logger.debug(
+                        f"Policy {self.name()}: waiting for metric to reach {expected_metric} "
+                        f"(initial={initial_metric} + increase={expected_increase})"
+                    )
+                    gateway.metrics.wait_for_kuadrant_config_value(expected_metric)
+
+                    final_metric = gateway.metrics.get_kuadrant_configs()
+                    logger.debug(
+                        f"Policy {self.name()}: metric validation successful (final={final_metric})"
+                    )
 
     def wait_for_ready(self):
         """

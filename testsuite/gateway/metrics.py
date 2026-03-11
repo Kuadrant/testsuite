@@ -56,8 +56,12 @@ class GatewayMetrics:
         else:
             return 0
 
-        # Query the metrics endpoint
-        response = httpx.get(metrics_url, timeout=5.0)
+        # Query the metrics endpoint with cache-busting
+        response = httpx.get(
+            metrics_url,
+            timeout=5.0,
+            headers={"Cache-Control": "no-cache, no-store, must-revalidate"}
+        )
         response.raise_for_status()
 
         # Parse kuadrant_configs metric using regex
@@ -92,10 +96,38 @@ class GatewayMetrics:
             return self.get_kuadrant_configs()
 
         final_value = poll_metric()
-
         if final_value is None or final_value < initial_value:
             raise AssertionError(
                 f"kuadrant_configs metric decreased. Initial: {initial_value}, Final: {final_value}"
+            )
+
+        return final_value
+
+    def wait_for_kuadrant_config_value(self, expected_value):
+        """
+        Polls the kuadrant_configs metric until it reaches or exceeds the expected value.
+
+        Args:
+            expected_value: The expected metric value to wait for
+
+        Returns:
+            int: The final metric value
+        """
+        @backoff.on_predicate(
+            backoff.constant,
+            lambda x: x is None or x < expected_value,
+            max_tries=10,
+            interval=3,
+            jitter=None,
+        )
+        def poll_metric():
+            return self.get_kuadrant_configs()
+
+        final_value = poll_metric()
+        if final_value is None or final_value < expected_value:
+         raise AssertionError(
+                f"kuadrant_configs metric did not reach expected value. "
+                f"Expected: >={expected_value}, Actual: {final_value}"
             )
 
         return final_value

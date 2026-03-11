@@ -4,6 +4,7 @@ import pytest
 
 from testsuite.httpx.auth import HttpxOidcClientAuth
 from testsuite.kuadrant.extensions.plan_policy import PlanPolicy, Plan
+from testsuite.gateway.topology import topology
 
 pytestmark = [pytest.mark.authorino, pytest.mark.kuadrant_only, pytest.mark.extensions]
 
@@ -60,6 +61,7 @@ def authorization(authorization, keycloak):
 
 
 @pytest.fixture(scope="module")
+@topology
 def plan_policy(cluster, blame, target):
     """Create PlanPolicy targeting the route/gateway"""
     plan_policy = PlanPolicy.create_instance(cluster, blame("my-plan"), target)

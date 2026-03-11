@@ -6,23 +6,13 @@ in their respective test files.
 """
 
 from contextlib import contextmanager
+from time import sleep
+
 import pytest
 
-from testsuite.gateway import Gateway, GatewayListener
-from testsuite.gateway.gateway_api.gateway import KuadrantGateway
+
 from testsuite.kuadrant.extensions.oidc_policy import OIDCPolicy
-
-
-@pytest.fixture(scope="module")
-def gateway(request, domain_name, base_domain, cluster, blame, label) -> Gateway:
-    """Create and configure the test Gateway."""
-    fqdn = f"{domain_name}-kuadrant.{base_domain}"
-    gw = KuadrantGateway.create_instance(cluster, blame("gw"), {"app": label})
-    gw.add_listener(GatewayListener(hostname=fqdn))
-    request.addfinalizer(gw.delete)
-    gw.commit()
-    gw.wait_for_ready()
-    return gw
+from testsuite.gateway.topology import topology
 
 
 # JWT Cookie Helper fixture
@@ -44,14 +34,15 @@ def oidc_policy_provider_config(oidc_provider, test_client):
 
 
 @pytest.fixture(scope="module")
-def oidc_policy(cluster, blame, oidc_policy_provider_config, gateway):
+@topology
+def oidc_policy(cluster, blame, oidc_policy_provider_config, route):
     """Create OIDC policy instance for testing.
 
     Note: This fixture depends on 'provider' which should be defined in each test file
     with the appropriate client-specific configuration.
     """
     oidc_policy = OIDCPolicy.create_instance(
-        cluster, blame("oidc-policy"), gateway, provider=oidc_policy_provider_config
+        cluster, blame("oidc-policy"), route, provider=oidc_policy_provider_config
     )
     return oidc_policy
 
