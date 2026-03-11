@@ -52,18 +52,20 @@ deploy-kuadrant-operator-local: ## Deploy Kuadrant Operator from local build/ima
 patch-kuadrant-operator-env: ## Patch Kuadrant Operator deployment with custom env vars
 ifneq ($(KUADRANT_OPERATOR_ENV_VARS),)
 	@echo "Patching Kuadrant Operator with environment variables..."
-	@ENV_PATCH='['; \
+	@EXISTING_ENV=$$(kubectl get deployment kuadrant-operator-controller-manager -n $(KUADRANT_NAMESPACE) -o jsonpath='{.spec.template.spec.containers[0].env}'); \
+	NEW_ENV='['; \
 	IFS=',' read -ra PAIRS <<< "$(KUADRANT_OPERATOR_ENV_VARS)"; \
 	for i in "$${!PAIRS[@]}"; do \
 		PAIR="$${PAIRS[$$i]}"; \
 		NAME=$$(echo "$$PAIR" | cut -d'=' -f1); \
 		VALUE=$$(echo "$$PAIR" | cut -d'=' -f2-); \
-		[ $$i -gt 0 ] && ENV_PATCH="$$ENV_PATCH,"; \
-		ENV_PATCH="$$ENV_PATCH{\"name\":\"$$NAME\",\"value\":\"$$VALUE\"}"; \
+		[ $$i -gt 0 ] && NEW_ENV="$$NEW_ENV,"; \
+		NEW_ENV="$$NEW_ENV{\"name\":\"$$NAME\",\"value\":\"$$VALUE\"}"; \
 	done; \
-	ENV_PATCH="$$ENV_PATCH]"; \
+	NEW_ENV="$$NEW_ENV]"; \
+	MERGED_ENV=$$(echo "$$EXISTING_ENV$$NEW_ENV" | jq -s '.[0] + .[1] | unique_by(.name)'); \
 	kubectl patch deployment kuadrant-operator-controller-manager -n $(KUADRANT_NAMESPACE) \
-		--type=json -p="[{\"op\":\"add\",\"path\":\"/spec/template/spec/containers/0/env\",\"value\":$$ENV_PATCH}]"; \
+		--type=json -p="[{\"op\":\"replace\",\"path\":\"/spec/template/spec/containers/0/env\",\"value\":$$MERGED_ENV}]"; \
 	kubectl -n $(KUADRANT_NAMESPACE) rollout status deployment/kuadrant-operator-controller-manager --timeout=$(KUBECTL_TIMEOUT)
 	@echo "✅ Kuadrant Operator patched with env vars"
 else
