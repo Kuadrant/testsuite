@@ -1,8 +1,8 @@
 """Component metadata collection for Report Portal integration."""
 
 import logging
-from typing import Dict, Optional
-from dataclasses import dataclass
+from typing import Optional
+from urllib.parse import urlparse
 
 import openshift_client as oc
 
@@ -12,167 +12,149 @@ from testsuite.kubernetes.client import KubernetesClient
 logger = logging.getLogger(__name__)
 
 
-KUADRANT_COMPONENTS = {
-    "kuadrant-operator": {
-        "namespace": settings["service_protection"]["system_project"],
-        "deployment": "kuadrant-operator-controller-manager",
-        "container": "manager",
-    },
-    "authorino": {
-        "namespace": settings["service_protection"]["system_project"],
-        "deployment": "authorino",
-        "container": "authorino",
-    },
-    "authorino-operator": {
-        "namespace": settings["service_protection"]["system_project"],
-        "deployment": "authorino-operator",
-        "container": "manager",
-    },
-    "limitador": {
-        "namespace": settings["service_protection"]["system_project"],
-        "deployment": "limitador-limitador",
-        "container": "limitador",
-    },
-    "limitador-operator": {
-        "namespace": settings["service_protection"]["system_project"],
-        "deployment": "limitador-operator-controller-manager",
-        "container": "manager",
-    },
-    "dns-operator": {
-        "namespace": settings["service_protection"]["system_project"],
-        "deployment": "dns-operator-controller-manager",
-        "container": "manager",
-    },
-    "console-plugin": {
-        "namespace": settings["service_protection"]["system_project"],
-        "deployment": "kuadrant-console-plugin",
-        "container": "kuadrant-console-plugin",
-    },
-}
-
-
-@dataclass
-class ComponentImage:
-    """Represents a component's image information."""
-
-    name: str
-    image: str
-    tag: str
-    digest: Optional[str] = None
-
-    @property
-    def image_with_digest(self) -> str:
-        """Returns image with digest if available, otherwise with tag."""
-        if self.digest:
-            return f"{self.image.split(':')[0]}@{self.digest}"
-        return f"{self.image}"
-
-
 class ComponentMetadataCollector:
-    """Collects component metadata for Report Portal integration."""
+    """Collects kuadrant-operator image metadata for Report Portal integration."""
 
     def __init__(self, cluster: KubernetesClient):
         self.cluster = cluster
 
-    def _get_deployment_pods(self, config: Dict[str, str]) -> list:
-        """Get pods for a deployment based on its selector."""
-        deployment = oc.selector(f"deployment/{config['deployment']}").object()
-
-        if not deployment.exists():
-            logger.warning("Deployment %s not found in %s", config["deployment"], config["namespace"])
-            return []
-
-        selector_labels = deployment.model.spec.selector.matchLabels
-        labels_dict = dict(selector_labels)
-        pods = oc.selector("pod", labels=labels_dict).objects()
-
-        # Filter pods by deployment name for operators with generic selectors
-        if config["deployment"] in [
-            "limitador-operator-controller-manager",
-            "kuadrant-operator-controller-manager",
-        ]:
-            deployment_name = config["deployment"].replace("-controller-manager", "")
-            pods = [pod for pod in pods if deployment_name in pod.name()]
-
-        return pods
-
-    def _get_container_status(self, pod, container_name: str):
-        """Get container status from pod."""
-        container_statuses = pod.model.status.containerStatuses
-        for status in container_statuses:
-            if status.name == container_name:
-                return status
-        return None
-
-    def _parse_image_info(self, container_status, component_name: str) -> ComponentImage:
-        """Parse image information from container status."""
-        image_id = container_status.imageID
-
-        if "@sha256:" in image_id:
-            image_name, digest = image_id.split("@", 1)
-            tag = "unknown"
-        else:
-            image_name = container_status.image
-            if ":" in image_name:
-                image_name, tag = image_name.rsplit(":", 1)
-            else:
-                tag = "latest"
-            digest = None
-
-        return ComponentImage(name=component_name, image=image_name, tag=tag, digest=digest)
-
-    def get_component_image(self, component_name: str) -> Optional[ComponentImage]:
-        """Get image information for a specific component."""
-        if component_name not in KUADRANT_COMPONENTS:
-            logger.warning("Unknown component: %s", component_name)
-            return None
-
-        config = KUADRANT_COMPONENTS[component_name]
+    def get_kuadrant_operator_image(self) -> Optional[str]:
+        """Get the kuadrant-operator image with tag (e.g., 'quay.io/kuadrant/kuadrant-operator:v1.0.0')."""
+        namespace = settings["service_protection"]["system_project"]
+        deployment_name = "kuadrant-operator-controller-manager"
+        container_name = "manager"
 
         try:
-            namespace_client = self.cluster.change_project(config["namespace"])
+            namespace_client = self.cluster.change_project(namespace)
 
             with namespace_client.context:
-                pods = self._get_deployment_pods(config)
+                deployment = oc.selector(f"deployment/{deployment_name}").object()
+
+                if not deployment.exists():
+                    logger.warning("Deployment %s not found in namespace %s", deployment_name, namespace)
+                    return None
+
+                selector_labels = deployment.model.spec.selector.matchLabels
+                pods = oc.selector("pod", labels=dict(selector_labels)).objects()
+
+                pods = [pod for pod in pods if "kuadrant-operator" in pod.name()]
+
                 if not pods:
-                    logger.warning("No pods found for deployment %s", config["deployment"])
+                    logger.warning("No pods found for deployment %s", deployment_name)
                     return None
 
-                container_status = self._get_container_status(pods[0], config["container"])
+                container_statuses = pods[0].model.status.containerStatuses
+                container_status = None
+                for status in container_statuses:
+                    if status.name == container_name:
+                        container_status = status
+                        break
+
                 if not container_status:
-                    logger.warning("Container %s status not found in pod", config["container"])
+                    logger.warning("Container %s status not found in pod", container_name)
                     return None
 
-                return self._parse_image_info(container_status, component_name)
+                image_spec = container_status.image
+
+                if "@" in image_spec:
+                    image_spec = image_spec.split("@")[0]
+
+                return image_spec
 
         except (oc.OpenShiftPythonException, AttributeError, KeyError) as e:
-            logger.error("Failed to get image for component %s: %s", component_name, e)
+            logger.error("Failed to get kuadrant-operator image: %s", e)
             return None
 
-    def get_all_component_images(self) -> Dict[str, ComponentImage]:
-        """Get image information for all known components."""
-        components = {}
-
-        for component_name in KUADRANT_COMPONENTS:
-            image_info = self.get_component_image(component_name)
-            if image_info:
-                components[component_name] = image_info
-
-        return components
-
-    def get_component_metadata_for_report_portal(self) -> Dict[str, str]:
-        """Get component metadata formatted for Report Portal attributes."""
-        components = self.get_all_component_images()
+    def get_component_metadata_for_report_portal(self) -> dict[str, str]:
+        """Get kuadrant-operator image for Report Portal attributes."""
         metadata = {}
 
-        for component_name, image_info in components.items():
-            # Only collect SHA digest - that's all we need to identify what's running
-            if image_info.digest:
-                # Remove 'sha256:' prefix for Report Portal compatibility (colons cause truncation)
-                clean_digest = image_info.digest.replace("sha256:", "")
-                metadata[f"{component_name}-sha"] = clean_digest
-            else:
-                # Fallback to tag if no digest available (shouldn't happen in normal deployments)
-                metadata[f"{component_name}-tag"] = image_info.tag
+        kuadrant_image = self.get_kuadrant_operator_image()
+        if kuadrant_image:
+            metadata["kuadrant_image"] = kuadrant_image
 
         return metadata
+
+
+class ReportPortalMetadataCollector:
+    """Collects and manages cluster metadata for ReportPortal integration."""
+
+    def __init__(self):
+        self.all_cluster_metadata = {}
+
+    def collect_all_clusters(self):
+        """Collect metadata from all configured clusters."""
+        clusters_config = self._get_cluster_configurations()
+        for cluster_kubeconfig, cluster_client in clusters_config:
+            metadata = self._collect_single_cluster(cluster_client)
+            if metadata:
+                self.all_cluster_metadata[cluster_kubeconfig] = metadata
+
+    def _get_cluster_configurations(self):
+        """Get cluster configurations from settings."""
+        clusters_config = [("cluster1", settings["control_plane"]["cluster"])]
+        if cluster2 := settings["control_plane"].get("cluster2"):
+            clusters_config.append(("cluster2", cluster2))
+        if cluster3 := settings["control_plane"].get("cluster3"):
+            clusters_config.append(("cluster3", cluster3))
+        return clusters_config
+
+    def _collect_single_cluster(self, cluster_client):
+        """Collect metadata for a single cluster."""
+        project = cluster_client.change_project(settings["service_protection"]["system_project"])
+        if not project.connected:
+            return None
+
+        collector = ComponentMetadataCollector(project)
+        component_metadata = collector.get_component_metadata_for_report_portal()
+        console_url = self._get_console_url(cluster_client.api_url)
+        ocp_version = self._get_ocp_version(project)
+
+        return {
+            "metadata": component_metadata,
+            "console_url": console_url,
+            "ocp_version": ocp_version,
+        }
+
+    def _get_console_url(self, api_url):
+        """Generate console URL from API URL."""
+        parsed = urlparse(api_url)
+        hostname = parsed.hostname
+        if hostname and hostname.startswith("api."):
+            console_hostname = hostname.replace("api.", "console-openshift-console.apps.", 1)
+            return f"https://{console_hostname}"
+        return api_url
+
+    def _get_ocp_version(self, project):
+        """Retrieve and format OCP version from cluster."""
+        with project.context:
+            version_result = oc.selector("clusterversion").objects()
+            if version_result:
+                ocp_version = version_result[0].model.status.history[0].version
+                if ocp_version:
+                    parts = ocp_version.split(".")
+                    if len(parts) >= 2:
+                        return f"{parts[0]}.{parts[1]}"
+        return None
+
+    def add_properties_to_items(self, items):
+        """Add cluster metadata as user properties to test items."""
+        for cluster_kubeconfig in ["cluster1", "cluster2", "cluster3"]:
+            if cluster_kubeconfig not in self.all_cluster_metadata:
+                continue
+
+            cluster_data = self.all_cluster_metadata[cluster_kubeconfig]
+            if "kuadrant_image" not in cluster_data["metadata"]:
+                continue
+
+            property_value = self._build_property_value(cluster_data, cluster_kubeconfig)
+            for item in items:
+                item.user_properties.append((cluster_data["console_url"], property_value))
+
+    def _build_property_value(self, cluster_data, cluster_kubeconfig):
+        """Build property value string from cluster data."""
+        property_value = f"Name:{cluster_kubeconfig}|"
+        if cluster_data.get("ocp_version"):
+            property_value += f"OCP:{cluster_data['ocp_version']}|"
+        property_value += f"Kuadrant:{cluster_data['metadata']['kuadrant_image']}"
+        return property_value
