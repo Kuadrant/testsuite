@@ -6,7 +6,7 @@ create-test-namespaces: ## Create namespaces for testing
 	@echo "Creating test namespaces..."
 	kubectl create namespace kuadrant || true
 	kubectl create namespace kuadrant2 || true
-	@echo "✅ Test namespaces created"
+	@echo "Test namespaces created"
 
 .PHONY: deploy-kuadrant-operator
 deploy-kuadrant-operator: ## Deploy Kuadrant Operator (via Helm by default, or custom image)
@@ -21,7 +21,7 @@ else
 		helm install kuadrant-operator kuadrant/kuadrant-operator --version $(KUADRANT_OPERATOR_VERSION) --create-namespace --namespace $(KUADRANT_NAMESPACE))
 	kubectl -n $(KUADRANT_NAMESPACE) wait --timeout=$(KUBECTL_TIMEOUT) --for=condition=Available deployments --all
 	$(MAKE) patch-kuadrant-operator-env
-	@echo "✅ Kuadrant Operator $(KUADRANT_OPERATOR_VERSION) installed"
+	@echo "Kuadrant Operator $(KUADRANT_OPERATOR_VERSION) installed"
 endif
 
 .PHONY: deploy-kuadrant-operator-local
@@ -46,7 +46,7 @@ deploy-kuadrant-operator-local: ## Deploy Kuadrant Operator from local build/ima
 		kustomize build ../deploy | kubectl apply --server-side -f -
 	kubectl -n $(KUADRANT_NAMESPACE) wait --timeout=$(KUBECTL_TIMEOUT) --for=condition=Available deployments --all
 	$(MAKE) patch-kuadrant-operator-env
-	@echo "✅ Kuadrant Operator deployed from image $(KUADRANT_OPERATOR_IMAGE)"
+	@echo "Kuadrant Operator deployed from image $(KUADRANT_OPERATOR_IMAGE)"
 
 .PHONY: patch-kuadrant-operator-env
 patch-kuadrant-operator-env: ## Patch Kuadrant Operator deployment with custom env vars
@@ -67,7 +67,7 @@ ifneq ($(KUADRANT_OPERATOR_ENV_VARS),)
 	kubectl patch deployment kuadrant-operator-controller-manager -n $(KUADRANT_NAMESPACE) \
 		--type=json -p="[{\"op\":\"replace\",\"path\":\"/spec/template/spec/containers/0/env\",\"value\":$$MERGED_ENV}]"; \
 	kubectl -n $(KUADRANT_NAMESPACE) rollout status deployment/kuadrant-operator-controller-manager --timeout=$(KUBECTL_TIMEOUT)
-	@echo "✅ Kuadrant Operator patched with env vars"
+	@echo "Kuadrant Operator patched with env vars"
 else
 	@echo "No custom env vars specified (KUADRANT_OPERATOR_ENV_VARS not set)"
 endif
@@ -84,4 +84,4 @@ deploy-kuadrant-cr: ## Deploy Kuadrant CR
 		'spec: {}' \
 		| kubectl apply -f -
 	kubectl wait kuadrant/kuadrant-sample --for=condition=Ready=True -n $(KUADRANT_NAMESPACE) --timeout=$(KUADRANT_CR_TIMEOUT)
-	@echo "✅ Kuadrant CR ready"
+	@echo "Kuadrant CR ready"

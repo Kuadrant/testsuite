@@ -8,4 +8,4 @@ envoygateway-install: ## Install EnvoyGateway
 		--create-namespace \
 		--namespace envoy-gateway-system \
 		--wait
-	@echo "✅ EnvoyGateway installed"
+	@echo "EnvoyGateway installed"
