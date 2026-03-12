@@ -8,6 +8,7 @@ from typing import Any, Optional, TYPE_CHECKING, Literal, List
 from httpx import Client
 
 from testsuite.certificates import Certificate
+from testsuite.gateway.metrics import GatewayMetrics
 from testsuite.httpx import KuadrantClient
 from testsuite.lifecycle import LifecycleObject
 from testsuite.utils import asdict
@@ -264,3 +265,4 @@ class Exposer(LifecycleObject):
     @abstractmethod
     def base_domain(self) -> str:
         """Returns base domains for all hostnames created by this exposer"""
+

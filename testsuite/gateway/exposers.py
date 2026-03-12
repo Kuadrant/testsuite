@@ -4,6 +4,7 @@ from testsuite.certificates import Certificate
 from testsuite.gateway import Exposer, Gateway, Hostname
 from testsuite.httpx import KuadrantClient, ForceSNIClient
 from testsuite.kubernetes.openshift.route import OpenshiftRoute
+from testsuite.kubernetes.service import Service, ServicePort
 
 
 class OpenShiftExposer(Exposer):
@@ -38,41 +39,6 @@ class OpenShiftExposer(Exposer):
         for route in self.routes:
             route.delete()
         self.routes = []
-
-    def expose_metrics(self, gateway):
-        """
-        Expose metrics via ClusterIP Service + Route.
-
-        Returns:
-            str: The metrics endpoint URL
-        """
-        from testsuite.kubernetes.service import Service, ServicePort
-
-        # Create ClusterIP service
-        metrics_service = Service.create_instance(
-            gateway.cluster,
-            gateway.metrics_service_name,
-            selector={"gateway.networking.k8s.io/gateway-name": gateway.name()},
-            ports=[ServicePort(name="metrics", port=15020, targetPort=15020)],
-            labels=gateway.model.metadata.get("labels", {}),
-            service_type="ClusterIP",
-        )
-        metrics_service.commit()
-
-        # Create Route to expose the service
-        metrics_route = OpenshiftRoute.create_instance(
-            gateway.cluster,
-            gateway.metrics_service_name,
-            gateway.metrics_service_name,
-            target_port="metrics",
-            tls=False
-        )
-        metrics_route.commit()
-
-        # Track for cleanup
-        self.routes.append(metrics_route)
-
-        return f"http://{metrics_route.hostname}/stats/prometheus"
 
 
 class StaticLocalHostname(Hostname):
@@ -116,15 +82,3 @@ class LoadBalancerServiceExposer(Exposer):
 
     def delete(self):
         pass
-
-    def expose_metrics(self, gateway):
-        """
-        Expose metrics via gateway's external IP directly (no separate service needed).
-
-        Returns:
-            str: The metrics endpoint URL (will be available after gateway.wait_for_ready())
-        """
-        # For LoadBalancer exposer (Kind/local), use the gateway's external IP directly
-        # The gateway already exposes port 15020 for metrics
-        # Return a lambda that gets the IP when actually needed (after gateway is ready)
-        return lambda: f"http://{gateway.external_ip().split(':')[0]}:15020/stats/prometheus"

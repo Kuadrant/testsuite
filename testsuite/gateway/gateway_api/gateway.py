@@ -14,7 +14,7 @@ from testsuite.kubernetes import KubernetesObject, modify
 from testsuite.kuadrant.policy import Policy
 from testsuite.kubernetes.deployment import Deployment
 from testsuite.utils import check_condition, asdict, domain_match
-from testsuite.gateway.metrics import GatewayMetrics
+from testsuite.core.metrics_factory import create_gateway_metrics
 
 
 class KuadrantGateway(KubernetesObject, Gateway):
@@ -137,64 +137,22 @@ class KuadrantGateway(KubernetesObject, Gateway):
             if "tls" in listener:
                 yield listener
 
-    def _create_metrics_service(
-        self, service_type: Literal["ClusterIP", "LoadBalancer", "NodePort", "ExternalName"] = "ClusterIP"
-    ):
-        """Creates a metrics service to expose gateway metrics on port 15020"""
-        from testsuite.kubernetes.service import Service, ServicePort
+    def expose_metrics(self):
+        """Expose metrics endpoint using the configured exposer"""
 
-        metrics_service = Service.create_instance(
-            self.cluster,
-            self.metrics_service_name,
-            selector={"gateway.networking.k8s.io/gateway-name": self.name()},
-            ports=[ServicePort(name="metrics", port=15020, targetPort=15020)],
-            labels=self.model.metadata.get("labels", {}),
-            service_type=service_type,
-        )
-
-        self._metrics_service = metrics_service
-        return metrics_service
+        exposer = settings["default_exposer"](self.cluster)
+        self._metrics = create_gateway_metrics(exposer, self)
 
     def commit(self):
-        """Commits gateway and creates metrics service + route/loadbalancer"""
+        """Commits gateway and exposes metrics endpoint"""
         result = super().commit()
-
-        # Detect cluster type using exposer
-        from testsuite.gateway.exposers import OpenShiftExposer
-
-        if settings["default_exposer"] == OpenShiftExposer:
-            # OpenShift: ClusterIP + Route
-            metrics_service = self._create_metrics_service(service_type="ClusterIP")
-            metrics_service.commit()
-
-            from testsuite.kubernetes.openshift.route import OpenshiftRoute
-            metrics_route = OpenshiftRoute.create_instance(
-                self.cluster,
-                self.metrics_service_name,
-                self.metrics_service_name,
-                target_port="metrics",
-                tls=False
-            )
-            metrics_route.commit()
-            self._metrics_route = metrics_route
-        else:
-            # Kind/Kubernetes: LoadBalancer
-            metrics_service = self._create_metrics_service(service_type="LoadBalancer")
-            metrics_service.commit()
-            metrics_service.wait_for_ready()
-            self._metrics_route = None
-
-        self._metrics_service = metrics_service
+        self.expose_metrics()
         return result
 
     def delete(self, ignore_not_found=True, cmd_args=None):
-        # Delete metrics route and service if they exist
-        if hasattr(self, '_metrics_route') and self._metrics_route is not None:
-            self._metrics_route.delete(ignore_not_found=True)
-            self._metrics_route = None
-        if hasattr(self, '_metrics_service') and self._metrics_service is not None:
-            self._metrics_service.delete(ignore_not_found=True)
-            self._metrics_service = None
+        # Delete metrics resources if they exist
+        if hasattr(self, '_metrics') and self._metrics:
+            self._metrics.delete()
 
         res = super().delete(ignore_not_found, cmd_args)
         with self.cluster.context:
@@ -238,12 +196,14 @@ class KuadrantGateway(KubernetesObject, Gateway):
     def class_name(self):
         return self.cached_gw_class_name
 
+    def __init__(self, dict_to_model=None, string_to_model=None, context=None):
+        super().__init__(dict_to_model, string_to_model, context)
+        self._metrics = None
+
     @property
     def metrics(self):
         """Returns GatewayMetrics instance for querying metrics"""
-        from testsuite.gateway.metrics import GatewayMetrics
+        if not hasattr(self, '_metrics'):
+            raise RuntimeError("Gateway metrics not available. Call commit() first to expose metrics endpoint.")
 
-        return GatewayMetrics(
-            self._metrics_route if hasattr(self, '_metrics_route') else None,
-            self._metrics_service if hasattr(self, '_metrics_service') else None
-        )
+        return self._metrics

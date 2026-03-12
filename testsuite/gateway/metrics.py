@@ -1,25 +1,25 @@
 """Gateway metrics querying functionality"""
 
 import re
+from abc import ABC, abstractmethod
+
 import backoff
 import httpx
 
 
-class GatewayMetrics:
+class GatewayMetrics(ABC):
     """
-    Handles querying metrics from a Gateway via OpenShift Route or LoadBalancer Service.
+    Base class for querying metrics from a Gateway.
     """
 
-    def __init__(self, metrics_route, metrics_service=None):
-        """
-        Initialize GatewayMetrics with metrics route or service.
+    @property
+    @abstractmethod
+    def metrics_url(self):
+        """Get the metrics endpoint URL"""
 
-        Args:
-            metrics_route: The OpenshiftRoute object (OpenShift) or None (Kind)
-            metrics_service: The Service object (for LoadBalancer on Kind/Kubernetes)
-        """
-        self.metrics_route = metrics_route
-        self.metrics_service = metrics_service
+    @abstractmethod
+    def delete(self):
+        """Clean up metrics resources"""
 
     @backoff.on_exception(
         backoff.constant,
@@ -34,31 +34,11 @@ class GatewayMetrics:
         This metric represents the total number of configs loaded in the wasm shim.
 
         Returns:
-            int: The metric value, or 0 if metric not found or route unavailable
+            int: The metric value, or 0 if metric not found or endpoint unavailable
         """
-        if self.metrics_route is not None:
-            # OpenShift: Use Route
-            metrics_url = f"http://{self.metrics_route.hostname}/stats/prometheus"
-        elif self.metrics_service is not None:
-            # Kind/Kubernetes: Use LoadBalancer service
-            # Get the external IP from the service status
-            service_model = self.metrics_service.refresh().model
-            if hasattr(service_model.status, 'loadBalancer') and service_model.status.loadBalancer.ingress:
-                ingress = service_model.status.loadBalancer.ingress[0]
-                # Could be either 'ip' or 'hostname' depending on the platform
-                external_address = getattr(ingress, 'ip', None) or getattr(ingress, 'hostname', None)
-                if external_address:
-                    metrics_url = f"http://{external_address}:15020/stats/prometheus"
-                else:
-                    return 0
-            else:
-                return 0
-        else:
-            return 0
-
         # Query the metrics endpoint with cache-busting
         response = httpx.get(
-            metrics_url,
+            self.metrics_url,
             timeout=5.0,
             headers={"Cache-Control": "no-cache, no-store, must-revalidate"}
         )
@@ -125,9 +105,61 @@ class GatewayMetrics:
 
         final_value = poll_metric()
         if final_value is None or final_value < expected_value:
-         raise AssertionError(
+            raise AssertionError(
                 f"kuadrant_configs metric did not reach expected value. "
                 f"Expected: >={expected_value}, Actual: {final_value}"
             )
 
         return final_value
+
+
+class OpenShiftGatewayMetrics(GatewayMetrics):
+    """Gateway metrics implementation for OpenShift (ClusterIP + Route)"""
+
+    def __init__(self, metrics_route, metrics_service):
+        """
+        Initialize OpenShift metrics.
+
+        Args:
+            metrics_route: OpenshiftRoute object exposing the metrics
+            metrics_service: Service object for metrics endpoint
+        """
+        self._metrics_route = metrics_route
+        self._metrics_service = metrics_service
+
+    @property
+    def metrics_url(self):
+        """Get the metrics URL from the route"""
+        return f"http://{self._metrics_route.hostname}/stats/prometheus"
+
+    def delete(self):
+        """Delete the metrics route and service"""
+        if self._metrics_route:
+            self._metrics_route.delete(ignore_not_found=True)
+        if self._metrics_service:
+            self._metrics_service.delete(ignore_not_found=True)
+
+
+class LoadBalancerGatewayMetrics(GatewayMetrics):
+    """Gateway metrics implementation for LoadBalancer (LoadBalancer Service)"""
+
+    def __init__(self, gateway, metrics_service):
+        """
+        Initialize LoadBalancer metrics.
+
+        Args:
+            gateway: Gateway object to get external IP from
+            metrics_service: Service object for metrics endpoint
+        """
+        self._gateway = gateway
+        self._metrics_service = metrics_service
+
+    @property
+    def metrics_url(self):
+        """Get the metrics URL from metrics service external IP"""
+        return f"http://{self._metrics_service.external_ip}:15020/stats/prometheus"
+
+    def delete(self):
+        """Delete the metrics service"""
+        if self._metrics_service:
+            self._metrics_service.delete(ignore_not_found=True)

@@ -3,10 +3,10 @@
 from dataclasses import dataclass, is_dataclass
 from enum import Enum
 
-from testsuite.core.topology import get_topology
 from testsuite.kubernetes import KubernetesObject, modify
 from testsuite.kuadrant.policy.metric_validator import WasmMetricValidator
 from testsuite.utils import check_condition
+from testsuite.core.topology import get_topology
 
 
 class Strategy(Enum):
@@ -182,7 +182,6 @@ class Policy(KubernetesObject):
     @property
     def _topology(self):
         """Get the global topology registry"""
-        from testsuite.core.topology import get_topology
         return get_topology()
 
     def commit(self):
