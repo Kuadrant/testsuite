@@ -134,5 +134,8 @@ dmypy.json
 logs/*
 !logs/.gitkeep
 
+# Test failure artifacts (automatic log collection)
+test-failures/
+
 # macOS system files
 .DS_Store
