@@ -104,6 +104,19 @@ def navigate_console(page, exposer, cluster, skip_or_fail):
     NavBar(page).kuadrant_nav.wait_for(state="visible", timeout=30000)
 
 
+@pytest.fixture(scope="session")
+def openshift_version(cluster):
+    """Get OpenShift cluster version"""
+    result = cluster.do_action(
+        "get", "clusterversion", "version", "-o", "jsonpath={.status.desired.version}", auto_raise=False
+    )
+    if result.status() != 0:
+        return None
+    version_str = result.out().strip()
+    parts = version_str.split(".")
+    return tuple(int(p.split("-")[0]) for p in parts[:2])  # Convert "4.20.0" -> (4, 20)
+
+
 @pytest.fixture
 def navigator(page):
     """Return a Navigator bound to the current Playwright page"""
