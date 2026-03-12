@@ -9,7 +9,7 @@ from testsuite.httpx.auth import HttpxOidcClientAuth
 from testsuite.kuadrant.policy.authorization.auth_policy import AuthPolicy
 from testsuite.kuadrant.policy.dns import DNSPolicy
 from testsuite.kuadrant.policy.tls import TLSPolicy
-from testsuite.gateway.topology import topology
+from testsuite.core.topology import topology
 
 
 @pytest.fixture(scope="module")

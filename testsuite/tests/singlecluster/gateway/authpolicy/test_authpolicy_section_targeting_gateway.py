@@ -10,7 +10,7 @@ from testsuite.gateway import GatewayListener
 from testsuite.gateway.gateway_api.gateway import KuadrantGateway
 from testsuite.gateway.gateway_api.hostname import StaticHostname
 from testsuite.gateway.gateway_api.route import HTTPRoute
-from testsuite.gateway.topology import topology
+from testsuite.core.topology import topology
 from testsuite.kuadrant.policy.authorization.auth_policy import AuthPolicy
 
 pytestmark = [pytest.mark.authorino, pytest.mark.kuadrant_only]

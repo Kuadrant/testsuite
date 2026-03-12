@@ -8,7 +8,7 @@ from testsuite.kuadrant.policy.rate_limit import Limit
 from testsuite.kuadrant.policy import CelPredicate
 from testsuite.kubernetes.monitoring import MetricsEndpoint
 from testsuite.kubernetes.monitoring.service_monitor import ServiceMonitor
-from testsuite.gateway.topology import topology
+from testsuite.core.topology import topology
 
 
 @pytest.fixture(scope="package")

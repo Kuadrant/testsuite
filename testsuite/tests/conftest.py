@@ -104,7 +104,7 @@ def skip_or_fail(request):
 @pytest.fixture(scope="session", autouse=True)
 def topology():
     """Global topology registry for Gateway API resources and policies"""
-    from testsuite.gateway.topology import TopologyRegistry, set_topology, clear_topology
+    from testsuite.core.topology import TopologyRegistry, set_topology, clear_topology
 
     registry = TopologyRegistry()
     set_topology(registry)  # Set as global singleton

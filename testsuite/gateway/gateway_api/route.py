@@ -6,6 +6,7 @@ from httpx import Client
 
 from testsuite.httpx import KuadrantClient
 from testsuite.gateway import Gateway, GatewayRoute, PathMatch, MatchType, RouteMatch
+from testsuite.gateway.gateway_api import GatewayAPIKind
 from testsuite.kubernetes.client import KubernetesClient
 from testsuite.kubernetes import KubernetesObject, modify
 from testsuite.kuadrant.policy import Policy
@@ -37,7 +38,7 @@ class HTTPRoute(KubernetesObject, GatewayRoute):
         """Creates new instance of HTTPRoute"""
         model = {
             "apiVersion": "gateway.networking.k8s.io/v1beta1",
-            "kind": "HTTPRoute",
+            "kind": GatewayAPIKind.HTTPROUTE,
             "metadata": {"name": name, "namespace": cluster.project, "labels": labels},
             "spec": {
                 "parentRefs": [gateway.reference],
@@ -75,7 +76,7 @@ class HTTPRoute(KubernetesObject, GatewayRoute):
     def reference(self):
         return {
             "group": "gateway.networking.k8s.io",
-            "kind": "HTTPRoute",
+            "kind": GatewayAPIKind.HTTPROUTE,
             "name": self.name(),
         }
 

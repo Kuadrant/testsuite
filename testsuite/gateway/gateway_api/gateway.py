@@ -1,18 +1,20 @@
 """Module containing all gateway classes"""
 
 from time import sleep
-from typing import Any, Literal
+from typing import Any
 
 import openshift_client as oc
 
 from testsuite.config import settings
 from testsuite.certificates import Certificate
 from testsuite.gateway import Gateway, GatewayListener
+from testsuite.gateway.gateway_api import GatewayAPIKind
 from testsuite.kubernetes.client import KubernetesClient
 from testsuite.kubernetes import KubernetesObject, modify
 from testsuite.kuadrant.policy import Policy
 from testsuite.kubernetes.deployment import Deployment
 from testsuite.utils import check_condition, asdict, domain_match
+from testsuite.gateway.metrics import GatewayMetrics
 
 
 class KuadrantGateway(KubernetesObject, Gateway):
@@ -30,7 +32,7 @@ class KuadrantGateway(KubernetesObject, Gateway):
 
         model: dict[Any, Any] = {
             "apiVersion": "gateway.networking.k8s.io/v1beta1",
-            "kind": "Gateway",
+            "kind": GatewayAPIKind.GATEWAY,
             "metadata": {"name": name, "labels": labels},
             "spec": {"gatewayClassName": cls.cached_gw_class_name, "listeners": []},
         }

@@ -3,8 +3,9 @@
 from dataclasses import dataclass, is_dataclass
 from enum import Enum
 
-from testsuite.gateway.topology import get_topology
+from testsuite.core.topology import get_topology
 from testsuite.kubernetes import KubernetesObject, modify
+from testsuite.kuadrant.policy.metric_validator import WasmMetricValidator
 from testsuite.utils import check_condition
 
 
@@ -181,88 +182,13 @@ class Policy(KubernetesObject):
     @property
     def _topology(self):
         """Get the global topology registry"""
-        from testsuite.gateway.topology import get_topology
+        from testsuite.core.topology import get_topology
         return get_topology()
 
     def commit(self):
-        """
-        Commits the policy to the cluster.
-        Captures the current kuadrant_configs metric before committing for later validation.
-        """
-        # Capture initial metric before commit
-        if self._topology and hasattr(self.model.spec, 'targetRef'):
-            target_ref = self.model.spec.targetRef
-            gateway = self._topology.get_gateway_for_target_ref(target_ref)
-            if gateway and hasattr(gateway, 'metrics'):
-                try:
-                    initial_metric = gateway.metrics.get_kuadrant_configs()
-                except Exception:  # pylint: disable=broad-except
-                    initial_metric = 0
-
-                # Determine if WasmPlugin config will change based on:
-                # 1. Topology: are there other policies for this target?
-                # 2. Gateway flag: has WasmPlugin ever been created for this gateway?
-                target_kind = target_ref.kind
-                target_name = target_ref.name
-
-                # Check topology for existing policies
-                if target_kind == "HTTPRoute":
-                    existing_policies = self._topology.get_policies_for_route(target_name)
-                elif target_kind == "Gateway":
-                    existing_policies = self._topology.get_policies_for_gateway(target_name)
-                else:
-                    existing_policies = []
-
-                # Filter out current policy if already registered
-                existing_policies = [p for p in existing_policies if p.name() != self.name()]
-
-                # Check gateway metadata flag for WasmPlugin creation
-                gateway_node = self._topology.get_node(gateway.name())
-                wasm_config_ever_created = gateway_node and gateway_node.metadata.get('wasm_config_created', False)
-
-                # Expect metric increase if: no existing policies AND no WasmPlugin created yet
-                expect_metric_increase = len(existing_policies) == 0 and not wasm_config_ever_created
-
-                # Mark that WasmPlugin will be created for this gateway
-                if gateway_node and expect_metric_increase:
-                    gateway_node.metadata['wasm_config_created'] = True
-
-                # Store metadata for validation in wait_for_ready()
-                self._topology.set_policy_metadata(self, 'initial_kuadrant_configs', initial_metric)
-                self._topology.set_policy_metadata(self, 'expect_metric_increase', expect_metric_increase)
-                self._topology.set_policy_metadata(self, 'gateway_name', gateway.name())
-
+        """Commits the policy to the cluster."""
+        WasmMetricValidator.prepare_validation(self, self._topology)
         return super().commit()
-
-    def _validate_wasm_config_metric(self):
-        """Validate that the kuadrant_configs metric changed as expected after policy commit"""
-        if not self._topology:
-            return
-
-        initial_metric = self._topology.get_policy_metadata(self, 'initial_kuadrant_configs')
-        gateway_name = self._topology.get_policy_metadata(self, 'gateway_name')
-        expect_metric_increase = self._topology.get_policy_metadata(self, 'expect_metric_increase')
-
-        if initial_metric is None or gateway_name is None:
-            return
-
-        gateway = self._topology.get_gateway(gateway_name)
-        if not gateway or not hasattr(gateway, 'metrics'):
-            return
-
-        # Wait for metric to reach expected state
-        if expect_metric_increase:
-            # First policy for this target - metric should increase
-            gateway.metrics.wait_for_kuadrant_config_increase(initial_metric)
-        else:
-            # Policy updates existing WasmPlugin - metric should stay same
-            # Just verify it didn't decrease
-            current_metric = gateway.metrics.get_kuadrant_configs()
-            if current_metric < initial_metric:
-                raise AssertionError(
-                    f"kuadrant_configs metric decreased unexpectedly for policy {self.name()}. "
-                    f"Initial: {initial_metric}, Current: {current_metric}"
-                )
 
     def wait_for_ready(self):
         """
@@ -273,7 +199,7 @@ class Policy(KubernetesObject):
         success = self.wait_until(has_observed_generation(self.generation))
         assert success, f"{self.kind()} did not reach observed generation in time"
         self.wait_for_full_enforced()
-        self._validate_wasm_config_metric()
+        WasmMetricValidator.validate_metrics(self, self._topology)
 
     def wait_for_accepted(self):
         """Wait for a Policy to be Accepted"""

@@ -4,7 +4,7 @@ import pytest
 
 from testsuite.httpx.auth import HttpxOidcClientAuth
 from testsuite.kuadrant.extensions.plan_policy import PlanPolicy, Plan
-from testsuite.gateway.topology import topology
+from testsuite.core.topology import topology
 
 pytestmark = [pytest.mark.authorino, pytest.mark.kuadrant_only, pytest.mark.extensions]
 

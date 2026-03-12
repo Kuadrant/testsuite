@@ -12,7 +12,7 @@ import pytest
 
 
 from testsuite.kuadrant.extensions.oidc_policy import OIDCPolicy
-from testsuite.gateway.topology import topology
+from testsuite.core.topology import topology
 
 
 # JWT Cookie Helper fixture

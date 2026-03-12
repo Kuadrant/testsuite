@@ -5,7 +5,7 @@ an HTTPRoute, protecting only the traffic handled by that named rule.
 
 import pytest
 
-from testsuite.gateway.topology import topology
+from testsuite.core.topology import topology
 from testsuite.kuadrant.policy.authorization.auth_policy import AuthPolicy
 
 pytestmark = [pytest.mark.authorino, pytest.mark.kuadrant_only]
