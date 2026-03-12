@@ -96,7 +96,7 @@ class GatewayMetrics:
             return self.get_kuadrant_configs()
 
         final_value = poll_metric()
-        if final_value is None or final_value < initial_value:
+        if final_value is None or final_value <= initial_value:
             raise AssertionError(
                 f"kuadrant_configs metric decreased. Initial: {initial_value}, Final: {final_value}"
             )

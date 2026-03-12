@@ -30,12 +30,6 @@ class Auth:  # pylint: disable=invalid-name
 class OIDCPolicy(Policy):
     """OIDCPolicy object, it serves as Kuadrant's OIDC configuration"""
 
-    # OIDCPolicy creates 2 AuthPolicies (main + callback), but they are merged
-    # into a single PluginConfiguration with 2 ActionSets
-    # This results in a single metric increase of +4 (not +8)
-    # See Envoy WASM logs: "plugin config parsed: PluginConfiguration { ... action_sets: [...] }"
-    EXPECTED_METRIC_INCREASE = 4
-
     @classmethod
     def create_instance(
         cls,

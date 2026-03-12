@@ -10,6 +10,7 @@ from testsuite.gateway import GatewayListener
 from testsuite.gateway.gateway_api.gateway import KuadrantGateway
 from testsuite.gateway.gateway_api.hostname import StaticHostname
 from testsuite.gateway.gateway_api.route import HTTPRoute
+from testsuite.gateway.topology import topology
 from testsuite.kuadrant.policy.authorization.auth_policy import AuthPolicy
 
 pytestmark = [pytest.mark.authorino, pytest.mark.kuadrant_only]
@@ -73,6 +74,7 @@ def route(route: HTTPRoute, managed_domain, unmanaged_domain):
 
 
 @pytest.fixture(scope="module")
+@topology
 def authorization(cluster, blame, module_label, oidc_provider, gateway, route):  # pylint: disable=unused-argument
     """Creates an AuthPolicy that targets ONLY the 'secure-listener' section."""
     policy = AuthPolicy.create_instance(
