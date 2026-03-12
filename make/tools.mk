@@ -23,7 +23,7 @@ deploy-testsuite-tools: ## Deploy testsuite tools (Keycloak, etc.) - requires RH
 			--wait \
 			--timeout=$(TOOLS_TIMEOUT) \
 			tools kuadrant-olm/tools-instances; \
-		echo "✅ Testsuite tools deployed"; \
+		echo "Testsuite tools deployed"; \
 	else \
 		echo "⏭️  Skipping testsuite tools deployment (requires RH_REGISTRY_USERNAME and RH_REGISTRY_PASSWORD)"; \
 	fi

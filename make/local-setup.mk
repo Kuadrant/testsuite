@@ -23,7 +23,7 @@ local-setup: ## Complete local environment setup (kind cluster + all dependencie
 	$(MAKE) deploy-kuadrant-cr
 	$(MAKE) deploy-testsuite-tools
 	@echo ""
-	@echo "🎉 Local environment setup complete!"
+	@echo "Local environment setup complete!"
 	@echo "   Cluster: $(KIND_CLUSTER_NAME)"
 	@echo "   Gateway Provider: $(GATEWAYAPI_PROVIDER)"
 	@echo ""

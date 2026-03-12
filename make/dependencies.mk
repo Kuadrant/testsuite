@@ -6,7 +6,7 @@ install-metrics-server: ## Install metrics-server
 	@echo "Installing metrics-server..."
 	kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
 	kubectl patch deployment metrics-server -n kube-system --type=json -p '[{"op":"add","path":"/spec/template/spec/containers/0/args/-","value":"--kubelet-insecure-tls"}]'
-	@echo "✅ metrics-server installed"
+	@echo "metrics-server installed"
 
 .PHONY: install-metallb
 install-metallb: ## Install MetalLB for LoadBalancer services
@@ -32,13 +32,13 @@ install-metallb: ## Install MetalLB for LoadBalancer services
 		'  name: default' \
 		'  namespace: metallb-system' \
 		| kubectl apply -f -
-	@echo "✅ MetalLB installed with IP pool 172.18.255.200-172.18.255.250"
+	@echo "MetalLB installed with IP pool 172.18.255.200-172.18.255.250"
 
 .PHONY: gateway-api-install
 gateway-api-install: ## Install Gateway API CRDs
 	@echo "Installing Gateway API $(GATEWAY_API_VERSION)..."
 	kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/$(GATEWAY_API_VERSION)/standard-install.yaml
-	@echo "✅ Gateway API CRDs installed"
+	@echo "Gateway API CRDs installed"
 
 .PHONY: install-cert-manager
 install-cert-manager: ## Install cert-manager
@@ -47,7 +47,7 @@ install-cert-manager: ## Install cert-manager
 	kubectl wait --namespace cert-manager --for=condition=Available deployment/cert-manager --timeout=$(CERT_MANAGER_TIMEOUT)
 	kubectl wait --namespace cert-manager --for=condition=Available deployment/cert-manager-webhook --timeout=$(CERT_MANAGER_TIMEOUT)
 	kubectl wait --namespace cert-manager --for=condition=ready pod --selector=app.kubernetes.io/name=webhook --timeout=$(CERT_MANAGER_TIMEOUT)
-	@echo "✅ cert-manager installed"
+	@echo "cert-manager installed"
 
 .PHONY: create-cluster-issuer
 create-cluster-issuer: ## Create self-signed ClusterIssuer for TLS testing
@@ -60,7 +60,7 @@ create-cluster-issuer: ## Create self-signed ClusterIssuer for TLS testing
 		'spec:' \
 		'  selfSigned: {}' \
 		| kubectl apply -f -
-	@echo "✅ ClusterIssuer 'kuadrant-qe-issuer' created"
+	@echo "ClusterIssuer 'kuadrant-qe-issuer' created"
 
 .PHONY: create-aws-credentials
 create-aws-credentials: ## Create AWS credentials secret for DNS testing (only if credentials provided)
@@ -80,7 +80,7 @@ create-aws-credentials: ## Create AWS credentials secret for DNS testing (only i
 			'  AWS_SECRET_ACCESS_KEY: $(AWS_SECRET_ACCESS_KEY)' \
 			'type: kuadrant.io/aws' \
 			| kubectl apply -f -; \
-		echo "✅ AWS credentials secret created in kuadrant namespace"; \
+		echo "AWS credentials secret created in kuadrant namespace"; \
 	else \
 		echo "⏭️  Skipping AWS credentials secret (requires AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION, and AWS_BASE_DOMAIN)"; \
 	fi

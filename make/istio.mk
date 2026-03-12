@@ -27,4 +27,4 @@ istio-install: ## Install Istio via SAIL operator
 		'      autoscaleMin: 2' \
 		'  version: $(ISTIO_VERSION)' \
 		| kubectl apply -f -
-	@echo "✅ Istio $(ISTIO_VERSION) installed via SAIL"
+	@echo "Istio $(ISTIO_VERSION) installed via SAIL"
