@@ -39,6 +39,7 @@ For local development and testing, you can set up a complete Kuadrant environmen
 ### Prerequisites
 * [Kind](https://kind.sigs.k8s.io/docs/user/quick-start/#installation)
 * [Helm](https://helm.sh/docs/intro/install/)
+* [jq](https://jqlang.github.io/jq/download/) (JSON processor)
 * **Red Hat Registry credentials** (optional but recommended for testing tools)
   - Username: Your Red Hat account username
   - Password: Your Red Hat registry token (from [console.redhat.com/openshift/downloads](https://console.redhat.com/openshift/downloads))
