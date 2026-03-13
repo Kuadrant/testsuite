@@ -5,7 +5,7 @@ from enum import Enum
 
 from testsuite.kubernetes import KubernetesObject, modify
 from testsuite.kuadrant.policy.metric_validator import WasmMetricValidator
-from testsuite.utils import check_condition
+from testsuite.utils import check_condition, asdict
 from testsuite.core.topology import get_topology
 
 
