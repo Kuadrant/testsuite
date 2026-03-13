@@ -7,7 +7,7 @@ from typing import Iterable
 from testsuite.gateway import Referencable
 from testsuite.kubernetes import modify
 from testsuite.kubernetes.client import KubernetesClient
-from testsuite.kuadrant.policy import Policy, CelPredicate, CelExpression, SectionContext
+from testsuite.kuadrant.policy import Policy, CelPredicate, CelExpression, Section
 from testsuite.utils import asdict
 
 
@@ -19,9 +19,10 @@ class Limit:
     window: str
 
 
-class RateLimitSectionContext(SectionContext):
-    """Context for working within a defaults/overrides section of RateLimitPolicy"""
+class RateLimitSection(Section):
+    """Section for rate limit policies - adds rate limit specific methods"""
 
+    @modify
     def add_limit(
         self,
         name,
@@ -29,16 +30,12 @@ class RateLimitSectionContext(SectionContext):
         when: list[CelPredicate] = None,
         counters: list[CelExpression] = None,
     ):
-        """Add limit to this section"""
+        """Add a rate limit to this section"""
         limit: dict = {
-            "rates": [asdict(limit) for limit in limits],
+            "rates": [asdict(lim) for lim in limits],
         }
-        if when:
-            limit["when"] = [asdict(rule) for rule in when]
-        if counters:
-            limit["counters"] = [asdict(rule) for rule in counters]
-
-        target = self._policy.model.spec.setdefault(self._section_name, {})
+        self.add_to_spec(limit, when=when, counters=counters)
+        target = self.get_section()
         target.setdefault("limits", {})[name] = limit
         return self
 
@@ -72,12 +69,12 @@ class RateLimitPolicy(Policy):
     @property
     def defaults(self):
         """Work within the defaults section"""
-        return RateLimitSectionContext(self, "defaults")
+        return RateLimitSection(self, "defaults")
 
     @property
     def overrides(self):
         """Work within the overrides section"""
-        return RateLimitSectionContext(self, "overrides")
+        return RateLimitSection(self, "overrides")
 
     @modify
     def add_limit(
@@ -88,15 +85,9 @@ class RateLimitPolicy(Policy):
         counters: list[CelExpression] = None,
     ):
         """Add limit to top-level spec (implicit defaults)"""
-        limit: dict = {
-            "rates": [asdict(limit) for limit in limits],
-        }
-        if when:
-            limit["when"] = [asdict(rule) for rule in when]
-        if counters:
-            limit["counters"] = [asdict(rule) for rule in counters]
-
-        self.model.spec.setdefault("limits", {})[name] = limit
+        # Use RateLimitSection to avoid duplication
+        section = RateLimitSection(self, None)
+        return section.add_limit(name, limits, when, counters)
 
     def wait_for_ready(self):
         """Wait for RLP to be enforced"""

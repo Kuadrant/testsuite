@@ -9,22 +9,22 @@ from testsuite.kubernetes.client import KubernetesClient
 from testsuite.utils import asdict
 from .auth_config import AuthConfig
 from .sections import ResponseSection
-from .. import Policy, CelPredicate, SectionContext
+from .. import Policy, CelPredicate, Section
 from . import Pattern
 
 
-class AuthPolicySectionContext(SectionContext, AuthConfig):
-    """Context for working within a defaults/overrides section of AuthPolicy"""
+class AuthSection(Section, AuthConfig):
+    """Section that combines base Section with AuthConfig methods"""
 
     @property
     def model(self):
-        """Delegate to policy's model"""
-        return self._policy.model
+        """Delegate to parent policy's model for AuthConfig compatibility"""
+        return self.obj.model
 
     @property
     def auth_section(self):
-        """Override to point to the defaults/overrides section"""
-        return self.model.spec.setdefault(self._section_name, {}).setdefault("rules", {})
+        """Returns section where auth rules should be added"""
+        return self.get_section("rules")
 
 
 class AuthPolicy(Policy, AuthConfig):
@@ -56,18 +56,21 @@ class AuthPolicy(Policy, AuthConfig):
     @property
     def defaults(self):
         """Work within the defaults section"""
-        return AuthPolicySectionContext(self, "defaults")
+        return AuthSection(self, "defaults")
 
     @property
     def overrides(self):
         """Work within the overrides section"""
-        return AuthPolicySectionContext(self, "overrides")
+        return AuthSection(self, "overrides")
 
     @modify
     def add_rule(self, when: list[CelPredicate]):
-        """Add rule for the skip of entire AuthPolicy"""
-        self.model.spec.setdefault("when", [])
-        self.model.spec["when"].extend([asdict(x) for x in when])
+        """Add rule for the skip of entire AuthPolicy - uses generic add_to_spec helper"""
+        existing = self.model.spec.get("when", [])
+        # Extend existing rules
+        extended = existing + [asdict(x) for x in when]
+        section = Section(self, None)
+        section.add_to_spec(self.model.spec, when=extended)
 
     @property
     def auth_section(self):
@@ -81,7 +84,12 @@ class AuthPolicy(Policy, AuthConfig):
 
     @modify
     def add_patterns(self, patterns: dict[str, list[Pattern]]):
-        """Add named pattern-matching expressions to be referenced in other "when" rules."""
-        self.model.spec.setdefault("patterns", {})
+        """Add named pattern-matching expressions to be referenced in other "when" rules - uses generic helper"""
+        patterns_spec = {}
         for key, value in patterns.items():
-            self.model.spec["patterns"].update({key: {"allOf": [asdict(x) for x in value]}})
+            patterns_spec[key] = {"allOf": [asdict(x) for x in value]}
+
+        existing = self.model.spec.get("patterns", {})
+        existing.update(patterns_spec)
+        section = Section(self, None)
+        section.add_to_spec(self.model.spec, patterns=existing)

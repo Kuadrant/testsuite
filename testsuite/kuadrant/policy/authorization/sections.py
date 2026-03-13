@@ -15,6 +15,7 @@ from testsuite.kuadrant.policy.authorization import (
     Cache,
     ResourceAttributes,
 )
+from testsuite.kuadrant.policy import Section as BaseSection
 from testsuite.oidc.keycloak import Keycloak
 from testsuite.utils import asdict
 from testsuite.kubernetes import modify, Selector, KubernetesObject
@@ -31,53 +32,24 @@ def add_common_features(
     metrics: bool = None,
     cache: Cache = None,
 ) -> None:
-    """Add common features to value dict."""
-
-    if when:
-        value["when"] = [asdict(x) for x in when]
-    if metrics:
-        value["metrics"] = metrics
-    if cache:
-        value["cache"] = asdict(cache)
-    if priority:
-        value["priority"] = priority
+    """Add common features to value dict - uses generic add_to_spec under the hood."""
+    # Create a temporary section instance to use add_to_spec
+    temp_section = BaseSection(None, None)
+    temp_section.add_to_spec(value, when=when if when else None, metrics=metrics, cache=cache, priority=priority)
 
 
-class Section:
-    """Common class for all Sections"""
-
-    def __init__(self, obj: "AuthConfig", section_name) -> None:
-        super().__init__()
-        self.obj = obj
-        self.section_name = section_name
-
-    def modify_and_apply(self, modifier_func, retries=2, cmd_args=None):
-        """Reimplementation of modify_and_apply from OpenshiftObject"""
-
-        def _new_modifier(obj):
-            modifier_func(self.__class__(obj, self.section_name))
-
-        return self.obj.modify_and_apply(_new_modifier, retries, cmd_args)
-
-    @property
-    def committed(self):
-        """Reimplementation of commit from OpenshiftObject"""
-        return self.obj.committed
+class Section(BaseSection):
+    """Auth-specific section class - inherits from base Section"""
 
     @property
     def section(self):
-        """The actual dict section which will be edited"""
-        return self.obj.auth_section.setdefault(self.section_name, {})
+        """The actual dict section which will be edited - backwards compatibility"""
+        return self.get_section()
 
     def add_item(self, name: str, value: dict, **common_features):
         """Adds item to the section"""
         add_common_features(value, **common_features)
         self.section.update({name: value})
-
-    @modify
-    def clear_all(self):
-        """Clears content of a Section"""
-        self.section.clear()
 
 
 class IdentitySection(Section):
