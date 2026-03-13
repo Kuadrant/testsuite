@@ -1,5 +1,6 @@
 """Test defaults policy aimed at the same resource uses the oldest policy."""
-from asyncio import sleep
+
+import time
 
 import pytest
 
@@ -16,7 +17,7 @@ def commit(request, route, rate_limit, global_rate_limit):  # pylint: disable=un
         request.addfinalizer(policy.delete)
         policy.commit()
         policy.wait_for_accepted()
-        sleep(60) # we sleep because if both get reconciled at the same time the overridden status will not work.
+        time.sleep(60)  # we sleep because if both get reconciled at the same time the overridden status will not work.
 
 
 @pytest.mark.parametrize(

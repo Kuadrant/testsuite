@@ -14,15 +14,16 @@ from testsuite.capabilities import has_kuadrant, kuadrant_version
 from testsuite.certificates import CFSSLClient
 from testsuite.component_metadata import ComponentMetadataCollector
 from testsuite.config import settings
+from testsuite.core.topology import TopologyRegistry, clear_topology, set_topology
 from testsuite.gateway import Exposer, CustomReference
 from testsuite.httpx import KuadrantClient
+from testsuite.kubernetes.config_map import ConfigMap
 from testsuite.mockserver import Mockserver
 from testsuite.oidc import OIDCProvider
 from testsuite.oidc.auth0 import Auth0Provider
-from testsuite.prometheus import Prometheus
 from testsuite.oidc.keycloak import Keycloak
+from testsuite.prometheus import Prometheus
 from testsuite.tracing.jaeger import JaegerClient
-from testsuite.kubernetes.config_map import ConfigMap
 from testsuite.tracing.tempo import RemoteTempoClient
 from testsuite.utils import randomize, _whoami
 
@@ -104,8 +105,6 @@ def skip_or_fail(request):
 @pytest.fixture(scope="session", autouse=True)
 def topology():
     """Global topology registry for Gateway API resources and policies"""
-    from testsuite.core.topology import TopologyRegistry, set_topology, clear_topology
-
     registry = TopologyRegistry()
     set_topology(registry)  # Set as global singleton
 

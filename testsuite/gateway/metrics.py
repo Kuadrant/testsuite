@@ -38,9 +38,7 @@ class GatewayMetrics(ABC):
         """
         # Query the metrics endpoint with cache-busting
         response = httpx.get(
-            self.metrics_url,
-            timeout=5.0,
-            headers={"Cache-Control": "no-cache, no-store, must-revalidate"}
+            self.metrics_url, timeout=5.0, headers={"Cache-Control": "no-cache, no-store, must-revalidate"}
         )
         response.raise_for_status()
 
@@ -77,9 +75,7 @@ class GatewayMetrics(ABC):
 
         final_value = poll_metric()
         if final_value is None or final_value <= initial_value:
-            raise AssertionError(
-                f"kuadrant_configs metric decreased. Initial: {initial_value}, Final: {final_value}"
-            )
+            raise AssertionError(f"kuadrant_configs metric decreased. Initial: {initial_value}, Final: {final_value}")
 
         return final_value
 
@@ -93,6 +89,7 @@ class GatewayMetrics(ABC):
         Returns:
             int: The final metric value
         """
+
         @backoff.on_predicate(
             backoff.constant,
             lambda x: x is None or x < expected_value,

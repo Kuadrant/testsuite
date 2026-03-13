@@ -9,7 +9,6 @@ from openshift_client import timeout, Missing
 from testsuite.kubernetes import KubernetesObject
 
 
-
 @dataclass
 class ServicePort:
     """Kubernetes Service Port object"""

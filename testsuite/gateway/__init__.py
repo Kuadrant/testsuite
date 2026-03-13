@@ -270,4 +270,3 @@ class Exposer(LifecycleObject):
     @abstractmethod
     def base_domain(self) -> str:
         """Returns base domains for all hostnames created by this exposer"""
-

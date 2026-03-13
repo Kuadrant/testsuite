@@ -121,7 +121,7 @@ class KuadrantGateway(KubernetesObject, Gateway):
     def get_tls_secret(self, hostname):
         """Returns the TLS secret for the matching listener hostname, or None if not found"""
         tls_cert_secret_name = None
-        for listener in self.all_tls_listeners():
+        for listener in self._all_tls_listeners():
             if domain_match(hostname, listener.hostname):
                 tls_cert_secret_name = listener.tls.certificateRefs[0].name
 
@@ -135,27 +135,26 @@ class KuadrantGateway(KubernetesObject, Gateway):
                 raise oc.OpenShiftPythonException("TLS secret was not created") from None
             raise e
 
-    def all_tls_listeners(self):
+    def _all_tls_listeners(self):
         """Yields all listeners in gateway that support 'tls'"""
         for listener in self.model.spec.listeners:
             if "tls" in listener:
                 yield listener
 
-    def expose_metrics(self):
+    def _expose_metrics(self):
         """Expose metrics endpoint using the configured exposer"""
-
         exposer = settings["default_exposer"](self.cluster)
         self._metrics = create_gateway_metrics(exposer, self)
 
     def commit(self):
         """Commits gateway and exposes metrics endpoint"""
         result = super().commit()
-        self.expose_metrics()
+        self._expose_metrics()
         return result
 
     def delete(self, ignore_not_found=True, cmd_args=None):
         # Delete metrics resources if they exist
-        if hasattr(self, '_metrics') and self._metrics:
+        if hasattr(self, "_metrics") and self._metrics:
             self._metrics.delete()
 
         res = super().delete(ignore_not_found, cmd_args)
@@ -203,7 +202,7 @@ class KuadrantGateway(KubernetesObject, Gateway):
     @property
     def metrics(self):
         """Returns GatewayMetrics instance for querying metrics"""
-        if not hasattr(self, '_metrics'):
+        if not hasattr(self, "_metrics"):
             raise RuntimeError("Gateway metrics not available. Call commit() first to expose metrics endpoint.")
 
         return self._metrics

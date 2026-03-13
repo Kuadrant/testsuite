@@ -28,13 +28,13 @@ class WasmMetricValidator:
             policy: The policy being committed
             topology: The TopologyRegistry instance
         """
-        if not topology or not hasattr(policy.model.spec, 'targetRef'):
+        if not topology or not hasattr(policy.model.spec, "targetRef"):
             return
 
         target_ref = policy.model.spec.targetRef
         gateway = topology.get_gateway_for_target_ref(target_ref)
 
-        if not gateway or not hasattr(gateway, 'metrics'):
+        if not gateway or not hasattr(gateway, "metrics"):
             return
 
         # Capture current metric value
@@ -47,9 +47,7 @@ class WasmMetricValidator:
 
         # Determine if this policy will cause WasmPlugin creation (metric increase)
         expect_metric_increase = topology.should_expect_wasm_metric_increase(
-            target_ref,
-            gateway.name(),
-            exclude_policy_name=policy.name()
+            target_ref, gateway.name(), exclude_policy_name=policy.name()
         )
 
         # Mark gateway if WasmPlugin will be created
@@ -57,9 +55,9 @@ class WasmMetricValidator:
             topology.mark_wasm_config_created(gateway.name())
 
         # Store metadata for validation in wait_for_ready()
-        topology.set_policy_metadata(policy, 'initial_kuadrant_configs', initial_metric)
-        topology.set_policy_metadata(policy, 'expect_metric_increase', expect_metric_increase)
-        topology.set_policy_metadata(policy, 'gateway_name', gateway.name())
+        topology.set_policy_metadata(policy, "initial_kuadrant_configs", initial_metric)
+        topology.set_policy_metadata(policy, "expect_metric_increase", expect_metric_increase)
+        topology.set_policy_metadata(policy, "gateway_name", gateway.name())
 
     @staticmethod
     def validate_metrics(policy, topology):
@@ -78,15 +76,15 @@ class WasmMetricValidator:
         if not topology:
             return
 
-        initial_metric = topology.get_policy_metadata(policy, 'initial_kuadrant_configs')
-        gateway_name = topology.get_policy_metadata(policy, 'gateway_name')
-        expect_metric_increase = topology.get_policy_metadata(policy, 'expect_metric_increase')
+        initial_metric = topology.get_policy_metadata(policy, "initial_kuadrant_configs")
+        gateway_name = topology.get_policy_metadata(policy, "gateway_name")
+        expect_metric_increase = topology.get_policy_metadata(policy, "expect_metric_increase")
 
         if initial_metric is None or gateway_name is None:
             return
 
         gateway = topology.get_gateway(gateway_name)
-        if not gateway or not hasattr(gateway, 'metrics'):
+        if not gateway or not hasattr(gateway, "metrics"):
             return
 
         # Wait for metric to reach expected state

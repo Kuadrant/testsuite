@@ -6,10 +6,8 @@ in their respective test files.
 """
 
 from contextlib import contextmanager
-from time import sleep
 
 import pytest
-
 
 from testsuite.kuadrant.extensions.oidc_policy import OIDCPolicy
 from testsuite.core.topology import topology
@@ -41,9 +39,7 @@ def oidc_policy(cluster, blame, oidc_policy_provider_config, route):
     Note: This fixture depends on 'provider' which should be defined in each test file
     with the appropriate client-specific configuration.
     """
-    oidc_policy = OIDCPolicy.create_instance(
-        cluster, blame("oidc-policy"), route, provider=oidc_policy_provider_config
-    )
+    oidc_policy = OIDCPolicy.create_instance(cluster, blame("oidc-policy"), route, provider=oidc_policy_provider_config)
     return oidc_policy
 
 

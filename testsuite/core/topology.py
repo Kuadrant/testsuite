@@ -2,33 +2,66 @@
 
 import inspect
 from functools import wraps
-from typing import Optional, List, Dict, Set, Callable, Union
+from typing import Any, Callable, Dict, List, Optional, Set, Union
 
-from testsuite.gateway import Gateway
 from testsuite.gateway.gateway_api import GatewayAPIKind, PolicyKind
 
-# Global singleton instance
-_global_topology_registry: Optional['TopologyRegistry'] = None
+
+class GlobalTopologySingleton:
+    """Holder class for global topology singleton to avoid global statement warnings"""
+
+    registry: Optional["TopologyRegistry"] = None
 
 
 class TopologyNode:
     """Represents a node in the Gateway API topology graph"""
 
-    def __init__(self, kind: Union[GatewayAPIKind, PolicyKind], resource, name: str):
+    class Relationships:
+        """Encapsulates all relationship data for a topology node"""
+
+        def __init__(self) -> None:
+            self.targets: Set[str] = set()  # Resources this node targets
+            self.targeted_by: Set[str] = set()  # Resources targeting this node
+            self.children: Set[str] = set()  # Child resources
+            self.parent: Optional[str] = None  # Parent resource
+
+    def __init__(self, kind: Optional[Union[GatewayAPIKind, PolicyKind]], resource: Any, name: str) -> None:
         self.kind = kind
         self.resource = resource  # The actual Gateway/Route/Policy object
         self.name = name
-        self.targets: Set[str] = set()  # Resources this node targets
-        self.targeted_by: Set[str] = set()  # Resources targeting this node
-        self.children: Set[str] = set()  # Child resources (e.g., routes for a gateway)
-        self.parent: Optional[str] = None  # Parent resource
+        self._relationships = self.Relationships()
         self.metadata: Dict = {}  # Arbitrary metadata storage
 
+    @property
+    def targets(self) -> Set[str]:
+        """Resources this node targets"""
+        return self._relationships.targets
+
+    @property
+    def targeted_by(self) -> Set[str]:
+        """Resources targeting this node"""
+        return self._relationships.targeted_by
+
+    @property
+    def children(self) -> Set[str]:
+        """Child resources"""
+        return self._relationships.children
+
+    @property
+    def parent(self) -> Optional[str]:
+        """Parent resource"""
+        return self._relationships.parent
+
+    @parent.setter
+    def parent(self, value: Optional[str]):
+        """Set parent resource"""
+        self._relationships.parent = value
+
     def __repr__(self):
-        return f"TopologyNode({self.kind.value}, {self.name})"
+        return f"TopologyNode({self.kind.value if self.kind else 'Unknown'}, {self.name})"
 
 
-def get_topology() -> Optional['TopologyRegistry']:
+def get_topology() -> Optional["TopologyRegistry"]:
     """
     Get the global topology registry instance.
 
@@ -42,10 +75,10 @@ def get_topology() -> Optional['TopologyRegistry']:
         if topology:
             gateway = topology.get_gateway_for_policy(policy)
     """
-    return _global_topology_registry
+    return GlobalTopologySingleton.registry
 
 
-def set_topology(registry: 'TopologyRegistry') -> None:
+def set_topology(registry: "TopologyRegistry") -> None:
     """
     Set the global topology registry instance.
 
@@ -54,16 +87,14 @@ def set_topology(registry: 'TopologyRegistry') -> None:
     Args:
         registry: The TopologyRegistry instance to use globally
     """
-    global _global_topology_registry
-    _global_topology_registry = registry
+    GlobalTopologySingleton.registry = registry
 
 
 def clear_topology() -> None:
     """Clear the global topology registry"""
-    global _global_topology_registry
-    if _global_topology_registry:
-        _global_topology_registry.clear()
-    _global_topology_registry = None
+    if GlobalTopologySingleton.registry:
+        GlobalTopologySingleton.registry.clear()
+    GlobalTopologySingleton.registry = None
 
 
 class TopologyRegistry:
@@ -93,22 +124,24 @@ class TopologyRegistry:
         topology.print_topology()
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.nodes: Dict[str, TopologyNode] = {}  # name -> TopologyNode
 
-    def _get_or_create_node(self, kind: Union[GatewayAPIKind, PolicyKind], resource, name: str) -> TopologyNode:
+    def _get_or_create_node(
+        self, kind: Optional[Union[GatewayAPIKind, PolicyKind]], resource: Any, name: str
+    ) -> TopologyNode:
         """Get existing node or create new one"""
         if name not in self.nodes:
             self.nodes[name] = TopologyNode(kind, resource, name)
         return self.nodes[name]
 
-    def register_gateway(self, gateway):
+    def register_gateway(self, gateway: Any) -> TopologyNode:
         """Register a Gateway"""
         name = gateway.name()
         node = self._get_or_create_node(GatewayAPIKind.GATEWAY, gateway, name)
         return node
 
-    def register_route(self, route, gateway_name: Optional[str] = None):
+    def register_route(self, route: Any, gateway_name: Optional[str] = None) -> TopologyNode:
         """
         Register an HTTPRoute
 
@@ -131,7 +164,7 @@ class TopologyRegistry:
 
         return node
 
-    def register_policy(self, policy):
+    def register_policy(self, policy: Any) -> TopologyNode:
         """
         Register a policy (AuthPolicy, RateLimitPolicy, etc.)
 
@@ -169,17 +202,17 @@ class TopologyRegistry:
         """Get a node by name"""
         return self.nodes.get(name)
 
-    def get_gateway(self, name: str):
+    def get_gateway(self, name: str) -> Any:
         """Get a Gateway resource by name"""
         node = self.get_node(name)
         return node.resource if node and node.kind == GatewayAPIKind.GATEWAY else None
 
-    def get_route(self, name: str):
+    def get_route(self, name: str) -> Any:
         """Get an HTTPRoute resource by name"""
         node = self.get_node(name)
         return node.resource if node and node.kind == GatewayAPIKind.HTTPROUTE else None
 
-    def get_gateway_for_target_ref(self, target_ref):
+    def get_gateway_for_target_ref(self, target_ref: Any) -> Any:
         """
         Get the Gateway for a given targetRef (before policy is registered).
 
@@ -195,7 +228,7 @@ class TopologyRegistry:
         if target_kind == GatewayAPIKind.GATEWAY:
             # Direct gateway target
             return self.get_gateway(target_name)
-        elif target_kind == GatewayAPIKind.HTTPROUTE:
+        if target_kind == GatewayAPIKind.HTTPROUTE:
             # Route target - get parent gateway
             route_node = self.get_node(target_name)
             if route_node and route_node.parent:
@@ -250,7 +283,7 @@ class TopologyRegistry:
                     policies.append(policy_node.resource)
         return policies
 
-    def set_policy_metadata(self, policy, key: str, value):
+    def set_policy_metadata(self, policy: Any, key: str, value: Any) -> None:
         """
         Store metadata for a policy.
 
@@ -264,7 +297,7 @@ class TopologyRegistry:
         if policy_node:
             policy_node.metadata[key] = value
 
-    def get_policy_metadata(self, policy, key: str, default=None):
+    def get_policy_metadata(self, policy: Any, key: str, default: Any = None) -> Any:
         """
         Retrieve metadata for a policy.
 
@@ -282,7 +315,7 @@ class TopologyRegistry:
             return policy_node.metadata.get(key, default)
         return default
 
-    def has_existing_policies_for_target(self, target_ref, exclude_policy_name=None):
+    def has_existing_policies_for_target(self, target_ref: Any, exclude_policy_name: Optional[str] = None) -> bool:
         """
         Check if there are existing committed policies targeting the given targetRef.
 
@@ -306,14 +339,14 @@ class TopologyRegistry:
 
         # Filter out excluded policy and uncommitted policies
         existing_policies = [
-            p for p in existing_policies
-            if (not exclude_policy_name or p.name() != exclude_policy_name)
-            and p.committed
+            p for p in existing_policies if (not exclude_policy_name or p.name() != exclude_policy_name) and p.committed
         ]
 
         return len(existing_policies) > 0
 
-    def should_expect_wasm_metric_increase(self, target_ref, gateway_name, exclude_policy_name=None):
+    def should_expect_wasm_metric_increase(
+        self, target_ref: Any, gateway_name: str, exclude_policy_name: Optional[str] = None
+    ) -> bool:
         """
         Determine if committing a policy should cause the kuadrant_configs metric to increase.
 
@@ -342,12 +375,12 @@ class TopologyRegistry:
 
         # Check if WasmPlugin was ever created for this gateway
         gateway_node = self.get_node(gateway_name)
-        wasm_config_created = gateway_node and gateway_node.metadata.get('wasm_config_created', False)
+        wasm_config_created = gateway_node and gateway_node.metadata.get("wasm_config_created", False)
 
         # Expect increase only if both checks say "no existing config"
         return not has_existing_policies and not wasm_config_created
 
-    def mark_wasm_config_created(self, gateway_name):
+    def mark_wasm_config_created(self, gateway_name: str) -> None:
         """
         Mark that a WasmPlugin config has been created for this gateway.
 
@@ -356,9 +389,9 @@ class TopologyRegistry:
         """
         gateway_node = self.get_node(gateway_name)
         if gateway_node:
-            gateway_node.metadata['wasm_config_created'] = True
+            gateway_node.metadata["wasm_config_created"] = True
 
-    def clear(self):
+    def clear(self) -> None:
         """Clear all registered resources"""
         self.nodes.clear()
 
@@ -366,6 +399,7 @@ class TopologyRegistry:
 # ============================================================================
 # Decorator-based automatic registration
 # ============================================================================
+
 
 def topology(func: Callable) -> Callable:
     """
@@ -390,12 +424,15 @@ def topology(func: Callable) -> Callable:
     if inspect.isgeneratorfunction(func):
         # It's a generator function (uses yield)
         @wraps(func)
-        def wrapper(*args, **kwargs):
+        def generator_wrapper(*args, **kwargs):
             generator = func(*args, **kwargs)
             topology_registry = get_topology()
 
             # Get the yielded object
-            obj = next(generator)
+            try:
+                obj = next(generator)
+            except StopIteration:
+                return
 
             # Register it
             if topology_registry:
@@ -404,56 +441,53 @@ def topology(func: Callable) -> Callable:
             # Yield it to the test
             yield obj
 
-            # Continue with cleanup
-            try:
-                next(generator)
-            except StopIteration:
+            # Continue with cleanup - consume the rest of the generator
+            for _ in generator:
                 pass
 
-        return wrapper
-    else:
-        # It's a regular function (uses return)
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            result = func(*args, **kwargs)
-            topology_registry = get_topology()
+        return generator_wrapper
 
-            # Register the returned object
-            if topology_registry:
-                _register_object(topology_registry, result)
+    # It's a regular function (uses return)
+    @wraps(func)
+    def regular_wrapper(*args, **kwargs):
+        result = func(*args, **kwargs)
+        topology_registry = get_topology()
 
-            return result
+        # Register the returned object
+        if topology_registry:
+            _register_object(topology_registry, result)
 
-        return wrapper
+        return result
+
+    return regular_wrapper
 
 
-def _register_object(topology_registry: TopologyRegistry, obj):
-    """Helper to detect object type and register it"""
+def _register_object(topology_registry: TopologyRegistry, obj: Any) -> None:
+    """
+    Helper to detect object type and register it using duck typing.
+
+    Uses attribute checking instead of isinstance to avoid circular imports.
+    """
     if obj is None:
         return
 
-    # Import here to avoid circular imports
-    from testsuite.gateway import GatewayRoute
-    from testsuite.gateway.gateway_api.gateway import KuadrantGateway
-    from testsuite.gateway.gateway_api.route import HTTPRoute
-    from testsuite.kuadrant.policy import Policy
-
-    # Check if it's a Gateway
-    if isinstance(obj, (KuadrantGateway, Gateway)):
+    # Check if it's a Gateway (has service_name and external_ip)
+    # Must check before Policy since Gateways also have model.kind
+    if hasattr(obj, "service_name") and hasattr(obj, "external_ip"):
         topology_registry.register_gateway(obj)
         return
 
-    # Check if it's an HTTPRoute
-    if isinstance(obj, (HTTPRoute, GatewayRoute)):
+    # Check if it's a Route (has gateway attribute)
+    # Must check before Policy since Routes also have model.kind
+    if hasattr(obj, "gateway"):
         gateway_name = None
-        if hasattr(obj, 'gateway') and obj.gateway:
+        if obj.gateway:
             gateway_name = obj.gateway.name()
         topology_registry.register_route(obj, gateway_name=gateway_name)
         return
 
-    # Check if it's a Policy
-    if isinstance(obj, Policy):
-        topology_registry.register_policy(obj)
-        return
-
-
+    # Check if it's a Policy (has model.kind and model.spec.targetRef)
+    if hasattr(obj, "model") and hasattr(obj.model, "kind") and hasattr(obj.model, "spec"):
+        if hasattr(obj.model.spec, "targetRef"):
+            topology_registry.register_policy(obj)
+            return

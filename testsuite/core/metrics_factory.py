@@ -1,15 +1,19 @@
 """Factory for creating GatewayMetrics instances based on exposer type."""
 
+from typing import TYPE_CHECKING, Literal
 
 from testsuite.config import settings
-from testsuite.gateway import Exposer, Gateway
-from testsuite.gateway.metrics import GatewayMetrics
-from testsuite.kubernetes.service import Service
-from testsuite.gateway.exposers import OpenShiftExposer, LoadBalancerServiceExposer
-from testsuite.gateway.metrics import OpenShiftGatewayMetrics, LoadBalancerGatewayMetrics
+from testsuite.gateway import Exposer
+from testsuite.gateway.exposers import LoadBalancerServiceExposer, OpenShiftExposer
+from testsuite.gateway.metrics import GatewayMetrics, LoadBalancerGatewayMetrics, OpenShiftGatewayMetrics
+from testsuite.kubernetes.openshift.route import OpenshiftRoute
+from testsuite.kubernetes.service import Service, ServicePort
+
+if TYPE_CHECKING:
+    from testsuite.gateway.gateway_api.gateway import KuadrantGateway
 
 
-def _create_metrics_service(gateway: "Gateway", service_type: str) -> Service:
+def _create_metrics_service(gateway: "KuadrantGateway", service_type: Literal["ClusterIP", "LoadBalancer"]) -> Service:
     """
     Helper function to create a metrics service.
 
@@ -20,8 +24,6 @@ def _create_metrics_service(gateway: "Gateway", service_type: str) -> Service:
     Returns:
         Service: The created metrics service
     """
-    from testsuite.kubernetes.service import Service, ServicePort
-
     metrics_service = Service.create_instance(
         gateway.cluster,
         gateway.metrics_service_name,
@@ -34,7 +36,7 @@ def _create_metrics_service(gateway: "Gateway", service_type: str) -> Service:
     return metrics_service
 
 
-def create_gateway_metrics(exposer: "Exposer", gateway: "Gateway") -> "GatewayMetrics":
+def create_gateway_metrics(exposer: "Exposer", gateway: "KuadrantGateway") -> "GatewayMetrics":
     """
     Factory function to create the appropriate GatewayMetrics implementation
     based on the exposer type.
@@ -48,8 +50,6 @@ def create_gateway_metrics(exposer: "Exposer", gateway: "Gateway") -> "GatewayMe
     """
     if isinstance(exposer, OpenShiftExposer):
         # OpenShift: Create ClusterIP Service + Route
-        from testsuite.kubernetes.openshift.route import OpenshiftRoute
-
         metrics_service = _create_metrics_service(gateway, "ClusterIP")
 
         metrics_route = OpenshiftRoute.create_instance(
@@ -57,19 +57,18 @@ def create_gateway_metrics(exposer: "Exposer", gateway: "Gateway") -> "GatewayMe
             gateway.metrics_service_name,
             gateway.metrics_service_name,
             target_port="metrics",
-            tls=False
+            tls=False,
         )
         metrics_route.commit()
 
         return OpenShiftGatewayMetrics(metrics_route, metrics_service)
 
-    elif isinstance(exposer, LoadBalancerServiceExposer):
+    if isinstance(exposer, LoadBalancerServiceExposer):
         # LoadBalancer: Create LoadBalancer Service
         metrics_service = _create_metrics_service(gateway, "LoadBalancer")
         metrics_service.wait_for_ready(slow_loadbalancers=settings["control_plane"]["slow_loadbalancers"])
 
         return LoadBalancerGatewayMetrics(gateway, metrics_service)
 
-    else:
-        # For other exposers (DNSPolicyExposer, etc.), metrics are not supported
-        raise NotImplementedError(f"Metrics not supported for exposer type: {type(exposer).__name__}")
+    # For other exposers (DNSPolicyExposer, etc.), metrics are not supported
+    raise NotImplementedError(f"Metrics not supported for exposer type: {type(exposer).__name__}")

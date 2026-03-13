@@ -63,16 +63,6 @@ class AuthPolicy(Policy, AuthConfig):
         """Work within the overrides section"""
         return AuthSection(self, "overrides")
 
-    @property
-    def defaults(self):
-        """Work within the defaults section"""
-        return AuthPolicySectionContext(self, "defaults")
-
-    @property
-    def overrides(self):
-        """Work within the overrides section"""
-        return AuthPolicySectionContext(self, "overrides")
-
     @modify
     def add_rule(self, when: list[CelPredicate]):
         """Add rule for the skip of entire AuthPolicy - uses generic add_to_spec helper"""
