@@ -204,6 +204,7 @@ class Policy(KubernetesObject):
         """Wait for a Policy to be Accepted"""
         success = self.wait_until(has_condition("Accepted", "True"))
         assert success, f"{self.kind()} did not get accepted in time"
+        WasmMetricValidator.validate_metrics(self, self._topology)
 
     def wait_for_partial_enforced(self):
         """Wait for a Policy to be partially Enforced"""

@@ -284,14 +284,14 @@ class TopologyRegistry:
 
     def has_existing_policies_for_target(self, target_ref, exclude_policy_name=None):
         """
-        Check if there are existing policies targeting the given targetRef.
+        Check if there are existing committed policies targeting the given targetRef.
 
         Args:
             target_ref: The targetRef object with .name and .kind attributes
             exclude_policy_name: Optional policy name to exclude from the check
 
         Returns:
-            bool: True if other policies exist for this target
+            bool: True if other committed policies exist for this target
         """
         target_kind = target_ref.kind
         target_name = target_ref.name
@@ -304,9 +304,12 @@ class TopologyRegistry:
         else:
             return False
 
-        # Filter out excluded policy
-        if exclude_policy_name:
-            existing_policies = [p for p in existing_policies if p.name() != exclude_policy_name]
+        # Filter out excluded policy and uncommitted policies
+        existing_policies = [
+            p for p in existing_policies
+            if (not exclude_policy_name or p.name() != exclude_policy_name)
+            and p.committed
+        ]
 
         return len(existing_policies) > 0
 

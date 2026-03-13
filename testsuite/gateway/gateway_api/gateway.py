@@ -23,6 +23,10 @@ class KuadrantGateway(KubernetesObject, Gateway):
     # Name of the GatewayClass that is to be used for all the instances
     cached_gw_class_name = None
 
+    def __init__(self, dict_to_model=None, string_to_model=None, context=None):
+        super().__init__(dict_to_model, string_to_model, context)
+        self._metrics = None
+
     @classmethod
     def create_instance(cls, cluster: KubernetesClient, name, labels):
         """Creates new instance of Gateway"""
@@ -195,10 +199,6 @@ class KuadrantGateway(KubernetesObject, Gateway):
     @property
     def class_name(self):
         return self.cached_gw_class_name
-
-    def __init__(self, dict_to_model=None, string_to_model=None, context=None):
-        super().__init__(dict_to_model, string_to_model, context)
-        self._metrics = None
 
     @property
     def metrics(self):

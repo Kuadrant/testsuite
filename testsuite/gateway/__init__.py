@@ -149,6 +149,11 @@ class Gateway(LifecycleObject, Referencable):
     def metrics(self):
         """Returns GatewayMetrics instance for querying metrics"""
 
+    @property
+    @abstractmethod
+    def metrics_service_name(self):
+        """Returns the name of the service that exposes the metrics"""
+
 
 class GatewayRoute(LifecycleObject, Referencable):
     """

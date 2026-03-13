@@ -4,6 +4,34 @@
 from testsuite.config import settings
 from testsuite.gateway import Exposer, Gateway
 from testsuite.gateway.metrics import GatewayMetrics
+from testsuite.kubernetes.service import Service
+from testsuite.gateway.exposers import OpenShiftExposer, LoadBalancerServiceExposer
+from testsuite.gateway.metrics import OpenShiftGatewayMetrics, LoadBalancerGatewayMetrics
+
+
+def _create_metrics_service(gateway: "Gateway", service_type: str) -> Service:
+    """
+    Helper function to create a metrics service.
+
+    Args:
+        gateway: The gateway to create metrics service for
+        service_type: Type of service ("ClusterIP" or "LoadBalancer")
+
+    Returns:
+        Service: The created metrics service
+    """
+    from testsuite.kubernetes.service import Service, ServicePort
+
+    metrics_service = Service.create_instance(
+        gateway.cluster,
+        gateway.metrics_service_name,
+        selector={"gateway.networking.k8s.io/gateway-name": gateway.name()},
+        ports=[ServicePort(name="metrics", port=15020, targetPort=15020)],
+        labels=gateway.model.metadata.get("labels", {}),
+        service_type=service_type,
+    )
+    metrics_service.commit()
+    return metrics_service
 
 
 def create_gateway_metrics(exposer: "Exposer", gateway: "Gateway") -> "GatewayMetrics":
@@ -18,24 +46,11 @@ def create_gateway_metrics(exposer: "Exposer", gateway: "Gateway") -> "GatewayMe
     Returns:
         GatewayMetrics: The appropriate metrics implementation
     """
-    # Import here to avoid circular imports
-    from testsuite.gateway.exposers import OpenShiftExposer, LoadBalancerServiceExposer
-    from testsuite.gateway.metrics import OpenShiftGatewayMetrics, LoadBalancerGatewayMetrics
-    from testsuite.kubernetes.service import Service, ServicePort
-
     if isinstance(exposer, OpenShiftExposer):
         # OpenShift: Create ClusterIP Service + Route
         from testsuite.kubernetes.openshift.route import OpenshiftRoute
 
-        metrics_service = Service.create_instance(
-            gateway.cluster,
-            gateway.metrics_service_name,
-            selector={"gateway.networking.k8s.io/gateway-name": gateway.name()},
-            ports=[ServicePort(name="metrics", port=15020, targetPort=15020)],
-            labels=gateway.model.metadata.get("labels", {}),
-            service_type="ClusterIP",
-        )
-        metrics_service.commit()
+        metrics_service = _create_metrics_service(gateway, "ClusterIP")
 
         metrics_route = OpenshiftRoute.create_instance(
             gateway.cluster,
@@ -50,15 +65,7 @@ def create_gateway_metrics(exposer: "Exposer", gateway: "Gateway") -> "GatewayMe
 
     elif isinstance(exposer, LoadBalancerServiceExposer):
         # LoadBalancer: Create LoadBalancer Service
-        metrics_service = Service.create_instance(
-            gateway.cluster,
-            gateway.metrics_service_name,
-            selector={"gateway.networking.k8s.io/gateway-name": gateway.name()},
-            ports=[ServicePort(name="metrics", port=15020, targetPort=15020)],
-            labels=gateway.model.metadata.get("labels", {}),
-            service_type="LoadBalancer",
-        )
-        metrics_service.commit()
+        metrics_service = _create_metrics_service(gateway, "LoadBalancer")
         metrics_service.wait_for_ready(slow_loadbalancers=settings["control_plane"]["slow_loadbalancers"])
 
         return LoadBalancerGatewayMetrics(gateway, metrics_service)
