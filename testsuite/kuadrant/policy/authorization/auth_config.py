@@ -13,6 +13,31 @@ from . import Rule, Pattern
 class AuthConfig(KubernetesObject):
     """Represents AuthConfig CR from Authorino"""
 
+    @property
+    def auth_section(self):
+        """Returns objects where all auth related things should be added"""
+        return self.model.spec
+
+    @cached_property
+    def authorization(self) -> AuthorizationSection:
+        """Gives access to authorization settings"""
+        return AuthorizationSection(self, "authorization")
+
+    @cached_property
+    def identity(self) -> IdentitySection:
+        """Gives access to identity settings"""
+        return IdentitySection(self, "authentication")
+
+    @cached_property
+    def metadata(self) -> MetadataSection:
+        """Gives access to metadata settings"""
+        return MetadataSection(self, "metadata")
+
+    @cached_property
+    def responses(self) -> ResponseSection:
+        """Gives access to response settings"""
+        return ResponseSection(self, "response", "dynamicMetadata")
+
     @classmethod
     def create_instance(
         cls,
@@ -67,28 +92,3 @@ class AuthConfig(KubernetesObject):
         self.model.spec.setdefault("patterns", {})
         for key, value in patterns.items():
             self.model.spec["patterns"].update({key: [asdict(x) for x in value]})
-
-    @property
-    def auth_section(self):
-        """Returns objects where all auth related things should be added"""
-        return self.model.spec
-
-    @cached_property
-    def identity(self) -> IdentitySection:
-        """Access identity/authentication section"""
-        return IdentitySection(self, "authentication")
-
-    @cached_property
-    def authorization(self) -> AuthorizationSection:
-        """Access authorization rules section"""
-        return AuthorizationSection(self, "authorization")
-
-    @cached_property
-    def metadata(self) -> MetadataSection:
-        """Access metadata enrichment section"""
-        return MetadataSection(self, "metadata")
-
-    @cached_property
-    def responses(self) -> ResponseSection:
-        """Access response manipulation section"""
-        return ResponseSection(self, "response", "dynamicMetadata")
