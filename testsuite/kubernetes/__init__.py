@@ -107,6 +107,7 @@ def modify(func):
             assert result.status
         else:
             func(self, *args, **kwargs)
+        return self
 
     return _wrap
 
