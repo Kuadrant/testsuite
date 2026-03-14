@@ -1,15 +1,16 @@
 """AuthConfig object"""
 
+from functools import cached_property
 from typing import Dict
 
 from testsuite.utils import asdict
 from testsuite.kubernetes import KubernetesObject, modify
 from testsuite.kubernetes.client import KubernetesClient
-from .section_management import SectionManagementMixin
+from .sections import IdentitySection, AuthorizationSection, MetadataSection, ResponseSection
 from . import Rule, Pattern
 
 
-class AuthConfig(KubernetesObject, SectionManagementMixin):
+class AuthConfig(KubernetesObject):
     """Represents AuthConfig CR from Authorino"""
 
     @classmethod
@@ -72,7 +73,22 @@ class AuthConfig(KubernetesObject, SectionManagementMixin):
         """Returns objects where all auth related things should be added"""
         return self.model.spec
 
-    @property
-    def _response_data_key(self):
-        """Authorino uses 'dynamicMetadata' for response configuration"""
-        return "dynamicMetadata"
+    @cached_property
+    def identity(self) -> IdentitySection:
+        """Access identity/authentication section"""
+        return IdentitySection(self, "authentication")
+
+    @cached_property
+    def authorization(self) -> AuthorizationSection:
+        """Access authorization rules section"""
+        return AuthorizationSection(self, "authorization")
+
+    @cached_property
+    def metadata(self) -> MetadataSection:
+        """Access metadata enrichment section"""
+        return MetadataSection(self, "metadata")
+
+    @cached_property
+    def responses(self) -> ResponseSection:
+        """Access response manipulation section"""
+        return ResponseSection(self, "response", "dynamicMetadata")

@@ -10,13 +10,19 @@ The structure matches the Go implementation in:
 github.com/kuadrant/kuadrant-operator/api/v1/authpolicy_types.go
 """
 
+from functools import cached_property
 from typing import Optional
 
 from testsuite.kuadrant.policy import Strategy
-from testsuite.kuadrant.policy.authorization.section_management import SectionManagementMixin
+from testsuite.kuadrant.policy.authorization.sections import (
+    IdentitySection,
+    AuthorizationSection,
+    MetadataSection,
+    ResponseSection,
+)
 
 
-class AuthPolicySpecProper(SectionManagementMixin):
+class AuthPolicySpecProper:
     """
     Actual policy rules matching Go AuthPolicySpecProper.
 
@@ -47,13 +53,28 @@ class AuthPolicySpecProper(SectionManagementMixin):
 
     @property
     def auth_section(self):
-        """Returns the rules dict where sections are stored (required by SectionManagementMixin)."""
+        """Returns the rules dict where sections are stored."""
         return self._rules
 
-    @property
-    def _response_data_key(self):
-        """Kuadrant uses 'filters' for response configuration"""
-        return "filters"
+    @cached_property
+    def identity(self) -> IdentitySection:
+        """Access identity/authentication section"""
+        return IdentitySection(self, "authentication")
+
+    @cached_property
+    def authorization(self) -> AuthorizationSection:
+        """Access authorization rules section"""
+        return AuthorizationSection(self, "authorization")
+
+    @cached_property
+    def metadata(self) -> MetadataSection:
+        """Access metadata enrichment section"""
+        return MetadataSection(self, "metadata")
+
+    @cached_property
+    def responses(self) -> ResponseSection:
+        """Access response manipulation section (Kuadrant uses 'filters')"""
+        return ResponseSection(self, "response", "filters")
 
     @property
     def committed(self):
