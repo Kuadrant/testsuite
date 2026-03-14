@@ -7,8 +7,11 @@ from typing import Iterable
 from testsuite.gateway import Referencable
 from testsuite.kubernetes import modify
 from testsuite.kubernetes.client import KubernetesClient
-from testsuite.kuadrant.policy import Policy, CelPredicate, CelExpression, Strategy
-from testsuite.utils import asdict
+from testsuite.kuadrant.policy import Policy, CelPredicate, CelExpression
+from testsuite.kuadrant.policy.rate_limit_spec import (
+    RateLimitPolicySpec,
+    MergeableRateLimitPolicySpec,
+)
 
 
 @dataclass
@@ -24,7 +27,9 @@ class RateLimitPolicy(Policy):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.spec_section = None
+        # Initialize the spec structure from the model
+        target_ref = self.model.spec.get("targetRef", {})
+        self.spec = RateLimitPolicySpec(target_ref)
 
     @classmethod
     def create_instance(
@@ -49,6 +54,36 @@ class RateLimitPolicy(Policy):
 
         return cls(model, context=cluster.context)
 
+    @property
+    def defaults(self) -> MergeableRateLimitPolicySpec:
+        """
+        Returns the defaults section, creating it lazily on first access.
+
+        Usage:
+            rlp.defaults.add_limit("basic", [Limit(5, "10s")])
+            rlp.defaults.strategy = Strategy.MERGE
+
+        Note: To check if defaults exists without creating it, use: `policy.spec.defaults is None`
+        """
+        if self.spec.defaults is None:
+            self.spec.defaults = MergeableRateLimitPolicySpec()
+        return self.spec.defaults
+
+    @property
+    def overrides(self) -> MergeableRateLimitPolicySpec:
+        """
+        Returns the overrides section, creating it lazily on first access.
+
+        Usage:
+            rlp.overrides.add_limit("override", [Limit(10, "10s")])
+            rlp.overrides.strategy = Strategy.MERGE
+
+        Note: To check if overrides exists without creating it, use: `policy.spec.overrides is None`
+        """
+        if self.spec.overrides is None:
+            self.spec.overrides = MergeableRateLimitPolicySpec()
+        return self.spec.overrides
+
     @modify
     def add_limit(
         self,
@@ -57,41 +92,22 @@ class RateLimitPolicy(Policy):
         when: list[CelPredicate] = None,
         counters: list[CelExpression] = None,
     ):
-        """Add another limit"""
-        limit: dict = {
-            "rates": [asdict(limit) for limit in limits],
-        }
-        if when:
-            limit["when"] = [asdict(rule) for rule in when]
-        if counters:
-            limit["counters"] = [asdict(rule) for rule in counters]
+        """
+        Add a limit to the implicit (bare) spec.
 
-        if self.spec_section is None:
-            self.spec_section = self.model.spec
+        This is for backward compatibility and adds limits directly to the policy
+        without using defaults or overrides.
+        """
+        self.spec.proper().add_limit(name, limits, when, counters)
 
-        self.spec_section.setdefault("limits", {})[name] = limit
-        self.spec_section = None
+    def _sync_spec_to_model(self):
+        """Sync the spec object to model.spec dict before commit."""
+        self.model.spec = self.spec.to_dict()
 
-    @modify
-    def strategy(self, strategy: Strategy) -> None:
-        """Add strategy type to default or overrides spec"""
-        if self.spec_section is None:
-            raise TypeError("Strategy can only be set on defaults or overrides")
-
-        self.spec_section["strategy"] = strategy.value
-        self.spec_section = None
-
-    @property
-    def defaults(self):
-        """Add new rule into the `defaults` RateLimitPolicy section"""
-        self.spec_section = self.model.spec.setdefault("defaults", {})
-        return self
-
-    @property
-    def overrides(self):
-        """Add new rule into the `overrides` RateLimitPolicy section"""
-        self.spec_section = self.model.spec.setdefault("overrides", {})
-        return self
+    def commit(self):
+        """Commit the policy to Kubernetes after syncing spec to model."""
+        self._sync_spec_to_model()
+        return super().commit()
 
     def wait_for_ready(self):
         """Wait for RLP to be enforced"""

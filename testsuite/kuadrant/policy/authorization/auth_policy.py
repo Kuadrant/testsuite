@@ -8,8 +8,9 @@ from testsuite.kubernetes import modify
 from testsuite.kubernetes.client import KubernetesClient
 from testsuite.utils import asdict
 from .auth_config import AuthConfig
-from .sections import ResponseSection
-from .. import Policy, CelPredicate, Strategy
+from .sections import ResponseSection, IdentitySection, AuthorizationSection, MetadataSection
+from .auth_policy_spec import AuthPolicySpec, MergeableAuthPolicySpec
+from .. import Policy, CelPredicate
 from . import Pattern
 
 
@@ -18,7 +19,9 @@ class AuthPolicy(Policy, AuthConfig):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.spec_section = None
+        # Initialize the spec structure from the model
+        target_ref = self.model.spec.get("targetRef", {})
+        self.spec = AuthPolicySpec(self, target_ref)
 
     @classmethod
     def create_instance(
@@ -43,46 +46,75 @@ class AuthPolicy(Policy, AuthConfig):
 
         return cls(model, context=cluster.context)
 
+    @property
+    def defaults(self) -> MergeableAuthPolicySpec:
+        """
+        Returns the defaults section, creating it lazily on first access.
+
+        Usage:
+            auth.defaults.identity.add_oidc(...)
+            auth.defaults.strategy = Strategy.MERGE
+
+        Note: To check if defaults exists without creating it, use: `policy.spec.defaults is None`
+        """
+        if self.spec.defaults is None:
+            self.spec.defaults = MergeableAuthPolicySpec(self)
+        return self.spec.defaults
+
+    @property
+    def overrides(self) -> MergeableAuthPolicySpec:
+        """
+        Returns the overrides section, creating it lazily on first access.
+
+        Usage:
+            auth.overrides.identity.add_oidc(...)
+            auth.overrides.strategy = Strategy.MERGE
+
+        Note: To check if overrides exists without creating it, use: `policy.spec.overrides is None`
+        """
+        if self.spec.overrides is None:
+            self.spec.overrides = MergeableAuthPolicySpec(self)
+        return self.spec.overrides
+
     @modify
     def add_rule(self, when: list[CelPredicate]):
         """Add rule for the skip of entire AuthPolicy"""
         self.model.spec.setdefault("when", [])
         self.model.spec["when"].extend([asdict(x) for x in when])
 
-    @modify
-    def strategy(self, strategy: Strategy) -> None:
-        """Add strategy type to default or overrides spec"""
-        if self.spec_section is None:
-            raise TypeError("Strategy can only be set on defaults or overrides")
-
-        self.spec_section["strategy"] = strategy.value
-        self.spec_section = None
-
     @property
     def auth_section(self):
-        if self.spec_section is None:
-            self.spec_section = self.model.spec
+        """Returns the rules section from the active spec (implicit/defaults/overrides)."""
+        return self.spec.proper().rules
 
-        spec_section = self.spec_section
-        self.spec_section = None
-        return spec_section.setdefault("rules", {})
+    @cached_property
+    def identity(self) -> IdentitySection:
+        """Gives access to identity settings"""
+        return self.spec.proper().identity
+
+    @cached_property
+    def authorization(self) -> AuthorizationSection:
+        """Gives access to authorization settings"""
+        return self.spec.proper().authorization
+
+    @cached_property
+    def metadata(self) -> MetadataSection:
+        """Gives access to metadata settings"""
+        return self.spec.proper().metadata
 
     @cached_property
     def responses(self) -> ResponseSection:
         """Gives access to response settings"""
-        return ResponseSection(self, "response", "filters")
+        return self.spec.proper().responses
 
-    @property
-    def defaults(self):
-        """Add new rule into the `defaults` AuthPolicy section"""
-        self.spec_section = self.model.spec.setdefault("defaults", {})
-        return self
+    def _sync_spec_to_model(self):
+        """Sync the spec object to model.spec dict before commit."""
+        self.model.spec = self.spec.to_dict()
 
-    @property
-    def overrides(self):
-        """Add new rule into the `overrides` AuthPolicy section"""
-        self.spec_section = self.model.spec.setdefault("overrides", {})
-        return self
+    def commit(self):
+        """Commit the policy to Kubernetes after syncing spec to model."""
+        self._sync_spec_to_model()
+        return super().commit()
 
     @modify
     def add_patterns(self, patterns: dict[str, list[Pattern]]):

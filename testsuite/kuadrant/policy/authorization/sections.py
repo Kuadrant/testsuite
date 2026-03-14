@@ -46,16 +46,32 @@ def add_common_features(
 class Section:
     """Common class for all Sections"""
 
-    def __init__(self, obj: "AuthConfig", section_name) -> None:
+    def __init__(self, spec_proper, section_name) -> None:
+        """
+        Initialize a section.
+
+        Args:
+            spec_proper: The AuthPolicySpecProper or parent object that owns this section.
+                        Must have 'rules', 'committed', and 'modify_and_apply' properties.
+            section_name: The name of the section (e.g., "authentication", "authorization").
+        """
         super().__init__()
-        self.obj = obj
+        self.obj = spec_proper
         self.section_name = section_name
 
     def modify_and_apply(self, modifier_func, retries=2, cmd_args=None):
         """Reimplementation of modify_and_apply from OpenshiftObject"""
 
         def _new_modifier(obj):
-            modifier_func(self.__class__(obj, self.section_name))
+            # During modify_and_apply, we need to recreate the section on the new object
+            # The obj here is the policy, so we need to get its spec.proper()
+            if hasattr(obj, 'spec'):
+                # It's a policy object, get the proper spec
+                spec_proper = obj.spec.proper()
+            else:
+                # It's already a spec proper
+                spec_proper = obj
+            modifier_func(self.__class__(spec_proper, self.section_name))
 
         return self.obj.modify_and_apply(_new_modifier, retries, cmd_args)
 
@@ -67,7 +83,7 @@ class Section:
     @property
     def section(self):
         """The actual dict section which will be edited"""
-        return self.obj.auth_section.setdefault(self.section_name, {})
+        return self.obj.rules.setdefault(self.section_name, {})
 
     def add_item(self, name: str, value: dict, **common_features):
         """Adds item to the section"""
@@ -225,8 +241,16 @@ class ResponseSection(Section):
 
     SUCCESS_RESPONSE = Union[JsonResponse, PlainResponse, WristbandResponse]
 
-    def __init__(self, obj: "AuthConfig", section_name, data_key: Literal["filters", "dynamicMetadata"]):
-        super().__init__(obj, section_name)
+    def __init__(self, spec_proper, section_name, data_key: Literal["filters", "dynamicMetadata"]):
+        """
+        Initialize a response section.
+
+        Args:
+            spec_proper: The AuthPolicySpecProper that owns this section.
+            section_name: The name of the section (typically "response").
+            data_key: Either "filters" or "dynamicMetadata" for success responses.
+        """
+        super().__init__(spec_proper, section_name)
         self.data_key = data_key
 
     def add_simple(self, auth_json: str, name="simple", key="data", **common_features):
