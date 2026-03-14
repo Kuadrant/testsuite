@@ -253,6 +253,22 @@ class ResponseSection(Section):
         super().__init__(spec_proper, section_name)
         self.data_key = data_key
 
+    def modify_and_apply(self, modifier_func, retries=2, cmd_args=None):
+        """Override to pass data_key when recreating section"""
+
+        def _new_modifier(obj):
+            # During modify_and_apply, we need to recreate the section on the new object
+            # The obj here is the policy, so we need to get its spec.proper()
+            if hasattr(obj, "spec"):
+                # It's a policy object, get the proper spec
+                spec_proper = obj.spec.proper()
+            else:
+                # It's already a spec proper
+                spec_proper = obj
+            modifier_func(self.__class__(spec_proper, self.section_name, self.data_key))
+
+        return self.obj.modify_and_apply(_new_modifier, retries, cmd_args)
+
     def add_simple(self, auth_json: str, name="simple", key="data", **common_features):
         """
         Add simple response to AuthConfig, used for configuring response for debugging purposes,
