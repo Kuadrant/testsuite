@@ -83,7 +83,7 @@ class Section:
     @property
     def section(self):
         """The actual dict section which will be edited"""
-        return self.obj.rules.setdefault(self.section_name, {})
+        return self.obj.auth_section.setdefault(self.section_name, {})
 
     def add_item(self, name: str, value: dict, **common_features):
         """Adds item to the section"""
