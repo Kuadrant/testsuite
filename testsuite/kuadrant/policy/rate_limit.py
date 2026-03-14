@@ -67,9 +67,16 @@ class RateLimitPolicy(Policy):
             limit["counters"] = [asdict(rule) for rule in counters]
 
         if self.spec_section is None:
-            self.spec_section = self.model.spec
+            # Implicit mode - use model.spec directly
+            spec_section = self.model.spec
+        elif isinstance(self.spec_section, str):
+            # String marker ("defaults" or "overrides") - create the section now
+            spec_section = self.model.spec.setdefault(self.spec_section, {})
+        else:
+            # Already a dict (shouldn't happen with new code but keep for compatibility)
+            spec_section = self.spec_section
 
-        self.spec_section.setdefault("limits", {})[name] = limit
+        spec_section.setdefault("limits", {})[name] = limit
         self.spec_section = None
 
     @modify
@@ -78,19 +85,29 @@ class RateLimitPolicy(Policy):
         if self.spec_section is None:
             raise TypeError("Strategy can only be set on defaults or overrides")
 
-        self.spec_section["strategy"] = strategy.value
+        if isinstance(self.spec_section, str):
+            # String marker - create the section now
+            section = self.model.spec.setdefault(self.spec_section, {})
+        else:
+            section = self.spec_section
+
+        section["strategy"] = strategy.value
         self.spec_section = None
 
     @property
     def defaults(self):
         """Add new rule into the `defaults` RateLimitPolicy section"""
-        self.spec_section = self.model.spec.setdefault("defaults", {})
+        # Don't create the dict yet - only mark which section to use
+        # The dict will be created when add_limit or strategy is called
+        self.spec_section = "defaults"
         return self
 
     @property
     def overrides(self):
         """Add new rule into the `overrides` RateLimitPolicy section"""
-        self.spec_section = self.model.spec.setdefault("overrides", {})
+        # Don't create the dict yet - only mark which section to use
+        # The dict will be created when add_limit or strategy is called
+        self.spec_section = "overrides"
         return self
 
     def wait_for_ready(self):
