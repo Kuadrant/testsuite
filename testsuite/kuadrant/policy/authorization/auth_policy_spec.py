@@ -35,7 +35,7 @@ class AuthPolicySpecProper:
     This is the "proper" spec that contains the actual policy configuration.
     """
 
-    def __init__(self, parent_policy):
+    def __init__(self, parent_policy) -> None:
         """
         Initialize the spec proper.
 
@@ -100,7 +100,7 @@ class MergeableAuthPolicySpec:
     Contains a strategy field and embeds an AuthPolicySpecProper.
     """
 
-    def __init__(self, parent_policy, strategy: Strategy = Strategy.ATOMIC):
+    def __init__(self, parent_policy, strategy: Strategy = Strategy.ATOMIC) -> None:
         """
         Initialize the mergeable spec.
 
@@ -170,7 +170,7 @@ class AuthPolicySpec:
     The proper() method abstracts which section is active.
     """
 
-    def __init__(self, parent_policy, target_ref: dict):
+    def __init__(self, parent_policy, target_ref: dict) -> None:
         """
         Initialize the spec.
 

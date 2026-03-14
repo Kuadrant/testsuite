@@ -110,16 +110,16 @@ class RateLimitPolicy(Policy):
         self.spec_section = "overrides"
         return self
 
-    def modify_and_apply(self, modifier_func, retries=2, cmd_args=None):
+    def modify_and_apply(self, modifier_func, retries=2, cmd_args=None, **kwargs):
         """Override to sync spec to model after modifications."""
 
         def _wrapper(obj):
             # Call the original modifier
             modifier_func(obj)
             # Sync spec to model after modification
-            obj._sync_spec_to_model()
+            obj._sync_spec_to_model()  # pylint: disable=protected-access
 
-        return super().modify_and_apply(_wrapper, retries, cmd_args)
+        return super().modify_and_apply(_wrapper, retries, cmd_args, **kwargs)
 
     def wait_for_ready(self):
         """Wait for RLP to be enforced"""

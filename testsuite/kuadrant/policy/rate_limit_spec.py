@@ -27,7 +27,7 @@ class RateLimitPolicySpecProper:
     This is the "proper" spec that contains the actual policy configuration.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.limits: dict[str, dict] = {}
 
     def add_limit(
@@ -71,7 +71,7 @@ class MergeableRateLimitPolicySpec:
     Contains a strategy field and embeds a RateLimitPolicySpecProper.
     """
 
-    def __init__(self, strategy: Strategy = Strategy.ATOMIC):
+    def __init__(self, strategy: Strategy = Strategy.ATOMIC) -> None:
         self._strategy = strategy
         self.proper = RateLimitPolicySpecProper()
 
@@ -121,7 +121,7 @@ class RateLimitPolicySpec:
     The proper() method abstracts which section is active.
     """
 
-    def __init__(self, target_ref: dict):
+    def __init__(self, target_ref: dict) -> None:
         self.target_ref = target_ref
         self._defaults: Optional[MergeableRateLimitPolicySpec] = None
         self._overrides: Optional[MergeableRateLimitPolicySpec] = None
