@@ -91,15 +91,18 @@ class MergeableAuthPolicySpec:
         self._strategy = strategy
         self.proper = AuthPolicySpecProper(self)
 
-    @property
-    def strategy(self) -> Strategy:
-        """Get the merge strategy."""
-        return self._strategy
-
-    @strategy.setter
     def strategy(self, value: Strategy):
-        """Set the merge strategy."""
+        """
+        Set the merge strategy.
+
+        Args:
+            value: The merge strategy (Strategy.ATOMIC or Strategy.MERGE)
+
+        Returns:
+            self for chaining
+        """
         self._strategy = value
+        return self
 
     @property
     def committed(self):

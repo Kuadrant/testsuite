@@ -61,7 +61,7 @@ class RateLimitPolicy(Policy):
 
         Usage:
             rlp.defaults.add_limit("basic", [Limit(5, "10s")])
-            rlp.defaults.strategy = Strategy.MERGE
+            rlp.defaults.strategy(Strategy.MERGE)
 
         Note: To check if defaults exists without creating it, use: `policy.spec.defaults is None`
         """
@@ -76,7 +76,7 @@ class RateLimitPolicy(Policy):
 
         Usage:
             rlp.overrides.add_limit("override", [Limit(10, "10s")])
-            rlp.overrides.strategy = Strategy.MERGE
+            rlp.overrides.strategy(Strategy.MERGE)
 
         Note: To check if overrides exists without creating it, use: `policy.spec.overrides is None`
         """

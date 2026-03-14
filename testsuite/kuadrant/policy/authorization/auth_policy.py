@@ -53,7 +53,7 @@ class AuthPolicy(Policy, AuthConfig):
 
         Usage:
             auth.defaults.identity.add_oidc(...)
-            auth.defaults.strategy = Strategy.MERGE
+            auth.defaults.strategy(Strategy.MERGE)
 
         Note: To check if defaults exists without creating it, use: `policy.spec.defaults is None`
         """
@@ -68,7 +68,7 @@ class AuthPolicy(Policy, AuthConfig):
 
         Usage:
             auth.overrides.identity.add_oidc(...)
-            auth.overrides.strategy = Strategy.MERGE
+            auth.overrides.strategy(Strategy.MERGE)
 
         Note: To check if overrides exists without creating it, use: `policy.spec.overrides is None`
         """
