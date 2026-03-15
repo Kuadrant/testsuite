@@ -2,6 +2,7 @@
 
 import pytest
 
+from testsuite.core.topology import topology
 from testsuite.kuadrant.policy import CelPredicate, Strategy
 from testsuite.kuadrant.policy.rate_limit import Limit, RateLimitPolicy
 
@@ -18,6 +19,7 @@ def route(backend, route):
 
 
 @pytest.fixture(scope="module")
+@topology
 def global_rate_limit(request, cluster, blame, module_label):
     """Create a RateLimitPolicy with default policies and a merge strategy."""
     target_ref = request.getfixturevalue(getattr(request, "param", "gateway"))

@@ -1,7 +1,9 @@
 """Conftest for defaults merge strategy tests for AuthPolicies"""
+import time
 
 import pytest
 
+from testsuite.core.topology import topology
 from testsuite.httpx.auth import HeaderApiKeyAuth, HttpxOidcClientAuth
 from testsuite.kuadrant.policy import Strategy
 from testsuite.kuadrant.policy.authorization.auth_policy import AuthPolicy
@@ -54,6 +56,7 @@ def auth(oidc_provider):
 
 
 @pytest.fixture(scope="module")
+@topology
 def global_authorization(request, cluster, blame, admin_label, admin_api_key):
     """
     Create an AuthPolicy with authentication for an admin with same target as one default.
@@ -80,3 +83,4 @@ def commit(request, route, global_authorization, authorization):  # pylint: disa
         request.addfinalizer(policy.delete)
         policy.commit()
         policy.wait_for_accepted()
+        time.sleep(60)  # we sleep because if both get reconciled at the same time the overridden status will not work.

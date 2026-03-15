@@ -102,6 +102,21 @@ class Envoy(Gateway):  # pylint: disable=too-many-instance-attributes
     def get_tls_cert(self, _) -> Optional[Certificate]:
         return None
 
+    @property
+    def class_name(self):
+        """Returns the class name (Envoy doesn't use GatewayClass)"""
+        return "envoy"
+
+    @property
+    def metrics_service_name(self):
+        """Returns the metrics service name (Envoy doesn't expose metrics separately)"""
+        return f"{self.name}-metrics"
+
+    @property
+    def metrics(self):
+        """Returns GatewayMetrics instance (not supported for Envoy-only deployment)"""
+        raise NotImplementedError("Metrics not supported for Envoy-only deployment")
+
     def delete(self):
         """Destroy all objects this instance created"""
         self.config.delete()

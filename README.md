@@ -32,6 +32,59 @@ make poetry
 > - [Kuadrant Helm Charts](https://github.com/Kuadrant/helm-charts) for any Kubernetes cluster
 > - [Deploying Kuadrant via OLM](https://github.com/Kuadrant/helm-charts-olm/blob/main/README.md) for OpenShift (recommended as it also deploys testing tools)
 
+## Local Kind Cluster Setup
+
+For local development and testing, you can set up a complete Kuadrant environment using Kind (Kubernetes in Docker).
+
+### Prerequisites
+* [Kind](https://kind.sigs.k8s.io/docs/user/quick-start/#installation)
+* [Helm](https://helm.sh/docs/intro/install/)
+* [jq](https://jqlang.github.io/jq/download/) (JSON processor)
+* **Red Hat Registry credentials** (optional but recommended for testing tools)
+  - Username: Your Red Hat account username
+  - Password: Your Red Hat registry token (from [console.redhat.com/openshift/downloads](https://console.redhat.com/openshift/downloads))
+  - **Note:** Without these credentials, testing tools (Keycloak, Mockserver, etc.) won't be deployed, but core Kuadrant functionality will still work
+
+### Quick Start
+
+Set up a complete local environment with one command:
+
+```bash
+# Optional: Red Hat registry credentials (for testing tools like Keycloak)
+# (if not provided, tools won't be deployed but core functionality will work)
+export RH_REGISTRY_USERNAME=<your-username>
+export RH_REGISTRY_PASSWORD=<your-token>
+
+# Optional: AWS credentials for DNS testing
+# (if not provided, the secret won't be created and DNS tests will be skipped)
+export AWS_ACCESS_KEY_ID=<your-aws-key>
+export AWS_SECRET_ACCESS_KEY=<your-aws-secret>
+export AWS_REGION=us-east-1
+export AWS_BASE_DOMAIN=test.example.com
+
+# Run the setup (defaults to Istio gateway)
+make local-setup
+
+# Or specify EnvoyGateway
+GATEWAYAPI_PROVIDER=envoygateway make local-setup
+```
+
+This will:
+1. Create a Kind cluster named `kuadrant-local`
+2. Install metrics-server and MetalLB (LoadBalancer support)
+3. Install Gateway API CRDs
+4. Install cert-manager and create a self-signed ClusterIssuer
+5. Install Istio or EnvoyGateway (based on `GATEWAYAPI_PROVIDER`)
+6. Create test namespaces (`kuadrant`, `kuadrant2`)
+7. Create AWS credentials secret (only if AWS credentials are provided)
+8. Deploy Kuadrant Operator and Kuadrant CR
+9. Deploy testing tools (only if RH_REGISTRY credentials are provided) - Keycloak, Mockserver, etc.
+
+**Cleanup:**
+```bash
+make local-cleanup  # Delete the Kind cluster
+```
+
 ## Configuration
 
 The Kuadrant testsuite uses [Dynaconf](https://www.dynaconf.com/) for configuration.
