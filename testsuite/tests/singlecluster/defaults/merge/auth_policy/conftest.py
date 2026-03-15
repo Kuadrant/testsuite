@@ -1,4 +1,5 @@
 """Conftest for defaults merge strategy tests for AuthPolicies"""
+import time
 
 import pytest
 
@@ -82,3 +83,4 @@ def commit(request, route, global_authorization, authorization):  # pylint: disa
         request.addfinalizer(policy.delete)
         policy.commit()
         policy.wait_for_accepted()
+        time.sleep(60)  # we sleep because if both get reconciled at the same time the overridden status will not work.
