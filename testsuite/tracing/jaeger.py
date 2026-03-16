@@ -68,3 +68,30 @@ class JaegerClient(TracingClient):
             if ref["refType"] == "CHILD_OF":
                 return ref["spanID"]
         return None
+
+    def get_spans_by_operation(self, request_id, service, operation_name, tag_name="request_id"):
+        """
+        Get spans from a trace by request ID, filtered by service and operation name.
+
+        Args:
+            request_id: The request ID to search for
+            service: Service name to filter traces by
+            operation_name: Operation name to filter spans by
+            tag_name: Tag name containing the request ID (default: "request_id")
+
+        Returns:
+            List of spans matching the criteria
+        """
+        # Get trace by request_id tag
+        traces = self.get_trace(service=service, tags={tag_name: request_id})
+        if not traces:
+            return []
+
+        # Extract all spans from the trace(s) and filter by operation name
+        matching_spans = []
+        for trace in traces:
+            for span in trace.get("spans", []):
+                if span.get("operationName") == operation_name:
+                    matching_spans.append(span)
+
+        return matching_spans
