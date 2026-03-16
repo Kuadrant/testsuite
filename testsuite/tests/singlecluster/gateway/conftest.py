@@ -9,9 +9,11 @@ from testsuite.httpx.auth import HttpxOidcClientAuth
 from testsuite.kuadrant.policy.authorization.auth_policy import AuthPolicy
 from testsuite.kuadrant.policy.dns import DNSPolicy
 from testsuite.kuadrant.policy.tls import TLSPolicy
+from testsuite.core.topology import topology
 
 
 @pytest.fixture(scope="module")
+@topology
 def gateway(request, cluster, blame, wildcard_domain, module_label):
     """Returns ready gateway"""
     gateway_name = blame("gw")
@@ -28,6 +30,7 @@ def gateway(request, cluster, blame, wildcard_domain, module_label):
 
 
 @pytest.fixture(scope="module")
+@topology
 def authorization(blame, gateway, module_label, cluster, oidc_provider, route):
     # pylint: disable=unused-argument
     """Create AuthPolicy attached to gateway"""
@@ -43,6 +46,7 @@ def auth(oidc_provider):
 
 
 @pytest.fixture(scope="module")
+@topology
 def rate_limit():
     """
     For these tests don't create any RateLimitPolicy

@@ -1,5 +1,7 @@
 """Test defaults policy aimed at the same resource uses the oldest policy."""
 
+import time
+
 import pytest
 
 from testsuite.kuadrant.policy import has_condition
@@ -14,6 +16,7 @@ def commit(request, route, authorization, global_authorization):  # pylint: disa
         request.addfinalizer(policy.delete)
         policy.commit()
         policy.wait_for_accepted()
+        time.sleep(60)  # we sleep because if both get reconciled at the same time the overridden status will not work.
 
 
 @pytest.mark.parametrize(
