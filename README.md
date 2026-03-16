@@ -45,6 +45,9 @@ For local development and testing, you can set up a complete Kuadrant environmen
   - Password: Your Red Hat registry token (from [console.redhat.com/openshift/downloads](https://console.redhat.com/openshift/downloads))
   - **Note:** Without these credentials, testing tools (Keycloak, Mockserver, etc.) won't be deployed, but core Kuadrant functionality will still work
 
+> **⚠️ macOS Limitation:**
+> MetalLB LoadBalancer services have limited functionality on macOS due to Docker Desktop's VM isolation. While MetalLB will work inside the cluster, LoadBalancer IPs won't be accessible from your Mac host machine. **For macOS users, we recommend running tests in containers** (see [From a Container](#from-a-container) section above) in addition to the local Kind setup.
+
 ### Quick Start
 
 Set up a complete local environment with one command:
