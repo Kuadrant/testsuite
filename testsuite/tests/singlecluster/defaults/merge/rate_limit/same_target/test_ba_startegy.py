@@ -1,4 +1,5 @@
 """Test defaults policy aimed at the same resource uses the oldest policy."""
+
 import time
 
 import pytest

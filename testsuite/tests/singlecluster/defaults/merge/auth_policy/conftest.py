@@ -1,4 +1,5 @@
 """Conftest for defaults merge strategy tests for AuthPolicies"""
+
 import time
 
 import pytest
