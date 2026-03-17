@@ -20,6 +20,12 @@ KUADRANT_NAMESPACE ?= kuadrant-system
 KUADRANT_OPERATOR_VERSION ?= latest
 KUADRANT_OPERATOR_IMAGE ?=
 
+# Kuadrant deployment mode: "components" (GitHub kustomize, default) or "helm" (stable releases)
+KUADRANT_DEPLOY_MODE ?= components
+
+# Component versions (used when KUADRANT_DEPLOY_MODE=components)
+KUADRANT_OPERATOR_GITREF = $(if $(filter latest,$(KUADRANT_OPERATOR_VERSION)),main,$(KUADRANT_OPERATOR_VERSION))
+
 # Kuadrant Operator environment variables
 # Default: Service timeouts for faster test execution
 # Override with your own: KUADRANT_OPERATOR_ENV_VARS="LOG_LEVEL=debug,..."
