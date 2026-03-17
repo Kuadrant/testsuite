@@ -62,6 +62,13 @@ create-cluster-issuer: ## Create self-signed ClusterIssuer for TLS testing
 		| kubectl apply -f -
 	@echo "ClusterIssuer 'kuadrant-qe-issuer' created"
 
+.PHONY: install-prometheus-crds
+install-prometheus-crds: ## Install only Prometheus Operator CRDs (ServiceMonitor, PodMonitor, etc.)
+	@echo "Installing Prometheus Operator CRDs $(PROMETHEUS_OPERATOR_VERSION)..."
+	@curl -sL https://github.com/prometheus-operator/prometheus-operator/releases/download/$(PROMETHEUS_OPERATOR_VERSION)/stripped-down-crds.yaml | \
+		kubectl apply --server-side -f -
+	@echo "Prometheus CRDs installed"
+
 .PHONY: apply-additional-manifests
 apply-additional-manifests: ## Apply additional manifests from file (if ADDITIONAL_MANIFESTS is set)
 	@if [ -n "$(ADDITIONAL_MANIFESTS)" ]; then \

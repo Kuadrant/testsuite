@@ -59,8 +59,14 @@ make local-setup
 # Optional: Apply additional manifests (e.g., DNS provider credentials, secrets, etc.)
 ADDITIONAL_MANIFESTS=./my-secrets.yaml make local-setup
 
+# Optional: Install Prometheus CRDs for observability testing
+INSTALL_PROMETHEUS=true make local-setup
+
 # Or specify EnvoyGateway
 GATEWAYAPI_PROVIDER=envoygateway make local-setup
+
+# Combine options
+GATEWAYAPI_PROVIDER=envoygateway INSTALL_PROMETHEUS=true ADDITIONAL_MANIFESTS=./secrets.yaml make local-setup
 ```
 
 This will:
@@ -68,11 +74,12 @@ This will:
 2. Install metrics-server and MetalLB (LoadBalancer support)
 3. Install Gateway API CRDs
 4. Install cert-manager and create a self-signed ClusterIssuer
-5. Install Istio or EnvoyGateway (based on `GATEWAYAPI_PROVIDER`)
-6. Create test namespaces (`kuadrant`, `kuadrant2`)
-7. Apply additional manifests (only if `ADDITIONAL_MANIFESTS` is provided)
-8. Deploy Kuadrant Operator and Kuadrant CR
-9. Deploy testing tools - Keycloak, Mockserver, etc.
+5. Install Prometheus CRDs (only if `INSTALL_PROMETHEUS=true`) - ServiceMonitor, PodMonitor, etc.
+6. Install Istio or EnvoyGateway (based on `GATEWAYAPI_PROVIDER`)
+7. Create test namespaces (`kuadrant`, `kuadrant2`)
+8. Apply additional manifests (only if `ADDITIONAL_MANIFESTS` is provided)
+9. Deploy Kuadrant Operator and Kuadrant CR
+10. Deploy testing tools - Keycloak, Mockserver, etc.
 
 **Cleanup:**
 ```bash

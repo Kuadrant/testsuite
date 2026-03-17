@@ -18,6 +18,7 @@ local-setup: ## Complete local environment setup (kind cluster + all dependencie
 	$(MAKE) gateway-api-install
 	$(MAKE) install-cert-manager
 	$(MAKE) create-cluster-issuer
+	$(MAKE) install-prometheus-crds
 	$(MAKE) $(GATEWAYAPI_PROVIDER)-install
 	$(MAKE) create-test-namespaces
 	$(MAKE) apply-additional-manifests

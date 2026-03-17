@@ -22,6 +22,9 @@ make local-setup                                                       # Default
 # Use Helm instead of components mode
 KUADRANT_DEPLOY_MODE=helm make local-setup
 
+# Enable Prometheus CRDs for observability testing (ServiceMonitor, PodMonitor)
+INSTALL_PROMETHEUS=true make local-setup
+
 # Apply additional manifests during setup (e.g., DNS credentials, secrets)
 ADDITIONAL_MANIFESTS=./my-secrets.yaml make local-setup
 
