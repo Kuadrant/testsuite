@@ -23,17 +23,11 @@ KUADRANT_OPERATOR_IMAGE ?=
 # Kuadrant Operator environment variables
 # Default: Service timeouts for faster test execution
 # Override with your own: KUADRANT_OPERATOR_ENV_VARS="LOG_LEVEL=debug,..."
-KUADRANT_OPERATOR_ENV_VARS ?= AUTH_SERVICE_TIMEOUT=1000ms,RATELIMIT_SERVICE_TIMEOUT=1000ms,RATELIMIT_CHECK_SERVICE_TIMEOUT=1000ms,RATELIMIT_REPORT_SERVICE_TIMEOUT=1000ms
+KUADRANT_OPERATOR_ENV_VARS ?= AUTH_SERVICE_TIMEOUT=1000ms,RATELIMIT_SERVICE_TIMEOUT=1000ms,RATELIMIT_CHECK_SERVICE_TIMEOUT=1000ms,RATELIMIT_REPORT_SERVICE_TIMEOUT=1000ms,TRACING_SERVICE_TIMEOUT=1000ms,DNS_DEFAULT_TTL=1,DNS_DEFAULT_LB_TTL=1
 
-# Red Hat registry credentials
-RH_REGISTRY_USERNAME ?=
-RH_REGISTRY_PASSWORD ?=
-
-# AWS credentials for DNS testing (optional - secret only created if provided)
-AWS_ACCESS_KEY_ID ?=
-AWS_SECRET_ACCESS_KEY ?=
-AWS_REGION ?=
-AWS_BASE_DOMAIN ?=
+# Additional manifests to apply during setup (optional - e.g., secrets, configmaps)
+# Point to a YAML file containing any additional Kubernetes resources
+ADDITIONAL_MANIFESTS ?=
 
 # Timeout configurations (in seconds)
 KUBECTL_TIMEOUT ?= 300s

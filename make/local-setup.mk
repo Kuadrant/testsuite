@@ -9,6 +9,8 @@ local-setup: ## Complete local environment setup (kind cluster + all dependencie
 		echo "Valid values: istio, envoygateway"; \
 		exit 1; \
 	fi
+	@echo "Using Kuadrant deployment mode: $(KUADRANT_DEPLOY_MODE)"
+	@echo "  (Change with: KUADRANT_DEPLOY_MODE=components make local-setup)"
 	$(MAKE) kind-delete-cluster
 	$(MAKE) kind-create-cluster
 	$(MAKE) install-metrics-server
@@ -18,7 +20,7 @@ local-setup: ## Complete local environment setup (kind cluster + all dependencie
 	$(MAKE) create-cluster-issuer
 	$(MAKE) $(GATEWAYAPI_PROVIDER)-install
 	$(MAKE) create-test-namespaces
-	$(MAKE) create-aws-credentials
+	$(MAKE) apply-additional-manifests
 	$(MAKE) deploy-kuadrant-operator
 	$(MAKE) deploy-kuadrant-cr
 	$(MAKE) deploy-testsuite-tools

@@ -53,20 +53,11 @@ For local development and testing, you can set up a complete Kuadrant environmen
 Set up a complete local environment with one command:
 
 ```bash
-# Optional: Red Hat registry credentials (for testing tools like Keycloak)
-# (if not provided, tools won't be deployed but core functionality will work)
-export RH_REGISTRY_USERNAME=<your-username>
-export RH_REGISTRY_PASSWORD=<your-token>
-
-# Optional: AWS credentials for DNS testing
-# (if not provided, the secret won't be created and DNS tests will be skipped)
-export AWS_ACCESS_KEY_ID=<your-aws-key>
-export AWS_SECRET_ACCESS_KEY=<your-aws-secret>
-export AWS_REGION=us-east-1
-export AWS_BASE_DOMAIN=test.example.com
-
 # Run the setup (defaults to Istio gateway)
 make local-setup
+
+# Optional: Apply additional manifests (e.g., DNS provider credentials, secrets, etc.)
+ADDITIONAL_MANIFESTS=./my-secrets.yaml make local-setup
 
 # Or specify EnvoyGateway
 GATEWAYAPI_PROVIDER=envoygateway make local-setup
@@ -79,9 +70,9 @@ This will:
 4. Install cert-manager and create a self-signed ClusterIssuer
 5. Install Istio or EnvoyGateway (based on `GATEWAYAPI_PROVIDER`)
 6. Create test namespaces (`kuadrant`, `kuadrant2`)
-7. Create AWS credentials secret (only if AWS credentials are provided)
+7. Apply additional manifests (only if `ADDITIONAL_MANIFESTS` is provided)
 8. Deploy Kuadrant Operator and Kuadrant CR
-9. Deploy testing tools (only if RH_REGISTRY credentials are provided) - Keycloak, Mockserver, etc.
+9. Deploy testing tools - Keycloak, Mockserver, etc.
 
 **Cleanup:**
 ```bash
@@ -136,19 +127,38 @@ helm install --values values-tools.yaml --wait --timeout 10m -g charts/tools-ins
 <details>
 <summary><b>DNS Provider Secret example (click to expand)</b></summary>
 
+Save this as a file (e.g., `additionalManifests.yaml`) and provide it via `ADDITIONAL_MANIFESTS`:
+```bash
+ADDITIONAL_MANIFESTS=./additionalManifests.yaml make local-setup
+```
+
 ```yaml
-kind: Secret
 apiVersion: v1
+kind: Secret
 metadata:
   name: aws-credentials
   namespace: kuadrant
   annotations:
     base_domain: example.com
-data:
-  AWS_ACCESS_KEY_ID: <key>
-  AWS_REGION: <region>
-  AWS_SECRET_ACCESS_KEY: <key>
+stringData:
+  AWS_ACCESS_KEY_ID: <your-key>
+  AWS_REGION: <your-region>
+  AWS_SECRET_ACCESS_KEY: <your-secret>
 type: kuadrant.io/aws
+---
+# You can include multiple resources in the same file
+# For example, GCP credentials:
+apiVersion: v1
+kind: Secret
+metadata:
+  name: gcp-credentials
+  namespace: kuadrant
+  annotations:
+    base_domain: example.com
+stringData:
+  PROJECT_ID: <your-project-id>
+  GOOGLE: <base64-encoded-service-account-json>
+type: kuadrant.io/gcp
 ```
 </details>
 

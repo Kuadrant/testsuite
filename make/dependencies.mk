@@ -62,25 +62,17 @@ create-cluster-issuer: ## Create self-signed ClusterIssuer for TLS testing
 		| kubectl apply -f -
 	@echo "ClusterIssuer 'kuadrant-qe-issuer' created"
 
-.PHONY: create-aws-credentials
-create-aws-credentials: ## Create AWS credentials secret for DNS testing (only if credentials provided)
-	@if [ -n "$(AWS_ACCESS_KEY_ID)" ] && [ -n "$(AWS_SECRET_ACCESS_KEY)" ] && [ -n "$(AWS_REGION)" ] && [ -n "$(AWS_BASE_DOMAIN)" ]; then \
-		echo "Creating AWS credentials secret..."; \
-		printf '%s\n' \
-			'apiVersion: v1' \
-			'kind: Secret' \
-			'metadata:' \
-			'  name: aws-credentials' \
-			'  namespace: kuadrant' \
-			'  annotations:' \
-			'    base_domain: $(AWS_BASE_DOMAIN)' \
-			'stringData:' \
-			'  AWS_ACCESS_KEY_ID: $(AWS_ACCESS_KEY_ID)' \
-			'  AWS_REGION: $(AWS_REGION)' \
-			'  AWS_SECRET_ACCESS_KEY: $(AWS_SECRET_ACCESS_KEY)' \
-			'type: kuadrant.io/aws' \
-			| kubectl apply -f -; \
-		echo "AWS credentials secret created in kuadrant namespace"; \
+.PHONY: apply-additional-manifests
+apply-additional-manifests: ## Apply additional manifests from file (if ADDITIONAL_MANIFESTS is set)
+	@if [ -n "$(ADDITIONAL_MANIFESTS)" ]; then \
+		if [ -f "$(ADDITIONAL_MANIFESTS)" ]; then \
+			echo "Applying additional manifests from $(ADDITIONAL_MANIFESTS)..."; \
+			kubectl apply -f "$(ADDITIONAL_MANIFESTS)"; \
+			echo "Additional manifests applied"; \
+		else \
+			echo "❌ Error: ADDITIONAL_MANIFESTS file '$(ADDITIONAL_MANIFESTS)' not found"; \
+			exit 1; \
+		fi; \
 	else \
-		echo "⏭️  Skipping AWS credentials secret (requires AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION, and AWS_BASE_DOMAIN)"; \
+		echo "⏭️  No additional manifests to apply (ADDITIONAL_MANIFESTS not set)"; \
 	fi
