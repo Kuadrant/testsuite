@@ -127,14 +127,18 @@ class ReportPortalMetadataCollector:
 
     def _get_ocp_version(self, project):
         """Retrieve and format OCP version from cluster."""
-        with project.context:
-            version_result = oc.selector("clusterversion").objects()
-            if version_result:
-                ocp_version = version_result[0].model.status.history[0].version
-                if ocp_version:
-                    parts = ocp_version.split(".")
-                    if len(parts) >= 2:
-                        return f"{parts[0]}.{parts[1]}"
+        try:
+            with project.context:
+                version_result = oc.selector("clusterversion").objects()
+                if version_result:
+                    ocp_version = version_result[0].model.status.history[0].version
+                    if ocp_version:
+                        parts = ocp_version.split(".")
+                        if len(parts) >= 2:
+                            return f"{parts[0]}.{parts[1]}"
+        except Exception as e:
+            logger.warning(str(e))
+
         return None
 
     def add_properties_to_items(self, items):

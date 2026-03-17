@@ -118,9 +118,6 @@ def pytest_collection_modifyitems(session, config, items):  # pylint: disable=un
     """
     Add user properties to testcases for xml output
 
-    Add cluster metadata to test items for ReportPortal integration.
-
-
     This adds issue and issue-id properties to junit output, utilizes
     pytest.mark.issue marker.
 
@@ -136,14 +133,6 @@ def pytest_collection_modifyitems(session, config, items):  # pylint: disable=un
         ## extracting test's docstring for RP
         if item._obj.__doc__:
             item.user_properties.append(['__rp_case_description', item._obj.__doc__])
-
-    """"""
-    try:
-        collector = ReportPortalMetadataCollector()
-        collector.collect_all_clusters()
-        collector.add_properties_to_items(items)
-    except (OpenShiftPythonException, AttributeError, KeyError, ValidationError) as e:
-        print(f"Warning: Component metadata collection failed: {e}")
 
 def pytest_configure(config):
     """Pytest post-execution configuration tuning"""

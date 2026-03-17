@@ -18,6 +18,10 @@ import random
 import subprocess
 
 
+from testsuite.component_metadata import ReportPortalMetadataCollector
+from openshift_client import OpenShiftPythonException
+from dynaconf import ValidationError
+
 import logging
 LOG = logging.getLogger(__name__)
 
@@ -80,6 +84,8 @@ def properties_collector(record_testsuite_property):
             
 
 
+
+
 @pytest.fixture(scope="session")
 def secondary_properties(record_testsuite_property):
     """ Can be defined multiple times """
@@ -102,28 +108,30 @@ def rp_suite_description(record_testsuite_property):
     """
     record_testsuite_property("__rp_suite_description", suite_description)
 
+
+def get_cluster_information() -> str:
+    """Cluster information collector"""
+    cluster_info = ""
+    try:
+        collector = ReportPortalMetadataCollector()
+        collector.collect_all_clusters()
+        cluster_info = str(collector.all_cluster_metadata)
+    except (OpenShiftPythonException, AttributeError, KeyError, ValidationError) as e:
+        LOG.error("Component metadata collection failed: {e}")
+        print(f"Warning: Component metadata collection failed: {e}")
+
+    return cluster_info
+
 @pytest.fixture(scope="session")
 def rp_launch_description(record_testsuite_property):
     """ Direct modification of RP Lauch description via promoted attribute
 
     description provided via commandline will be per-pended to this
     """
+    launch_description = get_cluster_information()
 
+    record_testsuite_property('__rp_launch_description', launch_description)
 
-    launch_description = """
-    # Test Launch Description
-
-    This is a sample description from the test pipeline
-
-**Cluster Information (2 clusters):**
-- https://console.cluster1.example.com (cluster1)
-  - OCP: `4.18`
-  - Kuadrant: `quay.io/kuadrant/kuadrant-operator:v1.3.1`
-- https://console.cluster2.example.com (cluster2)
-  - OCP: `4.20`
-  - Kuadrant: `quay.io/kuadrant/kuadrant-operator:nightly-latest`
-    """
-    record_testsuite_property("__rp_launch_description", launch_description)
 
 @pytest.mark.skipif(not os.environ.get('COLLECTOR_ENABLE'), reason="collector was not excplicitly enabled")
 def test_collect(caplog, record_testsuite_property, properties_collector, secondary_properties, rp_launch_description, rp_suite_description):
@@ -155,3 +163,6 @@ def test_controller():
     print(f'{sys.argv=}')
 
     assert True
+
+
+
