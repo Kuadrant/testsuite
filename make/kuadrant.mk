@@ -22,9 +22,11 @@ ifeq ($(KUADRANT_DEPLOY_MODE),components)
 else
 	@echo "Installing Kuadrant Operator $(KUADRANT_OPERATOR_VERSION) from Helm..."
 	helm repo add kuadrant https://kuadrant.io/helm-charts/ --force-update
-	$(if $(filter latest,$(KUADRANT_OPERATOR_VERSION)), \
-		helm install kuadrant-operator kuadrant/kuadrant-operator --create-namespace --namespace $(KUADRANT_NAMESPACE) --wait --timeout=$(HELM_TIMEOUT), \
-		helm install kuadrant-operator kuadrant/kuadrant-operator --version $(KUADRANT_OPERATOR_VERSION) --create-namespace --namespace $(KUADRANT_NAMESPACE) --wait --timeout=$(HELM_TIMEOUT))
+ifeq ($(KUADRANT_OPERATOR_VERSION),latest)
+	helm install kuadrant-operator kuadrant/kuadrant-operator --create-namespace --namespace $(KUADRANT_NAMESPACE) --wait --timeout=$(HELM_TIMEOUT)
+else
+	helm install kuadrant-operator kuadrant/kuadrant-operator --version $(KUADRANT_OPERATOR_VERSION) --create-namespace --namespace $(KUADRANT_NAMESPACE) --wait --timeout=$(HELM_TIMEOUT)
+endif
 	$(MAKE) patch-kuadrant-operator-env
 	@echo "Kuadrant Operator $(KUADRANT_OPERATOR_VERSION) installed from Helm"
 endif

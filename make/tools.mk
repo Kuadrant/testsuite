@@ -9,7 +9,6 @@ deploy-testsuite-tools: ## Deploy testsuite tools (Keycloak, etc.)
 	helm repo update
 	helm install \
 		--set=tools.keycloak.keycloakProvider=deployment \
-		--set=tools.coredns.enable=true \
 		--debug \
 		--wait \
 		--timeout=$(TOOLS_TIMEOUT) \
