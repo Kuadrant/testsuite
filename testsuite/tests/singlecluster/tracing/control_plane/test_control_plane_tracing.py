@@ -13,56 +13,11 @@ import pytest
 import backoff
 
 from testsuite.gateway.gateway_api.route import HTTPRoute
-from testsuite.httpx.auth import HeaderApiKeyAuth
 from testsuite.kubernetes import Selector
-from testsuite.kuadrant.policy import CelPredicate
-from testsuite.kuadrant.policy.authorization import JsonResponse, ValueFrom, Pattern
+from testsuite.kuadrant.policy.authorization import Pattern
 from testsuite.kuadrant.policy.authorization.auth_policy import AuthPolicy
-from testsuite.kuadrant.policy.rate_limit import Limit
 
 pytestmark = [pytest.mark.observability, pytest.mark.limitador, pytest.mark.authorino, pytest.mark.kuadrant_only]
-
-# TODO: add skip for control plane tracing not enabled on kuadrant-operator
-
-# Constants for trace querying
-TRACE_LOOKBACK_WINDOW = "10m"
-TRACE_SHORT_LOOKBACK = "5m"
-TRACE_MAX_RETRIES = 7
-
-
-@pytest.fixture(scope="module")
-def api_key(create_api_key, module_label):
-    """Creates API key Secret"""
-    annotations = {"user": "testuser"}
-    return create_api_key("api-key", module_label, "IAMTESTUSER", annotations=annotations)
-
-
-@pytest.fixture(scope="module")
-def auth(api_key):
-    """Valid API Key Auth"""
-    return HeaderApiKeyAuth(api_key)
-
-
-@pytest.fixture(scope="module")
-def authorization(authorization, api_key):
-    """Configures authorization policy with API key identity and user extraction."""
-    authorization.identity.add_api_key("api_key", selector=api_key.selector)
-    authorization.responses.add_success_dynamic(
-        "identity",
-        JsonResponse(
-            {
-                "user": ValueFrom("auth.identity.metadata.annotations.user"),
-            }
-        ),
-    )
-    return authorization
-
-
-@pytest.fixture(scope="module")
-def rate_limit(rate_limit):
-    """Configures rate limit policy with CEL-based user targeting."""
-    rate_limit.add_limit("testuser", [Limit(3, "10s")], when=[CelPredicate("auth.identity.user == 'testuser'")])
-    return rate_limit
 
 
 @pytest.fixture(scope="module")
@@ -76,112 +31,8 @@ def data_plane_trace(client, auth):
     return response.headers.get("x-request-id")
 
 
-def get_operator_traces(tracing, lookback=TRACE_LOOKBACK_WINDOW, limit=50):
-    """Helper to fetch recent kuadrant-operator traces."""
-    return tracing.query.api.traces.get(
-        params={"service": "kuadrant-operator", "lookback": lookback, "limit": limit}
-    ).json()["data"]
-
-
-def find_traces_with_policy(traces, policy_name, tracing):
-    """Find traces that reference a specific policy by name."""
-    matching_traces = []
-    for trace in traces:
-        for span in trace.get("spans", []):
-            tags = tracing.get_tags_dict(span)
-            # Check policy.name tag or source_policies tag
-            if tags.get("policy.name") == policy_name or policy_name in tags.get("source_policies", ""):
-                matching_traces.append(trace)
-                break
-    return matching_traces
-
-
-def find_traces_with_event_kind(traces, event_kind, tracing):
-    """Find traces where controller.reconcile span has specific event_kind."""
-    matching_traces = []
-    for trace in traces:
-        for span in trace.get("spans", []):
-            if span["operationName"] == "controller.reconcile":
-                tags = tracing.get_tags_dict(span)
-                if event_kind in tags.get("event_kinds", ""):
-                    matching_traces.append(trace)
-                    break
-    return matching_traces
-
-
-def wait_for_traces(tracing, filter_func, max_tries=TRACE_MAX_RETRIES, lookback="10m"):
-    """
-    Wait for traces to appear using backoff retry.
-
-    Args:
-        tracing: Tracing client instance
-        filter_func: Function that takes traces list and returns filtered results
-        max_tries: Maximum number of backoff attempts (default: 7)
-        lookback: Time window to search for traces (default: 10m)
-
-    Returns:
-        Filtered traces list
-    """
-
-    @backoff.on_predicate(backoff.fibo, lambda x: len(x) == 0, max_tries=max_tries, jitter=None)
-    def get_filtered_traces():
-        all_traces = get_operator_traces(tracing, lookback=lookback)
-        return filter_func(all_traces)
-
-    return get_filtered_traces()
-
-
-def wait_for_policy_traces(tracing, policy_name, lookback=TRACE_LOOKBACK_WINDOW, max_tries=TRACE_MAX_RETRIES):
-    """
-    Wait for traces referencing a specific policy.
-
-    Args:
-        tracing: Tracing client instance
-        policy_name: Name of the policy to search for
-        lookback: Time window to search (default: TRACE_LOOKBACK_WINDOW)
-        max_tries: Maximum backoff attempts (default: TRACE_MAX_RETRIES)
-
-    Returns:
-        List of traces referencing the policy
-    """
-    return wait_for_traces(
-        tracing, lambda traces: find_traces_with_policy(traces, policy_name, tracing), max_tries, lookback
-    )
-
-
-def wait_for_event_kind_traces(tracing, event_kind, lookback=TRACE_LOOKBACK_WINDOW, max_tries=TRACE_MAX_RETRIES):
-    """
-    Wait for traces with specific event_kind in controller.reconcile spans.
-
-    Args:
-        tracing: Tracing client instance
-        event_kind: Event kind to search for (e.g., "AuthPolicy.kuadrant.io")
-        lookback: Time window to search (default: TRACE_LOOKBACK_WINDOW)
-        max_tries: Maximum backoff attempts (default: TRACE_MAX_RETRIES)
-
-    Returns:
-        List of traces with matching event_kind
-    """
-    return wait_for_traces(
-        tracing, lambda traces: find_traces_with_event_kind(traces, event_kind, tracing), max_tries, lookback
-    )
-
-
 def assert_span_has_policy_metadata(span, policy, tracing):
-    """
-    Reusable assertion for policy metadata validation.
-
-    Args:
-        span: Span to validate
-        policy: Policy object to check against
-        tracing: Tracing client instance
-
-    Asserts that the span contains:
-        - policy.name matches policy.name()
-        - policy.namespace matches policy.namespace()
-        - policy.kind matches expected policy kind
-        - policy.uid is present
-    """
+    """Assert that span contains policy.name, policy.namespace, and policy.uid tags."""
     tags = tracing.get_tags_dict(span)
     assert tags.get("policy.name") == policy.name(), (
         f"Expected policy.name={policy.name()}, got {tags.get('policy.name')}. "
@@ -194,15 +45,7 @@ def assert_span_has_policy_metadata(span, policy, tracing):
 
 
 def get_span_duration_us(span):
-    """
-    Extract span duration in microseconds.
-
-    Args:
-        span: Span dict with startTime and duration fields
-
-    Returns:
-        Duration in microseconds, or None if not available
-    """
+    """Extract span duration in microseconds."""
     return span.get("duration")
 
 
@@ -217,8 +60,8 @@ def test_operator_traces_include_policy_context(authorization, rate_limit, traci
     - Policy UID
     """
     # Wait for traces for both policies
-    auth_traces = wait_for_policy_traces(tracing, authorization.name())
-    rl_traces = wait_for_policy_traces(tracing, rate_limit.name())
+    auth_traces = tracing.get_trace(service="kuadrant-operator", tags={"policy.name": authorization.name()})
+    rl_traces = tracing.get_trace(service="kuadrant-operator", tags={"policy.name": rate_limit.name()})
 
     assert len(auth_traces) > 0, f"No traces found for AuthPolicy: {authorization.name()}"
     assert len(rl_traces) > 0, f"No traces found for RateLimitPolicy: {rate_limit.name()}"
@@ -266,8 +109,8 @@ def test_operator_spans_include_reconciliation_details(authorization, rate_limit
     - Reconciliation result (success via otel.status_code)
     """
     # Wait for reconciliation traces for both policy types
-    auth_reconcile_traces = wait_for_event_kind_traces(tracing, "AuthPolicy.kuadrant.io")
-    rl_reconcile_traces = wait_for_event_kind_traces(tracing, "RateLimitPolicy.kuadrant.io")
+    auth_reconcile_traces = tracing.get_trace(service="kuadrant-operator", tags={"event_kinds": "AuthPolicy.kuadrant.io"})
+    rl_reconcile_traces = tracing.get_trace(service="kuadrant-operator", tags={"event_kinds": "RateLimitPolicy.kuadrant.io"})
 
     assert len(auth_reconcile_traces) > 0, "No reconciliation traces found for AuthPolicy events"
     assert len(rl_reconcile_traces) > 0, "No reconciliation traces found for RateLimitPolicy events"
@@ -320,7 +163,7 @@ def test_operator_traces_show_child_resource_creation(
     - Updating Istio resources (EnvoyFilter, etc.)
     """
     # Wait for traces for the specific policy kind
-    policy_traces = wait_for_event_kind_traces(tracing, f"{policy_kind}.kuadrant.io")
+    policy_traces = tracing.get_trace(service="kuadrant-operator", tags={"event_kinds": f"{policy_kind}.kuadrant.io"})
     assert len(policy_traces) > 0, f"No traces found for {policy_kind}"
 
     # Collect all operation names from traces
@@ -349,7 +192,7 @@ def test_correlate_policy_enforcement_with_data_plane_traces(authorization, rate
     """
 
     # Get data plane trace with policy enforcement
-    @backoff.on_predicate(backoff.fibo, lambda x: len(x) == 0, max_tries=TRACE_MAX_RETRIES, jitter=None)
+    @backoff.on_predicate(backoff.fibo, lambda x: len(x) == 0, max_tries=7, jitter=None)
     def get_data_plane_spans():
         return tracing.get_spans_by_operation(
             request_id=data_plane_trace, service="wasm-shim", operation_name="auth", tag_name="request_id"
@@ -363,7 +206,7 @@ def test_correlate_policy_enforcement_with_data_plane_traces(authorization, rate
     assert authorization.name() in dp_sources, f"AuthPolicy {authorization.name()} not in data plane sources"
 
     # Get control plane traces for the AuthPolicy
-    auth_cp_traces = wait_for_policy_traces(tracing, authorization.name())
+    auth_cp_traces = tracing.get_trace(service="kuadrant-operator", tags={"policy.name": authorization.name()})
     assert len(auth_cp_traces) > 0, f"No control plane traces found for AuthPolicy: {authorization.name()}"
 
     # Verify control plane trace has source_policies tag referencing the same policy
@@ -394,7 +237,7 @@ def test_policy_validation_spans_show_success_or_failure(authorization, rate_lim
     - Policy validation happens before enforcement
     """
     # Wait for traces for AuthPolicy
-    auth_traces = wait_for_policy_traces(tracing, authorization.name())
+    auth_traces = tracing.get_trace(service="kuadrant-operator", tags={"policy.name": authorization.name()})
     assert len(auth_traces) > 0
 
     validation_spans = []
@@ -437,7 +280,7 @@ def test_policy_update_generates_new_reconciliation_trace(authorization, tracing
     """
 
     # Get initial traces for this policy
-    initial_traces = wait_for_policy_traces(tracing, authorization.name())
+    initial_traces = tracing.get_trace(service="kuadrant-operator", tags={"policy.name": authorization.name()})
     assert len(initial_traces) > 0, "No initial traces found for policy"
 
     # Get the latest trace timestamp to compare later
@@ -453,22 +296,26 @@ def test_policy_update_generates_new_reconciliation_trace(authorization, tracing
     authorization.authorization.add_opa_policy("opa", "allow { false }", when=when_post)
 
     # Wait for new reconciliation trace after update (traces with newer timestamps)
-    def has_new_reconciliation(traces):
-        """Check if traces contain reconciliation spans newer than latest_timestamp."""
-        for trace in traces:
-            for span in trace.get("spans", []):
-                if span["operationName"] == "controller.reconcile" and span["startTime"] > latest_timestamp:
-                    return True
-        return False
-
     @backoff.on_predicate(
-        backoff.fibo, lambda x: len(x) == 0 or not has_new_reconciliation(x), max_tries=TRACE_MAX_RETRIES, jitter=None
+        backoff.fibo, lambda x: len(x) == 0, max_tries=7, jitter=None
     )
     def get_updated_traces():
         """Fetch traces after policy update, looking for new reconciliation."""
-        return wait_for_traces(
-            tracing, lambda traces: find_traces_with_policy(traces, authorization.name(), tracing), lookback=TRACE_SHORT_LOOKBACK
-        )
+        policy_traces = tracing.get_trace(service="kuadrant-operator", tags={"policy.name": authorization.name()})
+
+        # Filter for traces with new reconciliation (after update timestamp)
+        new_traces = []
+        for trace in policy_traces:
+            reconcile_spans = tracing.filter_spans(
+                trace.get("spans", []),
+                operation_name="controller.reconcile"
+            )
+            for span in reconcile_spans:
+                if span["startTime"] > latest_timestamp:
+                    new_traces.append(trace)
+                    break
+
+        return new_traces
 
     updated_traces = get_updated_traces()
 
@@ -495,12 +342,10 @@ def test_policy_update_generates_new_reconciliation_trace(authorization, tracing
     assert found_policy_reference, "Updated reconciliation traces should reference the policy"
 
 
-def _span_has_error_in_logs(span, tracing):
-    """Helper: Check if span logs contain error keywords."""
-    logs = span.get("logs", [])
+def _span_has_error_in_logs(span):
+    """Check if span logs contain error keywords."""
     error_keywords = ["error", "fail", "invalid", "warning"]
-
-    for log_entry in logs:
+    for log_entry in span.get("logs", []):
         for field in log_entry.get("fields", []):
             value = field.get("value", "").lower()
             if any(keyword in value for keyword in error_keywords):
@@ -509,7 +354,7 @@ def _span_has_error_in_logs(span, tracing):
 
 
 def _extract_validation_and_errors(policy_traces, tracing):
-    """Helper: Extract validation spans and check for error indicators from traces."""
+    """Extract validation spans and check for error indicators."""
     validation_spans = []
     error_found = False
 
@@ -517,13 +362,11 @@ def _extract_validation_and_errors(policy_traces, tracing):
         for span in trace.get("spans", []):
             op_name = span["operationName"]
 
-            # Collect validation spans
             if "validate" in op_name.lower() or "validation" in op_name.lower():
                 validation_spans.append(span)
 
-            # Check for error indicators
             tags = tracing.get_tags_dict(span)
-            if tags.get("otel.status_code") == "ERROR" or _span_has_error_in_logs(span, tracing):
+            if tags.get("otel.status_code") == "ERROR" or _span_has_error_in_logs(span):
                 error_found = True
 
     return validation_spans, error_found
@@ -562,7 +405,7 @@ def test_invalid_policy_validation_failure_traced(
         invalid_policy.wait_for_ready()
 
         # Wait for reconciliation traces (even for invalid policy)
-        policy_traces = wait_for_policy_traces(tracing, invalid_policy_name, lookback=TRACE_SHORT_LOOKBACK)
+        policy_traces = tracing.get_trace(service="kuadrant-operator", tags={"policy.name": invalid_policy_name})
         assert len(policy_traces) > 0, "No traces found for invalid policy"
 
         # Extract validation spans and check for errors
@@ -625,9 +468,11 @@ def test_policy_deletion_generates_cleanup_traces(blame, cluster, gateway, modul
     # Wait for deletion/finalization traces
     # Note: After deletion, the policy name might not appear in traces anymore.
     # Instead, look for reconciliation events that happened after deletion.
-    @backoff.on_predicate(backoff.fibo, lambda x: len(x) == 0, max_tries=TRACE_MAX_RETRIES, jitter=None)
+    @backoff.on_predicate(backoff.fibo, lambda x: len(x) == 0, max_tries=7, jitter=None)
     def get_deletion_traces():
-        all_traces = get_operator_traces(tracing, lookback=TRACE_SHORT_LOOKBACK)
+        all_traces = tracing.query.api.traces.get(
+            params={"service": "kuadrant-operator", "lookback": "10m", "limit": 50}
+        ).json()["data"]
         recent_traces = []
         for trace in all_traces:
             for span in trace.get("spans", []):
@@ -672,7 +517,7 @@ def test_reconciliation_duration_captured_in_spans(authorization, tracing):
     - Duration of WASM config generation is traceable
     - Can identify slow reconciliation steps
     """
-    auth_traces = wait_for_policy_traces(tracing, authorization.name())
+    auth_traces = tracing.get_trace(service="kuadrant-operator", tags={"policy.name": authorization.name()})
     assert len(auth_traces) > 0
 
     # Find controller.reconcile spans and validate they have duration
@@ -728,8 +573,8 @@ def test_multiple_policies_same_target_traced_separately(
         second_policy.wait_for_ready()
 
         # Wait for traces for both policies
-        first_traces = wait_for_policy_traces(tracing, authorization.name())
-        second_traces = wait_for_policy_traces(tracing, second_policy_name)
+        first_traces = tracing.get_trace(service="kuadrant-operator", tags={"policy.name": authorization.name()})
+        second_traces = tracing.get_trace(service="kuadrant-operator", tags={"policy.name": second_policy_name})
 
         assert len(first_traces) > 0, f"No traces for first policy {authorization.name()}"
         assert len(second_traces) > 0, f"No traces for second policy {second_policy_name}"
@@ -774,8 +619,8 @@ def test_wasm_plugin_configuration_details_in_traces(authorization, rate_limit, 
     - Can identify which policy triggered plugin update
     """
     # Wait for traces for both policies
-    auth_traces = wait_for_policy_traces(tracing, authorization.name())
-    rl_traces = wait_for_policy_traces(tracing, rate_limit.name())
+    auth_traces = tracing.get_trace(service="kuadrant-operator", tags={"policy.name": authorization.name()})
+    rl_traces = tracing.get_trace(service="kuadrant-operator", tags={"policy.name": rate_limit.name()})
 
     all_traces = auth_traces + rl_traces
 
@@ -823,7 +668,7 @@ def test_policy_target_change_traced(blame, cluster, gateway, route, module_labe
 
     try:
         # Get current traces count
-        initial_traces = wait_for_policy_traces(tracing, policy_name)
+        initial_traces = tracing.get_trace(service="kuadrant-operator", tags={"policy.name": policy_name})
         initial_count = len(initial_traces)
 
         # Update the policy to target the new route
@@ -836,10 +681,10 @@ def test_policy_target_change_traced(blame, cluster, gateway, route, module_labe
 
         # Wait for new reconciliation traces after target change
         @backoff.on_predicate(
-            backoff.fibo, lambda x: len(x) <= initial_count, max_tries=TRACE_MAX_RETRIES, jitter=None
+            backoff.fibo, lambda x: len(x) <= initial_count, max_tries=7, jitter=None
         )
         def get_updated_traces():
-            return wait_for_policy_traces(tracing, policy_name, lookback=TRACE_SHORT_LOOKBACK)
+            return tracing.get_trace(service="kuadrant-operator", tags={"policy.name": policy_name})
 
         updated_traces = get_updated_traces()
         assert len(updated_traces) > initial_count, "No new traces generated after target change"
@@ -894,7 +739,7 @@ def test_orphaned_policy_reconciliation_traced(blame, cluster, gateway, module_l
         time.sleep(5)
 
         # Look for traces with error indicators or warnings
-        policy_traces = wait_for_policy_traces(tracing, orphan_policy_name, lookback=TRACE_SHORT_LOOKBACK)
+        policy_traces = tracing.get_trace(service="kuadrant-operator", tags={"policy.name": orphan_policy_name})
 
         # Check if any spans indicate problems (error status or error logs)
         has_error_indicator = False
@@ -906,7 +751,7 @@ def test_orphaned_policy_reconciliation_traced(blame, cluster, gateway, module_l
                     break
 
                 # Check logs for error keywords
-                if _span_has_error_in_logs(span, tracing):
+                if _span_has_error_in_logs(span):
                     has_error_indicator = True
                     break
 
@@ -930,7 +775,7 @@ def test_span_attributes_follow_otel_semantic_conventions(authorization, rate_li
     - Error spans use otel.status_code correctly
     - Tags use consistent naming patterns
     """
-    auth_traces = wait_for_policy_traces(tracing, authorization.name())
+    auth_traces = tracing.get_trace(service="kuadrant-operator", tags={"policy.name": authorization.name()})
     assert len(auth_traces) > 0
 
     # Collect all span operation names
