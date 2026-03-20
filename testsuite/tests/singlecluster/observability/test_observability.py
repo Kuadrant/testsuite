@@ -37,7 +37,7 @@ POD_MONITOR_METRICS = [
 def test_service_monitor_metrics_per_service(metric, service_monitor_metrics_by_service):
     """Tests that all expected metrics appear in the data collected from each ServiceMonitor"""
     for service_name, metrics in service_monitor_metrics_by_service.items():
-        assert metric in metrics, f"Expected metric '{metric}' in '{service_name}'. Metrics found: {metrics}"
+        assert metric in metrics, f"Expected metric '{metric}' not found in '{service_name}'. Metrics found: {metrics}"
 
 
 @pytest.mark.parametrize("metric", POD_MONITOR_METRICS)

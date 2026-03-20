@@ -4,6 +4,7 @@ import backoff
 import pytest
 from openshift_client import selector
 
+from testsuite.config import settings
 from testsuite.kubernetes.monitoring.pod_monitor import PodMonitor
 from testsuite.kubernetes.monitoring.service_monitor import ServiceMonitor
 
@@ -93,3 +94,11 @@ def pod_monitor_metrics(client, pod_monitor, prometheus):
 
     metrics = prometheus.get_metrics(labels={"job": f"{pod_monitor.namespace()}/{pod_monitor.name()}"})
     return metrics
+
+
+@pytest.fixture(scope="module")
+def kuadrant_operator_metrics(prometheus):
+    """Return all metrics from the Kuadrant operator metrics endpoint"""
+    return prometheus.get_metrics(
+        labels={"service": "kuadrant-operator-metrics", "namespace": settings["service_protection"]["system_project"]}
+    )
