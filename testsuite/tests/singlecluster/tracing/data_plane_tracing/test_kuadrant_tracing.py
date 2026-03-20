@@ -171,9 +171,10 @@ def assert_parent_child(trace, parent_op, child_op):
     """Assert that child_op span is a direct child of parent_op span."""
     parent_span = trace.filter_spans(operation_name=parent_op)[0]
     child_span = trace.filter_spans(operation_name=child_op)[0]
+    parent_id = child_span.get_parent_id()
     assert (
-        child_span.parent_span_id == parent_span.span_id
-    ), f"Expected '{child_op}' to be a child of '{parent_op}', but got parent {child_span.parent_span_id}"
+        parent_id == parent_span.span_id
+    ), f"Expected '{child_op}' to be a child of '{parent_op}', but got parent {parent_id}"
 
 
 def test_span_hierarchy(trace_200):
