@@ -93,16 +93,10 @@ def test_trace_includes_all_kuadrant_services(trace, tracing, label):
     - limitador: Rate limiting service
     - gateway: Istio/Envoy gateway service
     """
-
-    @backoff.on_predicate(backoff.fibo, lambda x: len(x) == 0 or len(x[0]["processes"]) < 4, max_tries=5, jitter=None)
-    def get_full_trace():
-        return tracing.get_trace(service="wasm-shim", request_id=trace[200], tag_name="request_id")
-
-    traces = get_full_trace()
+    traces = tracing.get_traces(service="wasm-shim", min_processes=4, tags={"request_id": trace[200]})
     assert len(traces) == 1, f"No trace was found in tracing backend with request_id: {trace[200]}"
 
-    processes = traces[0]["processes"]
-    process_services = {process["serviceName"] for process in processes.values()}
+    process_services = traces[0].get_process_services()
 
     services = ["wasm-shim", "authorino", "limitador", f"{label}.kuadrant"]
     for service in services:
@@ -129,17 +123,14 @@ def test_spans_have_correct_policy_source_references(trace, tracing, operation_n
     - auth spans → AuthPolicy source reference
     - ratelimit spans → RateLimitPolicy source reference
     """
-    policy_spans = tracing.get_spans_by_operation(
-        request_id=trace[200], service="wasm-shim", operation_name=operation_name, tag_name="request_id"
-    )
-    assert len(policy_spans) > 0, f"No {operation_name} span found in trace"
+    traces = tracing.get_traces(service="wasm-shim", tags={"request_id": trace[200]})
+    assert len(traces) > 0, f"No trace found with request_id: {trace[200]}"
 
-    span = policy_spans[0]
-    tags = tracing.get_tags_dict(span)
-    sources_value = tags["sources"].strip('[]"')
     policy_obj = request.getfixturevalue(policy)
     expected_sources = f"{policy_kind}.kuadrant.io:kuadrant/{policy_obj.model.metadata['name']}"
-    assert sources_value == expected_sources, f"Expected sources to be '{expected_sources}' but got '{sources_value}'"
+
+    policy_spans = traces[0].filter_spans(operation_name=operation_name, tags={"sources": expected_sources})
+    assert len(policy_spans) > 0, f"No {operation_name} span with sources '{expected_sources}' found in trace"
 
 
 @pytest.mark.parametrize("expected_status_code", [429, 401])
@@ -156,13 +147,8 @@ def test_send_reply_span_on_request_rejection(trace, tracing, expected_status_co
     - 429 rate_limit: Request exceeds rate limit (after 3 successful requests)
     - 401 auth_failure: Request without valid authentication
     """
-    send_reply_spans = tracing.get_spans_by_operation(
-        request_id=trace[expected_status_code], service="wasm-shim", operation_name="send_reply", tag_name="request_id"
-    )
-    assert len(send_reply_spans) > 0
+    traces = tracing.get_traces(service="wasm-shim", tags={"request_id": trace[expected_status_code]})
+    assert len(traces) > 0, f"No trace found with request_id: {trace[expected_status_code]}"
 
-    span = send_reply_spans[0]
-    tags = tracing.get_tags_dict(span)
-    assert str(tags["status_code"]) == str(
-        expected_status_code
-    ), f"Expected status_code {expected_status_code} in send_reply span, got {tags['status_code']}"
+    send_reply_spans = traces[0].filter_spans(operation_name="send_reply", tags={"status_code": expected_status_code})
+    assert len(send_reply_spans) > 0, f"No send_reply span with status_code {expected_status_code} found in trace"

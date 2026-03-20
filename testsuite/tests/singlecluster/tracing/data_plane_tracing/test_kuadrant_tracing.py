@@ -42,7 +42,7 @@ def trace_request_ids(client, auth):
 def trace_200(trace_request_ids, tracing):
     """Fetches and caches the full wasm-shim trace for the 200 response."""
     request_id = trace_request_ids[0]
-    traces = tracing.get_trace(service="wasm-shim", min_processes=4, tags={"request_id": request_id})
+    traces = tracing.get_traces(service="wasm-shim", min_processes=4, tags={"request_id": request_id})
     assert len(traces) == 1, f"No trace was found in tracing backend with request_id: {request_id}"
     return traces[0]
 
@@ -51,7 +51,7 @@ def trace_200(trace_request_ids, tracing):
 def trace_429(trace_request_ids, tracing):
     """Fetches and caches the full wasm-shim trace for the 429 response."""
     request_id = trace_request_ids[1]
-    traces = tracing.get_trace(service="wasm-shim", min_processes=4, tags={"request_id": request_id})
+    traces = tracing.get_traces(service="wasm-shim", min_processes=4, tags={"request_id": request_id})
     assert len(traces) == 1, f"No trace was found in tracing backend with request_id: {request_id}"
     return traces[0]
 
@@ -64,7 +64,7 @@ def trace_401(client, tracing):
     assert response_401.status_code == 401
 
     request_id = response_401.headers.get("x-request-id")
-    traces = tracing.get_trace(service="wasm-shim", min_processes=3, tags={"request_id": request_id})
+    traces = tracing.get_traces(service="wasm-shim", min_processes=3, tags={"request_id": request_id})
     assert len(traces) == 1, f"No trace was found in tracing backend with request_id: {request_id}"
     return traces[0]
 
@@ -81,8 +81,7 @@ def test_trace_includes_all_kuadrant_services(trace_200, label):
     - gateway: Istio/Envoy gateway service
     """
 
-    processes = trace_200["processes"]
-    process_services = {process["serviceName"] for process in processes.values()}
+    process_services = trace_200.get_process_services()
 
     services = ["wasm-shim", "authorino", "limitador", f"{label}.kuadrant"]
     for service in services:
@@ -98,8 +97,7 @@ def test_relevant_services_on_auth_denied(trace_401, label):
     Note: gateway service is not included since the request was sent without traceparent header.
     """
 
-    processes = trace_401["processes"]
-    process_services = {process["serviceName"] for process in processes.values()}
+    process_services = trace_401.get_process_services()
 
     services = ["wasm-shim", "authorino", f"{label}.kuadrant"]
     for service in services:
@@ -132,9 +130,7 @@ def test_spans_have_correct_policy_source_references(trace_200, tracing, operati
     """
     policy_obj = request.getfixturevalue(policy)
     expected_sources = f"{policy_kind}.kuadrant.io:kuadrant/{policy_obj.model.metadata['name']}"
-    policy_spans = tracing.filter_spans(
-        trace_200["spans"], operation_name=operation_name, tags={"sources": expected_sources}
-    )
+    policy_spans = trace_200.filter_spans(operation_name=operation_name, tags={"sources": expected_sources})
     assert len(policy_spans) > 0, f"No {operation_name} span with sources '{expected_sources}' found in trace"
 
 
@@ -153,13 +149,11 @@ def test_send_reply_span_on_request_rejection(tracing, expected_status_code, tra
     - 401 auth_failure: Request without valid authentication
     """
     trace = request.getfixturevalue(trace_fixture)
-    send_reply_spans = tracing.filter_spans(
-        trace["spans"], operation_name="send_reply", tags={"status_code": expected_status_code}
-    )
+    send_reply_spans = trace.filter_spans(operation_name="send_reply", tags={"status_code": expected_status_code})
     assert len(send_reply_spans) > 0, f"No send_reply span with status_code {expected_status_code} found in trace"
 
 
-def test_send_reply_span_not_on_successful_response(trace_200, tracing):
+def test_send_reply_span_not_on_successful_response(trace_200):
     """
     Test that send_reply span is not present for successful (200) responses.
 
@@ -167,29 +161,28 @@ def test_send_reply_span_not_on_successful_response(trace_200, tracing):
     (e.g., 401 or 429). For successful responses that pass through all policies,
     no send_reply span should be emitted.
     """
-    send_reply_spans = tracing.filter_spans(trace_200["spans"], operation_name="send_reply")
+    send_reply_spans = trace_200.filter_spans(operation_name="send_reply")
     assert (
         len(send_reply_spans) == 0
     ), f"Expected no send_reply spans for successful response, but found {len(send_reply_spans)}"
 
 
-def assert_parent_child(tracing, spans, parent_op, child_op):
+def assert_parent_child(trace, parent_op, child_op):
     """Assert that child_op span is a direct child of parent_op span."""
-    parent_span = tracing.filter_spans(spans, operation_name=parent_op)[0]
-    child_span = tracing.filter_spans(spans, operation_name=child_op)[0]
-    actual_parent_id = tracing.get_parent_id(child_span)
+    parent_span = trace.filter_spans(operation_name=parent_op)[0]
+    child_span = trace.filter_spans(operation_name=child_op)[0]
     assert (
-        actual_parent_id == parent_span["spanID"]
-    ), f"Expected '{child_op}' to be a child of '{parent_op}', but got parent {actual_parent_id}"
+        child_span.parent_span_id == parent_span.span_id
+    ), f"Expected '{child_op}' to be a child of '{parent_op}', but got parent {child_span.parent_span_id}"
 
 
-def test_span_hierarchy(trace_200, tracing):
+def test_span_hierarchy(trace_200):
     """
     Test that spans in a successful (200) trace form the expected parent-child hierarchy.
     Validates parent-child relationships between spans across wasm-shim, authorino, and limitador.
     """
 
-    spans = trace_200["spans"]
+    spans = trace_200.spans
     assert len(spans) > 0, "No spans found in trace"
 
     expected_operations_hierarchy = {
@@ -203,11 +196,11 @@ def test_span_hierarchy(trace_200, tracing):
     }
 
     for parent_op, child_ops in expected_operations_hierarchy.items():
-        assert tracing.filter_spans(
-            spans, operation_name=parent_op
+        assert trace_200.filter_spans(
+            operation_name=parent_op
         ), f"Expected operation '{parent_op}' not found in trace spans"
         for child_op in child_ops:
-            assert tracing.filter_spans(
-                spans, operation_name=child_op
+            assert trace_200.filter_spans(
+                operation_name=child_op
             ), f"Expected operation '{child_op}' not found in trace spans"
-            assert_parent_child(tracing, spans, parent_op, child_op)
+            assert_parent_child(trace_200, parent_op, child_op)

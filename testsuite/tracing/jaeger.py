@@ -7,6 +7,7 @@ from apyproxy import ApyProxy
 from httpx import Client
 
 from testsuite.tracing import TracingClient
+from testsuite.tracing.models import Trace, Span
 
 
 class JaegerClient(TracingClient):
@@ -31,67 +32,89 @@ class JaegerClient(TracingClient):
         return self._query_url
 
     @backoff.on_predicate(backoff.fibo, lambda x: x == [], max_tries=7, jitter=None)
-    def get_trace(self, service: str, tags: dict, min_processes: int = 0):
+    def get_traces(self, service: str, tags: dict, min_processes: int = 0) -> list[Trace]:
         """Gets trace from tracing backend Tempo or Jaeger.
-        If min_processes is set, retries until at least that many service processes are present."""
-        params = {"service": service, "tags": json.dumps(tags)}
-        traces = self.query.api.traces.get(params=params).json()["data"]
-        if not traces or (min_processes and len(traces[0]["processes"]) < min_processes):
-            return []
-        return traces
-
-    @staticmethod
-    def filter_spans(spans, operation_name=None, tags=None):
-        """Filters spans by operation name and/or tag values.
-        Tag matching checks if the expected value is contained in the span's tag value."""
-        result = spans
-        if operation_name:
-            result = [span for span in result if span.get("operationName") == operation_name]
-        if tags:
-            for key, expected_value in tags.items():
-                result = [
-                    span
-                    for span in result
-                    if any(str(expected_value) in str(t["value"]) for t in span.get("tags", []) if t["key"] == key)
-                ]
-        return result
-
-    @staticmethod
-    def get_tags_dict(span):
-        """Converts span tags list to dictionary for easier access."""
-        return {tag["key"]: tag["value"] for tag in span.get("tags", [])}
-
-    @staticmethod
-    def get_parent_id(span):
-        """Extracts parent span ID from the CHILD_OF reference. Returns None if no parent."""
-        for ref in span.get("references", []):
-            if ref["refType"] == "CHILD_OF":
-                return ref["spanID"]
-        return None
-
-    def get_spans_by_operation(self, request_id, service, operation_name, tag_name="request_id"):
-        """
-        Get spans from a trace by request ID, filtered by service and operation name.
-
-        Args:
-            request_id: The request ID to search for
-            service: Service name to filter traces by
-            operation_name: Operation name to filter spans by
-            tag_name: Tag name containing the request ID (default: "request_id")
+        If min_processes is set, retries until at least that many service processes are present.
 
         Returns:
-            List of spans matching the criteria
+            List of Trace objects
         """
-        # Get trace by request_id tag
-        traces = self.get_trace(service=service, tags={tag_name: request_id})
-        if not traces:
+        params = {"service": service, "tags": json.dumps(tags)}
+        traces_data = self.query.api.traces.get(params=params).json()["data"]
+        if not traces_data or (min_processes and len(traces_data[0]["processes"]) < min_processes):
             return []
 
-        # Extract all spans from the trace(s) and filter by operation name
-        matching_spans = []
-        for trace in traces:
-            for span in trace.get("spans", []):
-                if span.get("operationName") == operation_name:
-                    matching_spans.append(span)
+        # Convert to Trace objects
+        return [Trace.from_dict(trace_data) for trace_data in traces_data]
 
-        return matching_spans
+    # @staticmethod
+    # def filter_spans(spans, operation_name=None, tags=None):
+    #     """Filters spans by operation name and/or tag values.
+    #     Tag matching checks if the expected value is contained in the span's tag value.
+    #
+    #     Works with both Span objects and raw dicts for backward compatibility.
+    #     """
+    #     result = spans
+    #     if operation_name:
+    #         result = [
+    #             span for span in result
+    #             if (span.operation_name if isinstance(span, Span) else span.get("operationName")) == operation_name
+    #         ]
+    #     if tags:
+    #         for key, expected_value in tags.items():
+    #             if result and isinstance(result[0], Span):
+    #                 # Working with Span objects
+    #                 result = [span for span in result if span.has_tag(key, str(expected_value))]
+    #             else:
+    #                 # Working with raw dicts (backward compatibility)
+    #                 result = [
+    #                     span
+    #                     for span in result
+    #                     if any(str(expected_value) in str(t["value"]) for t in span.get("tags", []) if t["key"] == key)
+    #                 ]
+    #     return result
+
+    # @staticmethod
+    # def get_tags_dict(span):
+    #     """Converts span tags to dictionary for easier access.
+    #     Works with both Span objects and raw dicts."""
+    #     if isinstance(span, Span):
+    #         return span.tags
+    #     return {tag["key"]: tag["value"] for tag in span.get("tags", [])}
+    #
+    # @staticmethod
+    # def get_parent_id(span):
+    #     """Extracts parent span ID from the CHILD_OF reference.
+    #     Works with both Span objects and raw dicts."""
+    #     if isinstance(span, Span):
+    #         return span.get_parent_id()
+    #
+    #     for ref in span.get("references", []):
+    #         if ref["refType"] == "CHILD_OF":
+    #             return ref["spanID"]
+    #     return None
+    #
+    # def get_spans_by_operation(self, request_id, service, operation_name, tag_name="request_id"):
+    #     """
+    #     Get spans from a trace by request ID, filtered by service and operation name.
+    #
+    #     Args:
+    #         request_id: The request ID to search for
+    #         service: Service name to filter traces by
+    #         operation_name: Operation name to filter spans by
+    #         tag_name: Tag name containing the request ID (default: "request_id")
+    #
+    #     Returns:
+    #         List of Span objects matching the criteria
+    #     """
+    #     # Get trace by request_id tag
+    #     traces = self.get_trace(service=service, tags={tag_name: request_id})
+    #     if not traces:
+    #         return []
+    #
+    #     # Extract all spans from the trace(s) and filter by operation name
+    #     matching_spans = []
+    #     for trace in traces:
+    #         matching_spans.extend(trace.filter_spans(operation_name=operation_name))
+    #
+    #     return matching_spans
