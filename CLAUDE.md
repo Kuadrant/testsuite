@@ -15,6 +15,26 @@ make poetry
 
 # Install dependencies without dev tools (used in CI/container)
 make poetry-no-dev
+
+# Complete local setup (creates kind cluster + installs all components)
+make local-setup                                                       # Default: components mode (latest from GitHub)
+
+# Use Helm instead of components mode
+KUADRANT_DEPLOY_MODE=helm make local-setup
+
+# Enable Prometheus CRDs for observability testing (ServiceMonitor, PodMonitor)
+INSTALL_PROMETHEUS=true make local-setup
+
+# Apply additional manifests during setup (e.g., DNS credentials, secrets)
+ADDITIONAL_MANIFESTS=./my-secrets.yaml make local-setup
+
+# Deploy specific versions
+AUTHORINO_OPERATOR_VERSION=v0.13.0 \
+  LIMITADOR_OPERATOR_VERSION=v1.5.0 \
+  DNS_OPERATOR_VERSION=v0.8.0 \
+  make local-setup                                                     # Components: specific versions
+KUADRANT_DEPLOY_MODE=helm KUADRANT_OPERATOR_VERSION=v0.10.0 \
+  make local-setup                                                     # Helm: specific version
 ```
 
 ### Running Tests

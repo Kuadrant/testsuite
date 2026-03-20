@@ -32,6 +32,56 @@ make poetry
 > - [Kuadrant Helm Charts](https://github.com/Kuadrant/helm-charts) for any Kubernetes cluster
 > - [Deploying Kuadrant via OLM](https://github.com/Kuadrant/helm-charts-olm/blob/main/README.md) for OpenShift (recommended as it also deploys testing tools)
 
+## Local Kind Cluster Setup
+
+For local development and testing, you can set up a complete Kuadrant environment using Kind (Kubernetes in Docker).
+
+### Prerequisites
+* [Kind](https://kind.sigs.k8s.io/docs/user/quick-start/#installation)
+* [Helm](https://helm.sh/docs/intro/install/)
+* [jq](https://jqlang.github.io/jq/download/) (JSON processor)
+
+> **⚠️ macOS Limitation:**
+> MetalLB LoadBalancer services have limited functionality on macOS due to Docker Desktop's VM isolation. While MetalLB will work inside the cluster, LoadBalancer IPs won't be accessible from your Mac host machine. **For macOS users, we recommend running tests in containers** (see [From a Container](#from-a-container) section above) in addition to the local Kind setup.
+
+### Quick Start
+
+Set up a complete local environment with one command:
+
+```bash
+# Run the setup (defaults to Istio gateway)
+make local-setup
+
+# Optional: Apply additional manifests (e.g., DNS provider credentials, secrets, etc.)
+ADDITIONAL_MANIFESTS=./my-secrets.yaml make local-setup
+
+# Optional: Install Prometheus CRDs for observability testing
+INSTALL_PROMETHEUS=true make local-setup
+
+# Or specify EnvoyGateway
+GATEWAYAPI_PROVIDER=envoygateway make local-setup
+
+# Combine options
+GATEWAYAPI_PROVIDER=envoygateway INSTALL_PROMETHEUS=true ADDITIONAL_MANIFESTS=./secrets.yaml make local-setup
+```
+
+This will:
+1. Create a Kind cluster named `kuadrant-local`
+2. Install metrics-server and MetalLB (LoadBalancer support)
+3. Install Gateway API CRDs
+4. Install cert-manager and create a self-signed ClusterIssuer
+5. Install Prometheus CRDs (only if `INSTALL_PROMETHEUS=true`) - ServiceMonitor, PodMonitor, etc.
+6. Install Istio or EnvoyGateway (based on `GATEWAYAPI_PROVIDER`)
+7. Create test namespaces (`kuadrant`, `kuadrant2`)
+8. Apply additional manifests (only if `ADDITIONAL_MANIFESTS` is provided)
+9. Deploy Kuadrant Operator and Kuadrant CR
+10. Deploy testing tools - Keycloak, Mockserver, etc.
+
+**Cleanup:**
+```bash
+make local-cleanup  # Delete the Kind cluster
+```
+
 ## Configuration
 
 The Kuadrant testsuite uses [Dynaconf](https://www.dynaconf.com/) for configuration.
@@ -80,19 +130,38 @@ helm install --values values-tools.yaml --wait --timeout 10m -g charts/tools-ins
 <details>
 <summary><b>DNS Provider Secret example (click to expand)</b></summary>
 
+Save this as a file (e.g., `additionalManifests.yaml`) and provide it via `ADDITIONAL_MANIFESTS`:
+```bash
+ADDITIONAL_MANIFESTS=./additionalManifests.yaml make local-setup
+```
+
 ```yaml
-kind: Secret
 apiVersion: v1
+kind: Secret
 metadata:
   name: aws-credentials
   namespace: kuadrant
   annotations:
     base_domain: example.com
-data:
-  AWS_ACCESS_KEY_ID: <key>
-  AWS_REGION: <region>
-  AWS_SECRET_ACCESS_KEY: <key>
+stringData:
+  AWS_ACCESS_KEY_ID: <your-key>
+  AWS_REGION: <your-region>
+  AWS_SECRET_ACCESS_KEY: <your-secret>
 type: kuadrant.io/aws
+---
+# You can include multiple resources in the same file
+# For example, GCP credentials:
+apiVersion: v1
+kind: Secret
+metadata:
+  name: gcp-credentials
+  namespace: kuadrant
+  annotations:
+    base_domain: example.com
+stringData:
+  PROJECT_ID: <your-project-id>
+  GOOGLE: <base64-encoded-service-account-json>
+type: kuadrant.io/gcp
 ```
 </details>
 
