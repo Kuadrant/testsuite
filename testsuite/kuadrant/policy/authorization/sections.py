@@ -14,6 +14,7 @@ from testsuite.kuadrant.policy.authorization import (
     DenyResponse,
     Cache,
     ResourceAttributes,
+    X509Source,
 )
 from testsuite.oidc.keycloak import Keycloak
 from testsuite.utils import asdict
@@ -108,13 +109,17 @@ class IdentitySection(Section):
         super().add_item(name, value, **common_features)
 
     @modify
-    def add_mtls(self, name: str, selector: Selector, **common_features):
+    def add_mtls(self, name: str, selector: Selector, *, source: X509Source = None, **common_features):
         """Adds mTLS identity
         Args:
             :param name: name of the identity
             :param selector: selector to match
+            :param source: optional source for client certificate extraction (XFCC, RFC 9440, or CEL expression)
         """
-        self.add_item(name, {"x509": {"selector": asdict(selector)}, **common_features})
+        x509 = {"selector": asdict(selector)}
+        if source:
+            x509["source"] = asdict(source)
+        self.add_item(name, {"x509": x509, **common_features})
 
     @modify
     def add_kubernetes(self, name: str, audiences: list[str] = None, **common_features):
