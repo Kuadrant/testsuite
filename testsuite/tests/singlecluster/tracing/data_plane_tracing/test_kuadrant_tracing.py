@@ -130,7 +130,9 @@ def test_spans_have_correct_policy_source_references(trace_200, tracing, operati
     """
     policy_obj = request.getfixturevalue(policy)
     expected_sources = f"{policy_kind}.kuadrant.io:kuadrant/{policy_obj.model.metadata['name']}"
-    policy_spans = trace_200.filter_spans(operation_name=operation_name, tags={"sources": expected_sources})
+    policy_spans = trace_200.filter_spans(
+        lambda s: s.operation_name == operation_name and s.has_tag("sources", expected_sources)
+    )
     assert len(policy_spans) > 0, f"No {operation_name} span with sources '{expected_sources}' found in trace"
 
 
@@ -149,7 +151,9 @@ def test_send_reply_span_on_request_rejection(tracing, expected_status_code, tra
     - 401 auth_failure: Request without valid authentication
     """
     trace = request.getfixturevalue(trace_fixture)
-    send_reply_spans = trace.filter_spans(operation_name="send_reply", tags={"status_code": expected_status_code})
+    send_reply_spans = trace.filter_spans(
+        lambda s: s.operation_name == "send_reply" and s.has_tag("status_code", expected_status_code)
+    )
     assert len(send_reply_spans) > 0, f"No send_reply span with status_code {expected_status_code} found in trace"
 
 
@@ -161,7 +165,7 @@ def test_send_reply_span_not_on_successful_response(trace_200):
     (e.g., 401 or 429). For successful responses that pass through all policies,
     no send_reply span should be emitted.
     """
-    send_reply_spans = trace_200.filter_spans(operation_name="send_reply")
+    send_reply_spans = trace_200.filter_spans(lambda s: s.operation_name == "send_reply")
     assert (
         len(send_reply_spans) == 0
     ), f"Expected no send_reply spans for successful response, but found {len(send_reply_spans)}"
@@ -169,8 +173,8 @@ def test_send_reply_span_not_on_successful_response(trace_200):
 
 def assert_parent_child(trace, parent_op, child_op):
     """Assert that child_op span is a direct child of parent_op span."""
-    parent_span = trace.filter_spans(operation_name=parent_op)[0]
-    child_span = trace.filter_spans(operation_name=child_op)[0]
+    parent_span = trace.filter_spans(lambda s: s.operation_name == parent_op)[0]
+    child_span = trace.filter_spans(lambda s: s.operation_name == child_op)[0]
     parent_id = child_span.get_parent_id()
     assert (
         parent_id == parent_span.span_id
@@ -198,10 +202,10 @@ def test_span_hierarchy(trace_200):
 
     for parent_op, child_ops in expected_operations_hierarchy.items():
         assert trace_200.filter_spans(
-            operation_name=parent_op
+            lambda s: s.operation_name == parent_op
         ), f"Expected operation '{parent_op}' not found in trace spans"
         for child_op in child_ops:
             assert trace_200.filter_spans(
-                operation_name=child_op
+                lambda s: s.operation_name == child_op
             ), f"Expected operation '{child_op}' not found in trace spans"
             assert_parent_child(trace_200, parent_op, child_op)

@@ -129,7 +129,9 @@ def test_spans_have_correct_policy_source_references(trace, tracing, operation_n
     policy_obj = request.getfixturevalue(policy)
     expected_sources = f"{policy_kind}.kuadrant.io:kuadrant/{policy_obj.model.metadata['name']}"
 
-    policy_spans = traces[0].filter_spans(operation_name=operation_name, tags={"sources": expected_sources})
+    policy_spans = traces[0].filter_spans(
+        lambda s: s.operation_name == operation_name and s.has_tag("sources", expected_sources)
+    )
     assert len(policy_spans) > 0, f"No {operation_name} span with sources '{expected_sources}' found in trace"
 
 
@@ -150,5 +152,7 @@ def test_send_reply_span_on_request_rejection(trace, tracing, expected_status_co
     traces = tracing.get_traces(service="wasm-shim", tags={"request_id": trace[expected_status_code]})
     assert len(traces) > 0, f"No trace found with request_id: {trace[expected_status_code]}"
 
-    send_reply_spans = traces[0].filter_spans(operation_name="send_reply", tags={"status_code": expected_status_code})
+    send_reply_spans = traces[0].filter_spans(
+        lambda s: s.operation_name == "send_reply" and s.has_tag("status_code", expected_status_code)
+    )
     assert len(send_reply_spans) > 0, f"No send_reply span with status_code {expected_status_code} found in trace"

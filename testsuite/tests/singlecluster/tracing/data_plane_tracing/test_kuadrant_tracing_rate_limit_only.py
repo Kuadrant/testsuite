@@ -50,7 +50,6 @@ def test_relevant_services_rate_limit_only(trace_429, label):
     """
 
     process_services = trace_429.get_process_services()
-
     services = ["wasm-shim", "limitador", f"{label}.kuadrant"]
     for service in services:
         assert service in process_services, f"Service '{service}' not found in trace processes: {process_services}"
