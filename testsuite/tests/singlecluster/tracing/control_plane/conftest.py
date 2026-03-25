@@ -10,7 +10,6 @@ from testsuite.tracing.models import Trace, Span
 # Minimum span duration in microseconds to indicate actual work performed
 MIN_MEANINGFUL_DURATION_US = 50
 
-
 @pytest.fixture(scope="module", autouse=True)
 def require_tracing_enabled(cluster, skip_or_fail):
     """Skip or fail tests if control plane tracing is not enabled on kuadrant-operator"""
