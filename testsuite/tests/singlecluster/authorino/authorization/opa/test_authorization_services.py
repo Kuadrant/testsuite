@@ -68,7 +68,7 @@ pat := http.send({{"url": "{owner_uma.uma_well_known["token_endpoint"]}",\
 &client_secret={owner_uma.connection.client_secret_key}"}}).body.access_token
 
 resource_id := http.send({{"url":concat("",["{owner_uma.uma_well_known["resource_registration_endpoint"]}?uri=",\
-input.context.request.http.path]),"method":"get", "headers":{{"Authorization":concat(" ",["Bearer ",pat])}}}}).body[0]
+input.context.request.http.path]),"method":"get", "headers":{{"Authorization":concat("",["Bearer ",pat])}}}}).body[0]
 
 scope := lower(input.context.request.http.method)
 access_token := trim_prefix(input.context.request.http.headers.authorization, "Bearer ")
@@ -77,12 +77,12 @@ rpt = access_token {{ object.get(input.auth.identity, "authorization", {{}}).per
 else = rpt_str {{
 
   ticket := http.send({{"url":"{owner_uma.uma_well_known["permission_endpoint"]}",\
-"method":"post","headers":{{"Authorization":concat(" ",["Bearer ",pat]),"Content-Type":"application/json"}},\
+"method":"post","headers":{{"Authorization":concat("",["Bearer ",pat]),"Content-Type":"application/json"}},\
 "raw_body":concat("",["[{{\\"resource_id\\":\\"",resource_id,"\\",\\"resource_scopes\\":[\\"",scope,"\\"]}}]"\
 ])}}).body.ticket
 
   rpt_str := object.get(http.send({{"url":"{owner_uma.uma_well_known["token_endpoint"]}",\
-"method":"post","headers":{{"Authorization":concat(" ",\
+"method":"post","headers":{{"Authorization":concat("",\
 ["Bearer ",access_token]),"Content-Type":"application/x-www-form-urlencoded"}},"raw_body":concat("",\
 ["grant_type=urn:ietf:params:oauth:grant-type:uma-ticket&ticket=",ticket,"&submit_request=true"])}})\
 .body, "access_token", "")
