@@ -324,3 +324,28 @@ def cluster_issuer(testconfig):
 def dns_provider_secret(testconfig):
     """Contains name of DNS provider secret"""
     return testconfig["control_plane"]["provider_secret"]
+
+
+@pytest.fixture(scope="session")
+def openshift_version(cluster):
+    """Get OpenShift cluster version"""
+    result = cluster.do_action(
+        "get", "clusterversion", "version", "-o", "jsonpath={.status.desired.version}", auto_raise=False
+    )
+    if result.status() != 0:
+        return None
+    version_str = result.out().strip()
+    parts = version_str.split(".")
+    return tuple(int(p.split("-")[0]) for p in parts[:2])  # Convert "4.20.0" -> (4, 20)
+
+
+@pytest.fixture(autouse=True)
+def check_min_ocp_version(request, openshift_version):
+    """Skip tests marked with @pytest.mark.min_ocp_version if OCP version is below required"""
+    marker = request.node.get_closest_marker("min_ocp_version")
+    if marker:
+        required_version = marker.args[0]
+        if openshift_version is None:
+            pytest.skip("Could not detect OpenShift version")
+        if openshift_version < required_version:
+            pytest.skip(f"Requires OCP {'.'.join(map(str, required_version))}+")
