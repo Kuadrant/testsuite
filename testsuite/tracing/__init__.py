@@ -24,4 +24,4 @@ class TracingClient(abc.ABC):
     @abc.abstractmethod
     def get_traces(self, service: str, tags: dict, min_processes: int = 0) -> list:
         """Search traces in tracing client by service name and tags.
-        If min_processes is set, retries until at least that many service processes are present."""
+        If min_processes is set, retries until at least that many service processes are present"""
