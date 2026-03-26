@@ -115,7 +115,7 @@ def get_cluster_information() -> str:
     try:
         collector = ReportPortalMetadataCollector()
         collector.collect_all_clusters()
-        cluster_info = str(collector.all_cluster_metadata)
+        cluster_info = collector.format_cluster_info()
     except (OpenShiftPythonException, AttributeError, KeyError, ValidationError) as e:
         LOG.error("Component metadata collection failed: {e}")
         print(f"Warning: Component metadata collection failed: {e}")
