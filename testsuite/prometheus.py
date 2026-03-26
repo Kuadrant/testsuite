@@ -1,5 +1,6 @@
 """Simple client for the Prometheus metrics"""
 
+import operator
 from datetime import datetime, timezone
 from typing import Callable
 
@@ -106,6 +107,29 @@ class Prometheus:
             return False
 
         assert _wait_for_scrape(), "Scrape wasn't done in time"
+
+    def wait_for_metric(
+        self,
+        metric_name: str,
+        metric_value: float,
+        labels: dict[str, str] = None,
+        compare: Callable[[float, float], bool] = operator.eq,
+    ) -> bool:
+        """Wait for a metric to reach the expected value by polling with retries.
+        Treats missing metrics as value 0.
+        Supports any comparison via operator module (e.g. operator.eq, operator.ge, operator.lt)."""
+
+        @backoff.on_predicate(backoff.constant, interval=10, jitter=None, max_tries=5)
+        def _wait():
+            metrics = self.get_metrics(key=metric_name, labels=labels)
+            values = metrics.values
+            if not values:
+                return compare(0, metric_value)
+            if len(values) > 1:
+                raise AssertionError(f"Metric '{metric_name}' returned {len(values)} series; use stricter labels.")
+            return compare(values[0], metric_value)
+
+        return _wait()
 
     @backoff.on_predicate(backoff.constant, interval=5, max_tries=12, jitter=None)
     def verify_no_observability_targets(self, label_filters: dict[str, list[str]]) -> bool:

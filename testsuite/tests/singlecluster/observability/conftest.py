@@ -97,8 +97,17 @@ def pod_monitor_metrics(client, pod_monitor, prometheus):
 
 
 @pytest.fixture(scope="module")
-def kuadrant_operator_metrics(prometheus):
+def kuadrant_service_monitor(service_monitors):
+    """Return the kuadrant-operator ServiceMonitor"""
+    monitor = next((sm for sm in service_monitors if "kuadrant-operator-monitor" in sm.name()), None)
+    assert monitor is not None, "kuadrant-operator-monitor ServiceMonitor not found"
+    return monitor
+
+
+@pytest.fixture(scope="module")
+def kuadrant_operator_metrics(prometheus, kuadrant_service_monitor):
     """Return all metrics from the Kuadrant operator metrics endpoint"""
+    prometheus.wait_for_scrape(kuadrant_service_monitor, "/metrics")
     return prometheus.get_metrics(
         labels={"service": "kuadrant-operator-metrics", "namespace": settings["service_protection"]["system_project"]}
     )
