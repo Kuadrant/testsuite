@@ -115,7 +115,7 @@ def test_relevant_services_on_auth_denied(trace_401, label):
         ("ratelimit", "rate_limit", "ratelimitpolicy"),
     ],
 )
-def test_spans_have_correct_policy_source_references(trace_200, tracing, operation_name, policy, policy_kind, request):
+def test_spans_have_correct_policy_source_references(trace_200, operation_name, policy, policy_kind, request):
     """
     Test that trace spans contain correct policy source references.
 
@@ -137,7 +137,7 @@ def test_spans_have_correct_policy_source_references(trace_200, tracing, operati
 
 
 @pytest.mark.parametrize("expected_status_code, trace_fixture", [(429, "trace_429"), (401, "trace_401")])
-def test_send_reply_span_on_request_rejection(tracing, expected_status_code, trace_fixture, request):
+def test_send_reply_span_on_request_rejection(expected_status_code, trace_fixture, request):
     """
     Test that send_reply spans capture correct metadata for request rejections.
 
@@ -201,11 +201,9 @@ def test_span_hierarchy(trace_200):
     }
 
     for parent_op, child_ops in expected_operations_hierarchy.items():
-        assert trace_200.filter_spans(
-            lambda s: s.operation_name == parent_op
-        ), f"Expected operation '{parent_op}' not found in trace spans"
+        parent_spans = [s for s in trace_200.spans if s.operation_name == parent_op]
+        assert parent_spans, f"Expected operation '{parent_op}' not found in trace spans"
         for child_op in child_ops:
-            assert trace_200.filter_spans(
-                lambda s: s.operation_name == child_op
-            ), f"Expected operation '{child_op}' not found in trace spans"
+            child_spans = [s for s in trace_200.spans if s.operation_name == child_op]
+            assert child_spans, f"Expected operation '{child_op}' not found in trace spans"
             assert_parent_child(trace_200, parent_op, child_op)

@@ -7,7 +7,7 @@ from apyproxy import ApyProxy
 from httpx import Client
 
 from testsuite.tracing import TracingClient
-from testsuite.tracing.models import Trace, Span
+from testsuite.tracing.models import Trace
 
 
 class JaegerClient(TracingClient):

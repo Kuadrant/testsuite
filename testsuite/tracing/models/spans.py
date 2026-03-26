@@ -1,4 +1,4 @@
-"""Span-related data models for distributed tracing."""
+"""Span-related data models for distributed tracing"""
 
 import json
 from dataclasses import dataclass
@@ -9,7 +9,7 @@ from .logs import LogEntry
 
 @dataclass(frozen=True)
 class SpanReference:
-    """Represents a reference to another span."""
+    """Represents a reference to another span"""
 
     ref_type: str  # "CHILD_OF", "FOLLOWS_FROM"
     trace_id: str
@@ -17,7 +17,7 @@ class SpanReference:
 
     @classmethod
     def from_dict(cls, data: dict) -> "SpanReference":
-        """Create SpanReference from Jaeger API response dict."""
+        """Create SpanReference from Jaeger API response dict"""
         return cls(
             ref_type=data.get("refType", ""),
             trace_id=data.get("traceID", ""),
@@ -26,13 +26,8 @@ class SpanReference:
 
 
 @dataclass(frozen=True)
-class Span:
-    """
-    Represents a single span in a distributed trace.
-
-    Note: Frozen to prevent accidental modification. Internal collections (tags, logs,
-    references) should not be modified after creation.
-    """
+class Span:  # pylint: disable=too-many-instance-attributes
+    """Represents a single span in a distributed trace"""
 
     operation_name: str
     span_id: str
@@ -45,8 +40,8 @@ class Span:
     process_id: str
 
     @classmethod
-    def from_dict(cls, data: dict) -> "Span":
-        """Create Span from Jaeger API response dict."""
+    def from_dict(cls, data: dict):
+        """Create Span from Jaeger API response dict"""
         # Convert tags list to dict, parsing JSON strings into Python objects
         # Note: If duplicate keys exist, we keep the first occurrence
         tags_dict = {}
@@ -64,7 +59,7 @@ class Span:
             # Try to parse JSON strings (arrays/objects) into Python objects
             if isinstance(value, str):
                 stripped = value.strip()
-                if stripped.startswith('[') or stripped.startswith('{'):
+                if stripped.startswith("[") or stripped.startswith("{"):
                     try:
                         value = json.loads(stripped)
                     except json.JSONDecodeError:
@@ -81,8 +76,7 @@ class Span:
         duration = data.get("duration", 0)
         # Negative durations don't make sense, but we don't fail on them
         # to be defensive against potentially malformed trace data
-        if duration < 0:
-            duration = 0
+        duration = max(duration, 0)
 
         return cls(
             operation_name=data.get("operationName", ""),
@@ -97,10 +91,10 @@ class Span:
         )
 
     def get_tag(self, key: str, default=None) -> Any:
-        """Get tag value by key."""
+        """Get tag value by key"""
         return self.tags.get(key, default)
 
-    def has_tag(self, key: str, value: Any = None) -> bool:
+    def has_tag(self, key: str, value: Any = None) -> bool:  # pylint: disable=too-many-return-statements
         """
         Check if span has a tag with matching value.
 
@@ -149,64 +143,16 @@ class Span:
 
         return False
 
-    def tag_contains(self, key: str, substring: str) -> bool:
-        """
-        Check if tag value contains substring (case-insensitive).
-
-        Args:
-            key: Tag key to check
-            substring: Substring to search for
-
-        Returns:
-            True if tag exists and its string representation contains the substring
-        """
-        tag_value = self.get_tag(key)
-        if tag_value is None:
-            return False
-        return substring.lower() in str(tag_value).lower()
-
     def get_parent_id(self) -> str | None:
-        """Get parent span ID from CHILD_OF reference."""
+        """Get parent span ID from CHILD_OF reference"""
         for ref in self.references:
             if ref.ref_type == "CHILD_OF":
                 return ref.span_id
         return None
 
     def has_log_field(self, key: str, value: str | None = None) -> bool:
-        """Check if any log entry has a field with exact value match."""
+        """Check if any log entry has a field with exact value match"""
         for log_entry in self.logs:
             if log_entry.has_field(key, value):
                 return True
-        return False
-
-    def log_field_contains(self, key: str, substring: str) -> bool:
-        """Check if any log entry has a field containing substring (case-insensitive)."""
-        for log_entry in self.logs:
-            if log_entry.field_contains(key, substring):
-                return True
-        return False
-
-    def get_log_fields(self, key: str) -> list[str]:
-        """Get all log field values matching the key across all log entries."""
-        values = []
-        for log_entry in self.logs:
-            field_value = log_entry.get_field(key)
-            if field_value is not None:
-                values.append(field_value)
-        return values
-
-    def log_field_contains_all(self, key: str, substrings: list[str]) -> bool:
-        """
-        Check if any single log entry has a field containing all substrings.
-
-        Unlike calling log_field_contains multiple times (which checks if ANY log entry
-        contains each substring separately), this ensures all substrings appear in the
-        SAME log entry's field value.
-        """
-        for log_entry in self.logs:
-            field_value = log_entry.get_field(key)
-            if field_value is not None:
-                # Check if this single field value contains ALL substrings
-                if all(substring.lower() in field_value.lower() for substring in substrings):
-                    return True
         return False

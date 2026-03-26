@@ -1,4 +1,5 @@
-from urllib.parse import urljoin
+"""Client for interacting with the Custom Metrics API Server."""
+
 import httpx
 
 
@@ -6,7 +7,7 @@ class CustomMetricsApiServerClient(httpx.Client):
     """Client for the Custom Metrics API Server"""
 
     def __init__(self, url: str):
-        return super().__init__(base_url=url, verify=False, headers={"Content-Type": "application/json"})
+        super().__init__(base_url=url, verify=False, headers={"Content-Type": "application/json"})
 
     def write_metric(self, namespace: str, resource_type: str, name: str, metric: str, value: int):
         """Write a metric value to the Custom Metrics API Server.

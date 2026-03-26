@@ -6,13 +6,13 @@ Kuadrant stack, including wasm-shim, Authorino, Limitador, and gateway services.
 """
 
 import os
+
 import pytest
-import backoff
 
 from testsuite.httpx.auth import HeaderApiKeyAuth
-from testsuite.kuadrant.policy.rate_limit import Limit
 from testsuite.kuadrant.policy import CelPredicate
 from testsuite.kuadrant.policy.authorization import JsonResponse, ValueFrom
+from testsuite.kuadrant.policy.rate_limit import Limit
 
 pytestmark = [pytest.mark.observability, pytest.mark.limitador, pytest.mark.authorino, pytest.mark.kuadrant_only]
 

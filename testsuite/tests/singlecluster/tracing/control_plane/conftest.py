@@ -10,6 +10,7 @@ from testsuite.tracing.models import Trace, Span
 # Minimum span duration in microseconds to indicate actual work performed
 MIN_MEANINGFUL_DURATION_US = 50
 
+
 @pytest.fixture(scope="module", autouse=True)
 def require_tracing_enabled(cluster, skip_or_fail):
     """Skip or fail tests if control plane tracing is not enabled on kuadrant-operator"""
@@ -23,7 +24,7 @@ def require_tracing_enabled(cluster, skip_or_fail):
             deployment = oc.selector(f"deployment/{deployment_name}").object()
 
             if not deployment.exists():
-                skip_or_fail(f"Deployment %s not found in namespace %s", deployment_name, namespace)
+                skip_or_fail(f"Deployment {deployment_name} not found in namespace {namespace}")
 
             selector_labels = deployment.model.spec.selector.matchLabels
             pods = oc.selector("pod", labels=dict(selector_labels)).objects()
@@ -41,7 +42,7 @@ def require_tracing_enabled(cluster, skip_or_fail):
             # Check if OTEL environment variables are configured
             env_vars = containers[0].env
 
-            if not any("OTEL_" in env_var.get('name', '') for env_var in env_vars):
+            if not any("OTEL_" in env_var.get("name", "") for env_var in env_vars):
                 skip_or_fail("Control plane tracing not enabled (no OTEL_* env vars on kuadrant-operator)")
 
     except (oc.OpenShiftPythonException, AttributeError, KeyError) as e:
@@ -89,8 +90,7 @@ def auth_policy_spans(auth_traces, authorization) -> list[Span]:
     for trace in auth_traces:
         spans.extend(
             trace.filter_spans(
-                lambda s: s.has_tag("policy.kind", "AuthPolicy")
-                          and s.has_tag("policy.name", authorization.name())
+                lambda s: s.has_tag("policy.kind", "AuthPolicy") and s.has_tag("policy.name", authorization.name())
             )
         )
     if len(spans) == 0:
@@ -105,8 +105,7 @@ def rl_policy_spans(rl_traces, rate_limit) -> list[Span]:
     for trace in rl_traces:
         spans.extend(
             trace.filter_spans(
-                lambda s: s.has_tag("policy.kind", "RateLimitPolicy")
-                          and s.has_tag("policy.name", rate_limit.name())
+                lambda s: s.has_tag("policy.kind", "RateLimitPolicy") and s.has_tag("policy.name", rate_limit.name())
             )
         )
     if len(spans) == 0:
@@ -122,7 +121,7 @@ def auth_reconcile_spans(auth_traces) -> list[Span]:
         spans.extend(
             trace.filter_spans(
                 lambda s: s.operation_name == "controller.reconcile"
-                          and s.has_tag("event_kinds", "AuthPolicy.kuadrant.io")
+                and s.has_tag("event_kinds", "AuthPolicy.kuadrant.io")
             )
         )
     if len(spans) == 0:
@@ -138,7 +137,7 @@ def rl_reconcile_spans(rl_traces) -> list[Span]:
         spans.extend(
             trace.filter_spans(
                 lambda s: s.operation_name == "controller.reconcile"
-                          and s.has_tag("event_kinds", "RateLimitPolicy.kuadrant.io")
+                and s.has_tag("event_kinds", "RateLimitPolicy.kuadrant.io")
             )
         )
     if len(spans) == 0:
@@ -158,9 +157,11 @@ def auth_reconciler_spans(auth_traces) -> dict[str, list[Span]]:
     for op_name in expected_ops:
         spans = []
         for trace in auth_traces:
-            spans.extend(trace.filter_spans(
-                lambda s, op=op_name: s.operation_name == op and s.duration > MIN_MEANINGFUL_DURATION_US
-            ))
+            spans.extend(
+                trace.filter_spans(
+                    lambda s, op=op_name: s.operation_name == op and s.duration > MIN_MEANINGFUL_DURATION_US
+                )
+            )
         operations_spans[op_name] = spans
     return operations_spans
 
@@ -177,9 +178,11 @@ def rl_reconciler_spans(rl_traces) -> dict[str, list[Span]]:
     for op_name in expected_ops:
         spans = []
         for trace in rl_traces:
-            spans.extend(trace.filter_spans(
-                lambda s, op=op_name: s.operation_name == op and s.duration > MIN_MEANINGFUL_DURATION_US
-            ))
+            spans.extend(
+                trace.filter_spans(
+                    lambda s, op=op_name: s.operation_name == op and s.duration > MIN_MEANINGFUL_DURATION_US
+                )
+            )
         operations_spans[op_name] = spans
     return operations_spans
 
@@ -189,10 +192,12 @@ def auth_wasm_spans(auth_traces) -> list[Span]:
     """WASM-related spans from auth traces with meaningful duration."""
     spans = []
     for trace in auth_traces:
-        spans.extend(trace.filter_spans(
-            lambda s: ("wasm." in s.operation_name or "istio_extension" in s.operation_name)
-                      and s.duration > MIN_MEANINGFUL_DURATION_US
-        ))
+        spans.extend(
+            trace.filter_spans(
+                lambda s: ("wasm." in s.operation_name or "istio_extension" in s.operation_name)
+                and s.duration > MIN_MEANINGFUL_DURATION_US
+            )
+        )
     return spans
 
 
@@ -201,9 +206,10 @@ def rl_wasm_spans(rl_traces) -> list[Span]:
     """WASM-related spans from rl traces with meaningful duration."""
     spans = []
     for trace in rl_traces:
-        spans.extend(trace.filter_spans(
-            lambda s: ("wasm." in s.operation_name or "istio_extension" in s.operation_name)
-                      and s.duration > MIN_MEANINGFUL_DURATION_US
-        ))
+        spans.extend(
+            trace.filter_spans(
+                lambda s: ("wasm." in s.operation_name or "istio_extension" in s.operation_name)
+                and s.duration > MIN_MEANINGFUL_DURATION_US
+            )
+        )
     return spans
-

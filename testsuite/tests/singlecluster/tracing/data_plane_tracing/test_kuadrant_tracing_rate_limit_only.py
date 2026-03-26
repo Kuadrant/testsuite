@@ -3,6 +3,7 @@ Tests for distributed tracing with only a RateLimitPolicy configured (no AuthPol
 """
 
 import os
+
 import pytest
 
 from testsuite.kuadrant.policy.rate_limit import Limit, RateLimitPolicy
@@ -11,7 +12,8 @@ pytestmark = [pytest.mark.observability, pytest.mark.limitador]
 
 
 @pytest.fixture(scope="module")
-def rate_limit(kuadrant, cluster, blame, module_label, route, gateway):
+def rate_limit(cluster, blame, module_label, route):
+    """Configures basic rate limit policy."""
     rate_limit = RateLimitPolicy.create_instance(cluster, blame("limit"), route, labels={"testRun": module_label})
     rate_limit.add_limit("basic", [Limit(3, "10s")])
     return rate_limit

@@ -10,8 +10,8 @@ pytestmark = [pytest.mark.observability, pytest.mark.limitador, pytest.mark.auth
 
 
 @pytest.fixture(scope="module")
-def wasm_config_span(tracing, authorization, rate_limit, gateway, route, cluster):
-    """Find BuildConfigForPath span containing both auth and rate limit policies."""
+def wasm_config_span(tracing, authorization, rate_limit):
+    """Find BuildConfigForPath span containing both auth and rate limit policies"""
     traces = tracing.get_traces(service="kuadrant-operator")
 
     # Find BuildConfigForPath span that has both policies and matches our topology
@@ -19,19 +19,21 @@ def wasm_config_span(tracing, authorization, rate_limit, gateway, route, cluster
         for span in trace.filter_spans(lambda s: s.operation_name == "wasm.BuildConfigForPath"):
             source_policies = span.get_tag("source_policies")
 
-            if not (f"authpolicy.kuadrant.io:kuadrant/{authorization.name()}" in source_policies and
-                    f"ratelimitpolicy.kuadrant.io:kuadrant/{rate_limit.name()}" in source_policies):
+            if not (
+                f"authpolicy.kuadrant.io:kuadrant/{authorization.name()}" in source_policies
+                and f"ratelimitpolicy.kuadrant.io:kuadrant/{rate_limit.name()}" in source_policies
+            ):
                 continue
 
             # Return trace and span for child fixtures to use
             return {"trace": trace, "span": span}
 
-    pytest.skip(f"No BuildConfigForPath span found with both policies for topology")
+    pytest.skip("No BuildConfigForPath span found with both policies for topology")
 
 
 @pytest.fixture(scope="module")
 def wasm_merge_span(wasm_config_span):
-    """MergeAndVerifyActions child span of BuildConfigForPath."""
+    """MergeAndVerifyActions child span of BuildConfigForPath"""
     trace = wasm_config_span["trace"]
     parent_span = wasm_config_span["span"]
 
@@ -46,7 +48,7 @@ def wasm_merge_span(wasm_config_span):
 
 @pytest.fixture(scope="module")
 def wasm_actionset_span(wasm_config_span):
-    """ActionSet.create child span of BuildConfigForPath."""
+    """ActionSet.create child span of BuildConfigForPath"""
     trace = wasm_config_span["trace"]
     parent_span = wasm_config_span["span"]
 
@@ -61,7 +63,7 @@ def wasm_actionset_span(wasm_config_span):
 
 @pytest.fixture(scope="module")
 def wasm_action_builder_span(wasm_config_span):
-    """BuildActionSetsForPath child span of BuildConfigForPath."""
+    """BuildActionSetsForPath child span of BuildConfigForPath"""
     trace = wasm_config_span["trace"]
     parent_span = wasm_config_span["span"]
 
@@ -75,7 +77,7 @@ def wasm_action_builder_span(wasm_config_span):
 
 
 def test_wasm_config_matches_topology(wasm_config_span, cluster, gateway, route):
-    """Validate BuildConfigForPath span matches the test topology."""
+    """Validate BuildConfigForPath span matches the test topology"""
     span = wasm_config_span["span"]
 
     assert span.get_tag("gateway.name") == gateway.name()
@@ -87,7 +89,7 @@ def test_wasm_config_matches_topology(wasm_config_span, cluster, gateway, route)
 
 
 def test_wasm_config_action_validation_metrics(wasm_config_span):
-    """Validate BuildConfigForPath has action validation metrics."""
+    """Validate BuildConfigForPath has action validation metrics"""
     span = wasm_config_span["span"]
 
     assert span.has_tag("actions.before_merge")
@@ -103,7 +105,7 @@ def test_wasm_config_action_validation_metrics(wasm_config_span):
 
 
 def test_wasm_merge_action_consistency(wasm_config_span, wasm_merge_span):
-    """Validate MergeAndVerifyActions is correlated and has consistent action counts."""
+    """Validate MergeAndVerifyActions is correlated and has consistent action counts"""
     config_span = wasm_config_span["span"]
 
     # Verify merge span has expected metrics
@@ -114,17 +116,17 @@ def test_wasm_merge_action_consistency(wasm_config_span, wasm_merge_span):
     # Data consistency: merge input should match config validated actions
     merge_input = wasm_merge_span.get_tag("actions.input")
     config_validated = config_span.get_tag("actions.validated")
-    assert merge_input == config_validated, \
-        f"Merge input ({merge_input}) should match config validated ({config_validated})"
+    assert (
+        merge_input == config_validated
+    ), f"Merge input ({merge_input}) should match config validated ({config_validated})"
 
     # Output should not exceed input
     merge_output = wasm_merge_span.get_tag("actions.output")
-    assert merge_output <= merge_input, \
-        f"Merge output ({merge_output}) should not exceed input ({merge_input})"
+    assert merge_output <= merge_input, f"Merge output ({merge_output}) should not exceed input ({merge_input})"
 
 
 def test_wasm_actionset_correlation(wasm_config_span, wasm_actionset_span):
-    """Validate ActionSet.create spans have both auth and rate limit actions with correct hash."""
+    """Validate ActionSet.create spans have both auth and rate limit actions with correct hash"""
     config_span = wasm_config_span["span"]
 
     assert wasm_actionset_span.has_tag("actionset.name")
@@ -138,12 +140,11 @@ def test_wasm_actionset_correlation(wasm_config_span, wasm_actionset_span):
     expected_name = hashlib.sha256(source.encode()).hexdigest()
 
     actual_name = wasm_actionset_span.get_tag("actionset.name")
-    assert actual_name == expected_name, \
-        f"ActionSet name mismatch: expected {expected_name}, got {actual_name}"
+    assert actual_name == expected_name, f"ActionSet name mismatch: expected {expected_name}, got {actual_name}"
 
 
 def test_wasm_action_builder_correlation(wasm_action_builder_span):
-    """Validate BuildActionSetsForPath shows both auth and rate limit action types."""
+    """Validate BuildActionSetsForPath shows both auth and rate limit action types"""
     action_types = str(wasm_action_builder_span.get_tag("action_types"))
     assert "auth-service" in action_types
     assert "ratelimit-service" in action_types
