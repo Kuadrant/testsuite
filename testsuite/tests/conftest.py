@@ -132,15 +132,7 @@ def pytest_collection_modifyitems(session, config, items):  # pylint: disable=un
 
         ## extracting test's docstring for RP
         if item._obj.__doc__:
-            item.user_properties.append(['__rp_case_description', item._obj.__doc__])
-
-def pytest_configure(config):
-    """Pytest post-execution configuration tuning"""
-
-    ## Overriding junit_suite_name for collector only
-    if os.environ.get('COLLECTOR_ENABLE'):
-        config.inicfg['junit_suite_name'] = 'info-collector'
-        # config.inicfg['junit_suite_name'] = junit_suite_name
+            item.user_properties.append(["__rp_case_description", item._obj.__doc__])
 
 
 @pytest.fixture(scope="session")

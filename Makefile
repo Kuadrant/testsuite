@@ -17,7 +17,7 @@ PYTEST += --junitxml=$(resultsdir)/junit-$(@F).xml -o junit_suite_name=$(@F)
 endif
 
 # Collector PYTEST Override
-collect: PYTEST = poetry run python -m pytest --tb=$(TB) --junitxml=$(resultsdir)/junit-00-$(@F).xml -o junit_suite_name=$(@F)
+collect: PYTEST = poetry run python -m pytest --tb=$(TB) --junitxml=$(resultsdir)/junit-00-$(@F).xml -o junit_suite_name=info-collector
 
 ifdef html
 PYTEST += --html=$(resultsdir)/report-$(@F).html --self-contained-html

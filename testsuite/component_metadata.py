@@ -162,3 +162,23 @@ class ReportPortalMetadataCollector:
             property_value += f"OCP:{cluster_data['ocp_version']}|"
         property_value += f"Kuadrant:{cluster_data['metadata']['kuadrant_image']}"
         return property_value
+
+    def format_cluster_info(self) -> str:
+        """Format cluster metadata as markdown for ReportPortal launch description."""
+        if not self.all_cluster_metadata:
+            return ""
+
+        count = len(self.all_cluster_metadata)
+        label = "cluster" if count == 1 else "clusters"
+        lines = [f"**Cluster Information ({count} {label}):**"]
+
+        for cluster_name, data in self.all_cluster_metadata.items():
+            console_url = data.get("console_url", "")
+            lines.append(f"- {console_url} ({cluster_name})")
+            if data.get("ocp_version"):
+                lines.append(f"  - OCP: `{data['ocp_version']}`")
+            image = data.get("metadata", {}).get("kuadrant_image", "")
+            if image:
+                lines.append(f"  - Kuadrant: `{image}`")
+
+        return "\n".join(lines)
