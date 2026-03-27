@@ -4,11 +4,13 @@ Basic control plane reconciliation tracing tests.
 
 import pytest
 
+from testsuite.tests.conftest import skip_or_fail
+
 pytestmark = [pytest.mark.observability, pytest.mark.limitador, pytest.mark.authorino, pytest.mark.kuadrant_only]
 
 
 @pytest.fixture(scope="module")
-def policy_lifecycle_trace(request, tracing):
+def policy_lifecycle_trace(request, tracing, skip_or_fail):
     """Find trace containing complete policy lifecycle (validation + status update)"""
     policy_fixture_name = getattr(request, "param", "authorization")
     policy = request.getfixturevalue(policy_fixture_name)
@@ -18,7 +20,6 @@ def policy_lifecycle_trace(request, tracing):
 
     # Find trace with both validation and status update spans for this policy
     for trace in traces:
-
         reconcile_spans = trace.filter_spans(
             lambda s: s.operation_name == "controller.reconcile"
             and s.has_tag("event_kinds", f"{policy_kind}.kuadrant.io")
@@ -45,8 +46,7 @@ def policy_lifecycle_trace(request, tracing):
                     "reconcile_span": reconcile_spans[0],
                 }
 
-    pytest.skip(f"No trace found with complete lifecycle for {policy_kind} {policy.name()}")
-    return None
+    skip_or_fail(f"Traces for reconciling policy {policy.name()} were not found")
 
 
 @pytest.fixture(scope="module")
@@ -68,13 +68,13 @@ def controller_reconcile_span(policy_lifecycle_trace):
 
 
 @pytest.fixture(scope="module")
-def effective_policies_span(policy_lifecycle_trace):
+def effective_policies_span(skip_or_fail, policy_lifecycle_trace):
     """Effective policies computation span"""
     trace = policy_lifecycle_trace["trace"]
 
     spans = trace.filter_spans(lambda s: s.operation_name == "effective_policies")
     if not spans:
-        pytest.skip("No effective_policies span found")
+        skip_or_fail("Control plane tracing not enabled (no OTEL_* env vars on kuadrant-operator)")
 
     return spans[0]
 

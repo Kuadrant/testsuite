@@ -4,6 +4,7 @@ import pytest
 import openshift_client as oc
 
 from testsuite.config import settings
+from testsuite.tests.conftest import skip_or_fail
 
 from testsuite.tracing.models import Trace, Span
 
@@ -50,7 +51,7 @@ def require_tracing_enabled(cluster, skip_or_fail):
 
 
 @pytest.fixture(scope="module")
-def auth_traces(authorization, tracing) -> list[Trace]:
+def auth_traces(authorization, tracing, skip_or_fail) -> list[Trace]:
     """
     Fetches and validates traces for AuthPolicy.
     """
@@ -58,7 +59,7 @@ def auth_traces(authorization, tracing) -> list[Trace]:
     query_tags = {"policy.name": policy_name}
     traces = tracing.get_traces(service="kuadrant-operator", tags=query_tags)
     if len(traces) == 0:
-        pytest.skip(
+        skip_or_fail(
             f"No traces found for AuthPolicy '{policy_name}'. "
             f"Queried service='kuadrant-operator' with tags={query_tags}. "
             "Check if control plane tracing is enabled and policy was reconciled."
@@ -67,7 +68,7 @@ def auth_traces(authorization, tracing) -> list[Trace]:
 
 
 @pytest.fixture(scope="module")
-def rl_traces(rate_limit, tracing) -> list[Trace]:
+def rl_traces(rate_limit, tracing, skip_or_fail) -> list[Trace]:
     """
     Fetches and validates traces for RateLimitPolicy.
     """
@@ -75,141 +76,9 @@ def rl_traces(rate_limit, tracing) -> list[Trace]:
     query_tags = {"policy.name": policy_name}
     traces = tracing.get_traces(service="kuadrant-operator", tags=query_tags)
     if len(traces) == 0:
-        pytest.skip(
+        skip_or_fail(
             f"No traces found for RateLimitPolicy '{policy_name}'. "
             f"Queried service='kuadrant-operator' with tags={query_tags}. "
             "Check if control plane tracing is enabled and policy was reconciled."
         )
     return traces
-
-
-@pytest.fixture(scope="module")
-def auth_policy_spans(auth_traces, authorization) -> list[Span]:
-    """Spans with AuthPolicy metadata."""
-    spans = []
-    for trace in auth_traces:
-        spans.extend(
-            trace.filter_spans(
-                lambda s: s.has_tag("policy.kind", "AuthPolicy") and s.has_tag("policy.name", authorization.name())
-            )
-        )
-    if len(spans) == 0:
-        pytest.skip("No AuthPolicy spans found with policy metadata")
-    return spans
-
-
-@pytest.fixture(scope="module")
-def rl_policy_spans(rl_traces, rate_limit) -> list[Span]:
-    """Spans with RateLimitPolicy metadata."""
-    spans = []
-    for trace in rl_traces:
-        spans.extend(
-            trace.filter_spans(
-                lambda s: s.has_tag("policy.kind", "RateLimitPolicy") and s.has_tag("policy.name", rate_limit.name())
-            )
-        )
-    if len(spans) == 0:
-        pytest.skip("No RateLimitPolicy spans found with policy metadata")
-    return spans
-
-
-@pytest.fixture(scope="module")
-def auth_reconcile_spans(auth_traces) -> list[Span]:
-    """controller.reconcile spans for AuthPolicy."""
-    spans = []
-    for trace in auth_traces:
-        spans.extend(
-            trace.filter_spans(
-                lambda s: s.operation_name == "controller.reconcile"
-                and s.has_tag("event_kinds", "AuthPolicy.kuadrant.io")
-            )
-        )
-    if len(spans) == 0:
-        pytest.skip("No controller.reconcile spans with AuthPolicy.kuadrant.io in event_kinds")
-    return spans
-
-
-@pytest.fixture(scope="module")
-def rl_reconcile_spans(rl_traces) -> list[Span]:
-    """controller.reconcile spans for RateLimitPolicy."""
-    spans = []
-    for trace in rl_traces:
-        spans.extend(
-            trace.filter_spans(
-                lambda s: s.operation_name == "controller.reconcile"
-                and s.has_tag("event_kinds", "RateLimitPolicy.kuadrant.io")
-            )
-        )
-    if len(spans) == 0:
-        pytest.skip("No controller.reconcile spans with RateLimitPolicy.kuadrant.io in event_kinds")
-    return spans
-
-
-@pytest.fixture(scope="module")
-def auth_reconciler_spans(auth_traces) -> dict[str, list[Span]]:
-    """Auth reconciler operation spans with meaningful duration."""
-    expected_ops = [
-        "reconciler.auth_configs",
-        "reconciler.istio_auth_cluster",
-        "reconciler.authorino_istio_integration",
-    ]
-    operations_spans = {}
-    for op_name in expected_ops:
-        spans = []
-        for trace in auth_traces:
-            spans.extend(
-                trace.filter_spans(
-                    lambda s, op=op_name: s.operation_name == op and s.duration > MIN_MEANINGFUL_DURATION_US
-                )
-            )
-        operations_spans[op_name] = spans
-    return operations_spans
-
-
-@pytest.fixture(scope="module")
-def rl_reconciler_spans(rl_traces) -> dict[str, list[Span]]:
-    """RateLimitPolicy reconciler operation spans with meaningful duration."""
-    expected_ops = [
-        "reconciler.limitador_limits",
-        "reconciler.istio_ratelimit_cluster",
-        "workflow.limitador",
-    ]
-    operations_spans = {}
-    for op_name in expected_ops:
-        spans = []
-        for trace in rl_traces:
-            spans.extend(
-                trace.filter_spans(
-                    lambda s, op=op_name: s.operation_name == op and s.duration > MIN_MEANINGFUL_DURATION_US
-                )
-            )
-        operations_spans[op_name] = spans
-    return operations_spans
-
-
-@pytest.fixture(scope="module")
-def auth_wasm_spans(auth_traces) -> list[Span]:
-    """WASM-related spans from auth traces with meaningful duration."""
-    spans = []
-    for trace in auth_traces:
-        spans.extend(
-            trace.filter_spans(
-                lambda s: ("wasm." in s.operation_name or "istio_extension" in s.operation_name)
-                and s.duration > MIN_MEANINGFUL_DURATION_US
-            )
-        )
-    return spans
-
-
-@pytest.fixture(scope="module")
-def rl_wasm_spans(rl_traces) -> list[Span]:
-    """WASM-related spans from rl traces with meaningful duration."""
-    spans = []
-    for trace in rl_traces:
-        spans.extend(
-            trace.filter_spans(
-                lambda s: ("wasm." in s.operation_name or "istio_extension" in s.operation_name)
-                and s.duration > MIN_MEANINGFUL_DURATION_US
-            )
-        )
-    return spans
