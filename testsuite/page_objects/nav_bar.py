@@ -2,6 +2,7 @@
 
 from testsuite.page_objects.navigator import step, Navigable
 from testsuite.page_objects.policies.policies import PoliciesPage
+from testsuite.page_objects.overview.overview_page import OverviewPage
 
 
 class NavBar(Navigable):
@@ -20,9 +21,11 @@ class NavBar(Navigable):
         if self.kuadrant_nav.get_attribute("aria-expanded") == "false":
             self.kuadrant_nav.click(timeout=60000)
 
+    @step(OverviewPage)
     def overview(self):
-        """Navigates to the console plugin Overview page"""
+        """Navigates to the console plugin Overview page and returns an OverviewPage object"""
         self.expand_kuadrant()
+        self.page.locator("//a[contains(@class, 'nav__link') and contains(@href, '/kuadrant/overview')]").click()
 
     @step(PoliciesPage)
     def policies(self):
