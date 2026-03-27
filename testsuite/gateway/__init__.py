@@ -97,6 +97,17 @@ class QueryParamsMatch:
 
 
 @dataclass
+class URLRewriteFilter:
+    """URLRewriteFilter for HTTPRoute defines a filter that modifies a request during forwarding"""
+
+    hostname: str
+
+    def asdict(self):
+        """Custom asdict to wrap as a Gateway API HTTPRoute filter"""
+        return {"type": "URLRewrite", "urlRewrite": {"hostname": self.hostname}}
+
+
+@dataclass
 class RouteMatch:
     """
     HTTPRouteMatch defines the predicate used to match requests to a given action.
