@@ -8,6 +8,7 @@ import subprocess
 from functools import cached_property
 from importlib import resources
 from typing import Optional, List, Dict, Collection, Union
+from urllib.parse import quote
 
 from cryptography import x509
 from cryptography.hazmat.primitives.asymmetric.types import CertificatePublicKeyTypes
@@ -64,6 +65,11 @@ class Certificate:
     def pub_key(self) -> CertificatePublicKeyTypes:
         """Returns certificate public key"""
         return self.decoded.public_key()
+
+    @cached_property
+    def xfcc_header(self) -> str:
+        """Returns X-Forwarded-Client-Cert header value with this certificate"""
+        return f'Hash=placeholder;Cert="{quote(self.certificate, safe="")}"'
 
 
 @dataclasses.dataclass

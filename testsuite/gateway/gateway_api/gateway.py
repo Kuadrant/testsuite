@@ -22,7 +22,7 @@ class KuadrantGateway(KubernetesObject, Gateway):
     cached_gw_class_name = None
 
     @classmethod
-    def create_instance(cls, cluster: KubernetesClient, name, labels):
+    def create_instance(cls, cluster: KubernetesClient, name, labels, annotations: dict = None):
         """Creates new instance of Gateway"""
 
         # Use cached value if exists
@@ -34,6 +34,10 @@ class KuadrantGateway(KubernetesObject, Gateway):
             "metadata": {"name": name, "labels": labels},
             "spec": {"gatewayClassName": cls.cached_gw_class_name, "listeners": []},
         }
+
+        if annotations:
+            model["metadata"]["annotations"] = annotations
+
         gateway = cls(model, context=cluster.context)
         return gateway
 
