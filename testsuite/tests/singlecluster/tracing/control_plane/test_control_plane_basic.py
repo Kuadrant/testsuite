@@ -14,7 +14,7 @@ def policy_lifecycle_trace(request, tracing, skip_or_fail):
     policy = request.getfixturevalue(policy_fixture_name)
     policy_kind = "AuthPolicy" if "auth" in policy_fixture_name else "RateLimitPolicy"
 
-    traces = tracing.get_traces(service="kuadrant-operator")
+    traces = tracing.get_traces(service="kuadrant-operator", tags={"policy.name": policy.name()})
 
     # Find trace with both validation and status update spans for this policy
     for trace in traces:
