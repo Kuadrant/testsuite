@@ -125,7 +125,7 @@ def test_policy_deletion_triggers_reconciliation_traces(temp_deletion_policy, tr
         "Expected HTTPRoute/Gateway reconciliation."
     )
 
-    # Verify we see effective_policies computation with non-trivial duration
+    # Verify we see data_plane_policies workflow with non-trivial duration
     data_plane_workflow = []
     for trace in deletion_traces:
         data_plane_workflow.extend(
@@ -134,7 +134,10 @@ def test_policy_deletion_triggers_reconciliation_traces(temp_deletion_policy, tr
             )
         )
 
-    assert len(data_plane_workflow) > 0
+    assert len(data_plane_workflow) > 0, (
+        f"Expected workflow.data_plane_policies spans with meaningful duration (>{MIN_MEANINGFUL_DURATION_US}μs) "
+        "after policy deletion"
+    )
 
     # Verify we see effective_policies computation with non-trivial duration
     effective_policies_spans = []
