@@ -68,7 +68,7 @@ def test_policy_update_generates_new_reconciliation_trace(updated_authorization,
 
 @pytest.fixture(scope="function")
 def temp_deletion_policy(request, cluster, blame, route, module_label):
-    """Temporary policy for deletion testing - not auto-deleted"""
+    """Temporary policy for deletion testing"""
     policy_type = getattr(request, "param", "auth")
 
     if policy_type == "auth":
@@ -80,9 +80,9 @@ def temp_deletion_policy(request, cluster, blame, route, module_label):
         )
         temp_policy.add_limit("basic", [Limit(5, "10s")])
 
+    request.addfinalizer(temp_policy.delete)
     temp_policy.commit()
     temp_policy.wait_for_ready()
-    # Note: No finalizer - test controls deletion timing
     return temp_policy
 
 

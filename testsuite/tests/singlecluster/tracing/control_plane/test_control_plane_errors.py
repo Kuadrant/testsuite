@@ -18,17 +18,11 @@ EXPECTED_ORPHAN_EXCEPTION_TYPE = "github.com/kuadrant/kuadrant-operator/internal
 
 @pytest.fixture(scope="function")
 def orphan_test_route(request, cluster, blame, gateway, module_label, backend):
-    """Route for orphaned policy testing - cleanup only if test doesn't delete it"""
+    """Route for orphaned policy testing"""
     orphan_route = HTTPRoute.create_instance(cluster, blame("orphan-route"), gateway, {"app": module_label})
     orphan_route.add_backend(backend)
+    request.addfinalizer(orphan_route.delete)
     orphan_route.commit()
-
-    # Cleanup finalizer - only deletes if route still exists (test may delete it explicitly)
-    def cleanup():
-        if orphan_route.exists():
-            orphan_route.delete()
-
-    request.addfinalizer(cleanup)
     return orphan_route
 
 
