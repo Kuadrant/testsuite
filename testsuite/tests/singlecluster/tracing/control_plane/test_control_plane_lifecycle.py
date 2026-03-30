@@ -219,17 +219,13 @@ def authorization_with_changed_target(
     authorization, second_route, trace_snapshot_before_target_change
 ):  # pylint: disable=unused-argument
     """
-    Authorization policy with targetRef changed.
+    Authorization policy with targetRef changed to second_route.
     (trace_snapshot_before_target_change ensures snapshot taken before change)
     """
-
-    def update_target_ref(policy):
-        policy.model.spec.targetRef.name = second_route.name()
-        return True
-
-    authorization.apply(modifier_func=update_target_ref)
+    authorization.refresh()
+    authorization.model.spec.targetRef = second_route.reference
+    authorization.apply()
     authorization.wait_for_ready()
-
     return authorization
 
 
