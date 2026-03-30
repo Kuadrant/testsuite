@@ -15,54 +15,55 @@ from testsuite.kuadrant.policy.authorization.auth_policy import AuthPolicy
 from testsuite.kuadrant.policy.rate_limit import Limit, RateLimitPolicy
 from testsuite.kubernetes import Selector
 from testsuite.tests.singlecluster.tracing.control_plane.conftest import MIN_MEANINGFUL_DURATION_US
-from testsuite.tracing.models import Trace
 
 pytestmark = [pytest.mark.observability, pytest.mark.limitador, pytest.mark.authorino, pytest.mark.kuadrant_only]
 
 
 @pytest.fixture(scope="module")
-def updated_authorization(authorization):
-    """Authorization policy after update, with timestamp before the update"""
-    # Capture timestamp before the update
-    timestamp_before_update = int(time.time() * 1000000)  # microseconds
+def trace_snapshot_before_update(authorization, tracing):
+    """Snapshot of trace and span IDs before policy update"""
+    traces = tracing.get_traces(service="kuadrant-operator", tags={"policy.name": authorization.name()})
+    trace_ids = {trace.trace_id for trace in traces}
+    span_ids = {span.span_id for trace in traces for span in trace.spans}
+    return {"trace_ids": trace_ids, "span_ids": span_ids}
 
+
+@pytest.fixture(scope="module")
+def updated_authorization(authorization, trace_snapshot_before_update):  # pylint: disable=unused-argument
+    """
+    Authorization policy after update.
+    (trace_snapshot_before_update ensures snapshot taken before update)
+    """
     when_post = [Pattern("context.request.http.method", "eq", "POST")]
     authorization.authorization.add_opa_policy("opa", "allow { false }", when=when_post)
     authorization.wait_for_ready()
 
-    # Store the timestamp as an attribute for the test to use
-    authorization._update_timestamp = timestamp_before_update
-
     return authorization
 
 
-def test_policy_update_generates_new_reconciliation_trace(updated_authorization, tracing):
+def test_policy_update_generates_new_reconciliation_trace(updated_authorization, trace_snapshot_before_update, tracing):
     """
     Validate that policy updates generate new reconciliation traces
     """
-    # Use the timestamp captured before the update
-    timestamp_before_update = updated_authorization._update_timestamp
+    snapshot = trace_snapshot_before_update
 
     updated_traces = tracing.get_traces(service="kuadrant-operator", tags={"policy.name": updated_authorization.name()})
 
+    # Find new reconcile spans (spans that weren't in the original snapshot)
     new_reconcile_spans = []
     for trace in updated_traces:
-        new_reconcile_spans.extend(
-            trace.filter_spans(
-                lambda s: s.operation_name == "controller.reconcile" and s.start_time > timestamp_before_update
-            )
-        )
+        for span in trace.filter_spans(lambda s: s.operation_name == "controller.reconcile"):
+            if span.span_id not in snapshot["span_ids"]:
+                new_reconcile_spans.append(span)
 
     assert len(new_reconcile_spans) > 0, "No new reconciliation traces found after policy update"
 
+    # Find new policy spans (spans that weren't in the original snapshot)
     new_policy_spans = []
     for trace in updated_traces:
-        new_policy_spans.extend(
-            trace.filter_spans(
-                lambda s: s.start_time > timestamp_before_update
-                and s.get_tag("policy.name") == updated_authorization.name()
-            )
-        )
+        for span in trace.filter_spans(lambda s: s.get_tag("policy.name") == updated_authorization.name()):
+            if span.span_id not in snapshot["span_ids"]:
+                new_policy_spans.append(span)
 
     assert len(new_policy_spans) > 0, "Updated reconciliation traces should reference the policy"
 
@@ -88,7 +89,7 @@ def temp_deletion_policy(request, cluster, blame, route, module_label):
 
 
 @pytest.mark.parametrize("temp_deletion_policy", ["auth", "rate_limit"], indirect=True)
-def test_policy_deletion_triggers_reconciliation_traces(temp_deletion_policy, tracing, route):
+def test_policy_deletion_triggers_reconciliation_traces(temp_deletion_policy, tracing):
     """
     Validate that policy deletion triggers reconciliation traces.
 
@@ -98,26 +99,36 @@ def test_policy_deletion_triggers_reconciliation_traces(temp_deletion_policy, tr
     # Determine policy kind based on the policy type
     policy_kind = "AuthPolicy" if isinstance(temp_deletion_policy, AuthPolicy) else "RateLimitPolicy"
 
-    deletion_time = int(time.time() * 1000000)  # microseconds
+    # Snapshot existing spans before deletion
+    all_traces_before = tracing.get_traces(service="kuadrant-operator")
+    span_ids_before = {span.span_id for trace in all_traces_before for span in trace.spans}
 
     temp_deletion_policy.delete()
     temp_deletion_policy.wait_until(lambda obj: not obj.exists(), timelimit=30)
 
+    # Small delay to allow traces to be collected
+    time.sleep(1)
+
     all_traces = tracing.get_traces(service="kuadrant-operator")
 
+    # Find new reconcile spans with policy deletion event
     deletion_traces = []
     for trace in all_traces:
-        reconcile_spans = trace.filter_spans(
-            lambda s: s.operation_name == "controller.reconcile"
-            and s.start_time > deletion_time
-            and s.has_tag("event_kinds", f"{policy_kind}.kuadrant.io")
-        )
-        if reconcile_spans:
+        new_reconcile_spans = [
+            s
+            for s in trace.filter_spans(
+                lambda s: s.operation_name == "controller.reconcile"
+                and s.has_tag("event_kinds", f"{policy_kind}.kuadrant.io")
+            )
+            if s.span_id not in span_ids_before
+        ]
+        if new_reconcile_spans:
             deletion_traces.append(trace)
 
-    assert (
-        len(deletion_traces) > 0
-    ), f"No reconciliation traces found after deletion of policy {temp_deletion_policy.name()}. Expected HTTPRoute/Gateway reconciliation."
+    assert len(deletion_traces) > 0, (
+        f"No reconciliation traces found after deletion of policy {temp_deletion_policy.name()}. "
+        "Expected HTTPRoute/Gateway reconciliation."
+    )
 
     # Verify we see effective_policies computation with non-trivial duration
     data_plane_workflow = []
@@ -130,7 +141,6 @@ def test_policy_deletion_triggers_reconciliation_traces(temp_deletion_policy, tr
 
     assert len(data_plane_workflow) > 0
 
-
     # Verify we see effective_policies computation with non-trivial duration
     effective_policies_spans = []
     for trace in deletion_traces:
@@ -140,9 +150,10 @@ def test_policy_deletion_triggers_reconciliation_traces(temp_deletion_policy, tr
             )
         )
 
-    assert (
-        len(effective_policies_spans) > 0
-    ), f"Expected effective_policies computation with meaningful duration (>{MIN_MEANINGFUL_DURATION_US}μs) after policy deletion"
+    assert len(effective_policies_spans) > 0, (
+        f"Expected effective_policies computation with meaningful duration (>{MIN_MEANINGFUL_DURATION_US}μs) "
+        "after policy deletion"
+    )
 
 
 @pytest.fixture(scope="function")
@@ -197,10 +208,21 @@ def second_route(request, cluster, blame, gateway, module_label, backend):
 
 
 @pytest.fixture(scope="function")
-def authorization_with_changed_target(authorization, second_route):
-    """Authorization policy with targetRef changed to second_route"""
-    # Capture timestamp before the target change
-    timestamp_before_change = int(time.time() * 1000000)  # microseconds
+def trace_snapshot_before_target_change(authorization, tracing):
+    """Snapshot of trace and span IDs before policy target change"""
+    traces = tracing.get_traces(service="kuadrant-operator", tags={"policy.name": authorization.name()})
+    span_ids = {span.span_id for trace in traces for span in trace.spans}
+    return span_ids
+
+
+@pytest.fixture(scope="function")
+def authorization_with_changed_target(
+    authorization, second_route, trace_snapshot_before_target_change
+):  # pylint: disable=unused-argument
+    """
+    Authorization policy with targetRef changed.
+    (trace_snapshot_before_target_change ensures snapshot taken before change)
+    """
 
     def update_target_ref(policy):
         policy.model.spec.targetRef.name = second_route.name()
@@ -209,27 +231,22 @@ def authorization_with_changed_target(authorization, second_route):
     authorization.apply(modifier_func=update_target_ref)
     authorization.wait_for_ready()
 
-    # Store the timestamp as an attribute for the test to use
-    authorization._target_change_timestamp = timestamp_before_change
-
     return authorization
 
 
-def test_policy_target_change_traced(authorization_with_changed_target, tracing):
+def test_policy_target_change_traced(authorization_with_changed_target, trace_snapshot_before_target_change, tracing):
     """Validate traces when policy's targetRef changes"""
-    # Use the timestamp captured before the target change
-    timestamp_before_change = authorization_with_changed_target._target_change_timestamp
+    snapshot = trace_snapshot_before_target_change
 
     updated_traces = tracing.get_traces(
         service="kuadrant-operator", tags={"policy.name": authorization_with_changed_target.name()}
     )
 
+    # Find new reconcile spans (spans that weren't in the original snapshot)
     new_reconcile_spans = []
     for trace in updated_traces:
-        new_reconcile_spans.extend(
-            trace.filter_spans(
-                lambda s: s.operation_name == "controller.reconcile" and s.start_time > timestamp_before_change
-            )
-        )
+        for span in trace.filter_spans(lambda s: s.operation_name == "controller.reconcile"):
+            if span.span_id not in snapshot:
+                new_reconcile_spans.append(span)
 
     assert len(new_reconcile_spans) > 0, "No new reconciliation spans found after target change"

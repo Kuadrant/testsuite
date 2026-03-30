@@ -4,8 +4,6 @@ Basic control plane reconciliation tracing tests.
 
 import pytest
 
-from testsuite.tests.conftest import skip_or_fail
-
 pytestmark = [pytest.mark.observability, pytest.mark.limitador, pytest.mark.authorino, pytest.mark.kuadrant_only]
 
 
@@ -47,6 +45,7 @@ def policy_lifecycle_trace(request, tracing, skip_or_fail):
                 }
 
     skip_or_fail(f"Traces for reconciling policy {policy.name()} were not found")
+    return None
 
 
 @pytest.fixture(scope="module")

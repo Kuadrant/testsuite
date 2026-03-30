@@ -4,9 +4,7 @@ import pytest
 import openshift_client as oc
 
 from testsuite.config import settings
-from testsuite.tests.conftest import skip_or_fail
-
-from testsuite.tracing.models import Trace, Span
+from testsuite.tracing.models import Trace
 
 # Minimum span duration in microseconds to indicate actual work performed
 MIN_MEANINGFUL_DURATION_US = 50
