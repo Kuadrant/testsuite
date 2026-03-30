@@ -38,10 +38,15 @@ def require_tracing_enabled(cluster, skip_or_fail):
             if not containers:
                 skip_or_fail(f"No containers found in pod {pod.name()}")
 
-            # Check if OTEL environment variables are configured
-            env_vars = containers[0].env
+            # Check if OTEL environment variables are configured across all containers
+            has_otel = False
+            for container in containers:
+                env_vars = getattr(container, "env", None) or []
+                if any(env_var.get("name", "").startswith("OTEL_") for env_var in env_vars):
+                    has_otel = True
+                    break
 
-            if not any("OTEL_" in env_var.get("name", "") for env_var in env_vars):
+            if not has_otel:
                 skip_or_fail("Control plane tracing not enabled (no OTEL_* env vars on kuadrant-operator)")
 
     except (oc.OpenShiftPythonException, AttributeError, KeyError) as e:

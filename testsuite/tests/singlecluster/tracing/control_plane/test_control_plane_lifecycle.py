@@ -106,9 +106,6 @@ def test_policy_deletion_triggers_reconciliation_traces(temp_deletion_policy, tr
     temp_deletion_policy.delete()
     temp_deletion_policy.wait_until(lambda obj: not obj.exists(), timelimit=30)
 
-    # Small delay to allow traces to be collected
-    time.sleep(1)
-
     all_traces = tracing.get_traces(service="kuadrant-operator")
 
     # Find new reconcile spans with policy deletion event
@@ -204,6 +201,7 @@ def second_route(request, cluster, blame, gateway, module_label, backend):
     route.add_backend(backend)
     request.addfinalizer(route.delete)
     route.commit()
+    route.wait_for_ready()
     return route
 
 
