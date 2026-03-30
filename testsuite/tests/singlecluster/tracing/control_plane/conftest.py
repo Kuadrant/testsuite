@@ -26,6 +26,9 @@ def require_tracing_enabled(cluster, skip_or_fail):
                 skip_or_fail(f"Deployment {deployment_name} not found in namespace {namespace}")
 
             selector_labels = deployment.model.spec.selector.matchLabels
+            if not selector_labels:
+                skip_or_fail(f"Deployment {deployment_name} uses matchExpressions instead of matchLabels")
+
             pods = oc.selector("pod", labels=dict(selector_labels)).objects()
 
             pods = [pod for pod in pods if "kuadrant-operator" in pod.name()]
@@ -58,6 +61,10 @@ def auth_traces(authorization, tracing, skip_or_fail) -> list[Trace]:
     """
     Fetches and validates traces for AuthPolicy.
     """
+    if authorization is None:
+        skip_or_fail("AuthPolicy fixture not available (may be running in standalone mode)")
+        return []
+
     policy_name = authorization.name()
     query_tags = {"policy.name": policy_name}
     traces = tracing.get_traces(service="kuadrant-operator", tags=query_tags)
@@ -75,6 +82,10 @@ def rl_traces(rate_limit, tracing, skip_or_fail) -> list[Trace]:
     """
     Fetches and validates traces for RateLimitPolicy.
     """
+    if rate_limit is None:
+        skip_or_fail("RateLimitPolicy fixture not available (may be running in standalone mode)")
+        return []
+
     policy_name = rate_limit.name()
     query_tags = {"policy.name": policy_name}
     traces = tracing.get_traces(service="kuadrant-operator", tags=query_tags)

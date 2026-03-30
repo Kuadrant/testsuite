@@ -5,8 +5,6 @@ Tests policy lifecycle events including validation, updates, deletion,
 target changes, and multi-policy scenarios.
 """
 
-import time
-
 import pytest
 
 from testsuite.gateway.gateway_api.route import HTTPRoute
