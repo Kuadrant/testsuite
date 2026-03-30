@@ -17,6 +17,7 @@ def policy_lifecycle_trace(request, tracing, skip_or_fail):
     traces = tracing.get_traces(service="kuadrant-operator", tags={"policy.name": policy.name()})
 
     # Find trace with both validation and status update spans for this policy
+    found_trace = None
     for trace in traces:
         reconcile_spans = trace.filter_spans(
             lambda s: s.operation_name == "controller.reconcile"
@@ -35,137 +36,155 @@ def policy_lifecycle_trace(request, tracing, skip_or_fail):
             )
 
             if validate_spans and status_spans:
-                return {
-                    "trace": trace,
-                    "policy": policy,
-                    "policy_kind": policy_kind,
-                    "validate_span": validate_spans[0],
-                    "status_span": status_spans[0],
-                    "reconcile_span": reconcile_spans[0],
-                }
+                found_trace = trace
+                break
 
-    skip_or_fail(f"Traces for reconciling policy {policy.name()} were not found")
-    return None
+    if found_trace is None:
+        skip_or_fail(f"Traces for reconciling policy {policy.name()} were not found")
 
-
-@pytest.fixture(scope="module")
-def policy_validate_span(policy_lifecycle_trace):
-    """Policy validation span from the lifecycle trace"""
-    return policy_lifecycle_trace["validate_span"]
-
-
-@pytest.fixture(scope="module")
-def policy_status_span(policy_lifecycle_trace):
-    """Policy status update span from the lifecycle trace"""
-    return policy_lifecycle_trace["status_span"]
-
-
-@pytest.fixture(scope="module")
-def controller_reconcile_span(policy_lifecycle_trace):
-    """Controller reconcile root span from the lifecycle trace"""
-    return policy_lifecycle_trace["reconcile_span"]
-
-
-@pytest.fixture(scope="module")
-def effective_policies_span(skip_or_fail, policy_lifecycle_trace):
-    """Effective policies computation span"""
-    trace = policy_lifecycle_trace["trace"]
-
-    spans = trace.filter_spans(lambda s: s.operation_name == "effective_policies")
-    if not spans:
-        skip_or_fail("Control plane tracing not enabled (no OTEL_* env vars on kuadrant-operator)")
-
-    return spans[0]
-
-
-@pytest.fixture(scope="module")
-def reconciler_spans(policy_lifecycle_trace, effective_policies_span):
-    """Dict of reconciler spans (by operation name)"""
-    trace = policy_lifecycle_trace["trace"]
-
-    # Get all reconciler children
-    reconcilers = {}
-    for span in trace.get_children(effective_policies_span.span_id):
-        if span.operation_name.startswith("reconciler."):
-            reconcilers[span.operation_name] = span
-
-    return reconcilers
+    return found_trace
 
 
 @pytest.mark.parametrize("policy_lifecycle_trace", ["authorization", "rate_limit"], indirect=True)
-def test_policy_lifecycle_has_consistent_metadata(policy_lifecycle_trace, policy_validate_span, policy_status_span):
+def test_policy_lifecycle_has_consistent_metadata(request, policy_lifecycle_trace):
     """Validate policy metadata is consistent across validation and status update phases"""
-    policy = policy_lifecycle_trace["policy"]
-    policy_kind = policy_lifecycle_trace["policy_kind"]
+    # Get policy info from parameterization
+    policy_fixture_name = getattr(request, "param", "authorization")
+    policy = request.getfixturevalue(policy_fixture_name)
+    policy_kind = "AuthPolicy" if "auth" in policy_fixture_name else "RateLimitPolicy"
 
-    # Same policy metadata in both phases
-    assert policy_validate_span.get_tag("policy.uid") == policy_status_span.get_tag("policy.uid")
-    assert policy_validate_span.get_tag("policy.name") == policy.name()
-    assert policy_status_span.get_tag("policy.name") == policy.name()
-    assert policy_validate_span.get_tag("policy.namespace") == policy.namespace()
-    assert policy_status_span.get_tag("policy.namespace") == policy.namespace()
-    assert policy_validate_span.get_tag("policy.kind") == policy_kind
-    assert policy_status_span.get_tag("policy.kind") == policy_kind
+    # Extract validation and status spans directly
+    validate_span = policy_lifecycle_trace.filter_spans(
+        lambda s: s.operation_name == f"policy.{policy_kind}.validate" and s.get_tag("policy.name") == policy.name()
+    )[0]
+
+    status_span = policy_lifecycle_trace.filter_spans(
+        lambda s: s.operation_name == f"policy.{policy_kind}"
+        and s.get_tag("policy.name") == policy.name()
+        and s.has_log_field("event", "policy status updated successfully")
+    )[0]
+
+    # Validate span metadata
+    assert validate_span.get_tag("policy.uid") == status_span.get_tag("policy.uid")
+    assert validate_span.get_tag("policy.name") == policy.name()
+    assert validate_span.get_tag("policy.namespace") == policy.namespace()
+    assert validate_span.get_tag("policy.kind") == policy_kind
+
+    # Status span metadata (should match validation)
+    assert status_span.get_tag("policy.name") == policy.name()
+    assert status_span.get_tag("policy.namespace") == policy.namespace()
+    assert status_span.get_tag("policy.kind") == policy_kind
 
 
 @pytest.mark.parametrize("policy_lifecycle_trace", ["authorization", "rate_limit"], indirect=True)
-def test_policy_validation_before_status_update(policy_validate_span, policy_status_span):
+def test_policy_validation_before_status_update(request, policy_lifecycle_trace):
     """Validate policy validation happens before status update in the trace"""
-    assert (
-        policy_validate_span.start_time < policy_status_span.start_time
-    ), "Validation should happen before status update"
+    # Get policy info from parameterization
+    policy_fixture_name = getattr(request, "param", "authorization")
+    policy = request.getfixturevalue(policy_fixture_name)
+    policy_kind = "AuthPolicy" if "auth" in policy_fixture_name else "RateLimitPolicy"
+
+    # Extract spans directly
+    validate_span = policy_lifecycle_trace.filter_spans(
+        lambda s: s.operation_name == f"policy.{policy_kind}.validate" and s.get_tag("policy.name") == policy.name()
+    )[0]
+
+    status_span = policy_lifecycle_trace.filter_spans(
+        lambda s: s.operation_name == f"policy.{policy_kind}"
+        and s.get_tag("policy.name") == policy.name()
+        and s.has_log_field("event", "policy status updated successfully")
+    )[0]
+
+    assert validate_span.start_time < status_span.start_time, "Validation should happen before status update"
 
 
 @pytest.mark.parametrize("policy_lifecycle_trace", ["authorization", "rate_limit"], indirect=True)
-def test_policy_spans_have_correct_log_messages(policy_validate_span, policy_status_span):
+def test_policy_spans_have_correct_log_messages(request, policy_lifecycle_trace):
     """Validate policy spans have expected log messages"""
-    assert policy_validate_span.has_log_field("event", "policy validated successfully")
-    assert policy_status_span.has_log_field("event", "policy status updated successfully")
+    # Get policy info from parameterization
+    policy_fixture_name = getattr(request, "param", "authorization")
+    policy = request.getfixturevalue(policy_fixture_name)
+    policy_kind = "AuthPolicy" if "auth" in policy_fixture_name else "RateLimitPolicy"
+
+    # Extract spans directly
+    validate_span = policy_lifecycle_trace.filter_spans(
+        lambda s: s.operation_name == f"policy.{policy_kind}.validate" and s.get_tag("policy.name") == policy.name()
+    )[0]
+
+    status_span = policy_lifecycle_trace.filter_spans(
+        lambda s: s.operation_name == f"policy.{policy_kind}"
+        and s.get_tag("policy.name") == policy.name()
+        and s.has_log_field("event", "policy status updated successfully")
+    )[0]
+
+    assert validate_span.has_log_field("event", "policy validated successfully")
+    assert status_span.has_log_field("event", "policy status updated successfully")
 
 
 @pytest.mark.parametrize("policy_lifecycle_trace", ["authorization", "rate_limit"], indirect=True)
-def test_policy_spans_are_in_workflow_hierarchy(policy_lifecycle_trace, policy_validate_span, policy_status_span):
+def test_policy_spans_are_in_workflow_hierarchy(request, policy_lifecycle_trace):
     """Validate policy spans are part of workflow.data_plane_policies hierarchy"""
-    trace = policy_lifecycle_trace["trace"]
+    # Get policy info from parameterization
+    policy_fixture_name = getattr(request, "param", "authorization")
+    policy = request.getfixturevalue(policy_fixture_name)
+    policy_kind = "AuthPolicy" if "auth" in policy_fixture_name else "RateLimitPolicy"
+
+    # Extract spans directly
+    validate_span = policy_lifecycle_trace.filter_spans(
+        lambda s: s.operation_name == f"policy.{policy_kind}.validate" and s.get_tag("policy.name") == policy.name()
+    )[0]
+
+    status_span = policy_lifecycle_trace.filter_spans(
+        lambda s: s.operation_name == f"policy.{policy_kind}"
+        and s.get_tag("policy.name") == policy.name()
+        and s.has_log_field("event", "policy status updated successfully")
+    )[0]
 
     # Validation span hierarchy
-    validation_parent = trace.get_span_by_id(policy_validate_span.get_parent_id())
+    validation_parent = policy_lifecycle_trace.get_span_by_id(validate_span.get_parent_id())
     assert validation_parent is not None
     assert validation_parent.operation_name.startswith("validator.")
 
-    validation_grandparent = trace.get_span_by_id(validation_parent.get_parent_id())
+    validation_grandparent = policy_lifecycle_trace.get_span_by_id(validation_parent.get_parent_id())
     assert validation_grandparent is not None
     assert validation_grandparent.operation_name == "validation"
 
-    validation_great_grandparent = trace.get_span_by_id(validation_grandparent.get_parent_id())
+    validation_great_grandparent = policy_lifecycle_trace.get_span_by_id(validation_grandparent.get_parent_id())
     assert validation_great_grandparent is not None
     assert validation_great_grandparent.operation_name == "workflow.data_plane_policies"
 
     # Status span hierarchy
-    status_parent = trace.get_span_by_id(policy_status_span.get_parent_id())
+    status_parent = policy_lifecycle_trace.get_span_by_id(status_span.get_parent_id())
     assert status_parent is not None
     assert status_parent.operation_name.startswith("status.")
 
-    status_grandparent = trace.get_span_by_id(status_parent.get_parent_id())
+    status_grandparent = policy_lifecycle_trace.get_span_by_id(status_parent.get_parent_id())
     assert status_grandparent is not None
     assert status_grandparent.operation_name == "status_update"
 
-    status_great_grandparent = trace.get_span_by_id(status_grandparent.get_parent_id())
+    status_great_grandparent = policy_lifecycle_trace.get_span_by_id(status_grandparent.get_parent_id())
     assert status_great_grandparent is not None
     assert status_great_grandparent.operation_name == "workflow.data_plane_policies"
 
 
 @pytest.mark.parametrize("policy_lifecycle_trace", ["authorization", "rate_limit"], indirect=True)
-def test_controller_reconcile_includes_event_details(policy_lifecycle_trace, controller_reconcile_span):
+def test_controller_reconcile_includes_event_details(request, policy_lifecycle_trace):
     """Validate controller.reconcile span has event details"""
-    policy_kind = policy_lifecycle_trace["policy_kind"]
+    # Get policy info from parameterization
+    policy_fixture_name = getattr(request, "param", "authorization")
+    policy_kind = "AuthPolicy" if "auth" in policy_fixture_name else "RateLimitPolicy"
 
-    assert controller_reconcile_span.has_tag("event_kinds")
+    # Extract reconcile span directly
+    reconcile_span = policy_lifecycle_trace.filter_spans(
+        lambda s: s.operation_name == "controller.reconcile" and s.has_tag("event_kinds", f"{policy_kind}.kuadrant.io")
+    )[0]
 
-    event_kinds = str(controller_reconcile_span.get_tag("event_kinds"))
+    assert reconcile_span.has_tag("event_kinds")
+
+    event_kinds = str(reconcile_span.get_tag("event_kinds"))
     assert f"{policy_kind}.kuadrant.io" in event_kinds, f"event_kinds should contain {policy_kind}.kuadrant.io"
 
-    assert controller_reconcile_span.has_tag("event_count") or controller_reconcile_span.has_tag("events.count")
+    assert reconcile_span.has_tag("event_count") or reconcile_span.has_tag("events.count")
 
 
 @pytest.mark.parametrize(
@@ -179,8 +198,18 @@ def test_controller_reconcile_includes_event_details(policy_lifecycle_trace, con
     ],
     indirect=["policy_lifecycle_trace"],
 )
-def test_policy_specific_reconcilers_executed(reconciler_spans, expected_reconcilers):
+def test_policy_specific_reconcilers_executed(policy_lifecycle_trace, expected_reconcilers):
     """Validate policy-specific reconcilers are executed"""
+    # Find effective_policies span
+    effective_policies_span = policy_lifecycle_trace.filter_spans(lambda s: s.operation_name == "effective_policies")[0]
+
+    # Get all reconciler children
+    reconciler_spans = {}
+    for span in policy_lifecycle_trace.get_children(effective_policies_span.span_id):
+        if span.operation_name.startswith("reconciler."):
+            reconciler_spans[span.operation_name] = span
+
+    # Verify expected reconcilers exist and succeeded
     for expected_reconciler in expected_reconcilers:
         assert expected_reconciler in reconciler_spans, f"Should have {expected_reconciler} reconciler span"
 
@@ -189,23 +218,29 @@ def test_policy_specific_reconcilers_executed(reconciler_spans, expected_reconci
 
 
 @pytest.mark.parametrize("policy_lifecycle_trace", ["authorization", "rate_limit"], indirect=True)
-def test_effective_policies_computed_before_reconcilers(
-    policy_lifecycle_trace, effective_policies_span, reconciler_spans
-):
+def test_effective_policies_computed_before_reconcilers(policy_lifecycle_trace):
     """Validate effective policies are computed before reconcilers run."""
-    trace = policy_lifecycle_trace["trace"]
+    # Find effective_policies span
+    effective_policies_span = policy_lifecycle_trace.filter_spans(lambda s: s.operation_name == "effective_policies")[0]
 
     # Find effective_policies.compute child
     compute_spans = [
         s
-        for s in trace.get_children(effective_policies_span.span_id)
+        for s in policy_lifecycle_trace.get_children(effective_policies_span.span_id)
         if s.operation_name == "effective_policies.compute"
     ]
     assert len(compute_spans) > 0, "Should have effective_policies.compute span"
     compute_span = compute_spans[0]
 
+    # Get all reconciler children
+    reconciler_spans = [
+        span
+        for span in policy_lifecycle_trace.get_children(effective_policies_span.span_id)
+        if span.operation_name.startswith("reconciler.")
+    ]
+
     # All reconcilers should start after compute finishes
-    for reconciler_span in reconciler_spans.values():
+    for reconciler_span in reconciler_spans:
         assert (
             compute_span.start_time + compute_span.duration <= reconciler_span.start_time
         ), f"{reconciler_span.operation_name} should start after effective_policies.compute finishes"

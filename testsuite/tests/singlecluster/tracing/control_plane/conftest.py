@@ -63,7 +63,6 @@ def auth_traces(authorization, tracing, skip_or_fail) -> list[Trace]:
     """
     if authorization is None:
         skip_or_fail("AuthPolicy fixture not available (may be running in standalone mode)")
-        return []
 
     policy_name = authorization.name()
     query_tags = {"policy.name": policy_name}
@@ -84,7 +83,6 @@ def rl_traces(rate_limit, tracing, skip_or_fail) -> list[Trace]:
     """
     if rate_limit is None:
         skip_or_fail("RateLimitPolicy fixture not available (may be running in standalone mode)")
-        return []
 
     policy_name = rate_limit.name()
     query_tags = {"policy.name": policy_name}
