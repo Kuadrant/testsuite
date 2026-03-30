@@ -22,6 +22,9 @@ class BasePolicyNewPage(Navigable):
 class BasePolicyNewPageYaml(BasePolicyNewPage):
     """Base class for YAML-based policy creation pages"""
 
+    # Set to False in subclasses for policies that require more complex setup for enforcement
+    check_enforcement = True
+
     def __init__(self, page: Page):
         super().__init__(page)
         self.editor = page.locator("div.monaco-editor[data-uri]").first
@@ -62,12 +65,13 @@ class BasePolicyNewPageYaml(BasePolicyNewPage):
         self.create_btn.click()
 
         # Wait for the details page to load and display confirmation
-        # Policy enforcement can take time as it waits for the controller to reconcile
         self.page.wait_for_selector(f"text={self.policy_type} details", timeout=UI_PAGE_LOAD_TIMEOUT)
-        self.page.wait_for_selector(f"text={self.policy_type} has been accepted", timeout=UI_PAGE_LOAD_TIMEOUT)
-        self.page.wait_for_selector(
-            f"text={self.policy_type} has been successfully enforced", timeout=UI_PAGE_LOAD_TIMEOUT
-        )
+        if self.check_enforcement:
+            # Policy enforcement can take time as it waits for the controller to reconcile
+            self.page.wait_for_selector(f"text={self.policy_type} has been accepted", timeout=UI_PAGE_LOAD_TIMEOUT)
+            self.page.wait_for_selector(
+                f"text={self.policy_type} has been successfully enforced", timeout=UI_PAGE_LOAD_TIMEOUT
+            )
 
     def is_displayed(self):
         """Returns the editor and create button locators"""
