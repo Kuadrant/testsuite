@@ -128,29 +128,23 @@ def test_policy_deletion_triggers_reconciliation_traces(temp_deletion_policy, tr
     data_plane_workflow = []
     for trace in deletion_traces:
         data_plane_workflow.extend(
-            trace.filter_spans(
-                lambda s: s.operation_name == "workflow.data_plane_policies" and s.duration > 0
-            )
+            trace.filter_spans(lambda s: s.operation_name == "workflow.data_plane_policies" and s.duration > 0)
         )
 
-    assert len(data_plane_workflow) > 0, (
-        f"Expected workflow.data_plane_policies spans with meaningful duration (>0μs) "
-        "after policy deletion"
-    )
+    assert (
+        len(data_plane_workflow) > 0
+    ), "Expected workflow.data_plane_policies spans with meaningful duration (>0μs) after policy deletion"
 
     # Verify we see effective_policies computation with non-trivial duration
     effective_policies_spans = []
     for trace in deletion_traces:
         effective_policies_spans.extend(
-            trace.filter_spans(
-                lambda s: s.operation_name == "effective_policies" and s.duration > 0
-            )
+            trace.filter_spans(lambda s: s.operation_name == "effective_policies" and s.duration > 0)
         )
 
-    assert len(effective_policies_spans) > 0, (
-        f"Expected effective_policies computation with meaningful duration (>0μs) "
-        "after policy deletion"
-    )
+    assert (
+        len(effective_policies_spans) > 0
+    ), "Expected effective_policies computation with meaningful duration (>0μs) after policy deletion"
 
 
 @pytest.fixture(scope="function")
