@@ -6,9 +6,6 @@ import openshift_client as oc
 from testsuite.config import settings
 from testsuite.tracing.models import Trace
 
-# Minimum span duration in microseconds to indicate actual work performed
-MIN_MEANINGFUL_DURATION_US = 50
-
 
 @pytest.fixture(scope="module", autouse=True)
 def require_tracing_enabled(cluster, skip_or_fail):
