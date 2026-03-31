@@ -6,29 +6,27 @@ import hashlib
 
 import pytest
 
+from testsuite.tests.conftest import skip_or_fail
+
 pytestmark = [pytest.mark.observability, pytest.mark.limitador, pytest.mark.authorino, pytest.mark.kuadrant_only]
 
 
 @pytest.fixture(scope="module")
-def wasm_config_span(tracing, authorization, rate_limit):
+def wasm_config_span(tracing, authorization, rate_limit, skip_or_fail):
     """Find BuildConfigForPath span containing both auth and rate limit policies"""
     traces = tracing.get_traces(service="kuadrant-operator")
 
     # Find BuildConfigForPath span that has both policies and matches our topology
     for trace in traces:
-        for span in trace.filter_spans(lambda s: s.operation_name == "wasm.BuildConfigForPath"):
-            source_policies = span.get_tag("source_policies")
+        spans = trace.filter_spans(
+            lambda s: s.operation_name == "wasm.BuildConfigForPath",
+            lambda s: f"authpolicy.kuadrant.io:kuadrant/{authorization.name()}" in str(s.get_tag("source_policies")),
+            lambda s: f"ratelimitpolicy.kuadrant.io:kuadrant/{rate_limit.name()}" in str(s.get_tag("source_policies")),
+        )
+        if spans:
+            return {"trace": trace, "span": spans[0]}
 
-            if not (
-                f"authpolicy.kuadrant.io:kuadrant/{authorization.name()}" in source_policies
-                and f"ratelimitpolicy.kuadrant.io:kuadrant/{rate_limit.name()}" in source_policies
-            ):
-                continue
-
-            # Return trace and span for child fixtures to use
-            return {"trace": trace, "span": span}
-
-    pytest.skip("No BuildConfigForPath span found with both policies for topology")
+    skip_or_fail("No BuildConfigForPath span found with both policies for topology")
 
 
 @pytest.fixture(scope="module")
