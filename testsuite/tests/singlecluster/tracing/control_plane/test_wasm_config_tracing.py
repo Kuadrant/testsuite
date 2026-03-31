@@ -6,8 +6,6 @@ import hashlib
 
 import pytest
 
-from testsuite.tests.conftest import skip_or_fail
-
 pytestmark = [pytest.mark.observability, pytest.mark.limitador, pytest.mark.authorino, pytest.mark.kuadrant_only]
 
 
@@ -27,10 +25,11 @@ def wasm_config_span(tracing, authorization, rate_limit, skip_or_fail):
             return {"trace": trace, "span": spans[0]}
 
     skip_or_fail("No BuildConfigForPath span found with both policies for topology")
+    return None
 
 
 @pytest.fixture(scope="module")
-def wasm_merge_span(wasm_config_span):
+def wasm_merge_span(wasm_config_span, skip_or_fail):
     """MergeAndVerifyActions child span of BuildConfigForPath"""
     trace = wasm_config_span["trace"]
     parent_span = wasm_config_span["span"]
@@ -39,13 +38,13 @@ def wasm_merge_span(wasm_config_span):
     merge_span = next((s for s in children if s.operation_name == "wasm.MergeAndVerifyActions"), None)
 
     if merge_span is None:
-        pytest.skip("No wasm.MergeAndVerifyActions child span found")
+        skip_or_fail("No wasm.MergeAndVerifyActions child span found")
 
     return merge_span
 
 
 @pytest.fixture(scope="module")
-def wasm_actionset_span(wasm_config_span):
+def wasm_actionset_span(wasm_config_span, skip_or_fail):
     """ActionSet.create child span of BuildConfigForPath"""
     trace = wasm_config_span["trace"]
     parent_span = wasm_config_span["span"]
@@ -54,13 +53,13 @@ def wasm_actionset_span(wasm_config_span):
     actionset_span = next((s for s in children if s.operation_name == "wasm.ActionSet.create"), None)
 
     if actionset_span is None:
-        pytest.skip("No wasm.ActionSet.create child span found")
+        skip_or_fail("No wasm.ActionSet.create child span found")
 
     return actionset_span
 
 
 @pytest.fixture(scope="module")
-def wasm_action_builder_span(wasm_config_span):
+def wasm_action_builder_span(wasm_config_span, skip_or_fail):
     """BuildActionSetsForPath child span of BuildConfigForPath"""
     trace = wasm_config_span["trace"]
     parent_span = wasm_config_span["span"]
@@ -69,7 +68,7 @@ def wasm_action_builder_span(wasm_config_span):
     builder_span = next((s for s in children if s.operation_name == "wasm.BuildActionSetsForPath"), None)
 
     if builder_span is None:
-        pytest.skip("No wasm.BuildActionSetsForPath child span found")
+        skip_or_fail("No wasm.BuildActionSetsForPath child span found")
 
     return builder_span
 
