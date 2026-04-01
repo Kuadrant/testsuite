@@ -8,11 +8,18 @@ pytestmark = [pytest.mark.observability, pytest.mark.limitador, pytest.mark.auth
 
 
 @pytest.fixture(scope="module")
-def policy_lifecycle_trace(request, tracing, skip_or_fail):
-    """Find trace containing complete policy lifecycle (validation + status update)"""
+def policy_params(request):
+    """Get policy fixture and determine its kind from parametrization"""
     policy_fixture_name = getattr(request, "param", "authorization")
     policy = request.getfixturevalue(policy_fixture_name)
     policy_kind = "AuthPolicy" if "auth" in policy_fixture_name else "RateLimitPolicy"
+    return policy, policy_kind
+
+
+@pytest.fixture(scope="module")
+def policy_lifecycle_trace(policy_params, tracing, skip_or_fail):
+    """Find trace containing complete policy lifecycle (validation + status update)"""
+    policy, policy_kind = policy_params
 
     traces = tracing.get_traces(service="kuadrant-operator", tags={"policy.name": policy.name()})
 
@@ -42,14 +49,14 @@ def policy_lifecycle_trace(request, tracing, skip_or_fail):
     if found_trace is None:
         skip_or_fail(f"Traces for reconciling policy {policy.name()} were not found")
 
-    # Return tuple: (trace, policy, policy_kind) so tests can extract the right spans
-    return found_trace, policy, policy_kind
+    return found_trace
 
 
-@pytest.mark.parametrize("policy_lifecycle_trace", ["authorization", "rate_limit"], indirect=True)
-def test_policy_lifecycle_has_consistent_metadata(policy_lifecycle_trace):
+@pytest.mark.parametrize("policy_params", ["authorization", "rate_limit"], indirect=True)
+def test_policy_lifecycle_has_consistent_metadata(policy_params, policy_lifecycle_trace):
     """Validate policy metadata is consistent across validation and status update phases"""
-    trace, policy, policy_kind = policy_lifecycle_trace
+    policy, policy_kind = policy_params
+    trace = policy_lifecycle_trace
 
     validate_span = trace.filter_spans(
         lambda s: s.operation_name == f"policy.{policy_kind}.validate" and s.get_tag("policy.name") == policy.name()
@@ -71,10 +78,11 @@ def test_policy_lifecycle_has_consistent_metadata(policy_lifecycle_trace):
     assert status_span.get_tag("policy.kind") == policy_kind
 
 
-@pytest.mark.parametrize("policy_lifecycle_trace", ["authorization", "rate_limit"], indirect=True)
-def test_policy_validation_before_status_update(policy_lifecycle_trace):
+@pytest.mark.parametrize("policy_params", ["authorization", "rate_limit"], indirect=True)
+def test_policy_validation_before_status_update(policy_params, policy_lifecycle_trace):
     """Validate policy validation happens before status update in the trace"""
-    trace, policy, policy_kind = policy_lifecycle_trace
+    policy, policy_kind = policy_params
+    trace = policy_lifecycle_trace
 
     # Extract spans directly
     validate_span = trace.filter_spans(
@@ -90,10 +98,11 @@ def test_policy_validation_before_status_update(policy_lifecycle_trace):
     assert validate_span.start_time < status_span.start_time, "Validation should happen before status update"
 
 
-@pytest.mark.parametrize("policy_lifecycle_trace", ["authorization", "rate_limit"], indirect=True)
-def test_policy_spans_have_correct_log_messages(policy_lifecycle_trace):
+@pytest.mark.parametrize("policy_params", ["authorization", "rate_limit"], indirect=True)
+def test_policy_spans_have_correct_log_messages(policy_params, policy_lifecycle_trace):
     """Validate policy spans have expected log messages"""
-    trace, policy, policy_kind = policy_lifecycle_trace
+    policy, policy_kind = policy_params
+    trace = policy_lifecycle_trace
 
     # Extract spans directly
     validate_span = trace.filter_spans(
@@ -110,10 +119,11 @@ def test_policy_spans_have_correct_log_messages(policy_lifecycle_trace):
     assert status_span.has_log_field("event", "policy status updated successfully")
 
 
-@pytest.mark.parametrize("policy_lifecycle_trace", ["authorization", "rate_limit"], indirect=True)
-def test_policy_spans_are_in_workflow_hierarchy(policy_lifecycle_trace):
+@pytest.mark.parametrize("policy_params", ["authorization", "rate_limit"], indirect=True)
+def test_policy_spans_are_in_workflow_hierarchy(policy_params, policy_lifecycle_trace):
     """Validate policy spans are part of workflow.data_plane_policies hierarchy"""
-    trace, policy, policy_kind = policy_lifecycle_trace
+    policy, policy_kind = policy_params
+    trace = policy_lifecycle_trace
 
     # Extract spans directly
     validate_span = trace.filter_spans(
@@ -153,10 +163,11 @@ def test_policy_spans_are_in_workflow_hierarchy(policy_lifecycle_trace):
     assert status_great_grandparent.operation_name == "workflow.data_plane_policies"
 
 
-@pytest.mark.parametrize("policy_lifecycle_trace", ["authorization", "rate_limit"], indirect=True)
-def test_controller_reconcile_includes_event_details(policy_lifecycle_trace):
+@pytest.mark.parametrize("policy_params", ["authorization", "rate_limit"], indirect=True)
+def test_controller_reconcile_includes_event_details(policy_params, policy_lifecycle_trace):
     """Validate controller.reconcile span has event details"""
-    trace, _, policy_kind = policy_lifecycle_trace
+    _, policy_kind = policy_params
+    trace = policy_lifecycle_trace
 
     # Extract reconcile span directly
     reconcile_span = trace.filter_spans(
@@ -172,7 +183,7 @@ def test_controller_reconcile_includes_event_details(policy_lifecycle_trace):
 
 
 @pytest.mark.parametrize(
-    "policy_lifecycle_trace,expected_reconcilers",
+    "policy_params,expected_reconcilers",
     [
         (
             "authorization",
@@ -180,11 +191,11 @@ def test_controller_reconcile_includes_event_details(policy_lifecycle_trace):
         ),
         ("rate_limit", ["reconciler.limitador_limits", "reconciler.istio_ratelimit_cluster"]),
     ],
-    indirect=["policy_lifecycle_trace"],
+    indirect=["policy_params"],
 )
-def test_policy_specific_reconcilers_executed(policy_lifecycle_trace, expected_reconcilers):
+def test_policy_specific_reconcilers_executed(policy_params, policy_lifecycle_trace, expected_reconcilers):
     """Validate policy-specific reconcilers are executed"""
-    trace, _, _ = policy_lifecycle_trace
+    trace = policy_lifecycle_trace
 
     # Find effective_policies span
     effective_policies_span = trace.filter_spans(lambda s: s.operation_name == "effective_policies")[0]
@@ -203,10 +214,10 @@ def test_policy_specific_reconcilers_executed(policy_lifecycle_trace, expected_r
         assert span.get_tag("otel.status_code") == "OK"
 
 
-@pytest.mark.parametrize("policy_lifecycle_trace", ["authorization", "rate_limit"], indirect=True)
-def test_effective_policies_computed_before_reconcilers(policy_lifecycle_trace):
+@pytest.mark.parametrize("policy_params", ["authorization", "rate_limit"], indirect=True)
+def test_effective_policies_computed_before_reconcilers(policy_params, policy_lifecycle_trace):
     """Validate effective policies are computed before reconcilers run."""
-    trace, _, _ = policy_lifecycle_trace
+    trace = policy_lifecycle_trace
 
     # Find effective_policies span
     effective_policies_span = trace.filter_spans(lambda s: s.operation_name == "effective_policies")[0]
