@@ -174,8 +174,6 @@ def test_controller_reconcile_includes_event_details(policy_params, policy_lifec
         lambda s: s.operation_name == "controller.reconcile" and s.has_tag("event_kinds", f"{policy_kind}.kuadrant.io")
     )[0]
 
-    assert reconcile_span.has_tag("event_kinds")
-
     event_kinds = str(reconcile_span.get_tag("event_kinds"))
     assert f"{policy_kind}.kuadrant.io" in event_kinds, f"event_kinds should contain {policy_kind}.kuadrant.io"
 

@@ -58,9 +58,6 @@ def auth_traces(authorization, tracing, skip_or_fail) -> list[Trace]:
     """
     Fetches and validates traces for AuthPolicy.
     """
-    if authorization is None:
-        skip_or_fail("AuthPolicy fixture not available (may be running in standalone mode)")
-
     policy_name = authorization.name()
     query_tags = {"policy.name": policy_name}
     traces = tracing.get_traces(service="kuadrant-operator", tags=query_tags)
