@@ -75,9 +75,6 @@ def rl_traces(rate_limit, tracing, skip_or_fail) -> list[Trace]:
     """
     Fetches and validates traces for RateLimitPolicy.
     """
-    if rate_limit is None:
-        skip_or_fail("RateLimitPolicy fixture not available (may be running in standalone mode)")
-
     policy_name = rate_limit.name()
     query_tags = {"policy.name": policy_name}
     traces = tracing.get_traces(service="kuadrant-operator", tags=query_tags)
