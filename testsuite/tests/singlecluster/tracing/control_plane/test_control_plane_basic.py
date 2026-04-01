@@ -193,7 +193,9 @@ def test_controller_reconcile_includes_event_details(policy_params, policy_lifec
     ],
     indirect=["policy_params"],
 )
-def test_policy_specific_reconcilers_executed(policy_params, policy_lifecycle_trace, expected_reconcilers):
+def test_policy_specific_reconcilers_executed(
+    policy_params, policy_lifecycle_trace, expected_reconcilers
+):  # pylint: disable=unused-argument
     """Validate policy-specific reconcilers are executed"""
     trace = policy_lifecycle_trace
 
@@ -215,7 +217,9 @@ def test_policy_specific_reconcilers_executed(policy_params, policy_lifecycle_tr
 
 
 @pytest.mark.parametrize("policy_params", ["authorization", "rate_limit"], indirect=True)
-def test_effective_policies_computed_before_reconcilers(policy_params, policy_lifecycle_trace):
+def test_effective_policies_computed_before_reconcilers(
+    policy_params, policy_lifecycle_trace
+):  # pylint: disable=unused-argument
     """Validate effective policies are computed before reconcilers run."""
     trace = policy_lifecycle_trace
 
