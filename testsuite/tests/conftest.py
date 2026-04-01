@@ -3,6 +3,7 @@
 import signal
 from urllib.parse import urlparse
 import yaml
+import xml.dom.minidom
 
 import os
 
@@ -95,6 +96,20 @@ def pytest_report_header(config):
         images.append(image)
     config.stash[metadata_key]["Kuadrant"] = images
     return header
+
+
+def pytest_sessionfinish(session, exitstatus):  # pylint: disable=unused-argument
+    """Pretty-print JUnit XML files after test session"""
+    junit_xml = session.config.option.xmlpath
+    if junit_xml and os.path.exists(junit_xml):
+        try:
+            dom = xml.dom.minidom.parse(junit_xml)
+            pretty_xml = dom.toprettyxml(indent="  ")
+            with open(junit_xml, 'w', encoding='utf-8') as f:
+                f.write(pretty_xml)
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            # Don't fail the test run if formatting fails
+            print(f"Warning: Failed to format JUnit XML: {e}")
 
 
 @pytest.fixture(scope="session")
