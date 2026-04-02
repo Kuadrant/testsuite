@@ -14,6 +14,8 @@ import sys
 import re
 import json
 
+from jinja2 import Template
+
 import openshift_client as oc
 
 from testsuite.component_metadata import ReportPortalMetadataCollector
@@ -133,11 +135,11 @@ def rp_suite_description(record_testsuite_property):
 
 def get_cluster_information() -> str:
     """Cluster information collector"""
-    cluster_info = ""
+    cluster_info = {}
     try:
         collector = ReportPortalMetadataCollector()
         collector.collect_all_clusters()
-        cluster_info = collector.format_cluster_info()
+        cluster_info = collector.get_cluster_metadata()
     except (oc.OpenShiftPythonException, AttributeError, KeyError, ValidationError) as e:
         logger.error(f"Component metadata collection failed: {e}")
 
@@ -147,10 +149,29 @@ def get_cluster_information() -> str:
 @pytest.mark.skipif(not os.environ.get("COLLECTOR_ENABLE"), reason="collector was not excplicitly enabled")
 def test_launch_description(record_testsuite_property):
     """Direct modification of RP Lauch description via promoted attribute
-
-    description provided via commandline will be per-pended to this
+    description provided via commandline will be pre-pended to this
     """
-    launch_description = get_cluster_information()
+    cluster_data = get_cluster_information()
+    description_data = {"cluster_count": len(cluster_data), "clusters": cluster_data}
+    # jinja2 template
+    description_template = Template("""
+    {%- set cluster_word = "cluster" -%}
+    {%- if cluster_count > 1 -%}
+    {%- set cluster_word = "clusters" -%}
+    {%- endif -%}
+    **Environment Information ({{cluster_count}} {{cluster_word}})**
+    {%- for key, cluster in clusters.items() %}
+    - {{cluster.console_url}} ({{key}}):
+      {%- if cluster.ocp_version is defined %}
+      - OCP: {{cluster.ocp_version}}
+      {%- endif %}
+      {%- if cluster.metadata.kuadrant_image is defined %}
+      - kuadrant_image: {{cluster.metadata.kuadrant_image}}
+      {%- endif %}
+    {%- endfor %}
+    """)
+
+    launch_description = description_template.render(description_data)
 
     record_testsuite_property("__rp_launch_description", launch_description)
 

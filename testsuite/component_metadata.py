@@ -163,6 +163,10 @@ class ReportPortalMetadataCollector:
         property_value += f"Kuadrant:{cluster_data['metadata']['kuadrant_image']}"
         return property_value
 
+    def get_cluster_metadata(self)->dict:
+        """Getter to collected cluster metadata information"""
+        return self.all_cluster_metadata
+
     def format_cluster_info(self) -> str:
         """Format cluster metadata as markdown for ReportPortal launch description."""
         if not self.all_cluster_metadata:
