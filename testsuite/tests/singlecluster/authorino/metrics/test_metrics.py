@@ -1,5 +1,6 @@
 """Tests for integrity of the metrics endpoints"""
 
+import backoff
 import pytest
 
 pytestmark = [pytest.mark.observability, pytest.mark.authorino]
@@ -39,41 +40,49 @@ SERVER_METRICS_HISTOGRAM = [
 
 
 @pytest.fixture(scope="module")
-def metrics_keys(authorino, service_monitor, prometheus, client, auth):
-    """
-    Send a simple get request so that a few metrics can appear and
-    return all metrics defined for the Authorino metrics service
-    """
-    response = client.get("/get", auth=auth)
-    assert response.status_code == 200
-
+def metrics_labels(authorino, service_monitor, prometheus, client, auth):
+    """Send a request to generate metrics and return Prometheus query labels"""
     prometheus.wait_for_scrape(service_monitor, "/metrics")
     prometheus.wait_for_scrape(service_monitor, "/server-metrics")
 
-    return prometheus.get_metrics(labels={"service": authorino.metrics_service.name()}).names
+    response = client.get("/get", auth=auth)
+    assert response.status_code == 200
+
+    return {"service": authorino.metrics_service.name()}
+
+
+@pytest.fixture(scope="module")
+def metrics_keys(prometheus, metrics_labels):
+    """Return a function that checks if a metric exists, retrying for propagation delays"""
+
+    @backoff.on_predicate(backoff.constant, interval=10, jitter=None, max_tries=6)
+    def _has_metric(metric):
+        return metric in prometheus.get_metrics(labels=metrics_labels).names
+
+    return _has_metric
 
 
 @pytest.mark.parametrize("metric", METRICS)
 def test_metrics(metric, metrics_keys):
     """Test for metrics that Authorino export at the /metrics endpoint"""
-    assert metric in metrics_keys
+    assert metrics_keys(metric), f"Metric '{metric}' not found"
 
 
 @pytest.mark.parametrize("metric", METRICS_HISTOGRAM)
 def test_metrics_histogram(metric, metrics_keys):
     """Test for histogram metrics that Authorino export at the /metrics endpoint"""
     for suffix in ["_bucket", "_sum", "_count"]:
-        assert metric + suffix in metrics_keys
+        assert metrics_keys(metric + suffix), f"Metric '{metric + suffix}' not found"
 
 
 @pytest.mark.parametrize("metric", SERVER_METRICS)
 def test_server_metrics(metric, metrics_keys):
     """Test for metrics that Authorino export at the /server-metrics endpoint"""
-    assert metric in metrics_keys
+    assert metrics_keys(metric), f"Metric '{metric}' not found"
 
 
 @pytest.mark.parametrize("metric", SERVER_METRICS_HISTOGRAM)
 def test_server_metrics_histogram(metric, metrics_keys):
     """Test for histogram metrics that Authorino export at the /server-metrics endpoint"""
     for suffix in ["_bucket", "_sum", "_count"]:
-        assert metric + suffix in metrics_keys
+        assert metrics_keys(metric + suffix), f"Metric '{metric + suffix}' not found"

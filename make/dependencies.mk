@@ -62,12 +62,40 @@ create-cluster-issuer: ## Create self-signed ClusterIssuer for TLS testing
 		| kubectl apply -f -
 	@echo "ClusterIssuer 'kuadrant-qe-issuer' created"
 
-.PHONY: install-prometheus-crds
-install-prometheus-crds: ## Install only Prometheus Operator CRDs (ServiceMonitor, PodMonitor, etc.)
+.PHONY: install-prometheus
+install-prometheus: ## Install Prometheus stack (full or CRDs only based on INSTALL_PROMETHEUS)
+ifeq ($(INSTALL_PROMETHEUS),true)
+	@echo "Installing Prometheus stack $(PROMETHEUS_STACK_VERSION)..."
+	kubectl create namespace $(PROMETHEUS_NAMESPACE) || true
+	helm repo add prometheus-community https://prometheus-community.github.io/helm-charts --force-update
+	helm install prometheus prometheus-community/kube-prometheus-stack \
+		--version $(PROMETHEUS_STACK_VERSION) \
+		--namespace $(PROMETHEUS_NAMESPACE) \
+		--create-namespace \
+		--wait \
+		--timeout=$(HELM_TIMEOUT) \
+		--set prometheus.prometheusSpec.serviceMonitorSelectorNilUsesHelmValues=false \
+		--set prometheus.prometheusSpec.podMonitorSelectorNilUsesHelmValues=false \
+		--set prometheus.prometheusSpec.ruleSelectorNilUsesHelmValues=false \
+		--set prometheus.service.type=LoadBalancer
+	@echo "Prometheus stack installed in $(PROMETHEUS_NAMESPACE) namespace"
+	@echo ""
+	@echo "Waiting for LoadBalancer IP assignment..."
+	@kubectl wait --for=jsonpath='{.status.loadBalancer.ingress[0].ip}' \
+		svc/prometheus-kube-prometheus-prometheus -n $(PROMETHEUS_NAMESPACE) --timeout=60s 2>/dev/null || true
+	@PROM_URL=$$(kubectl get svc -n $(PROMETHEUS_NAMESPACE) prometheus-kube-prometheus-prometheus \
+		-o jsonpath='http://{.status.loadBalancer.ingress[0].ip}:9090' 2>/dev/null); \
+	if [ -n "$$PROM_URL" ]; then \
+		echo "Prometheus accessible at: $$PROM_URL"; \
+	else \
+		echo "WARNING: LoadBalancer IP not yet assigned. Run 'make get-prometheus-url' once ready."; \
+	fi
+else
 	@echo "Installing Prometheus Operator CRDs $(PROMETHEUS_OPERATOR_VERSION)..."
 	@curl -sL https://github.com/prometheus-operator/prometheus-operator/releases/download/$(PROMETHEUS_OPERATOR_VERSION)/stripped-down-crds.yaml | \
 		kubectl apply --server-side -f -
-	@echo "Prometheus CRDs installed"
+	@echo "Prometheus CRDs installed (to install full stack, use INSTALL_PROMETHEUS=true)"
+endif
 
 .PHONY: apply-additional-manifests
 apply-additional-manifests: ## Apply additional manifests from file (if ADDITIONAL_MANIFESTS is set)

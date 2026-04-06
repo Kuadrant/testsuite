@@ -79,6 +79,10 @@ settings = Dynaconf(
             "custom_metrics_apiserver.url",
             default=fetch_service_ip("custom-metrics-apiserver", protocol="http", port=8080),
         ),
+        DefaultValueValidator(
+            "prometheus.url",
+            default=fetch_service_ip("prometheus-kube-prometheus-prometheus", port=9090, namespace="monitoring"),
+        ),
     ],
     validate_only=["authorino", "kuadrant", "default_exposer", "control_plane"],
     loaders=["dynaconf.loaders.env_loader", "testsuite.config.openshift_loader", "testsuite.config.exposer"],
