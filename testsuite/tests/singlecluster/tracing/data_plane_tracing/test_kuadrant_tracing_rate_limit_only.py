@@ -3,16 +3,18 @@ Tests for distributed tracing with only a RateLimitPolicy configured (no AuthPol
 """
 
 import os
+
 import pytest
 
-from testsuite.kuadrant.policy.rate_limit import Limit
+from testsuite.kuadrant.policy.rate_limit import Limit, RateLimitPolicy
 
 pytestmark = [pytest.mark.observability, pytest.mark.limitador]
 
 
 @pytest.fixture(scope="module")
-def rate_limit(rate_limit):
+def rate_limit(cluster, blame, module_label, route):
     """Configures basic rate limit policy."""
+    rate_limit = RateLimitPolicy.create_instance(cluster, blame("limit"), route, labels={"testRun": module_label})
     rate_limit.add_limit("basic", [Limit(3, "10s")])
     return rate_limit
 
@@ -38,7 +40,7 @@ def trace_429(client, tracing):
     assert response_429.status_code == 429
 
     request_id = response_429.headers.get("x-request-id")
-    traces = tracing.get_trace(service="wasm-shim", min_processes=3, tags={"request_id": request_id})
+    traces = tracing.get_traces(service="wasm-shim", min_processes=3, tags={"request_id": request_id})
     assert len(traces) == 1, f"No trace was found in tracing backend with request_id: {request_id}"
     return traces[0]
 
@@ -49,9 +51,7 @@ def test_relevant_services_rate_limit_only(trace_429, label):
     Trace should not contain authorino since no authorization is involved.
     """
 
-    processes = trace_429["processes"]
-    process_services = {process["serviceName"] for process in processes.values()}
-
+    process_services = trace_429.get_process_services()
     services = ["wasm-shim", "limitador", f"{label}.kuadrant"]
     for service in services:
         assert service in process_services, f"Service '{service}' not found in trace processes: {process_services}"

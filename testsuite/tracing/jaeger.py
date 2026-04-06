@@ -1,12 +1,14 @@
 """Jaeger Tracing client"""
 
 import json
+from typing import Optional
 
 import backoff
 from apyproxy import ApyProxy
 from httpx import Client
 
 from testsuite.tracing import TracingClient
+from testsuite.tracing.models import Trace
 
 
 class JaegerClient(TracingClient):
@@ -31,40 +33,26 @@ class JaegerClient(TracingClient):
         return self._query_url
 
     @backoff.on_predicate(backoff.fibo, lambda x: x == [], max_tries=7, jitter=None)
-    def get_trace(self, service: str, tags: dict, min_processes: int = 0):
+    def get_traces(self, service: str, tags: Optional[dict[str, str]] = None, min_processes: int = 0) -> list[Trace]:
         """Gets trace from tracing backend Tempo or Jaeger.
-        If min_processes is set, retries until at least that many service processes are present."""
-        params = {"service": service, "tags": json.dumps(tags)}
-        traces = self.query.api.traces.get(params=params).json()["data"]
-        if not traces or (min_processes and len(traces[0]["processes"]) < min_processes):
-            return []
-        return traces
+        If min_processes is set, retries until at least that many service processes are present.
 
-    @staticmethod
-    def filter_spans(spans, operation_name=None, tags=None):
-        """Filters spans by operation name and/or tag values.
-        Tag matching checks if the expected value is contained in the span's tag value."""
-        result = spans
-        if operation_name:
-            result = [span for span in result if span.get("operationName") == operation_name]
+        Returns:
+            List of Trace objects
+        """
+        params = {"service": service}
         if tags:
-            for key, expected_value in tags.items():
-                result = [
-                    span
-                    for span in result
-                    if any(str(expected_value) in str(t["value"]) for t in span.get("tags", []) if t["key"] == key)
-                ]
-        return result
+            params["tags"] = json.dumps(tags)
 
-    @staticmethod
-    def get_tags_dict(span):
-        """Converts span tags list to dictionary for easier access."""
-        return {tag["key"]: tag["value"] for tag in span.get("tags", [])}
+        traces_data = self.query.api.traces.get(params=params).json()["data"]
+        if not traces_data:
+            return []
 
-    @staticmethod
-    def get_parent_id(span):
-        """Extracts parent span ID from the CHILD_OF reference. Returns None if no parent."""
-        for ref in span.get("references", []):
-            if ref["refType"] == "CHILD_OF":
-                return ref["spanID"]
-        return None
+        # Filter traces that meet min_processes requirement
+        if min_processes:
+            traces_data = [trace for trace in traces_data if len(trace.get("processes", {})) >= min_processes]
+            if not traces_data:
+                return []
+
+        # Convert to Trace objects
+        return [Trace.from_dict(trace_data) for trace_data in traces_data]

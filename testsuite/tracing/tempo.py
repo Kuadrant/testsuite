@@ -1,20 +1,32 @@
 """Tempo tracing"""
 
+from typing import Optional
+
 import backoff
 
 from testsuite.tracing.jaeger import JaegerClient
+from testsuite.tracing.models import Trace
 
 
 class RemoteTempoClient(JaegerClient):
     """Client to a Tempo that is deployed remotely"""
 
     @backoff.on_predicate(backoff.fibo, lambda x: x == [], max_tries=7, jitter=None)
-    def get_trace(self, service: str, tags: dict, min_processes: int = 0):
+    def get_traces(self, service: str, tags: Optional[dict[str, str]] = None, min_processes: int = 0) -> list[Trace]:
         """Gets trace from Tempo tracing backend.
-        If min_processes is set, retries until at least that many service processes are present."""
+        If min_processes is set, retries until at least that many service processes are present"""
         params = {"service.name": service}
-        params.update(tags)
-        traces = self.query.api.get_trace.get(params=params).json()["traces"]
-        if min_processes and traces and len(traces[0]["processes"]) < min_processes:
+        if tags:
+            params.update(tags)
+        traces_data = self.query.api.get_traces.get(params=params).json()["traces"]
+        if not traces_data:
             return []
-        return traces
+
+        # Filter traces that meet min_processes requirement
+        if min_processes:
+            traces_data = [trace for trace in traces_data if len(trace.get("processes", {})) >= min_processes]
+            if not traces_data:
+                return []
+
+        # Convert to Trace objects
+        return [Trace.from_dict(trace_data) for trace_data in traces_data]
