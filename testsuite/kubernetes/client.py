@@ -46,6 +46,11 @@ class KubernetesClient:
         return context
 
     @property
+    def kubeconfig_path(self):
+        """Returns kubeconfig path"""
+        return self._kubeconfig_path
+
+    @property
     def api_url(self):
         """Returns real API url"""
         return self._api_url or self.inspect_context(jsonpath="{.clusters[*].cluster.server}")
