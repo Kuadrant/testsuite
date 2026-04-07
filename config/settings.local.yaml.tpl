@@ -27,8 +27,6 @@
 #    url: "MOCKSERVER_URL"
 #    image: "MOCKSERVER_IMAGE"                  # Image to be used for self-deployed Mockserver
 #  tracing:
-#    backend: "jaeger"                          # Tracing backend (jaeger or tempo)
-#    collector_url: "rpc://jaeger-collector.tools.svc.cluster.local:4317"  # Collector endpoint (internal cluster DNS for Kind)
 #    query_url: "http://jaeger-query.tools.svc.cluster.local:80"           # Query UI endpoint (internal DNS or LoadBalancer IP)
 #  cfssl: "cfssl"  # Path to the CFSSL library for TLS tests
 #  service_protection:
