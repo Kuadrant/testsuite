@@ -1,21 +1,19 @@
 """Root conftest"""
 
-import signal
-from urllib.parse import urlparse
-import yaml
-import xml.dom.minidom
-
 import os
+import signal
+import xml.dom.minidom
+from urllib.parse import urlparse
 
+import yaml
 import pytest
 from pytest_metadata.plugin import metadata_key  # type: ignore
 from dynaconf import ValidationError
 from keycloak import KeycloakAuthenticationError
-from openshift_client import OpenShiftPythonException, selector
+from openshift_client import selector
 
 from testsuite.capabilities import has_kuadrant, kuadrant_version
 from testsuite.certificates import CFSSLClient
-from testsuite.component_metadata import ReportPortalMetadataCollector
 from testsuite.config import settings
 from testsuite.gateway import Exposer, CustomReference
 from testsuite.httpx import KuadrantClient
@@ -105,7 +103,7 @@ def pytest_sessionfinish(session, exitstatus):  # pylint: disable=unused-argumen
         try:
             dom = xml.dom.minidom.parse(junit_xml)
             pretty_xml = dom.toprettyxml(indent="  ")
-            with open(junit_xml, 'w', encoding='utf-8') as f:
+            with open(junit_xml, "w", encoding="utf-8") as f:
                 f.write(pretty_xml)
         except Exception as e:  # pylint: disable=broad-exception-caught
             # Don't fail the test run if formatting fails
