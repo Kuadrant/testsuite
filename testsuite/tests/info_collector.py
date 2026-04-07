@@ -19,6 +19,7 @@ from dynaconf import ValidationError
 from jinja2 import Template
 
 from testsuite.component_metadata import ReportPortalMetadataCollector
+from testsuite.template_utils import render_template
 from testsuite.config import settings
 
 logger = logging.getLogger(__name__)
@@ -69,25 +70,8 @@ def test_launch_description(record_testsuite_property):
     """
     cluster_data = get_cluster_information()
     description_data = {"cluster_count": len(cluster_data), "clusters": cluster_data}
-    # jinja2 template
-    description_template = Template("""
-    {%- set cluster_word = "cluster" -%}
-    {%- if cluster_count > 1 -%}
-    {%- set cluster_word = "clusters" -%}
-    {%- endif -%}
-    **Environment Information ({{cluster_count}} {{cluster_word}})**
-    {%- for key, cluster in clusters.items() %}
-    - {{cluster.console_url}} ({{key}}):
-      {%- if cluster.ocp_version is defined %}
-      - OCP: {{cluster.ocp_version}}
-      {%- endif %}
-      {%- if cluster.metadata.kuadrant_image is defined %}
-      - kuadrant_image: {{cluster.metadata.kuadrant_image}}
-      {%- endif %}
-    {%- endfor %}
-    """)
 
-    launch_description = description_template.render(description_data)
+    launch_description = render_template("reporting/launch_description.txt.j2", description_data)
 
     record_testsuite_property("__rp_launch_description", launch_description)
 
