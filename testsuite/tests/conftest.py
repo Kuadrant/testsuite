@@ -144,8 +144,8 @@ def pytest_collection_modifyitems(session, config, items):  # pylint: disable=un
             item.user_properties.append(("issue", issue))
 
         ## extracting test's docstring for RP
-        if item._obj.__doc__:
-            item.user_properties.append(["__rp_case_description", item._obj.__doc__])
+        if item.function.__doc__:
+            item.user_properties.append(["__rp_case_description", item.function.__doc__])
 
 
 @pytest.fixture(scope="session")

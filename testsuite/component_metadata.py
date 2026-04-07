@@ -51,7 +51,7 @@ class ReportPortalMetadataCollector:
     @staticmethod
     def _get_kuadrant_metadata(project) -> dict[str, str]:
         """Get kuadrant-operator image for Report Portal attributes."""
-        metadata = {}
+        metadata: dict[str, str] = {}
         deployment_name = "kuadrant-operator-controller-manager"
         container_name = "manager"
         try:

@@ -48,7 +48,7 @@ def rp_suite_description(record_testsuite_property):
     record_testsuite_property("__rp_suite_description", suite_description)
 
 
-def get_cluster_information() -> str:
+def get_cluster_information() -> dict:
     """Cluster information collector"""
     cluster_info = {}
     try:
