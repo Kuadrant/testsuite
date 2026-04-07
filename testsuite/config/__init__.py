@@ -41,7 +41,7 @@ settings = Dynaconf(
         ),
         DefaultValueValidator("tracing.backend", default="jaeger", is_in=["jaeger", "tempo"]),
         DefaultValueValidator(
-            "tracing.collector_url", default=fetch_service("jaeger-collector", protocol="rpc", port=4317)
+            "tracing.collector_url", default=fetch_service("jaeger-collector", protocol="http", port=4318)
         ),
         DefaultValueValidator("tracing.query_url", default=fetch_service_ip("jaeger-query", protocol="http", port=80)),
         Validator(
