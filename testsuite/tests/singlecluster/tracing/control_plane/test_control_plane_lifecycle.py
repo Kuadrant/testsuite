@@ -5,6 +5,8 @@ Tests policy lifecycle events including validation, updates, deletion,
 target changes, and multi-policy scenarios.
 """
 
+import time
+
 import pytest
 
 from testsuite.gateway.gateway_api.route import HTTPRoute
@@ -30,21 +32,30 @@ def updated_authorization(authorization, trace_snapshot_before_update):  # pylin
     """
     Authorization policy after update.
     (trace_snapshot_before_update ensures snapshot taken before update)
+    Returns tuple of (authorization, update_timestamp_micros)
     """
+    # Capture timestamp right before updating (in microseconds)
+    update_time = int(time.time() * 1_000_000)
+
     when_post = [Pattern("context.request.http.method", "eq", "POST")]
     authorization.authorization.add_opa_policy("opa", "allow { false }", when=when_post)
     authorization.wait_for_ready()
 
-    return authorization
+    return authorization, update_time
 
 
 def test_policy_update_generates_new_reconciliation_trace(updated_authorization, trace_snapshot_before_update, tracing):
     """
     Validate that policy updates generate new reconciliation traces
     """
+    authorization, update_time = updated_authorization
     snapshot = trace_snapshot_before_update
 
-    updated_traces = tracing.get_traces(service="kuadrant-operator", tags={"policy.name": updated_authorization.name()})
+    # Query for traces that started after the update timestamp
+    # The backoff decorator will retry until at least one trace appears
+    updated_traces = tracing.get_traces(
+        service="kuadrant-operator", tags={"policy.name": authorization.name()}, start_time=update_time
+    )
 
     # Find new reconcile spans (spans that weren't in the original snapshot)
     new_reconcile_spans = []
@@ -58,7 +69,7 @@ def test_policy_update_generates_new_reconciliation_trace(updated_authorization,
     # Find new policy spans (spans that weren't in the original snapshot)
     new_policy_spans = []
     for trace in updated_traces:
-        for span in trace.filter_spans(lambda s: s.get_tag("policy.name") == updated_authorization.name()):
+        for span in trace.filter_spans(lambda s: s.get_tag("policy.name") == authorization.name()):
             if span.span_id not in snapshot["span_ids"]:
                 new_policy_spans.append(span)
 
@@ -214,20 +225,27 @@ def authorization_with_changed_target(
     """
     Authorization policy with targetRef changed to second_route.
     (trace_snapshot_before_target_change ensures snapshot taken before change)
+    Returns tuple of (authorization, change_timestamp_micros)
     """
+    # Capture timestamp right before changing the target (in microseconds)
+    change_time = int(time.time() * 1_000_000)
+
     authorization.refresh()
     authorization.model.spec.targetRef = second_route.reference
     authorization.apply()
     authorization.wait_for_ready()
-    return authorization
+    return authorization, change_time
 
 
 def test_policy_target_change_traced(authorization_with_changed_target, trace_snapshot_before_target_change, tracing):
     """Validate traces when policy's targetRef changes"""
+    authorization, change_time = authorization_with_changed_target
     snapshot = trace_snapshot_before_target_change
 
+    # Query for traces that started after the target change timestamp
+    # The backoff decorator will retry until at least one trace appears
     updated_traces = tracing.get_traces(
-        service="kuadrant-operator", tags={"policy.name": authorization_with_changed_target.name()}
+        service="kuadrant-operator", tags={"policy.name": authorization.name()}, start_time=change_time
     )
 
     # Find new reconcile spans (spans that weren't in the original snapshot)
