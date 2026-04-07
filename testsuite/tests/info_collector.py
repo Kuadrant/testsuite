@@ -16,7 +16,6 @@ import sys
 import openshift_client as oc
 import pytest
 from dynaconf import ValidationError
-from jinja2 import Template
 
 from testsuite.component_metadata import ReportPortalMetadataCollector
 from testsuite.template_utils import render_template
@@ -36,11 +35,10 @@ def gather_cluster_versions() -> dict:
 
 
 @pytest.fixture(scope="session")
-def properties_collector(record_testsuite_property):
+def properties_collector(record_testsuite_property):  # pylint: disable=unused-argument
     """Main property collector - properties added here will be promoted to Launch level"""
     # Placeholder for any additional properties that need to be collected at session level
     # Properties can be added here if needed in the future
-    pass
 
 
 @pytest.fixture(scope="session")
@@ -127,7 +125,7 @@ def test_istio_properties(record_testsuite_property):
 
 
 @pytest.mark.skipif(not os.environ.get("COLLECTOR_ENABLE"), reason="collector was not excplicitly enabled")
-def test_collect(record_testsuite_property):
+def test_collect(record_testsuite_property):  # pylint: disable=unused-argument
     """Main collector entrypoint"""
     # Placeholder for now, if any miscellanous collection should be happening.
     # Otherwise it will be subject for removal.
@@ -136,7 +134,7 @@ def test_collect(record_testsuite_property):
 
 @pytest.mark.skipif(not os.environ.get("COLLECTOR_ENABLE"), reason="collector was not excplicitly enabled")
 def test_controller():
-
+    """Collect controller/host information (uname, argv)"""
     ## probably not worth it to collect uname from the pytest controller ?
     print(f"{os.uname()=}")
     # print(f'{os.=}')

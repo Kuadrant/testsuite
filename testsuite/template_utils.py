@@ -6,7 +6,15 @@ in the testsuite/templates/ directory.
 """
 
 from pathlib import Path
-from jinja2 import Environment, FileSystemLoader, select_autoescape, Template
+from jinja2 import (
+    Environment,
+    FileSystemLoader,
+    select_autoescape,
+    Template,
+    TemplateNotFound,
+    TemplateSyntaxError,
+    UndefinedError,
+)
 
 # Base template directory
 TEMPLATE_DIR = Path(__file__).parent / "templates"
@@ -85,17 +93,28 @@ if __name__ == "__main__":
     yaml_file = sys.argv[2]
 
     try:
-        with open(yaml_file, "r") as f:
+        with open(yaml_file, "r", encoding="utf-8") as f:
             context = yaml.safe_load(f)
-
-        output = render_template(template_path, context)
-        print(output, end="")
     except FileNotFoundError as e:
-        print(f"Error: {e}", file=sys.stderr)
+        print(f"Error: YAML file not found: {e}", file=sys.stderr)
         sys.exit(1)
     except yaml.YAMLError as e:
-        print(f"Error parsing YAML file: {e}", file=sys.stderr)
+        print(f"Error: Invalid YAML syntax: {e}", file=sys.stderr)
         sys.exit(1)
-    except Exception as e:
-        print(f"Error rendering template: {e}", file=sys.stderr)
+
+    try:
+        output = render_template(template_path, context)
+        print(output, end="")
+    except TemplateNotFound as e:
+        print(f"Error: Template not found: {e}", file=sys.stderr)
+        print(f"  Looking in: {TEMPLATE_DIR}", file=sys.stderr)
+        sys.exit(1)
+    except TemplateSyntaxError as e:
+        print(f"Error: Invalid template syntax at line {e.lineno}: {e.message}", file=sys.stderr)
+        sys.exit(1)
+    except UndefinedError as e:
+        print(f"Error: Missing or undefined variable in template: {e}", file=sys.stderr)
+        sys.exit(1)
+    except Exception as e:  # pylint: disable=broad-exception-caught
+        print(f"Error: Unexpected error rendering template: {e}", file=sys.stderr)
         sys.exit(1)
