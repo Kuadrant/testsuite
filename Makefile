@@ -33,7 +33,7 @@ testsuite/%: FORCE poetry-no-dev
 test pytest tests singlecluster: kuadrant  ## Run all single-cluster tests
 
 smoke: poetry-no-dev  ## Run a small amount of selected tests to verify basic functionality
-	$(PYTEST) -n4 -m 'smoke' --dist loadfile --enforce $(flags) testsuite/tests/ || true
+	$(PYTEST) -n4 -m 'smoke' --dist loadfile --enforce $(flags) testsuite/tests/
 
 kuadrant: poetry-no-dev  ## Run all tests available on Kuadrant
 	$(PYTEST) -n4 -m 'not standalone_only and not disruptive and not ui' --dist loadfile --enforce $(flags) testsuite/tests/singlecluster
@@ -45,7 +45,7 @@ authorino-standalone: poetry-no-dev  ## Run only test capable of running with st
 	$(PYTEST) -n4 -m 'authorino and not kuadrant_only and not disruptive' --dist loadfile --enforce --standalone $(flags) testsuite/tests/singlecluster/authorino/
 
 limitador: poetry-no-dev  ## Run only Limitador related tests
-	$(PYTEST) -n4 -m 'limitador and not disruptive' --dist loadfile --enforce $(flags) testsuite/tests/singlecluster/ || true
+	$(PYTEST) -n4 -m 'limitador and not disruptive' --dist loadfile --enforce $(flags) testsuite/tests/singlecluster/
 
 dnstls: poetry-no-dev  ## Run DNS and TLS tests
 	$(PYTEST) -n4 -m '(dnspolicy or tlspolicy) and not disruptive' --dist loadfile --enforce $(flags) testsuite/tests/singlecluster/

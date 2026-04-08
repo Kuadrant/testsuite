@@ -69,8 +69,8 @@ class ReportPortalMetadataCollector:
                         if "@" in image:
                             image = image.split("@")[0]
                         metadata["kuadrant_image"] = image
-        except (oc.OpenShiftPythonException, AttributeError, KeyError) as e:
-            logger.error("Failed to get kuadrant-operator image: %s", e)
+        except (oc.OpenShiftPythonException, AttributeError, KeyError, IndexError, ValueError) as e:
+            logger.warning("Failed to get kuadrant-operator image: %s", e)
         return metadata
 
     @staticmethod
@@ -95,8 +95,8 @@ class ReportPortalMetadataCollector:
                         parts = ocp_version.split(".")
                         if len(parts) >= 2:
                             return f"{parts[0]}.{parts[1]}"
-        except (oc.OpenShiftPythonException, AttributeError, KeyError) as e:
-            logger.warning(str(e))
+        except (oc.OpenShiftPythonException, AttributeError, KeyError, IndexError, ValueError) as e:
+            logger.warning("Failed to get OCP version: %s", e)
 
         return None
 
@@ -114,7 +114,7 @@ class ReportPortalMetadataCollector:
                 if match:
                     return match.groups()[0]
         except oc.OpenShiftPythonException as e:
-            logger.exception(e)
+            logger.warning("Failed to get Kubernetes version: %s", e)
         return None
 
     @staticmethod
@@ -125,25 +125,44 @@ class ReportPortalMetadataCollector:
             with project.context:
                 pods = oc.selector("pods").objects()
 
+            seen = set()
             for pod in pods:
                 for container in pod.model.spec.containers:
                     image = container.image
-                    if not image:
+                    if not image or image in seen:
                         continue
+                    seen.add(image)
                     print(f"{image=}")
                     if "@sha256" in image:
                         continue
                     image_name = image.split("/")[-1]
-                    if ":" in image_name:
-                        name, tag = image_name.rsplit(":", 1)
-                    else:
-                        name, tag = image_name, "latest"
+                    name, tag = image_name.rsplit(":", 1)
                     images.append((name, tag, image))
-                    print(f"{name}:{tag}")
-        except (IndexError, ValueError, oc.OpenShiftPythonException) as e:
-            logger.error("Failed to get images from %s: %s", project, e)
+        except (oc.OpenShiftPythonException, AttributeError, KeyError, IndexError, ValueError) as e:
+            logger.warning("Failed to get images from %s: %s", project, e)
 
         return images
+
+    @staticmethod
+    def get_istio_metadata(project) -> dict[str, str]:
+        """Get Istio version and istiod image from the cluster."""
+        metadata: dict[str, str] = {}
+        try:
+            with project.context:
+                istio = oc.selector("istio").objects()
+                if istio:
+                    version = istio[0].model.spec.version
+                    if version:
+                        metadata["istio_version"] = version
+
+                pods = oc.selector("pods", labels={"app": "istiod"}).objects()
+                if pods:
+                    image = pods[0].model.spec.containers[0].image
+                    if image:
+                        metadata["istiod_image"] = image
+        except (oc.OpenShiftPythonException, AttributeError, KeyError, IndexError, ValueError) as e:
+            logger.warning("Failed to get Istio metadata: %s", e)
+        return metadata
 
     def get_cluster_metadata(self) -> dict:
         """Getter to collected cluster metadata information."""
