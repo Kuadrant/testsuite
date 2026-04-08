@@ -24,7 +24,7 @@ def authconfig_trace(auth_traces, skip_or_fail):
         if spans:
             return trace
 
-    skip_or_fail("No trace with authconfig span containing 'sources' attribute found")
+    return skip_or_fail("No trace with authconfig span containing 'sources' attribute found")
 
 
 @pytest.fixture(scope="module")
@@ -36,7 +36,7 @@ def limitador_trace(rl_traces, skip_or_fail):
             return trace
 
     available_operations = list({span.operation_name for trace in rl_traces for span in trace.spans})[:20]
-    skip_or_fail(
+    return skip_or_fail(
         f"No trace with spans containing 'sources' attribute found in rate limit traces. "
         f"Available operations: {available_operations}"
     )
@@ -140,7 +140,7 @@ def authconfig_trace_multiple_policies(authorization, second_auth_policy, tracin
             if sources and (first_policy_ref in sources or second_policy_ref in sources):
                 return trace
 
-    skip_or_fail(
+    return skip_or_fail(
         f"No trace with authconfig span found with either policy. "
         f"Looking for {first_policy_ref} or {second_policy_ref} in sources"
     )
@@ -214,7 +214,9 @@ def limitador_trace_multiple_policies(rate_limit, second_rate_limit_policy, trac
             if sources and (first_policy_ref in sources or second_policy_ref in sources):
                 return trace
 
-    skip_or_fail(f"No trace found with either policy. Looking for {first_policy_ref} or {second_policy_ref} in sources")
+    return skip_or_fail(
+        f"No trace found with either policy. Looking for {first_policy_ref} or {second_policy_ref} in sources"
+    )
 
 
 def test_limitador_sources_contains_multiple_policies(
