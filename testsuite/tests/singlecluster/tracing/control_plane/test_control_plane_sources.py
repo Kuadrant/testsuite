@@ -35,11 +35,7 @@ def limitador_trace(rl_traces, skip_or_fail):
         if spans:
             return trace
 
-    available_operations = list({span.operation_name for trace in rl_traces for span in trace.spans})[:20]
-    return skip_or_fail(
-        f"No trace with spans containing 'sources' attribute found in rate limit traces. "
-        f"Available operations: {available_operations}"
-    )
+    return skip_or_fail("No trace with limits span containing 'sources' attribute found")
 
 
 def test_authconfig_span_attributes(authconfig_trace, authorization):
