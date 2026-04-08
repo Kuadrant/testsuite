@@ -136,8 +136,11 @@ class ReportPortalMetadataCollector:
                     if "@sha256" in image:
                         continue
                     image_name = image.split("/")[-1]
-                    name, tag = image_name.rsplit(":", 1)
-                    images.append((name, tag, image))
+                    if ":" in image_name:
+                        name, tag = image_name.rsplit(":", 1)
+                        images.append((name, tag, image))
+                    else:
+                        logger.debug("Skipping image without tag: %s", image)
         except (oc.OpenShiftPythonException, AttributeError, KeyError, IndexError, ValueError) as e:
             logger.warning("Failed to get images from %s: %s", project, e)
 
