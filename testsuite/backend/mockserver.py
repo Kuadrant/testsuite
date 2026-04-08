@@ -29,7 +29,7 @@ class MockserverBackend(Backend):
             self.cluster,
             self.name,
             selector=match_labels,
-            ports=[ServicePort(name="1080-tcp", port=8080, targetPort="api")],
+            ports=[ServicePort(name="http", port=8080, targetPort="api")],
             labels={"app": self.label},
             service_type="LoadBalancer",
         )

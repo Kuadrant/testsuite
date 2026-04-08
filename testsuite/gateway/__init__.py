@@ -101,10 +101,14 @@ class URLRewriteFilter:
     """URLRewriteFilter for HTTPRoute defines a filter that modifies a request during forwarding"""
 
     hostname: str
+    replace_prefix_match: Optional[str] = None
 
     def asdict(self):
         """Custom asdict to wrap as a Gateway API HTTPRoute filter"""
-        return {"type": "URLRewrite", "urlRewrite": {"hostname": self.hostname}}
+        url_rewrite: dict = {"hostname": self.hostname}
+        if self.replace_prefix_match is not None:
+            url_rewrite["path"] = {"type": "ReplacePrefixMatch", "replacePrefixMatch": self.replace_prefix_match}
+        return {"type": "URLRewrite", "urlRewrite": url_rewrite}
 
 
 @dataclass
