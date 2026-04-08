@@ -140,12 +140,13 @@ def pytest_collection_modifyitems(session, config, items):  # pylint: disable=un
 
     for item in items:
         for marker in item.iter_markers(name="issue"):
-            issue = marker.args[0]
-            item.user_properties.append(("issue", issue))
+            if marker.args:
+                item.user_properties.append(("issue", marker.args[0]))
 
         ## extracting test's docstring for RP
-        if item.function.__doc__:
-            item.user_properties.append(("__rp_case_description", item.function.__doc__))
+        func = getattr(item, "function", None)
+        if func and func.__doc__:
+            item.user_properties.append(("__rp_case_description", func.__doc__))
 
 
 @pytest.fixture(scope="session")

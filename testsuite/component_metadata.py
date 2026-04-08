@@ -113,7 +113,7 @@ class ReportPortalMetadataCollector:
                 match = re.match(r"v([0-9]+\.[0-9]+)(\.[0-9]+)?", kubernetes_version)
                 if match:
                     return match.groups()[0]
-        except oc.OpenShiftPythonException as e:
+        except (oc.OpenShiftPythonException, AttributeError, KeyError, IndexError, ValueError) as e:
             logger.warning("Failed to get Kubernetes version: %s", e)
         return None
 
