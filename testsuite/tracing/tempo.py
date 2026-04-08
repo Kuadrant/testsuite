@@ -17,7 +17,6 @@ class RemoteTempoClient(JaegerClient):
         service: str,
         tags: Optional[dict[str, str]] = None,
         min_processes: int = 0,
-        lookback: Optional[str] = None,
         start_time: Optional[int] = None,
     ) -> list[Trace]:
         """Gets trace from Tempo tracing backend.
@@ -25,10 +24,8 @@ class RemoteTempoClient(JaegerClient):
         params = {"service.name": service}
         if tags:
             params.update(tags)
-        if lookback:
-            params["lookback"] = lookback
         if start_time:
-            params["start"] = start_time
+            params["start"] = str(start_time)
         traces_data = self.query.api.get_traces.get(params=params).json()["traces"]
         if not traces_data:
             return []

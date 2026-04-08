@@ -28,10 +28,8 @@ class TracingClient(abc.ABC):
         service: str,
         tags: Optional[dict[str, str]] = None,
         min_processes: int = 0,
-        lookback: Optional[str] = None,
         start_time: Optional[int] = None,
     ) -> list[Any]:
         """Search traces in tracing client by service name and tags.
         If min_processes is set, retries until at least that many service processes are present.
-        If lookback is set, only returns traces within that time window (e.g., "1h", "30m").
         If start_time is set, only returns traces that started after that time (in microseconds)."""

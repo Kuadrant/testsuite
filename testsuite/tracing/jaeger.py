@@ -38,7 +38,6 @@ class JaegerClient(TracingClient):
         service: str,
         tags: Optional[dict[str, str]] = None,
         min_processes: int = 0,
-        lookback: Optional[str] = None,
         start_time: Optional[int] = None,
     ) -> list[Trace]:
         """Gets trace from tracing backend Tempo or Jaeger.
@@ -48,7 +47,6 @@ class JaegerClient(TracingClient):
             service: Service name to filter traces
             tags: Optional tags to filter traces
             min_processes: Minimum number of processes required in traces
-            lookback: Optional lookback duration (e.g., "1h", "30m", "1m")
             start_time: Optional start time in microseconds (filters traces that started after this time)
 
         Returns:
@@ -57,10 +55,8 @@ class JaegerClient(TracingClient):
         params = {"service": service}
         if tags:
             params["tags"] = json.dumps(tags)
-        if lookback:
-            params["lookback"] = lookback
         if start_time:
-            params["start"] = start_time
+            params["start"] = str(start_time)
 
         traces_data = self.query.api.traces.get(params=params).json()["data"]
         if not traces_data:
