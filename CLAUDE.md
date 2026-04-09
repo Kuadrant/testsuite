@@ -75,9 +75,71 @@ make clean               # Delete all test-created resources (uses USER env var)
 
 For PR title format and commit conventions, see `.claude/commands/pr-description.md` or use the `/pr-description` command.
 
-## Configuration
+## Configuration and Settings
+
+### Settings File
 
 Template with all configuration options: `config/settings.local.yaml.tpl`
+
+The testsuite uses Dynaconf for configuration management. Settings are loaded from `config/settings.yaml` and can be overridden via `config/settings.local.yaml` or environment variables with the `KUADRANT_` prefix (e.g., `KUADRANT_RHSSO__url`).
+
+### Cluster Connection (Required)
+
+The only required setting is a cluster connection. It can be set via either kubeconfig or token:
+
+```yaml
+default:
+  control_plane:
+    cluster:
+      kubeconfig_path: "~/.kube/config"         # Option 1: kubeconfig
+      # OR
+      api_url: "https://api.cluster.kuadrant-qe.net:6443"     # Option 2: API URL + token
+      token: "abcde12345_token"
+```
+
+### External Service Connections
+
+External services (Keycloak, Mockserver, Jaeger/Tempo, Redis, etc.) can be configured in two ways:
+
+1. **Auto-fetched from the cluster** (default): If services are deployed in the `tools` namespace on the test cluster, the testsuite automatically discovers their connection URLs via `DefaultValueValidator` in `testsuite/config/__init__.py`. The auto-fetch helpers (`fetch_service_ip`, `fetch_secret` in `testsuite/config/tools.py`) look up LoadBalancer IPs and secrets from the cluster.
+
+2. **Explicitly set in settings**: Override the auto-fetched values by specifying the URL directly in `config/settings.local.yaml` or via environment variables.
+
+```yaml
+default:
+  # Keycloak: auto-fetched from 'keycloak' service in tools namespace,
+  # password from 'credential-sso' secret. Override with explicit values:
+  keycloak:
+    url: "http://keycloak.example.com:8080"
+    username: "admin"
+    password: "admin-password"
+    test_user:
+      username: "testUser"  # name of the keycloak realm user for the tests
+      password: "testPassword"  # password of the keycloak realm user for the tests
+
+  # Mockserver: auto-fetched from 'mockserver' service in tools namespace.
+  # Override with explicit URL:
+  mockserver:
+    url: "http://10.0.25.192:1080"
+    image: "mockserver/mockserver:latest"       # Image for self-deployed MockserverBackend
+```
+
+If auto-fetch fails (service not found on cluster) and no explicit value is set, tests requiring that service are automatically skipped.
+
+### Settings Validation
+
+Settings validation is defined in `testsuite/config/__init__.py`. Validators run at startup for required settings and lazily for optional ones. Test fixtures validate their required config sections before use:
+
+```python
+@pytest.fixture(scope="session")
+def keycloak(request, testconfig, blame, skip_or_fail):
+    """Keycloak OIDC Provider fixture"""
+    testconfig.validators.validate(only="keycloak")  # Validates keycloak config section
+    cnf = testconfig["keycloak"]
+    # ... setup keycloak
+```
+
+Tests automatically skip when their required configuration is missing.
 
 ## Test Suite Structure
 
@@ -86,7 +148,7 @@ Template with all configuration options: `config/settings.local.yaml.tpl`
 **testsuite/tests/singlecluster/**: Single-cluster test scenarios
 - `authorino/`: Authorino-specific features (identity verification, metadata, authorization, response manipulation)
 - `limitador/`: Rate limiting tests
-- `gateway/`: Gateway API behavior tests
+- `gateway/`: Gateway API behavior tests (DNS/TLS policy)
 - `observability/`: Metrics and monitoring tests
 - `reconciliation/`: Resource reconciliation tests
 - `defaults/`: Default policy behavior
@@ -99,47 +161,44 @@ Template with all configuration options: `config/settings.local.yaml.tpl`
 
 ### Pytest Markers
 
-Tests use markers to categorize functionality. All available markers are defined in `pyproject.toml` under `[tool.pytest.ini_options]`.
+Tests use markers to categorize functionality. All available markers are defined in `pyproject.toml` under `[tool.pytest.ini_options]`. Common markers:
 
-### Customizing Fixtures
+- `@pytest.mark.authorino` - Authorino-specific tests
+- `@pytest.mark.limitador` - Limitador-specific tests
+- `@pytest.mark.kuadrant_only` - Tests requiring full Kuadrant (not standalone)
+- `@pytest.mark.standalone_only` - Standalone mode tests
+- `@pytest.mark.smoke` - Smoke tests
+- `@pytest.mark.issue("https://github.com/...")` - Linked to GitHub/Jira issues
+- `@pytest.mark.min_ocp_version((4, 20))` - Minimum OpenShift version requirement
 
-Tests commonly override fixtures to customize behavior:
+## Coding Conventions
+
+### Docstrings
+
+**Every module and fixture must have a short, descriptive docstring.** Module-level docstrings describe the test scope. Fixture docstrings describe what they create or return, not how.
+
+### Fixture Naming
+
+Fixtures should have simple, descriptive names like `route`, `authorization`, `backend`, `gateway`, `hostname`, `client`. When a test requires multiple instances of the same resource, append a number to the secondary resources: `route2`, `backend2`, `authorization2`, etc. The primary resource always uses the plain name without a number.
+
+### Resource Naming with `blame()`
+
+The `blame()` fixture generates unique, scoped names for Kubernetes resources:
 
 ```python
-import pytest
-from testsuite.kuadrant.policy.rate_limit import Limit
-
-@pytest.fixture(scope="module")
-def authorization(authorization, oidc_provider):
-    """Customize authorization by adding identity providers"""
-    authorization.identity.add_oidc("oidc", oidc_provider.well_known["issuer"])
-    authorization.identity.add_api_key("api_key")
-    return authorization
-
-@pytest.fixture(scope="module")
-def rate_limit(rate_limit):
-    """Add limits to rate limit policy"""
-    rate_limit.add_limit("basic", [Limit(5, "10s")])
-    return rate_limit
-
-@pytest.fixture(scope="module", autouse=True)
-def commit(request, authorization, rate_limit):
-    """Automatically commit policies before tests run"""
-    for component in [authorization, rate_limit]:
-        if component is not None:
-            request.addfinalizer(component.delete)
-            component.commit()
-            component.wait_for_ready()
+blame("gw")       # -> "gw-alice-tc-abc"
+blame("route")    # -> "route-alice-modname-jkl"
 ```
 
-The `commit` fixture with `autouse=True` automatically runs before tests, ensuring policies are created and ready. The `request.addfinalizer` ensures cleanup after tests complete.
+### Fixture Scopes
 
-### Policy Lifecycle
+- `scope="session"` - Created once per test run: `cluster`, `backend`, `gateway`, `exposer` (usually located in `testsuite/tests/conftest.py`)
+- `scope="module"` - Created per test module: `route`, `authorization`, `rate_limit`, `hostname`, `client`
+- `scope="function"` - Created per test: rarely used, only for parametrized or stateful tests
 
-The Kuadrant policy fixture setups follow this pattern:
+### Pylint Disable Guidelines
 
-1. **Create instance**: `Policy.create_instance(cluster, name, target_ref)`
-2. **Configure**: Call methods to add rules, conditions, etc.
-3. **Commit**: `policy.commit()` applies to Kubernetes
-4. **Wait for ready**: `policy.wait_for_ready()` waits for observedGeneration and Enforced conditions
-5. **Delete**: `policy.delete()` (usually via finalizer)
+**Always look for a more correct solution before disabling a warning.** Common legitimate uses:
+
+- `# pylint: disable=unused-argument` - Fixtures that need to be in the signature for pytest dependency ordering but aren't directly used in the function body
+- `# pylint: disable=invalid-name` - Dataclass fields that must match Kubernetes API camelCase naming (e.g., `matchExpressions`, `sectionName`)
