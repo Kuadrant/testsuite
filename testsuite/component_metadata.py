@@ -58,17 +58,12 @@ class ReportPortalMetadataCollector:
             with project.context:
                 deployment = oc.selector(f"deployment/{deployment_name}").object()
                 if not deployment.exists():
+                    logger.warning("Deployment '%s' not found", deployment_name)
                     return metadata
-                selector_labels = deployment.model.spec.selector.matchLabels
-                pods = oc.selector("pod", labels=dict(selector_labels)).objects()
-                if not pods:
-                    return metadata
-                for status in pods[0].model.status.containerStatuses:
-                    if status.name == container_name:
-                        image = status.image
-                        if "@" in image:
-                            image = image.split("@")[0]
-                        metadata["kuadrant_image"] = image
+                for container in deployment.model.spec.template.spec.containers:
+                    if container.name == container_name:
+                        metadata["kuadrant_image"] = container.image
+                        break
         except (oc.OpenShiftPythonException, AttributeError, KeyError, IndexError, ValueError) as e:
             logger.warning("Failed to get kuadrant-operator image: %s", e)
         return metadata
@@ -129,13 +124,14 @@ class ReportPortalMetadataCollector:
             for pod in pods:
                 for container in pod.model.spec.containers:
                     image = container.image
-                    if not image or image in seen:
+                    if not image:
                         continue
-                    seen.add(image)
+                    normalised_image = image.split("@", 1)[0]
+                    if normalised_image in seen:
+                        continue
+                    seen.add(normalised_image)
                     print(f"{image=}")
-                    if "@sha256" in image:
-                        continue
-                    image_name = image.split("/")[-1]
+                    image_name = normalised_image.split("/")[-1]
                     if ":" in image_name:
                         name, tag = image_name.rsplit(":", 1)
                         images.append((name, tag, image))

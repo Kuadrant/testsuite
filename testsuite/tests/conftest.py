@@ -96,6 +96,7 @@ def pytest_report_header(config):
     return header
 
 
+@pytest.hookimpl(trylast=True)
 def pytest_sessionfinish(session, exitstatus):  # pylint: disable=unused-argument
     """Pretty-print JUnit XML files after test session"""
     junit_xml = session.config.option.xmlpath
