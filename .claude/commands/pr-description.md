@@ -50,7 +50,21 @@ Follow these steps to minimize token usage:
 4. Run `git diff --name-only main...HEAD | grep -E 'test.*\.py$'` to find test files
 5. Only if needed for understanding complex changes, run `git diff -U1 main...HEAD` for condensed diff
 
+6. Assess the **scope of changes** to determine if the PR modifies shared/core code that could affect the broader testsuite:
+   - Check if changes touch shared libraries (`testsuite/kuadrant/`, `testsuite/kuadrantctl/`, `testsuite/utils/`, `testsuite/httpx/`, `testsuite/openshift/`, `testsuite/gateway/`, `testsuite/mockserver/`, `testsuite/certmanager/`)
+   - Check if changes modify build or project configuration files (`Makefile`, `pyproject.toml`, `config/`)
+   - Check if changes modify top-level or shared conftest files (`conftest.py` files outside of a single test directory)
+   - Check if changes span multiple test directories (e.g., both `singlecluster/authorino/` and `singlecluster/limitador/`)
+   - Check if changes modify base classes, shared fixtures, or utility functions used across tests
+   - Check if changes include deletions or renames of files in shared non-test modules
+   - If **any** of the above apply, the PR has a **broad scope** and the author should consider requesting two reviewers
+
 Based on the analysis, generate a PR description with the following structure:
+
+If the PR has a **broad scope** (as determined in step 6), prepend this note at the very beginning of the description, before the `## Description` heading:
+
+> [!IMPORTANT]
+> This PR modifies shared/core testsuite code that could potentially affect multiple test areas. 2 reviewers should review this PR to ensure adequate coverage.
 
 ## Description
 - Provide 2-4 concise bullet points summarizing the key changes
