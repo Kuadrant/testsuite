@@ -115,7 +115,7 @@ def pytest_collection_modifyitems(session, config, items):  # pylint: disable=un
     """
     Add user properties to testcases for xml output
 
-    This adds issue and issue-id properties to junit output, utilizes
+    This adds issue properties to junit output, utilizes
     pytest.mark.issue marker.
 
     This is copied from pytest examples to record custom properties in junit
