@@ -15,6 +15,26 @@ atomic test case design principles in your test design.
 Just considering the principles, might give you an idea of new test cases, that
 might be useful to write.
 
+## Fixture Design
+
+1. Use simple, descriptive names: `route`, `authorization`, `backend`, `gateway`, `hostname`, `client`
+1. For multiple instances of the same resource, append a number to secondary resources: `route2`, `backend2`, `authorization2`
+1. The primary resource always uses the plain name without a number
+1. Use `blame()` to generate unique, scoped names for Kubernetes resources: `blame("gw")` → `"gw-alice-tc-abc"`
+1. Choose appropriate fixture scope:
+   * `scope="session"` - Created once per test run (e.g., `cluster`, `backend`, `gateway`)
+   * `scope="module"` - Created per test module (e.g., `route`, `authorization`, `rate_limit`)
+   * `scope="function"` - Created per test (rarely used, only for parametrized or stateful tests)
+
+## Code Quality
+
+1. **Every module and fixture must have a short, descriptive docstring**
+   * Module docstrings describe the test scope
+   * Fixture docstrings describe what they create or return, not how
+1. **Always look for a more correct solution before disabling a pylint warning**
+   * Legitimate uses: `# pylint: disable=unused-argument` for pytest dependency ordering
+   * Legitimate uses: `# pylint: disable=invalid-name` for Kubernetes API camelCase fields
+
 ## Commits
 
 1. Consider using https://www.conventionalcommits.org/en/v1.0.0/  (.gitmessage)
@@ -26,7 +46,7 @@ might be useful to write.
 
 1. To promote quality code, request 2 reviewers
 1. Link relevant issues, and/or summarize the changes
-1. Consider providing a verification steps in the PR description (might have a tool for that)
+1. Use the `/pr-description` command to generate comprehensive PR descriptions with verification steps
 1. Ensure CI checks pass before opening a PR (e.g., DCO sign-off, code analysis, GitGuardian)
 1. Use a draft PR to share work in progress and gather early feedback before marking it ready for review
 
@@ -39,7 +59,19 @@ might be useful to write.
 
 ### precommit hook
 
-Consider using some secret guarding precommit hooks in your git setup, to prevent secret leaking.
+Consider using secret guarding precommit hooks in your git setup to prevent secret leaking:
+
+1. Install pre-commit framework: https://pre-commit.com/
+1. Use gitleaks (https://github.com/gitleaks/gitleaks) or similar tools to detect hardcoded secrets
+1. Example `.pre-commit-config.yaml`:
+   ```yaml
+   repos:
+     - repo: https://github.com/gitleaks/gitleaks
+       rev: v8.18.2
+       hooks:
+         - id: gitleaks
+   ```
+1. Install hooks: `pre-commit install`
 
 ### .gitmessage
 
