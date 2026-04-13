@@ -24,6 +24,8 @@ might be useful to write.
 1. To promote quality code, request 2 reviewers
 1. Link relevant issues, and/or summarize the changes
 1. Consider providing a verification steps in the PR description (might have a tool for that)
+1. Ensure CI checks pass before opening a PR (e.g., DCO sign-off, code analysis, GitGuardian)
+1. Use a draft PR to share work in progress and gather early feedback before marking it ready for review
 
 ## Reviewing PRs
 
