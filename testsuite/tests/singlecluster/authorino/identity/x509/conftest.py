@@ -62,10 +62,11 @@ def certificate_selector_labels(blame):
 
 
 @pytest.fixture(scope="module")
-def client_ca_secret(request, cluster, blame, client_ca, certificate_selector_labels):
-    """Create Kubernetes Secret with client CA certificate, with labels matching the selector in AuthPolicy"""
+def client_ca_secret(request, testconfig, cluster, blame, client_ca, certificate_selector_labels):
+    """Create CA certificate Kubernetes Secret in system namespace, with labels matching the selector in AuthPolicy"""
+    sys_proj = cluster.change_project(testconfig["service_protection"]["system_project"])
     secret = Secret.create_instance(
-        cluster, blame("client-ca"), stringData={"ca.crt": client_ca.certificate}, labels=certificate_selector_labels
+        sys_proj, blame("client-ca"), stringData={"ca.crt": client_ca.certificate}, labels=certificate_selector_labels
     )
     request.addfinalizer(secret.delete)
     secret.commit()
@@ -73,9 +74,9 @@ def client_ca_secret(request, cluster, blame, client_ca, certificate_selector_la
 
 
 @pytest.fixture(scope="module")
-def authorization(authorization, certificate_selector_labels):
+def authorization(authorization, certificate_selector_labels, client_ca_secret):  # pylint: disable=unused-argument
     """AuthPolicy with x509 identity configured, matching certificates secrets selected by the label"""
     authorization.identity.add_mtls(
-        "x509", Selector(matchLabels=certificate_selector_labels), source=X509Source(xfcc=XFCC_HEADER_NAME)
+        "x509", Selector(matchLabels=certificate_selector_labels), source=X509Source(xfccHeader=XFCC_HEADER_NAME)
     )
     return authorization

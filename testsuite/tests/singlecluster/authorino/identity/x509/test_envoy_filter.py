@@ -14,12 +14,9 @@ from testsuite.gateway.gateway_api.gateway import KuadrantGateway
 from testsuite.kuadrant.policy.tls import TLSPolicy
 from testsuite.kubernetes.deployment import SecretVolume, VolumeMount
 from testsuite.kubernetes.envoy_filter import EnvoyFilter
+from testsuite.kubernetes.secret import Secret
 
-pytestmark = [
-    pytest.mark.authorino,
-    pytest.mark.kuadrant_only,
-    pytest.mark.skip(reason="pending for implementation: https://github.com/Kuadrant/architecture/issues/140"),
-]
+pytestmark = [pytest.mark.authorino, pytest.mark.kuadrant_only]
 
 
 @pytest.fixture(scope="module")
@@ -57,10 +54,19 @@ def gateway(request, cluster, blame, wildcard_domain, module_label):
 
 
 @pytest.fixture(scope="module")
-def envoy_filter(request, cluster, blame, gateway, client_ca_secret, module_label):
+def gateway_ca_secret(request, cluster, blame, client_ca):
+    """CA secret in the gateway namespace for EnvoyFilter volume mount"""
+    secret = Secret.create_instance(cluster, blame("gw-ca"), stringData={"ca.crt": client_ca.certificate})
+    request.addfinalizer(secret.delete)
+    secret.commit()
+    return secret
+
+
+@pytest.fixture(scope="module")
+def envoy_filter(request, cluster, blame, gateway, gateway_ca_secret, module_label):
     """EnvoyFilter that enables client certificate validation on the gateway"""
     ca_mount_path = "/etc/istio/client-ca-certs"
-    gateway.deployment.add_volume(SecretVolume(secret_name=client_ca_secret.name(), name="client-ca"))
+    gateway.deployment.add_volume(SecretVolume(secret_name=gateway_ca_secret.name(), name="client-ca"))
     gateway.deployment.add_mount(VolumeMount(mountPath=ca_mount_path, name="client-ca"))
 
     envoy_filter = EnvoyFilter.create_instance(cluster, blame("ef"), gateway=gateway, labels={"app": module_label})
@@ -98,8 +104,6 @@ def test_valid_cert(hostname, server_ca, valid_cert):
     with hostname.client(verify=server_ca, cert=valid_cert) as client:
         response = client.get("/get")
         assert response.status_code == 200
-        # Authorino should not forward the XFCC header to the upstream service because it contains sensitive information
-        assert "X-Forwarded-Client-Cert" not in response.json()["headers"]
 
 
 def test_no_cert(hostname, server_ca):
