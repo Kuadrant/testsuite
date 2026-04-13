@@ -18,6 +18,9 @@ might be useful to write.
 ## Commits
 
 1. Consider using https://www.conventionalcommits.org/en/v1.0.0/  (.gitmessage)
+1. Run `make reformat` and `make commit-acceptance` locally to catch code analysis or formatting issues before committing and pushing
+1. Sign off commits by adding the `-s` flag (`git commit -s`)
+1. Optionally, sign commits with the `-S` flag (`git commit -S`) if you have a GPG or SSH key configured — this verifies commit authenticity on GitHub
 
 ## Creating PRs
 
