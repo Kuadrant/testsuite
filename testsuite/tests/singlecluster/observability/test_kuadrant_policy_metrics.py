@@ -1,7 +1,10 @@
 """Tests for Kuadrant policy metrics (policies total and policies enforced per policy kind)."""
 
+import operator
+
 import pytest
 
+from testsuite.config import settings
 from testsuite.gateway import Exposer, TLSGatewayListener
 from testsuite.prometheus import has_label
 from testsuite.gateway.gateway_api.gateway import KuadrantGateway
@@ -115,14 +118,15 @@ def test_metric_kuadrant_policies_total(kuadrant_operator_metrics, policy_kind):
 
 
 @pytest.mark.parametrize("policy_kind", POLICY_KINDS)
-def test_metric_kuadrant_policies_enforced(kuadrant_operator_metrics, policy_kind):
+def test_metric_kuadrant_policies_enforced(prometheus, policy_kind):
     """Tests that kuadrant_policies_enforced metric has value >= 1 for each enforced policy kind"""
-    metrics = (
-        kuadrant_operator_metrics.filter(has_label("__name__", "kuadrant_policies_enforced"))
-        .filter(has_label("kind", policy_kind))
-        .filter(has_label("status", "true"))
+    labels = {
+        "service": "kuadrant-operator-metrics",
+        "namespace": settings["service_protection"]["system_project"],
+        "kind": policy_kind,
+        "status": "true",
+    }
+    assert prometheus.wait_for_metric("kuadrant_policies_enforced", 1, labels=labels, compare=operator.ge), (
+        f"Expected 'kuadrant_policies_enforced' for kind '{policy_kind}' "
+        f"to have value >= 1, but got: {prometheus.get_metrics(key='kuadrant_policies_enforced', labels=labels).values}"
     )
-    assert metrics, f"'kuadrant_policies_enforced' metric wasn't found for kind '{policy_kind}'"
-    assert (
-        metrics.values[0] >= 1
-    ), f"Expected 'kuadrant_policies_enforced' for kind '{policy_kind}' to have value >= 1, but got: {metrics.values}"
