@@ -34,5 +34,6 @@ class Httpbin(Backend):
             self.name,
             selector=match_labels,
             ports=[ServicePort(name="http", port=8080, targetPort="api")],
+            labels={"app": self.label},
         )
         self.service.commit()

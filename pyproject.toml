@@ -57,6 +57,7 @@ markers = [
     "observability: Tracing, metrics and logging tests",
     "ui: Test uses browser automation via Playwright to test the console plugin UI",
     "cli: Test is using CLI tools (kubectl-dns, kuadrantctl)",
+    "egress_gateway: Test is using egress gateway",
     "min_ocp_version: Minimum OpenShift version required for test (e.g., @pytest.mark.min_ocp_version((4, 20)))",
 ]
 filterwarnings = [

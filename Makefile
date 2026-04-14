@@ -62,6 +62,9 @@ ui: playwright-install ## Run UI (console plugin) tests
 disruptive: poetry-no-dev  ## Run disruptive tests
 	$(PYTEST) -m 'disruptive' $(flags) testsuite/tests/
 
+egress-gateway: poetry-no-dev  ## Run egress gateway tests
+	$(PYTEST) -n4 -m 'egress_gateway' --dist loadfile --enforce $(flags) testsuite/tests/singlecluster/test_egress.py
+
 kuadrantctl: poetry-no-dev  ## Run Kuadrantctl tests
 	$(PYTEST) -n4 --dist loadfile --enforce $(flags) testsuite/tests/kuadrantctl/
 

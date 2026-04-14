@@ -5,7 +5,7 @@ import typing
 from httpx import Client
 
 from testsuite.httpx import KuadrantClient
-from testsuite.gateway import Gateway, GatewayRoute, PathMatch, MatchType, RouteMatch
+from testsuite.gateway import Gateway, GatewayRoute, PathMatch, MatchType, RouteMatch, URLRewriteFilter
 from testsuite.kubernetes.client import KubernetesClient
 from testsuite.kubernetes import KubernetesObject, modify
 from testsuite.kuadrant.policy import Policy
@@ -90,7 +90,7 @@ class HTTPRoute(KubernetesObject, GatewayRoute):
         self.model.spec.hostnames = []
 
     @modify
-    def add_rule(self, backend: "Backend", *route_matches: RouteMatch):
+    def add_rule(self, backend: "Backend", *route_matches: RouteMatch, filters: list[URLRewriteFilter] = None):
         """Adds rule to the Route"""
         rules: dict[str, typing.Any] = {"backendRefs": [backend.reference]}
         matches = list(route_matches)
@@ -98,6 +98,8 @@ class HTTPRoute(KubernetesObject, GatewayRoute):
             matches.append(RouteMatch(path=PathMatch(type=MatchType.PATH_PREFIX, value="/")))
 
         rules["matches"] = [asdict(match) for match in matches]
+        if filters:
+            rules["filters"] = [asdict(f) for f in filters]
         self.model.spec.rules.append(rules)
 
     @modify
