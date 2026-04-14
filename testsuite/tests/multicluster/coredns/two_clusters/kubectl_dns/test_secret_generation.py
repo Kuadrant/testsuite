@@ -1,4 +1,4 @@
-"""Test kubectl-dns secret-generate command with basic coredns setup with 1 primary and 1 secondary clusters"""
+"""Test kubectl-dns add-cluster-secret command with basic coredns setup with 1 primary and 1 secondary clusters"""
 
 import shutil
 
@@ -22,7 +22,7 @@ def kubectl_dns(testconfig, skip_or_fail):
 
 @pytest.fixture(scope="module")
 def kubeconfig_secrets(request, testconfig, cluster, cluster2, kubectl_dns, blame):
-    """Run generate-secret command on merged kubeconfig to generate kubeconfig secret for the secondary cluster"""
+    """Run add-cluster-secret command on merged kubeconfig to generate kubeconfig secret for the secondary cluster"""
     system_project = testconfig["service_protection"]["system_project"]
     secret_name = blame("kubecfg")
     request.addfinalizer(
@@ -31,7 +31,7 @@ def kubeconfig_secrets(request, testconfig, cluster, cluster2, kubectl_dns, blam
 
     merged_kubeconfig = cluster.create_merged_kubeconfig(cluster2)
     result = kubectl_dns.run(
-        "secret-generation",
+        "add-cluster-secret",
         "--name",
         secret_name,
         "--context",
