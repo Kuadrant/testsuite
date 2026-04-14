@@ -6,6 +6,7 @@ from testsuite.kuadrant.policy.tls import TLSPolicy
 from testsuite.page_objects.navigator import step
 from testsuite.page_objects.policies.policies_new_page import BasePolicyNewPageForm, BasePolicyNewPageYaml
 from testsuite.page_objects.policies.policies_list_page import BasePolicyListPage
+from testsuite.tests.singlecluster.ui.console_plugin.constants import UI_PAGE_LOAD_TIMEOUT
 
 
 class TLSPolicyType:
@@ -22,7 +23,7 @@ class TLSNewPageYaml(TLSPolicyType, BasePolicyNewPageYaml):
 
     def page_displayed(self):
         """Check if the TLSPolicy creation page is displayed (starts in Form view)"""
-        self.page.locator("text=Create TLS Policy").wait_for(state="visible", timeout=60000)
+        self.page.locator("text=Create TLS Policy").wait_for(state="visible", timeout=UI_PAGE_LOAD_TIMEOUT)
         return True
 
 
@@ -69,7 +70,7 @@ class TLSNewPageForm(TLSPolicyType, BasePolicyNewPageForm):
 
     def page_displayed(self):
         """Check if the TLSPolicy form creation page is displayed"""
-        self.page.locator("text=Create TLS Policy").wait_for(state="visible", timeout=60000)
+        self.page.locator("text=Create TLS Policy").wait_for(state="visible", timeout=UI_PAGE_LOAD_TIMEOUT)
         return True
 
 

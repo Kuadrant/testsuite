@@ -2,6 +2,7 @@
 
 from playwright.sync_api import Page
 from testsuite.page_objects.navigator import Navigable
+from testsuite.tests.singlecluster.ui.console_plugin.constants import UI_PAGE_LOAD_TIMEOUT, UI_ELEMENT_TIMEOUT
 
 
 class OverviewPage(Navigable):
@@ -17,14 +18,14 @@ class OverviewPage(Navigable):
 
     def page_displayed(self):
         """Check if the overview page is displayed"""
-        self.page_heading.wait_for(state="visible", timeout=60000)
+        self.page_heading.wait_for(state="visible", timeout=UI_PAGE_LOAD_TIMEOUT)
         return True
 
     def get_metric_count(self, metric_name: str):
         """Get the count from a gateway metric card"""
         metric_card = self.page.locator(f"//div[contains(., '{metric_name}')]").first
         # Wait for the metric card to be visible before reading the value
-        metric_card.wait_for(state="visible", timeout=10000)
+        metric_card.wait_for(state="visible", timeout=UI_ELEMENT_TIMEOUT)
         count_element = metric_card.locator("strong").first
         return int(count_element.inner_text().strip())
 

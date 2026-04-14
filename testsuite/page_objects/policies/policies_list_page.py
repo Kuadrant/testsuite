@@ -3,6 +3,10 @@
 from abc import abstractmethod
 from playwright.sync_api import Page
 from testsuite.page_objects.navigator import Navigable
+from testsuite.tests.singlecluster.ui.console_plugin.constants import (
+    UI_NAVIGATION_TIMEOUT,
+    UI_ELEMENT_TIMEOUT,
+)
 
 
 class BasePolicyListPage(Navigable):
@@ -25,7 +29,7 @@ class BasePolicyListPage(Navigable):
     def has_policy(self, name: str) -> bool:
         """Returns True if a policy with the given name appears in the list"""
         # Wait a moment for the list to fully load, but don't require rows to exist
-        self.page.wait_for_timeout(10000)
+        self.page.wait_for_timeout(UI_ELEMENT_TIMEOUT)
         locator = self.page.locator(f"//tr//a[@data-test-id='{name}']")
         return locator.count() > 0
 
@@ -59,7 +63,7 @@ class BasePolicyListPage(Navigable):
 
         # Open the Actions dropdown menu
         actions_btn = self.page.locator("//button[contains(., 'Actions')]")
-        actions_btn.wait_for(state="visible", timeout=10000)
+        actions_btn.wait_for(state="visible", timeout=UI_ELEMENT_TIMEOUT)
         actions_btn.click()
 
         # Find and click the Delete action (supports PF v5 and v6)
@@ -68,17 +72,17 @@ class BasePolicyListPage(Navigable):
             f"//button[@role='menuitem' and contains(., 'Delete {self.policy_type}')] | "  # PF v6 (4.19)
             "//li[@data-test-action='Delete']"  # PF v6 (4.20) does not include policy type
         ).first
-        delete_button.wait_for(state="visible", timeout=10000)
+        delete_button.wait_for(state="visible", timeout=UI_ELEMENT_TIMEOUT)
         delete_button.click()
 
         # Confirm the deletion in the confirmation dialog
         confirm_delete_btn = self.page.locator("//button[@data-test='confirm-action']")
-        confirm_delete_btn.wait_for(state="visible", timeout=10000)
+        confirm_delete_btn.wait_for(state="visible", timeout=UI_ELEMENT_TIMEOUT)
         confirm_delete_btn.click()
 
         # Wait for redirection back to the policy list view
         if self.policy_url_path not in self.page.url:
-            self.page.wait_for_url(f"**/{self.policy_url_path}*", timeout=60000)
+            self.page.wait_for_url(f"**/{self.policy_url_path}*", timeout=UI_NAVIGATION_TIMEOUT)
 
     def is_displayed(self):
         """Returns the create button locator"""

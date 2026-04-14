@@ -3,6 +3,7 @@
 from testsuite.page_objects.navigator import step
 from testsuite.page_objects.policies.policies_new_page import BasePolicyNewPageYaml
 from testsuite.page_objects.policies.policies_list_page import BasePolicyListPage
+from testsuite.tests.singlecluster.ui.console_plugin.constants import UI_PAGE_LOAD_TIMEOUT
 
 
 class RateLimitPolicyType:
@@ -19,7 +20,7 @@ class RateLimitNewPageYaml(RateLimitPolicyType, BasePolicyNewPageYaml):
 
     def page_displayed(self):
         """Check if the RateLimitPolicy YAML creation page is displayed"""
-        self.editor.wait_for(state="visible", timeout=60000)
+        self.editor.wait_for(state="visible", timeout=UI_PAGE_LOAD_TIMEOUT)
         return self.editor.is_visible() and self.create_btn.is_visible()
 
 

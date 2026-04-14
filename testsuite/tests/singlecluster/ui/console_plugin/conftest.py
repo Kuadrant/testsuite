@@ -9,6 +9,11 @@ from httpx import Timeout
 from testsuite.gateway.exposers import OpenShiftExposer
 from testsuite.page_objects.nav_bar import NavBar
 from testsuite.page_objects.navigator import Navigator
+from testsuite.tests.singlecluster.ui.console_plugin.constants import (
+    UI_PAGE_LOAD_TIMEOUT,
+    UI_NAVIGATION_TIMEOUT,
+    UI_SESSION_INIT_TIMEOUT,
+)
 
 
 @pytest.fixture(scope="session")
@@ -25,7 +30,7 @@ def auth_state_file(browser, cluster, testconfig, request):
     page = temp_context.new_page()
 
     # Perform login
-    page.goto(cluster.console_url, timeout=60000)
+    page.goto(cluster.console_url, timeout=UI_PAGE_LOAD_TIMEOUT)
     page.locator("//a[@title='Log in with HTPasswd']").click()
 
     username = testconfig.get("console.username") or os.getenv("KUBE_USER", "admin")
@@ -36,10 +41,10 @@ def auth_state_file(browser, cluster, testconfig, request):
     page.locator("//button[@type='submit']").click()
 
     # Wait for successful login by checking URL changed from auth page
-    page.wait_for_url(f"{cluster.console_url}/**", timeout=30000)
+    page.wait_for_url(f"{cluster.console_url}/**", timeout=UI_NAVIGATION_TIMEOUT)
 
     # Give console a moment to initialize session
-    page.wait_for_timeout(2000)
+    page.wait_for_timeout(UI_SESSION_INIT_TIMEOUT)
 
     # Save cookies and session storage to file
     temp_context.storage_state(path=state_file.name)
@@ -98,10 +103,10 @@ def navigate_console(page, exposer, cluster, skip_or_fail):
             "Please enable it in the console operator configuration."
         )
 
-    page.goto(cluster.console_url, timeout=60000)  # OpenShift console can be slow to fully load
+    page.goto(cluster.console_url, timeout=UI_PAGE_LOAD_TIMEOUT)
 
     # Wait for console plugin nav element (plugin is enabled at this point, so should be available)
-    NavBar(page).kuadrant_nav.wait_for(state="visible", timeout=30000)
+    NavBar(page).kuadrant_nav.wait_for(state="visible", timeout=UI_PAGE_LOAD_TIMEOUT)
 
 
 @pytest.fixture

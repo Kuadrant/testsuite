@@ -4,6 +4,7 @@ from abc import abstractmethod
 import yaml
 from playwright.sync_api import Page
 from testsuite.page_objects.navigator import Navigable
+from testsuite.tests.singlecluster.ui.console_plugin.constants import UI_PAGE_LOAD_TIMEOUT
 
 
 class BasePolicyNewPage(Navigable):
@@ -61,9 +62,12 @@ class BasePolicyNewPageYaml(BasePolicyNewPage):
         self.create_btn.click()
 
         # Wait for the details page to load and display confirmation
-        self.page.wait_for_selector(f"text={self.policy_type} details")
-        self.page.wait_for_selector(f"text={self.policy_type} has been accepted", timeout=60000)
-        self.page.wait_for_selector(f"text={self.policy_type} has been successfully enforced", timeout=60000)
+        # Policy enforcement can take time as it waits for the controller to reconcile
+        self.page.wait_for_selector(f"text={self.policy_type} details", timeout=UI_PAGE_LOAD_TIMEOUT)
+        self.page.wait_for_selector(f"text={self.policy_type} has been accepted", timeout=UI_PAGE_LOAD_TIMEOUT)
+        self.page.wait_for_selector(
+            f"text={self.policy_type} has been successfully enforced", timeout=UI_PAGE_LOAD_TIMEOUT
+        )
 
     def is_displayed(self):
         """Returns the editor and create button locators"""
