@@ -3,6 +3,7 @@
 from testsuite.page_objects.navigator import step, Navigable
 from testsuite.page_objects.policies.policies import PoliciesPage
 from testsuite.page_objects.overview.overview_page import OverviewPage
+from testsuite.tests.singlecluster.ui.console_plugin.constants import UI_PAGE_LOAD_TIMEOUT
 
 
 class NavBar(Navigable):
@@ -17,9 +18,9 @@ class NavBar(Navigable):
 
     def expand_kuadrant(self):
         """Expands the Kuadrant / RHCL navigation menu if it's currently collapsed"""
-        self.kuadrant_nav.wait_for(state="visible", timeout=60000)
+        self.kuadrant_nav.wait_for(state="visible", timeout=UI_PAGE_LOAD_TIMEOUT)
         if self.kuadrant_nav.get_attribute("aria-expanded") == "false":
-            self.kuadrant_nav.click(timeout=60000)
+            self.kuadrant_nav.click(timeout=UI_PAGE_LOAD_TIMEOUT)
 
     @step(OverviewPage)
     def overview(self):

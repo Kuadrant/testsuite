@@ -6,6 +6,7 @@ from testsuite.kuadrant.policy.dns import DNSPolicy
 from testsuite.page_objects.navigator import step
 from testsuite.page_objects.policies.policies_new_page import BasePolicyNewPageForm, BasePolicyNewPageYaml
 from testsuite.page_objects.policies.policies_list_page import BasePolicyListPage
+from testsuite.tests.singlecluster.ui.console_plugin.constants import UI_PAGE_LOAD_TIMEOUT, UI_ELEMENT_TIMEOUT
 
 
 class DNSPolicyType:
@@ -22,7 +23,7 @@ class DNSNewPageYaml(DNSPolicyType, BasePolicyNewPageYaml):
 
     def page_displayed(self):
         """Check if the DNSPolicy creation page is displayed (starts in Form view)"""
-        self.page.locator("text=Create DNS Policy").wait_for(state="visible", timeout=60000)
+        self.page.locator("text=Create DNS Policy").wait_for(state="visible", timeout=UI_PAGE_LOAD_TIMEOUT)
         return True
 
 
@@ -57,7 +58,7 @@ class DNSNewPageForm(DNSPolicyType, BasePolicyNewPageForm):
         # Expand and fill LoadBalancing section
         load_balancing_section = self.page.get_by_text("LoadBalancing")
         load_balancing_section.click()
-        self.page.wait_for_selector("//input[@id='weight']", timeout=10000)
+        self.page.wait_for_selector("//input[@id='weight']", timeout=UI_ELEMENT_TIMEOUT)
 
         lb_spec = policy.model.spec.get("loadBalancing", {})
         self.weight_input.fill(str(lb_spec.get("weight", 100)))
@@ -78,7 +79,7 @@ class DNSNewPageForm(DNSPolicyType, BasePolicyNewPageForm):
 
     def page_displayed(self):
         """Check if the DNSPolicy form creation page is displayed"""
-        self.page.locator("text=Create DNS Policy").wait_for(state="visible", timeout=60000)
+        self.page.locator("text=Create DNS Policy").wait_for(state="visible", timeout=UI_PAGE_LOAD_TIMEOUT)
         return True
 
 
