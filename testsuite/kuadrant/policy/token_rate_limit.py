@@ -25,7 +25,7 @@ class TokenRateLimitPolicy(RateLimitPolicy):
         model: dict = {
             "apiVersion": "kuadrant.io/v1alpha1",
             "kind": "TokenRateLimitPolicy",
-            "metadata": {"name": name, "labels": labels},
+            "metadata": {"name": name, "namespace": cluster.project, "labels": labels},
             "spec": {
                 "targetRef": target.reference,
             },
