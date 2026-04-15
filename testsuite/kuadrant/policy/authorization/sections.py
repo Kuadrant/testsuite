@@ -198,19 +198,26 @@ class MetadataSection(Section):
     """Section which contains metadata configuration"""
 
     @modify
-    def add_http(self, name, endpoint, method: Literal["GET", "POST"], **common_features):
+    def add_http(
+        self,
+        name,
+        endpoint,
+        method: Literal["GET", "POST"],
+        credentials: Credentials = None,
+        shared_secret_ref: dict[str, str] = None,
+        **common_features,
+    ):
         """Set metadata http external auth feature"""
-        self.add_item(
-            name,
-            {
-                "http": {
-                    "url": endpoint,
-                    "method": method,
-                    "headers": {"Accept": {"value": "application/json"}},
-                }
-            },
-            **common_features,
-        )
+        http_config: dict = {
+            "url": endpoint,
+            "method": method,
+            "headers": {"Accept": {"value": "application/json"}},
+        }
+        if credentials:
+            http_config["credentials"] = asdict(credentials)
+        if shared_secret_ref:
+            http_config["sharedSecretRef"] = shared_secret_ref
+        self.add_item(name, {"http": http_config}, **common_features)
 
     @modify
     def add_user_info(self, name, identity_source, **common_features):
