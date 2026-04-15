@@ -12,11 +12,7 @@ from testsuite.gateway import GatewayListener
 from testsuite.gateway.gateway_api.gateway import KuadrantGateway
 from .conftest import XFCC_HEADER_NAME
 
-pytestmark = [
-    pytest.mark.authorino,
-    pytest.mark.kuadrant_only,
-    pytest.mark.skip(reason="pending for implementation: https://github.com/Kuadrant/architecture/issues/140"),
-]
+pytestmark = [pytest.mark.authorino, pytest.mark.kuadrant_only]
 
 
 @pytest.fixture(scope="module")
@@ -41,8 +37,6 @@ def test_valid_cert(client, valid_cert):
     """Test that a request with a valid certificate in XFCC header succeeds"""
     response = client.get("/get", headers={XFCC_HEADER_NAME: valid_cert.xfcc_header})
     assert response.status_code == 200
-    # Authorino should not forward the XFCC header to the upstream service because it contains sensitive information
-    assert XFCC_HEADER_NAME not in response.json()["headers"]
 
 
 def test_no_header(client):

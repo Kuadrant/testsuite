@@ -182,11 +182,11 @@ class X509Source:
     """Dataclass for specifying the source of client certificate in x509 identity.
     Only one of the fields should be set (mutually exclusive).
 
-    :param xfcc: Envoy XFCC header name (e.g. "x-forwarded-client-cert")
+    :param xfccHeader: Envoy XFCC header name (e.g. "x-forwarded-client-cert")
     :param clientCertHeader: RFC 9440 Client-Cert header name (e.g. "client-cert")
     :param expression: CEL expression to extract PEM-encoded client certificate
     """
 
-    xfcc: Optional[str] = None
+    xfccHeader: Optional[str] = None
     clientCertHeader: Optional[str] = None
     expression: Optional[CelExpression] = None
