@@ -20,7 +20,7 @@ def test_no_certificate(hostname, envoy_authority):
 
 
 def test_invalid_certificate(envoy_authority, invalid_cert, auth, hostname):
-    """Tests that certificate with different CA will be rejeceted"""
+    """Tests that certificate with different CA will be rejected"""
     with hostname.client(verify=envoy_authority, cert=invalid_cert) as client:
         result = client.get("/get", auth=auth)
         assert result.has_unknown_ca_error()
