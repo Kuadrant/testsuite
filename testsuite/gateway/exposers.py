@@ -1,6 +1,5 @@
 """General exposers, not tied to Envoy or Gateway API"""
 
-from testsuite.certificates import Certificate
 from testsuite.gateway import Exposer, Gateway, Hostname
 from testsuite.httpx import KuadrantClient, ForceSNIClient
 from testsuite.kubernetes.openshift.route import OpenshiftRoute
@@ -43,20 +42,23 @@ class OpenShiftExposer(Exposer):
 class StaticLocalHostname(Hostname):
     """Static local IP hostname"""
 
-    def __init__(self, hostname, ip_getter, verify: Certificate = None, force_https: bool = False):
+    def __init__(self, hostname, ip_getter, verify_getter=None, force_https: bool = False):
         self._hostname = hostname
-        self.verify = verify
         self.ip_getter = ip_getter
+        self.verify_getter = verify_getter
         self.force_https = force_https
 
     def client(self, **kwargs) -> KuadrantClient:
         headers = kwargs.setdefault("headers", {})
         headers["Host"] = self.hostname
+        ip = self.ip_getter()
+        verify = self.verify_getter() if self.verify_getter else None
         protocol = "http"
-        if self.verify or self.force_https:
+        if verify or self.force_https:
+            ip = ip.replace(":80", ":443")
             protocol = "https"
-            kwargs.setdefault("verify", self.verify)
-        return ForceSNIClient(base_url=f"{protocol}://{self.ip_getter()}", sni_hostname=self.hostname, **kwargs)
+            kwargs.setdefault("verify", verify)
+        return ForceSNIClient(base_url=f"{protocol}://{ip}", sni_hostname=self.hostname, **kwargs)
 
     @property
     def hostname(self):
@@ -69,7 +71,7 @@ class LoadBalancerServiceExposer(Exposer):
     def expose_hostname(self, name, gateway: Gateway) -> Hostname:
         hostname = f"{name}.{self.base_domain}"
         return StaticLocalHostname(
-            hostname, gateway.external_ip, gateway.get_tls_cert(hostname), force_https=self.passthrough
+            hostname, gateway.external_ip, lambda: gateway.get_tls_cert(hostname), force_https=self.passthrough
         )
 
     @property

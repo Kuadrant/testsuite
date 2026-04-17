@@ -9,9 +9,8 @@ from the X-Forwarded-Client-Cert (XFCC) header.
 
 import pytest
 
-from testsuite.gateway import Exposer, TLSGatewayListener
+from testsuite.gateway import TLSGatewayListener
 from testsuite.gateway.gateway_api.gateway import KuadrantGateway
-from testsuite.kuadrant.policy.tls import TLSPolicy
 from testsuite.kubernetes.deployment import SecretVolume, VolumeMount
 from testsuite.kubernetes.envoy_filter import EnvoyFilter
 from testsuite.kubernetes.secret import Secret
@@ -20,30 +19,8 @@ pytestmark = [pytest.mark.authorino, pytest.mark.kuadrant_only]
 
 
 @pytest.fixture(scope="module")
-def exposer(request, testconfig, cluster) -> Exposer:
-    """Exposer object instance with TLS passthrough"""
-    exposer = testconfig["default_exposer"](cluster)
-    exposer.passthrough = True  # Gateway needs to terminate TLS to validate client certificates
-    request.addfinalizer(exposer.delete)
-    exposer.commit()
-    return exposer
-
-
-@pytest.fixture(scope="module")
-def base_domain(exposer):
-    """Returns preconfigured base domain"""
-    return exposer.base_domain
-
-
-@pytest.fixture(scope="module")
-def wildcard_domain(base_domain):
-    """Wildcard domain for the exposer"""
-    return f"*.{base_domain}"
-
-
-@pytest.fixture(scope="module")
 def gateway(request, cluster, blame, wildcard_domain, module_label):
-    """Gateway with TLS listener"""
+    """Gateway with TLS listener without frontend validation (EnvoyFilter handles L4 validation)"""
     gateway_name = blame("gw")
     gw = KuadrantGateway.create_instance(cluster, gateway_name, labels={"app": module_label})
     gw.add_listener(TLSGatewayListener(hostname=wildcard_domain, gateway_name=gateway_name))
@@ -76,27 +53,13 @@ def envoy_filter(request, cluster, blame, gateway, gateway_ca_secret, module_lab
     return envoy_filter
 
 
-@pytest.fixture(scope="module")
-def tls_policy(blame, gateway, module_label, cluster_issuer):
-    """TLSPolicy fixture"""
-    return TLSPolicy.create_instance(
-        gateway.cluster, blame("tls"), parent=gateway, issuer=cluster_issuer, labels={"app": module_label}
-    )
-
-
 @pytest.fixture(scope="module", autouse=True)
 def commit(request, tls_policy, authorization, envoy_filter):  # pylint: disable=unused-argument
-    """Commits AuthPolicy and TLSPolicy"""
+    """Commits TLSPolicy and AuthPolicy after EnvoyFilter is set up"""
     for component in [tls_policy, authorization]:
         request.addfinalizer(component.delete)
         component.commit()
         component.wait_for_ready()
-
-
-@pytest.fixture(scope="module")
-def server_ca(gateway, hostname):
-    """Server-side TLS certificate from the gateway for verifying the TLS connection"""
-    return gateway.get_tls_cert(hostname.hostname)
 
 
 def test_valid_cert(hostname, server_ca, valid_cert):

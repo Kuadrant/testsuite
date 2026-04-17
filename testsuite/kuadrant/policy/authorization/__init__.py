@@ -189,4 +189,4 @@ class X509Source:
 
     xfccHeader: Optional[str] = None
     clientCertHeader: Optional[str] = None
-    expression: Optional[CelExpression] = None
+    expression: Optional[str] = None

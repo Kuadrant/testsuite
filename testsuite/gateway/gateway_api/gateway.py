@@ -47,6 +47,20 @@ class KuadrantGateway(KubernetesObject, Gateway):
         self.model.spec.listeners.append(asdict(listener))
 
     @modify
+    def set_frontend_tls_validation(self, ca_certificate_refs: list[dict], mode: str = "AllowValidOnly"):
+        """Configures Gateway API v1.5+ frontend TLS client certificate validation"""
+        self.model.spec.tls = {
+            "frontend": {
+                "default": {
+                    "validation": {
+                        "caCertificateRefs": ca_certificate_refs,
+                        "mode": mode,
+                    }
+                }
+            }
+        }
+
+    @modify
     def remove_listener(self, listener_name: str):
         """Removes a listener from Gateway."""
         self.model.spec.listeners = list(filter(lambda i: i["name"] != listener_name, self.model.spec.listeners))

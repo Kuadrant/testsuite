@@ -1,5 +1,6 @@
 """Module containing classes for working with TLS certificates"""
 
+import base64
 import dataclasses
 import datetime
 import json
@@ -11,6 +12,7 @@ from typing import Optional, List, Dict, Collection, Union
 from urllib.parse import quote
 
 from cryptography import x509
+from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.types import CertificatePublicKeyTypes
 
 
@@ -70,6 +72,18 @@ class Certificate:
     def xfcc_header(self) -> str:
         """Returns X-Forwarded-Client-Cert header value with this certificate"""
         return f'Hash=placeholder;Cert="{quote(self.certificate, safe="")}"'
+
+    @cached_property
+    def client_cert_header(self) -> str:
+        """Returns RFC 9440 Client-Cert header value (colon-delimited base64-encoded DER certificate)"""
+        der_bytes = self.decoded.public_bytes(serialization.Encoding.DER)
+        encoded = base64.b64encode(der_bytes).decode("ascii")
+        return f":{encoded}:"
+
+    @cached_property
+    def url_encoded_pem(self) -> str:
+        """Returns URL-encoded PEM certificate"""
+        return quote(self.certificate, safe="")
 
 
 @dataclasses.dataclass

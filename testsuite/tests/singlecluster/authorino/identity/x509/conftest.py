@@ -62,15 +62,23 @@ def certificate_selector_labels(blame):
 
 
 @pytest.fixture(scope="module")
-def client_ca_secret(request, testconfig, cluster, blame, client_ca, certificate_selector_labels):
-    """Create CA certificate Kubernetes Secret in system namespace, with labels matching the selector in AuthPolicy"""
-    sys_proj = cluster.change_project(testconfig["service_protection"]["system_project"])
-    secret = Secret.create_instance(
-        sys_proj, blame("client-ca"), stringData={"ca.crt": client_ca.certificate}, labels=certificate_selector_labels
-    )
-    request.addfinalizer(secret.delete)
-    secret.commit()
-    return secret
+def create_secret(blame, request, testconfig, cluster):
+    """Factory for creating Secrets in the system namespace"""
+
+    def _create_secret(name, string_data, labels=None):
+        sys_proj = cluster.change_project(testconfig["service_protection"]["system_project"])
+        secret = Secret.create_instance(sys_proj, blame(name), stringData=string_data, labels=labels)
+        request.addfinalizer(secret.delete)
+        secret.commit()
+        return secret
+
+    return _create_secret
+
+
+@pytest.fixture(scope="module")
+def client_ca_secret(create_secret, client_ca, certificate_selector_labels):
+    """CA certificate Secret in system namespace, with labels matching the selector in AuthPolicy"""
+    return create_secret("client-ca", {"ca.crt": client_ca.certificate}, labels=certificate_selector_labels)
 
 
 @pytest.fixture(scope="module")
