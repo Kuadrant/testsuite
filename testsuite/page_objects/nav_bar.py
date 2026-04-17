@@ -3,6 +3,7 @@
 from testsuite.page_objects.navigator import step, Navigable
 from testsuite.page_objects.policies.policies import PoliciesPage
 from testsuite.page_objects.overview.overview_page import OverviewPage
+from testsuite.page_objects.topology.topology_page import TopologyPage
 from testsuite.tests.singlecluster.ui.console_plugin.constants import UI_PAGE_LOAD_TIMEOUT
 
 
@@ -34,9 +35,11 @@ class NavBar(Navigable):
         self.expand_kuadrant()
         self.page.locator("//a[contains(@class, 'nav__link') and text() = 'Policies']").click()
 
+    @step(TopologyPage)
     def topology(self):
-        """Navigates to the console plugin Topology page"""
+        """Navigates to the console plugin Topology page and returns a TopologyPage object"""
         self.expand_kuadrant()
+        self.page.locator("//a[contains(@class, 'nav__link') and contains(@href, '/kuadrant/policy-topology')]").click()
 
     def is_displayed(self):
         """Returns the nav button locator"""
