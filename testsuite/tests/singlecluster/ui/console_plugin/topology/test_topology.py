@@ -42,8 +42,13 @@ def test_topology_resources_appear(navigator, gateway, route, authorization, rat
     assert topology_page.has_connections(), "No connections found in topology"
 
 
+@pytest.mark.min_ocp_version((4, 20))
 def test_topology_filters_work(navigator, gateway, route, cluster):
-    """Verify namespace and resource filters control which resources are shown"""
+    """Verify namespace and resource filters control which resources are shown (OCP 4.20+ / PF6)
+
+    Skipped on OCP < 4.20 due to unreliable PF5 filter behavior
+    For more info, see: https://github.com/Kuadrant/kuadrant-console-plugin/issues/373
+    """
     # Navigate to topology page
     topology_page = navigator.navigate(TopologyPage)
     assert topology_page.page_displayed(), "Topology page did not load"

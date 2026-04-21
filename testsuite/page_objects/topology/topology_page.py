@@ -26,8 +26,11 @@ class TopologyPage(Navigable):
         return True
 
     def get_resource_dropdown(self):
-        """Get the Resource filter dropdown button"""
-        return self.page.locator("//button[contains(@class, 'pf-v6-c-menu-toggle') and contains(., 'Resource')]").first
+        """Get the Resource filter dropdown button (PF5 and PF6 compatible)"""
+        return self.page.locator(
+            "//button[(contains(@class, 'pf-v6-c-menu-toggle') or contains(@class, 'pf-v5-c-menu-toggle')) "
+            "and contains(., 'Resource')]"
+        ).first
 
     def get_namespace_dropdown(self):
         """Get the Namespace filter dropdown button"""
