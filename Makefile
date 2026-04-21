@@ -1,4 +1,4 @@
-.PHONY: commit-acceptance pylint mypy black reformat test authorino poetry poetry-no-dev mgc container-image polish-junit reportportal authorino-standalone limitador kuadrant kuadrant-only disruptive kuadrantctl multicluster ui playwright-install
+.PHONY: commit-acceptance pylint mypy black reformat test authorino poetry poetry-no-dev mgc container-image polish-junit reportportal authorino-standalone limitador kuadrant kuadrant-only disruptive kuadrantctl multicluster ui playwright-install collect
 
 TB ?= short
 LOGLEVEL ?= INFO
@@ -15,6 +15,9 @@ RUNSCRIPT = poetry run ./scripts/
 ifdef junit
 PYTEST += --junitxml=$(resultsdir)/junit-$(@F).xml -o junit_suite_name=$(@F)
 endif
+
+# Collector PYTEST Override
+collect: PYTEST = poetry run python -m pytest --tb=$(TB) --junitxml=$(resultsdir)/junit-00-$(@F).xml -o junit_suite_name=info-collector
 
 ifdef html
 PYTEST += --html=$(resultsdir)/report-$(@F).html --self-contained-html
@@ -79,6 +82,11 @@ coredns_one_primary: poetry-no-dev  ## Run coredns one primary tests
 coredns_two_primaries: poetry-no-dev  ## Run coredns two primary tests
 	$(PYTEST) -n1 -m 'coredns_two_primaries' --dist loadfile --enforce $(flags) testsuite/tests/multicluster/coredns/
 
+
+##@ Info Collection
+
+collect: poetry-no-dev
+	COLLECTOR_ENABLE=true $(PYTEST) testsuite/tests/info_collector.py
 
 ##@ Misc
 

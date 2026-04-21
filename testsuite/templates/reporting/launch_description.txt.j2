@@ -1,0 +1,14 @@
+{%- set cluster_word = "cluster" -%}
+{%- if cluster_count > 1 -%}
+    {%- set cluster_word = "clusters" -%}
+{%- endif -%}
+**Environment Information ({{ cluster_count }} {{ cluster_word }})**
+{% for key, cluster in clusters.items() -%}
+{{ loop.index }}. {{ cluster.console_url }} ({{ key }}):
+{% if cluster.ocp_version is defined %}
+    - OCP: `{{ cluster.ocp_version }}`
+{% endif -%}
+{% if cluster.metadata is defined and cluster.metadata.kuadrant_image is defined %}
+    - kuadrant_image: `{{ cluster.metadata.kuadrant_image }}`
+{% endif -%}
+{%- endfor -%}

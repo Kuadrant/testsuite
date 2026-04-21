@@ -2,17 +2,16 @@
 
 import signal
 from urllib.parse import urlparse
-import yaml
 
+import yaml
 import pytest
 from pytest_metadata.plugin import metadata_key  # type: ignore
 from dynaconf import ValidationError
 from keycloak import KeycloakAuthenticationError
-from openshift_client import OpenShiftPythonException, selector
+from openshift_client import selector
 
 from testsuite.capabilities import has_kuadrant, kuadrant_version
 from testsuite.certificates import CFSSLClient
-from testsuite.component_metadata import ReportPortalMetadataCollector
 from testsuite.config import settings
 from testsuite.gateway import Exposer, CustomReference
 from testsuite.httpx import KuadrantClient
@@ -113,13 +112,25 @@ def term_handler():
 
 
 def pytest_collection_modifyitems(session, config, items):  # pylint: disable=unused-argument
-    """Add cluster metadata to test items for ReportPortal integration."""
-    try:
-        collector = ReportPortalMetadataCollector()
-        collector.collect_all_clusters()
-        collector.add_properties_to_items(items)
-    except (OpenShiftPythonException, AttributeError, KeyError, ValidationError) as e:
-        print(f"Warning: Component metadata collection failed: {e}")
+    """
+    Add user properties to testcases for xml output
+
+    This adds issue properties to junit output, utilizes
+    pytest.mark.issue marker.
+
+    This is copied from pytest examples to record custom properties in junit
+    https://docs.pytest.org/en/stable/usage.html
+    """
+
+    for item in items:
+        for marker in item.iter_markers(name="issue"):
+            if marker.args:
+                item.user_properties.append(("issue", marker.args[0]))
+
+        ## extracting test's docstring for RP
+        func = getattr(item, "function", None)
+        if func and func.__doc__:
+            item.user_properties.append(("__rp_case_description", func.__doc__))
 
 
 @pytest.fixture(scope="session")
