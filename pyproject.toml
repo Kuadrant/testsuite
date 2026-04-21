@@ -25,6 +25,7 @@ apyproxy = "*"
 weakget = "*"
 pytest-playwright = "*"
 playwright = "1.57.0"
+pytest-rerunfailures = "*"
 
 [tool.poetry.group.dev.dependencies]
 mypy = "*"

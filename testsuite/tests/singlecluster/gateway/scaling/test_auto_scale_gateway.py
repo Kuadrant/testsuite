@@ -52,6 +52,7 @@ def hpa(request, cluster, gateway, blame, backend, module_label):
     return hpa
 
 
+@pytest.mark.flaky(reruns=0)
 def test_auto_scale_gateway(
     gateway, hpa, backend, client, auth, custom_metrics_apiserver, cluster
 ):  # pylint: disable=unused-argument

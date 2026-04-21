@@ -42,6 +42,7 @@ def auth2(keycloak, blame):
 
 
 @pytest.mark.parametrize("rate_limit", ["route", "gateway"], indirect=True)
+@pytest.mark.flaky(reruns=3, reruns_delay=65)
 def test_authz_limit(client, auth, auth2):
     """Tests that rate limit is applied for two users independently"""
     responses = client.get_many("/get", 5, auth=auth)

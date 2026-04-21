@@ -58,6 +58,7 @@ def custom_client():
     return _client_new
 
 
+@pytest.mark.flaky(reruns=0)
 def test_update_tls_policy_target_ref(
     tls_policy, gateway, gateway2, dns_policy, dns_policy2, change_target_ref, custom_client, hostname, hostname2
 ):  # pylint: disable=unused-argument

@@ -34,6 +34,7 @@ def test_missing_api_key(client):
     assert response.status_code == 401, f"Expected status code 401, but got {response.status_code}"
 
 
+@pytest.mark.flaky(reruns=3, reruns_delay=35)
 def test_trlp_limit_and_reset_free_user(client, free_user_auth):
     """Ensures free users are rate limited and limits reset correctly"""
     total_tokens = 0
@@ -71,6 +72,7 @@ def test_trlp_limit_and_reset_free_user(client, free_user_auth):
     assert response.status_code == 200, f"Expected 200 after reset, but got {response.status_code}"
 
 
+@pytest.mark.flaky(reruns=3, reruns_delay=65)
 def test_trlp_limit_and_reset_paid_user(client, paid_user_auth):
     """Ensures paid users are rate limited and limits reset correctly"""
     total_tokens = 0

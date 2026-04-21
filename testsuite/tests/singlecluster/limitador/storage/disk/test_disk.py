@@ -14,6 +14,7 @@ def storage():
     return Disk()
 
 
+@pytest.mark.flaky(reruns=0)
 def test_basic(client):
     """Tests that limits work normally in storage environment"""
     responses = client.get_many("/get", LIMIT.limit)
@@ -21,6 +22,7 @@ def test_basic(client):
     assert client.get("/get").status_code == 429
 
 
+@pytest.mark.flaky(reruns=0)
 def test_durability(client, limitador, rate_limit):
     """
     Basic test checking that after Limitador pod restart, counters are preserved.

@@ -10,6 +10,7 @@ from testsuite.gateway import GatewayListener
 pytestmark = [pytest.mark.dnspolicy]
 
 
+@pytest.mark.flaky(reruns=0)
 def test_update_dns_policy_target_ref(
     gateway, gateway2, client, client2, dns_policy, change_target_ref
 ):  # pylint: disable=unused-argument

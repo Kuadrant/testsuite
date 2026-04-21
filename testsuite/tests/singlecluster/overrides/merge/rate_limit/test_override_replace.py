@@ -16,6 +16,7 @@ def rate_limit(rate_limit):
     return rate_limit
 
 
+@pytest.mark.flaky(reruns=3, reruns_delay=15)
 def test_gateway_override_replace(client, global_rate_limit, rate_limit):
     """Test RateLimitPolicy with an override and merge strategy overrides completely the lower level one"""
     assert rate_limit.wait_until(

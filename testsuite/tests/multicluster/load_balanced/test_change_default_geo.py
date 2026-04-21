@@ -13,6 +13,7 @@ pytestmark = [pytest.mark.multicluster]
     settings["control_plane"]["provider_secret"].startswith("gcp"),
     reason="Default geo not supported on GCP",
 )
+@pytest.mark.flaky(reruns=0)
 def test_change_default_geo(hostname, gateway, gateway2, dns_policy, dns_policy2, dns_default_geo_server):
     """Test changing dns default geolocation and verify that changes are propagated"""
     resolver = dns.resolver.Resolver(configure=False)

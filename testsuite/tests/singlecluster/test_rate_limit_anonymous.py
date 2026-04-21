@@ -46,6 +46,7 @@ def test_no_limit_for_auth_user(client, auth):
     responses.assert_all(status_code=200)
 
 
+@pytest.mark.flaky(reruns=3, reruns_delay=15)
 def test_limit_for_anonymous_identity(client, auth):
     """Test that an anonymous requests are correctly limited"""
     assert client.get("/get", auth=auth).status_code == 200

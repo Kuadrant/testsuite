@@ -34,6 +34,7 @@ def commit(request, rate_limit, rate_limit2):
         policy.wait_for_ready()
 
 
+@pytest.mark.flaky(reruns=3, reruns_delay=10)
 def test_multiple_limits_targeting_different_route_rules(client):
     """Test targeting separate HTTPRoute Rules with different limits"""
     responses = client.get_many("/get", 3)

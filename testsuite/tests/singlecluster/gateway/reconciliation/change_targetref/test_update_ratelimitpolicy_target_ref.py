@@ -17,6 +17,7 @@ def rate_limit(cluster, blame, module_label, gateway, route):  # pylint: disable
     return policy
 
 
+@pytest.mark.flaky(reruns=0)
 def test_update_ratelimit_policy_target_ref(
     route2, gateway, gateway2, rate_limit, client, client2, dns_policy, dns_policy2, change_target_ref
 ):  # pylint: disable=unused-argument

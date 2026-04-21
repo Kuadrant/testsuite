@@ -30,6 +30,7 @@ def kubeconfig_secrets(testconfig, cluster, cluster2, blame, module_label):
     ]
 
 
+@pytest.mark.flaky(reruns=0)
 def test_update_secondary(hostname, dnsrecord2):
     """Test if update/delete changes on secondary DNSRecord are propagated to the authoritative DNS record"""
     dns_ips = {ip.address for ip in dns.resolver.resolve(hostname.hostname)}

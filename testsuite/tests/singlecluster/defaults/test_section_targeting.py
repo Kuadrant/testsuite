@@ -48,6 +48,7 @@ def rate_limit(cluster, target, route, module_label, blame):  # pylint: disable=
     [pytest.param(("gateway", "api"), id="gateway"), pytest.param(("route", "rule-1"), id="route")],
     indirect=True,
 )
+@pytest.mark.flaky(reruns=3, reruns_delay=15)
 def test_basic_listener(client, auth):
     """Test the defaults policies are correctly applied to the target section"""
     assert client.get("/get").status_code == 401

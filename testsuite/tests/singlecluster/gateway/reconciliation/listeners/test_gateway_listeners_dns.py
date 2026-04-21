@@ -12,6 +12,7 @@ DEFAULT_LISTENER_NAME = TLSGatewayListener.name
 
 
 @pytest.mark.issue("https://github.com/Kuadrant/kuadrant-operator/issues/794")
+@pytest.mark.flaky(reruns=0)
 def test_change_listener(custom_client, check_ok_https, gateway, route, second_domain, wildcard_domain):
     """
     This test checks if after change of listener hostname in a Gateway while having DNSPolicy applied, that

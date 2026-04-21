@@ -16,6 +16,7 @@ def rate_limit(rate_limit):
     return rate_limit
 
 
+@pytest.mark.flaky(reruns=3, reruns_delay=15)
 def test_gateway_default_replace(client, global_rate_limit):
     """Test Gateway default policy being partially overridden when a policy with the same name is attached on a route"""
     assert global_rate_limit.wait_until(

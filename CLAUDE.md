@@ -171,6 +171,10 @@ Tests use markers to categorize functionality. All available markers are defined
 - `@pytest.mark.issue("https://github.com/...")` - Linked to GitHub/Jira issues
 - `@pytest.mark.min_ocp_version((4, 20))` - Minimum OpenShift version requirement
 
+### Test Reruns (`@pytest.mark.flaky`)
+
+See `.claude/rules/test-reruns.md` for detailed guidance on using `@pytest.mark.flaky` to control rerun behavior per test.
+
 ## Coding Conventions
 
 ### Docstrings

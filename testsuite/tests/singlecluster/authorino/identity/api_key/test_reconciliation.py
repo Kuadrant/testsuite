@@ -35,6 +35,7 @@ def test_create_new_api_key(client, create_api_key, module_label):
     assert response.status_code == 200
 
 
+@pytest.mark.flaky(reruns=0)
 def test_delete_api_key(client, auth, api_key):
     """Test reconciliation when API key Secret is deleted"""
     response = client.get("/get", auth=auth)

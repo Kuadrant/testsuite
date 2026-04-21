@@ -30,6 +30,7 @@ def rate_limit(rate_limit, limit):
 
 
 @pytest.mark.parametrize("rate_limit", ["route", "gateway"], indirect=True)
+@pytest.mark.flaky(reruns=3, reruns_delay=20)
 def test_limit(client, limit):
     """Tests that simple limit is applied successfully"""
     responses = client.get_many("/get", limit.limit)

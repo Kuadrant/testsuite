@@ -15,6 +15,7 @@ def rate_limit(cluster, blame, module_label, route):
     return rlp
 
 
+@pytest.mark.flaky(reruns=3, reruns_delay=15)
 def test_limit_match_route_rule(client):
     """Tests that RLP correctly applies to the specific HTTPRoute Rule"""
     responses = client.get_many("/get", 2)

@@ -29,8 +29,15 @@ class KubernetesObject(APIObject, LifecycleObject):
         """
         Creates object on the server and returns created entity.
         It will be the same class but attributes might differ, due to server adding/rejecting some of them.
+        If the object already exists (e.g. during a pytest rerun), it falls back to apply.
         """
-        self.create(["--save-config=true"])
+        try:
+            self.create(["--save-config=true"])
+        except OpenShiftPythonException as e:
+            if "AlreadyExists" in str(e):
+                self.apply()
+            else:
+                raise
         self._committed = True
         return self.refresh()
 

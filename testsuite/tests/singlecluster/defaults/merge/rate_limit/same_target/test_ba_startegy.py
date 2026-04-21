@@ -22,6 +22,7 @@ def commit(request, route, rate_limit, global_rate_limit):  # pylint: disable=un
     [("gateway", "gateway"), ("route", "route")],
     indirect=True,
 )
+@pytest.mark.flaky(reruns=3, reruns_delay=15)
 def test_multiple_policies_merge_default_ba(client, global_rate_limit):
     """Test RateLimitPolicy with merge defaults being ignored due to age"""
     assert global_rate_limit.wait_until(

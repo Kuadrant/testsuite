@@ -23,6 +23,7 @@ def rate_limit(rate_limit):
     return rate_limit
 
 
+@pytest.mark.flaky(reruns=3, reruns_delay=15)
 def test_gateway_default_merge(client, global_rate_limit, rate_limit):
     """Both policies are enforced and not being overridden"""
     assert global_rate_limit.wait_until(

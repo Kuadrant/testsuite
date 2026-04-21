@@ -41,6 +41,7 @@ def commit(request, rate_limit, rate_limit2):
     ), f"'2pr10s' RLP did not reach expected record status, instead it was: {rate_limit2.model.status.condition}"
 
 
+@pytest.mark.flaky(reruns=0)
 def test_identical_hostnames_rlp_on_gw_and_route(client, rate_limit, rate_limit2):
     """
     Tests that Gateway-attached RateLimitPolicy is enforced on 'route2' if both 'route' and 'route2' declare

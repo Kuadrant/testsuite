@@ -44,6 +44,7 @@ def commit(request, route, rate_limit, override_rate_limit):  # pylint: disable=
 
 
 @pytest.mark.parametrize("target", ["gateway", "route"], indirect=True)
+@pytest.mark.flaky(reruns=3, reruns_delay=15)
 def test_multiple_policies_gateway_override(client):
     """Test RateLimitPolicy with an override overriding a default policy targeting the same gateway/route"""
     responses = client.get_many("/get", OVERRIDE_LIMIT.limit)

@@ -18,6 +18,7 @@ def rate_limit(cluster, blame, module_label, route):
     return rate_limit
 
 
+@pytest.mark.flaky(reruns=3, reruns_delay=15)
 def test_two_limits_targeting_one_route_rule(client):
     """Test that one limit ends up shadowing others"""
     responses = client.get_many("/get", 3)

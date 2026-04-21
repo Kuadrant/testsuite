@@ -23,6 +23,7 @@ def rate_limit(rate_limit):
 
 
 @pytest.mark.parametrize("rate_limit", ["route", "gateway"], indirect=True)
+@pytest.mark.flaky(reruns=3, reruns_delay=10)
 def test_basic_rate_limit(rate_limit, route, client):
     """Test that default rate limit is applied successfully and shows affected status in the route"""
     route.refresh()

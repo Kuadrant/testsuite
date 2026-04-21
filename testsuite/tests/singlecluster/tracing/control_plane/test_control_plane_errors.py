@@ -37,6 +37,7 @@ def orphan_test_policy(request, cluster, blame, orphan_test_route, module_label)
     return orphan_policy
 
 
+@pytest.mark.flaky(reruns=0)
 def test_orphaned_policy_reconciliation_traced(orphan_test_route, orphan_test_policy, tracing):
     """
     Validate traces when policy references deleted resources

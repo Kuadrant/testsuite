@@ -28,6 +28,7 @@ def _get_metric_value(prometheus, metric, policy_kind):
     return metrics.values[0] if metrics.values else 0
 
 
+@pytest.mark.flaky(reruns=0)
 def test_metric_policy_lifecycle(request, prometheus, cluster, blame, route, module_label):
     """Tests that policy metrics increment on create and decrement on delete"""
     initial_counts = {m: _get_metric_value(prometheus, m, "RateLimitPolicy") for m in POLICY_METRICS}

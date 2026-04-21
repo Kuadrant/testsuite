@@ -33,6 +33,7 @@ def commit(request, rate_limit, rate_limit2):
             rlp.wait_for_ready()
 
 
+@pytest.mark.flaky(reruns=0)
 def test_identical_hostnames_rlp_on_routes(client, rate_limit2):
     """
     Validates that 1st RateLimitPolicy is still enforced on 'route' declaring identical hostname as 'route2' if another

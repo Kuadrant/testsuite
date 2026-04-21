@@ -29,6 +29,7 @@ def kubeconfig_secrets(testconfig, cluster, cluster2, blame, module_label):
     ]
 
 
+@pytest.mark.flaky(reruns=0)
 def test_authoritative_record_removal_cleans_up_provider(hostname, dnsrecord1, dnsrecord2):
     """Delete DNSRecords from both primary and secondary clusters and check they are really cleaned up"""
     dns_ips = {ip.address for ip in dns.resolver.resolve(hostname.hostname)}

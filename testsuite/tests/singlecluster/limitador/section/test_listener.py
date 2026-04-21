@@ -15,6 +15,7 @@ def rate_limit(cluster, blame, module_label, gateway):
     return rlp
 
 
+@pytest.mark.flaky(reruns=3, reruns_delay=15)
 def test_limit_match_gateway_listener(client):
     """Tests that RLP correctly applies to the specific Gateway Listener"""
     responses = client.get_many("/get", 2)

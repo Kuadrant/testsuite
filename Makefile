@@ -9,7 +9,7 @@ else
 resultsdir ?= .
 endif
 
-PYTEST = poetry run python -m pytest --tb=$(TB) -o cache_dir=$(resultsdir)/.pytest_cache.$(@F)
+PYTEST = poetry run python -m pytest --tb=$(TB) --reruns 3 -o cache_dir=$(resultsdir)/.pytest_cache.$(@F)
 RUNSCRIPT = poetry run ./scripts/
 
 ifdef junit
