@@ -31,7 +31,7 @@ def authconfig_trace(auth_traces, skip_or_fail):
 def limitador_trace(rl_traces, skip_or_fail):
     """Find trace with span that has sources attribute"""
     for trace in rl_traces:
-        spans = trace.filter_spans(lambda s: s.operation_name == "limits" and s.has_tag("sources"))
+        spans = trace.filter_spans(lambda s: s.operation_name == "reconciler.limitador_limits" and s.has_tag("sources"))
         if spans:
             return trace
 
