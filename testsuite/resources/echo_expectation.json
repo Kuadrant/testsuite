@@ -1,0 +1,11 @@
+[
+  {
+    "id": "echo",
+    "httpRequest": {},
+    "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{'statusCode': 200, 'headers': {'content-type': ['application/json']}, 'body': {'headers': {#foreach($entry in $request.headers.entrySet())#if($foreach.count > 1),#end '$entry.key': '$entry.value.get(0)'#end}, 'method': '$request.method', 'url': '$request.path'}}"
+    },
+    "priority": -10
+  }
+]
