@@ -33,9 +33,21 @@ class JaegerClient(TracingClient):
         return self._query_url
 
     @backoff.on_predicate(backoff.fibo, lambda x: x == [], max_tries=7, jitter=None)
-    def get_traces(self, service: str, tags: Optional[dict[str, str]] = None, min_processes: int = 0) -> list[Trace]:
+    def get_traces(
+        self,
+        service: str,
+        tags: Optional[dict[str, str]] = None,
+        min_processes: int = 0,
+        start_time: Optional[int] = None,
+    ) -> list[Trace]:
         """Gets trace from tracing backend Tempo or Jaeger.
         If min_processes is set, retries until at least that many service processes are present.
+
+        Args:
+            service: Service name to filter traces
+            tags: Optional tags to filter traces
+            min_processes: Minimum number of processes required in traces
+            start_time: Optional start time in microseconds (filters traces that started after this time)
 
         Returns:
             List of Trace objects
@@ -43,6 +55,8 @@ class JaegerClient(TracingClient):
         params = {"service": service}
         if tags:
             params["tags"] = json.dumps(tags)
+        if start_time:
+            params["start"] = str(start_time)
 
         traces_data = self.query.api.traces.get(params=params).json()["data"]
         if not traces_data:

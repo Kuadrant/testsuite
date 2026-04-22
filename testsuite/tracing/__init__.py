@@ -23,6 +23,13 @@ class TracingClient(abc.ABC):
         """Returns URL for application to deposit traces"""
 
     @abc.abstractmethod
-    def get_traces(self, service: str, tags: Optional[dict[str, str]] = None, min_processes: int = 0) -> list[Any]:
+    def get_traces(
+        self,
+        service: str,
+        tags: Optional[dict[str, str]] = None,
+        min_processes: int = 0,
+        start_time: Optional[int] = None,
+    ) -> list[Any]:
         """Search traces in tracing client by service name and tags.
-        If min_processes is set, retries until at least that many service processes are present"""
+        If min_processes is set, retries until at least that many service processes are present.
+        If start_time is set, only returns traces that started after that time (in microseconds)."""

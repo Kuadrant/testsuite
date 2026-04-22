@@ -36,6 +36,13 @@ KUADRANT_OPERATOR_ENV_VARS ?= AUTH_SERVICE_TIMEOUT=1000ms,RATELIMIT_SERVICE_TIME
 # Point to a YAML file containing any additional Kubernetes resources
 ADDITIONAL_MANIFESTS ?=
 
+# Tools namespace (Jaeger, Keycloak, etc.)
+TOOLS_NAMESPACE ?= tools
+
+# Tracing configuration
+INSTALL_TRACING ?= true
+JAEGER_COLLECTOR_ENDPOINT ?= http://jaeger-collector.$(TOOLS_NAMESPACE).svc.cluster.local:4318
+
 # Timeout configurations (in seconds)
 KUBECTL_TIMEOUT ?= 300s
 CERT_MANAGER_TIMEOUT ?= 120s
