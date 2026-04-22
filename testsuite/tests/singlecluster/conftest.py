@@ -1,10 +1,12 @@
 """Configure all the components through Kuadrant,
 all methods are placeholders for now since we do not work with Kuadrant"""
 
+from importlib import resources
+
 import pytest
 from openshift_client import selector
 
-from testsuite.backend.httpbin import Httpbin
+from testsuite.backend.mockserver import MockserverBackend, MockserverBackendConfig
 from testsuite.gateway import GatewayRoute, Gateway, Hostname, GatewayListener
 from testsuite.gateway.envoy import Envoy
 from testsuite.gateway.envoy.route import EnvoyVirtualRoute
@@ -87,13 +89,27 @@ def kuadrant(request, testconfig):
 
 
 @pytest.fixture(scope="session")
-def backend(request, cluster, blame, label, testconfig):
-    """Deploys Httpbin backend"""
-    image = testconfig["httpbin"]["image"]
-    httpbin = Httpbin(cluster, blame("httpbin"), label, image)
-    request.addfinalizer(httpbin.delete)
-    httpbin.commit()
-    return httpbin
+def mockserver_config(request, cluster, blame, label):
+    """Initial MockServer configuration with echo expectation"""
+    echo_json = resources.files("testsuite.resources").joinpath("echo_expectation.json").read_text()
+    config = MockserverBackendConfig(
+        cluster, blame("mockserver-config"), label,
+        data={"echo_expectation.json": echo_json},
+    )
+    config.commit()
+    return config
+
+
+@pytest.fixture(scope="session")
+def backend(request, cluster, blame, label, mockserver_config):
+    """Deploys MockServer backend"""
+    mockserver = MockserverBackend(
+        cluster, blame("mockserver"), label, service_type="ClusterIP", config=mockserver_config
+    )
+    request.addfinalizer(mockserver.delete)
+    mockserver.commit()
+    mockserver.wait_for_ready()
+    return mockserver
 
 
 @pytest.fixture(scope="session")

@@ -5,7 +5,7 @@ from importlib import resources
 import pytest
 from dynaconf import ValidationError
 
-from testsuite.backend.httpbin import Httpbin
+from testsuite.backend.mockserver import MockserverBackend, MockserverBackendConfig
 from testsuite.certificates import Certificate
 from testsuite.gateway import Exposer, Hostname
 from testsuite.gateway import TLSGatewayListener
@@ -69,16 +69,22 @@ def wildcard_domain(base_domain):
 
 
 @pytest.fixture(scope="session")
-def backends(request, cluster, cluster2, blame, label, testconfig) -> list[Httpbin]:
-    """Deploys Backend to each Kubernetes cluster"""
+def backends(request, cluster, cluster2, blame, label):
+    """Deploys MockServer backend to each Kubernetes cluster"""
     backends = []
-    name = blame("httpbin")
-    image = testconfig["httpbin"]["image"]
-    for client in [cluster, cluster2]:
-        httpbin = Httpbin(client, name, label, image)
-        request.addfinalizer(httpbin.delete)
-        httpbin.commit()
-        backends.append(httpbin)
+    name = blame("mockserver")
+    echo_json = resources.files("testsuite.resources").joinpath("echo_expectation.json").read_text()
+    for cluster_client in [cluster, cluster2]:
+        config = MockserverBackendConfig(
+            cluster_client, name + "-config", label,
+            data={"echo_expectation.json": echo_json},
+        )
+        config.commit()
+        mockserver = MockserverBackend(cluster_client, name, label, service_type="ClusterIP", config=config)
+        request.addfinalizer(mockserver.delete)
+        mockserver.commit()
+        mockserver.wait_for_ready()
+        backends.append(mockserver)
     return backends
 
 
