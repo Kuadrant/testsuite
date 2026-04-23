@@ -166,7 +166,7 @@ def test_user_managed_access(client, resource_owner_auth, requester_auth, protec
     assert response.status_code == 200
 
     # Extract the RPT from the response
-    rpt = json.loads(response.json()["headers"]["X-Keycloak"])["rpt"]
+    rpt = json.loads(response.json()["headers"]["x-keycloak"])["rpt"]
 
     # Access the protected resource by requester using RPT (type of JWT)
     response = client.get("/anything/1", headers={"Authorization": f"Bearer {rpt}"})
