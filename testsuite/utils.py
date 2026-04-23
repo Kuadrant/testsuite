@@ -114,7 +114,7 @@ def create_csv_file(rows: list) -> StringIO:
     return file
 
 
-def extract_response(response, header="Simple", key="data"):
+def extract_response(response, header="simple", key="data"):
     """
     Extracts response added by Authorino from header
     :param key: Response key section

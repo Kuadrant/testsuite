@@ -27,8 +27,8 @@ def test_headers(auth, client, header_name):
     """Tests that value in correct Header"""
     response = client.get("/get", auth=auth)
     assert response.status_code == 200
-    data = response.json()["headers"].get(header_name.capitalize(), None)
-    assert data is not None, f"Headers from response ({header_name.capitalize()}) is missing"
+    data = response.json()["headers"].get(header_name.lower(), None)
+    assert data is not None, f"Headers from response ({header_name.lower()}) is missing"
 
     extra_data = json.loads(data)
     assert extra_data["anything"] == "one"
