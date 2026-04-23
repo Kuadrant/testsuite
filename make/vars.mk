@@ -41,7 +41,7 @@ TOOLS_NAMESPACE ?= tools
 
 # Tracing configuration
 INSTALL_TRACING ?= true
-JAEGER_COLLECTOR_ENDPOINT ?= http://jaeger-collector.$(TOOLS_NAMESPACE).svc.cluster.local:4318
+JAEGER_COLLECTOR_ENDPOINT ?= rpc://jaeger-collector.$(TOOLS_NAMESPACE).svc.cluster.local:4317
 
 # Timeout configurations (in seconds)
 KUBECTL_TIMEOUT ?= 300s
