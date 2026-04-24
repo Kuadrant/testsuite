@@ -82,6 +82,29 @@ This will:
 make local-cleanup  # Delete the Kind cluster
 ```
 
+### Tracing (Jaeger)
+
+Jaeger is deployed automatically by `make local-setup` and configured for both control plane and data plane tracing (when `INSTALL_TRACING=true`, which is the default).
+
+- **Control plane**: the kuadrant-operator sends traces via OTLP/gRPC to `jaeger-collector.tools.svc.cluster.local:4317`
+- **Data plane**: the gateway (Istio/Envoy) sends request-level traces to the same collector
+
+To access the Jaeger UI:
+```bash
+kubectl port-forward -n tools svc/jaeger-query 16686:80
+# Open http://localhost:16686
+```
+
+To run tracing tests:
+```bash
+make testsuite/tests/singlecluster/tracing/
+```
+
+To disable tracing during setup:
+```bash
+INSTALL_TRACING=false make local-setup
+```
+
 ## Configuration
 
 The Kuadrant testsuite uses [Dynaconf](https://www.dynaconf.com/) for configuration.

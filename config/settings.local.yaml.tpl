@@ -28,9 +28,9 @@
 #    url: "MOCKSERVER_URL"
 #    image: "MOCKSERVER_IMAGE"                  # Image to be used for self-deployed Mockserver
 #  tracing:
-#    backend: "jaeger"                          # Tracing backend
-#    collector_url: "rpc://jaeger-collector.com:4317"  # Tracing collector URL (may be internal)
-#    query_url: "http://jaeger-query.com"       # Tracing query URL
+#    backend: "jaeger"                          # Tracing backend ("jaeger" or "tempo")
+#    collector_url: "rpc://jaeger-collector.tools.svc.cluster.local:4317"  # Tracing collector URL (OTLP/gRPC endpoint)
+#    query_url: "http://jaeger-query.tools.svc.cluster.local:80"           # Query UI endpoint (internal DNS or LoadBalancer IP)
 #  cfssl: "cfssl"  # Path to the CFSSL library for TLS tests
 #  service_protection:
 #    system_project: "kuadrant-system"           # Namespace where Kuadrant resource resides
