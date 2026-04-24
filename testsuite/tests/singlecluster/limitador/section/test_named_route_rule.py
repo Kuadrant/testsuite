@@ -6,6 +6,8 @@ from testsuite.kuadrant.policy.rate_limit import Limit, RateLimitPolicy
 
 pytestmark = [pytest.mark.limitador]
 
+LIMIT = Limit(2, "10s")
+
 
 @pytest.fixture(scope="module")
 def route(route, backend):
@@ -20,13 +22,13 @@ def route(route, backend):
 def rate_limit(cluster, blame, module_label, route):
     """Add a RateLimitPolicy targeting the get-rule HTTPRoute Rule."""
     rlp = RateLimitPolicy.create_instance(cluster, blame("limit"), route, "get-rule", labels={"testRun": module_label})
-    rlp.add_limit("basic", [Limit(2, "10s")])
+    rlp.add_limit("basic", [LIMIT])
     return rlp
 
 
 def test_limit_match_named_route_rule(client):
     """Tests that RLP correctly applies to the specific named HTTPRoute Rule"""
-    responses = client.get_many("/get", 2)
+    responses = client.get_many("/get", LIMIT.limit)
     responses.assert_all(status_code=200)
     assert client.get("/get").status_code == 429
 
