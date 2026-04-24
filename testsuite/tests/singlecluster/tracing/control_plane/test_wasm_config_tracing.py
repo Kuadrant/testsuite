@@ -79,8 +79,9 @@ def test_wasm_config_matches_topology(wasm_config_span, cluster, gateway, route)
 
     assert span.get_tag("gateway.name") == gateway.name()
     assert span.get_tag("gateway.namespace") == cluster.project
-    assert span.get_tag("httproute.name") == route.name()
-    assert span.get_tag("httproute.namespace") == cluster.project
+    assert span.get_tag("route.name") == route.name()
+    assert span.get_tag("route.namespace") == cluster.project
+    assert span.get_tag("route_type") == "HTTP"
     assert span.get_tag("listener.name") == "api"
     assert span.has_tag("path_id")
 
