@@ -52,12 +52,14 @@ def fetch_service(name, protocol: str = None, port: int = None):
     return _fetcher
 
 
-def fetch_service_ip(name, port: int, protocol: str = "http"):
+def fetch_service_ip(name, port: int, protocol: str = "http", namespace: str = None):
     """Fetched load balanced ip for LoadBalancer service"""
 
     def _fetcher(settings, _):
         try:
             cluster = settings["tools"]
+            if namespace:
+                cluster = cluster.change_project(namespace)
             with cluster.context:
                 ip = selector(f"service/{name}").object(cls=Service).external_ip
                 return f"{protocol}://{ip}:{port}"

@@ -4,7 +4,7 @@ import abc
 from dataclasses import dataclass
 from typing import Literal, Optional
 from testsuite.utils import asdict, JSONValues
-from testsuite.kuadrant.policy import CelExpression
+from testsuite.kuadrant.policy import CelExpression, CelPredicate
 
 # pylint: disable=invalid-name
 
@@ -63,7 +63,7 @@ class PatternRef:
     patternRef: str
 
 
-Rule = Pattern | AnyPattern | AllPattern | PatternRef
+Rule = Pattern | AnyPattern | AllPattern | PatternRef | CelPredicate
 
 
 @dataclass
@@ -89,6 +89,28 @@ class ValueFrom(ABCValue):
 
 
 @dataclass
+class ValueOrSelector:
+    """Dataclass matching Authorino's ValueOrSelector: static value, selector path, or CEL expression"""
+
+    source: Value | ValueFrom | CelExpression
+
+    def asdict(self):
+        """Serializes the source value to dict"""
+        return asdict(self.source)
+
+
+@dataclass
+class NamedValueOrSelector(ValueOrSelector):
+    """Named ValueOrSelector entry, serializes as {name: {value/selector/expression}}"""
+
+    name: str
+
+    def asdict(self):
+        """Serializes as {name: {value/selector/expression}}"""
+        return {self.name: super().asdict()}
+
+
+@dataclass
 class JsonResponse:
     """Response item as JSON injection."""
 
@@ -106,7 +128,7 @@ class JsonResponse:
 class PlainResponse:
     """Response item as plain text value."""
 
-    plain: ABCValue
+    plain: ABCValue | CelExpression
 
 
 @dataclass(kw_only=True)
