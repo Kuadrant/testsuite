@@ -1,5 +1,6 @@
 """Root conftest"""
 
+import operator
 import signal
 from urllib.parse import urlparse
 
@@ -111,6 +112,22 @@ def term_handler():
     signal.signal(signal.SIGTERM, orig)
 
 
+def _detect_gateway_api_version():
+    """Detect Gateway API CRD version from the cluster at collection time"""
+    try:
+        cluster = settings["control_plane"]["cluster"].change_project(settings["service_protection"]["project"])
+    except (KeyError, ValidationError):
+        return None
+
+    with cluster.context:
+        if (crd := selector("crd/gateways.gateway.networking.k8s.io").object(ignore_not_found=True)) is None:
+            return None
+
+    if (version_str := crd.model.metadata.annotations.get("gateway.networking.k8s.io/bundle-version")) is None:
+        return None
+    return tuple(int(p) for p in str(version_str).removeprefix("v").split(".")[:3])
+
+
 def pytest_collection_modifyitems(session, config, items):  # pylint: disable=unused-argument
     """
     Add user properties to testcases for xml output
@@ -131,6 +148,20 @@ def pytest_collection_modifyitems(session, config, items):  # pylint: disable=un
         func = getattr(item, "function", None)
         if func and func.__doc__:
             item.user_properties.append(("__rp_case_description", func.__doc__))
+
+    gateway_api_ver = _detect_gateway_api_version()
+    for item in items:
+        marker = item.get_closest_marker("gateway_api_version")
+        if marker:
+            required = marker.args[0]
+            op = marker.args[1] if len(marker.args) > 1 else operator.ge
+            if gateway_api_ver is None or not op(gateway_api_ver, required):
+                got = f"v{'.'.join(map(str, gateway_api_ver))}" if gateway_api_ver else "unknown"
+                item.add_marker(
+                    pytest.mark.skip(
+                        reason=f"Requires Gateway API CRDs {op.__name__} v{'.'.join(map(str, required))}, got {got}"
+                    )
+                )
 
 
 @pytest.fixture(scope="session")

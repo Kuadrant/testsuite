@@ -59,6 +59,7 @@ markers = [
     "cli: Test is using CLI tools (kubectl-dns, kuadrantctl)",
     "egress_gateway: Test is using egress gateway",
     "min_ocp_version: Minimum OpenShift version required for test (e.g., @pytest.mark.min_ocp_version((4, 20)))",
+    "gateway_api_version: Gateway API version requirement (e.g., @pytest.mark.gateway_api_version((1, 5, 0)) or @pytest.mark.gateway_api_version((1, 5, 0), operator.eq))",
 ]
 filterwarnings = [
     "ignore: WARNING the new order is not taken into account:UserWarning",
