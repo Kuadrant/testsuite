@@ -75,3 +75,10 @@ class Mockserver:
             params={"type": "REQUESTS", "format": "JSON"},
             json={"path": "/" + expectation_id},
         ).json()
+
+    def retrieve_all_requests(self):
+        """Retrieve all requests received by MockServer"""
+        return self.client.mockserver.retrieve.put(
+            params={"type": "REQUESTS", "format": "JSON"},
+            json={},
+        ).json()
