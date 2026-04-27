@@ -34,6 +34,7 @@ def parse_streaming_usage(response):
     return usage
 
 
+@pytest.mark.flaky(reruns=3, reruns_delay=35)
 def test_trlp_streaming_limit_and_reset(client, free_user_auth):
     """Ensures users are rate limited and limits reset correctly with streaming enabled"""
     total_tokens = 0

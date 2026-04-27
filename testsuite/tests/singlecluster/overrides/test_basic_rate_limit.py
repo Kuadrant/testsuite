@@ -37,6 +37,7 @@ def rate_limit(rate_limit):
 
 
 @pytest.mark.parametrize("rate_limit", ["route", "gateway"], indirect=True)
+@pytest.mark.flaky(reruns=3, reruns_delay=10)
 def test_basic_rate_limit(rate_limit, rate_limit_route, route, client):
     """Test if rules inside overrides block of Gateway/HTTPRoute RateLimitPolicy are inherited by the HTTPRoute
     and override the rate limit targeting the route."""

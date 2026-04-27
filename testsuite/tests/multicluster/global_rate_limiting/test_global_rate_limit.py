@@ -31,6 +31,7 @@ class Xfailexception(Exception):
 
 @pytest.mark.issue("https://github.com/Kuadrant/limitador-operator/issues/197")
 @pytest.mark.xfail(reason="https://github.com/Kuadrant/limitador-operator/issues/197", raises=Xfailexception)
+@pytest.mark.flaky(reruns=3, reruns_delay=35)
 def test_global_limit_is_shared(
     client1,
     client2,

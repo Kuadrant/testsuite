@@ -10,6 +10,7 @@ from testsuite.tests.singlecluster.gateway.scaling.conftest import LIMIT
 pytestmark = [pytest.mark.limitador, pytest.mark.authorino, pytest.mark.kuadrant_only]
 
 
+@pytest.mark.flaky(reruns=0)
 def test_scale_gateway(gateway, client, auth):
     """This test asserts that the policies are working as expected and this behavior does not change after scaling"""
     anon_auth_resp = client.get("/anything/auth")

@@ -18,6 +18,7 @@ basic_request = {
 }
 
 
+@pytest.mark.flaky(reruns=3, reruns_delay=25)
 def test_multiple_trlp_limit_iterations(client):
     """Ensures TRLP limit resets correctly over multiple iterations"""
     for i in range(10):

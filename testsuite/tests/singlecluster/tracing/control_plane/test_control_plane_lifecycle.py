@@ -86,6 +86,7 @@ def temp_deletion_policy(request, cluster, blame, route, module_label):
 
 
 @pytest.mark.parametrize("temp_deletion_policy", ["auth", "rate_limit"], indirect=True)
+@pytest.mark.flaky(reruns=0)
 def test_policy_deletion_triggers_reconciliation_traces(temp_deletion_policy, tracing):
     """
     Validate that policy deletion triggers reconciliation traces.

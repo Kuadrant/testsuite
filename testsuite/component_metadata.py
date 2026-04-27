@@ -62,7 +62,7 @@ class ReportPortalMetadataCollector:
                     return metadata
                 for container in deployment.model.spec.template.spec.containers:
                     if container.name == container_name:
-                        metadata["kuadrant_image"] = container.image
+                        metadata["kuadrant_image"] = container.image.split("@", 1)[0]
                         break
         except (oc.OpenShiftPythonException, AttributeError, KeyError, IndexError, ValueError) as e:
             logger.warning("Failed to get kuadrant-operator image: %s", e)

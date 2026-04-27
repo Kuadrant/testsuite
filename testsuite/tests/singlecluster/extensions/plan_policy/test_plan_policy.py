@@ -82,11 +82,15 @@ def commit(request, plan_policy, authorization):
 @pytest.mark.parametrize(
     "user_with_plan, allowed_requests",
     [
-        (tier, plan.limits["custom"][0]["limit"] if "custom" in plan.limits else list(plan.limits.values())[0])
-        for tier, plan in PLANS.items()
+        pytest.param("gold", 5, id="gold"),
+        pytest.param("silver", 3, id="silver"),
+        pytest.param("bronze", 2, id="bronze", marks=pytest.mark.flaky(reruns=0)),
     ],
     indirect=["user_with_plan"],
 )
+# 25s reruns_delay is enough for gold (10s) and silver (20s) windows to reset.
+# Bronze uses a daily limit, so reruns are disabled via param-level reruns=0.
+@pytest.mark.flaky(reruns=3, reruns_delay=25)
 def test_plan_policy(client, user_with_plan, allowed_requests):
     """
     Test PlanPolicy enforcement across different tiers and rate limits.

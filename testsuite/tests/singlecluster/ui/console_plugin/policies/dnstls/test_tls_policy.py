@@ -16,6 +16,7 @@ def remove_preexisting_tls(tls_policy):
 
 
 @pytest.mark.parametrize("tls_new_page", [TLSNewPageYaml, TLSNewPageForm])
+@pytest.mark.flaky(reruns=0)
 def test_tls_policy_ui(request, navigator, cluster, blame, gateway, cluster_issuer, tls_new_page, client):
     """Creates a TLSPolicy via the UI (form or YAML), verifies it appears, then deletes it via the UI"""
 

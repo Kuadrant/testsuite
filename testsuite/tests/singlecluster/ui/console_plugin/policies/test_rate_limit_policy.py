@@ -7,6 +7,7 @@ from testsuite.page_objects.policies.rate_limit_policy import RateLimitNewPageYa
 pytestmark = [pytest.mark.ui]
 
 
+@pytest.mark.flaky(reruns=0)
 def test_rate_limit_policy_ui(request, navigator, cluster, blame, gateway, client):
     """Creates a RateLimitPolicy via the UI, verifies it appears, then deletes it via the UI"""
 

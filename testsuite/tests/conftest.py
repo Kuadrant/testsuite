@@ -65,9 +65,60 @@ def pytest_runtest_setup(item):
             skip_or_fail(f"Unable to locate Kuadrant installation: {error}")
 
 
+def _format_failure_message(call, report):
+    """Extract failure message from call/report, keeping only testsuite frames."""
+    if not call.excinfo:
+        return str(report.longrepr or "")
+    tb_lines = []
+    for entry in call.excinfo.traceback:
+        if "site-packages" not in str(entry.path):
+            tb_lines.append(f"{entry.path}:{entry.lineno}: in {entry.name}\n    {entry.statement}")
+
+    exc = call.excinfo.value
+    exc_message = str(exc)
+    # OpenShiftPythonException embeds full K8s objects in its message;
+    # extract just the stderr from each action
+    result = getattr(exc, "result", None)
+    if result is not None and callable(getattr(result, "actions", None)):
+        errs = [a.err.strip() for a in result.actions() if getattr(a, "err", None)]
+        if errs:
+            exc_message = "; ".join(errs)
+
+    tb_lines.append(f"E   {call.excinfo.type.__name__}: {exc_message}")
+    return "\n".join(tb_lines)
+
+
+def _collect_rerun_attempt(item, call, report):
+    """Record failure message and captured output for one rerun attempt."""
+    message = _format_failure_message(call, report)
+    if report.failed and call.excinfo:
+        exc = call.excinfo.value
+        result = getattr(exc, "result", None)
+        if result is not None and callable(getattr(result, "actions", None)):
+            report.longrepr = message
+    item.rerun_messages = getattr(item, "rerun_messages", []) + [message]
+
+    captured_output = "".join(content for _, content in report.sections if content)
+    item.rerun_outputs = getattr(item, "rerun_outputs", []) + [captured_output]
+
+
+def _write_rerun_properties(item, report):
+    """Write collected rerun data into JUnit XML user properties at teardown."""
+    execution_count = getattr(item, "execution_count", 1)
+    if execution_count > 1:
+        rerun_messages = getattr(item, "rerun_messages", [])
+        rerun_outputs = getattr(item, "rerun_outputs", [])
+        report.user_properties.append(("__rp_reruns", str(execution_count - 1)))
+        for i, msg in enumerate(rerun_messages, start=1):
+            report.user_properties.append((f"__rp_rerun_{i}_message", msg))
+        for i, output in enumerate(rerun_outputs, start=1):
+            if output:
+                report.user_properties.append((f"__rp_rerun_{i}_output", output))
+
+
 @pytest.hookimpl(hookwrapper=True)
-def pytest_runtest_makereport(item, call):  # pylint: disable=unused-argument
-    """Add jira link to html report"""
+def pytest_runtest_makereport(item, call):
+    """Add jira link to html report and record rerun count for JUnit XML."""
     pytest_html = item.config.pluginmanager.getplugin("html")
     outcome = yield
     report = outcome.get_result()
@@ -82,6 +133,10 @@ def pytest_runtest_makereport(item, call):  # pylint: disable=unused-argument
                 label = issue
             extra.append(pytest_html.extras.url(issue, name=label))
         report.extra = extra
+    if report.when in ("call", "setup") and (report.failed or report.outcome == "rerun"):
+        _collect_rerun_attempt(item, call, report)
+    if report.when == "teardown":
+        _write_rerun_properties(item, report)
 
 
 def pytest_report_header(config):

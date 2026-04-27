@@ -30,6 +30,7 @@ def commit(request, authorization, authorization2):
             auth.wait_for_ready()
 
 
+@pytest.mark.flaky(reruns=0)
 def test_identical_hostnames_auth_on_routes(client, authorization):
     """
     Validate that 2nd AuthPolicy is fully enforced on 'route2' declaring identical hostname as 'route' when another

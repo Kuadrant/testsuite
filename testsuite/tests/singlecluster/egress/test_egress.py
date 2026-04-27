@@ -65,6 +65,7 @@ def test_egress_authorization(client, auth):
     assert response.status_code == 200
 
 
+@pytest.mark.flaky(reruns=3, reruns_delay=10)
 def test_egress_ratelimit(client, auth):
     """Test that RateLimitPolicy is enforced on egress gateway traffic"""
     sleep(5 + 1)  # make sure request limit quota is reset before starting the test

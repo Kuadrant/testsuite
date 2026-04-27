@@ -10,6 +10,7 @@ from testsuite.kuadrant.policy.dns import has_record_condition
 pytestmark = [pytest.mark.multicluster]
 
 
+@pytest.mark.flaky(reruns=0)
 def test_change_lb_strategy(hostname, gateway, gateway2, dns_policy2, dns_server, dns_server2, wildcard_domain):
     """Verify that removing DNSPolicy load-balancing configuration removes GEO load-balancing endpoint from the pool"""
     resolver = dns.resolver.Resolver(configure=False)

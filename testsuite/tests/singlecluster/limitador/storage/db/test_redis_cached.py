@@ -18,6 +18,7 @@ def storage(storage_secret):
     return RedisCached(storage_secret.name(), flush_period=1, batch_size=1, max_cached=1)
 
 
+@pytest.mark.flaky(reruns=0)
 def test_basic(client):
     """Tests that limits work normally in storage environment"""
     responses = client.get_many("/get", LIMIT.limit)
@@ -27,6 +28,7 @@ def test_basic(client):
 
 @pytest.mark.issue("https://github.com/Kuadrant/limitador-operator/issues/197")
 @pytest.mark.xfail(reason="https://github.com/Kuadrant/limitador-operator/issues/197")
+@pytest.mark.flaky(reruns=0)
 def test_durability(client, limitador, rate_limit):
     """Basic test checking that after Limitador pod restart, counters are preserved."""
     responses = client.get_many("/get", LIMIT.limit)

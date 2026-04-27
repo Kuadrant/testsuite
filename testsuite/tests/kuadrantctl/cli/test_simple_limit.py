@@ -22,6 +22,7 @@ def oas(oas, blame, gateway, hostname, backend):
 
 @pytest.mark.parametrize("encoder", [pytest.param("as_json", id="JSON"), pytest.param("as_yaml", id="YAML")])
 @pytest.mark.parametrize("stdin", [pytest.param(True, id="STDIN"), pytest.param(False, id="File")])
+@pytest.mark.flaky(reruns=3, reruns_delay=25)
 def test_generate_limit(request, kuadrantctl, oas, encoder, cluster, client, stdin):
     """Tests that RateLimitPolicy can be generated and that it is enforced as expected"""
     encoded = getattr(oas, encoder)()

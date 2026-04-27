@@ -28,6 +28,7 @@ def commit(request, route, dns_policy):  # pylint: disable=unused-argument
     dns_policy.wait_for_ready()
 
 
+@pytest.mark.flaky(reruns=0)
 def test_dnspolicy_removal(gateway, dns_policy, client):
     """
     Test that Gateway will behave properly after attached DNSPolicy is deleted

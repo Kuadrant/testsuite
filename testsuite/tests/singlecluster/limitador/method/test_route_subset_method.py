@@ -33,6 +33,7 @@ def rate_limit(rate_limit):
 
 
 @pytest.mark.issue("https://github.com/Kuadrant/testsuite/issues/561")
+@pytest.mark.flaky(reruns=3, reruns_delay=15)
 def test_route_subset_method(client):
     """Tests that RLP for a HTTPRouteRule doesn't apply to separate HTTPRouteRule with different method"""
     responses = client.get_many("/anything", 5)

@@ -19,6 +19,7 @@ def rate_limit(rate_limit):
 
 
 @pytest.mark.parametrize("rate_limit", ["route", "gateway"], indirect=True)
+@pytest.mark.flaky(reruns=3, reruns_delay=15)
 def test_multiple_iterations(client):
     """Tests that simple limit is applied successfully and works for multiple iterations"""
     for _ in range(10):

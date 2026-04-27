@@ -6,6 +6,7 @@ pytestmark = [pytest.mark.authorino, pytest.mark.standalone_only]
 
 
 @pytest.mark.issue("https://github.com/Kuadrant/authorino/pull/349")
+@pytest.mark.flaky(reruns=0)
 def test_preexisting_auth(
     setup_authorino, setup_authorization, setup_gateway, setup_route, exposer, wildcard_domain, blame
 ):  # pylint: disable=too-many-locals

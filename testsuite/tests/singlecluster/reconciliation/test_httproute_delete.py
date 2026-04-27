@@ -8,6 +8,7 @@ pytestmark = [pytest.mark.authorino, pytest.mark.kuadrant_only]
 
 
 @pytest.mark.issue("https://github.com/Kuadrant/kuadrant-operator/issues/124")
+@pytest.mark.flaky(reruns=0)
 def test_delete(client, route, hostname, authorization):
     """
     Tests that after deleting HTTPRoute, status.conditions shows it missing:

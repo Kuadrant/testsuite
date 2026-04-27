@@ -20,6 +20,7 @@ def rate_limit(cluster, blame, module_label, route):
 
 @pytest.mark.authorino
 @pytest.mark.limitador
+@pytest.mark.flaky(reruns=0)
 def test_route_status(route, rate_limit, authorization):
     """Tests affected by status for HTTPRoute"""
     route.refresh()
@@ -35,6 +36,7 @@ def test_route_status(route, rate_limit, authorization):
 
 @pytest.mark.dnspolicy
 @pytest.mark.tlspolicy
+@pytest.mark.flaky(reruns=0)
 def test_gateway_status(gateway, dns_policy, tls_policy):
     """Tests affected by status for Gateway"""
     gateway.refresh()

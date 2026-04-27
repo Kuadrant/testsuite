@@ -15,6 +15,7 @@ pytestmark = [pytest.mark.dnspolicy, pytest.mark.tlspolicy]
 LISTENER_NAME = "api-second"
 
 
+@pytest.mark.flaky(reruns=0)
 def test_listeners(custom_client, check_ok_https, gateway, route, wildcard_domain, second_domain):
     """
     This test checks reconciliation of dns/tls policy on addition and removal of listeners in gateway and HTTPRoute.

@@ -39,6 +39,7 @@ def commit(request, authorization, authorization2):
     )
 
 
+@pytest.mark.flaky(reruns=0)
 def test_identical_hostnames_auth_on_gw_and_route(client, authorization, authorization2):
     """
     Tests that Gateway-attached AuthPolicy affects on 'route2' even if both 'route' and 'route2' declare identical

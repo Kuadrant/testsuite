@@ -10,6 +10,7 @@ pytestmark = [pytest.mark.ui]
 
 
 @pytest.mark.min_ocp_version((4, 20))
+@pytest.mark.flaky(reruns=0)
 def test_token_rate_limit_policy_ui(request, navigator, cluster, blame, gateway):
     """Creates a TokenRateLimitPolicy via the UI, verifies it appears, then deletes it via the UI
 

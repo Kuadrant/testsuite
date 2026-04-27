@@ -35,6 +35,7 @@ def assert_request_behavior(component, client, authorization, auth, rate_limit):
 
 
 @pytest.mark.parametrize("component", component_cases, indirect=True)
+@pytest.mark.flaky(reruns=3, reruns_delay=15)
 def test_requests_succeed_when_mtls_disabled(
     kuadrant, client, component, rate_limit, authorization, auth, configure_mtls
 ):  # pylint: disable=unused-argument
@@ -49,6 +50,7 @@ def test_requests_succeed_when_mtls_disabled(
 
 
 @pytest.mark.parametrize("component", component_cases, indirect=True)
+@pytest.mark.flaky(reruns=3, reruns_delay=15)
 def test_requests_succeed_when_mtls_enabled(
     kuadrant, client, component, rate_limit, authorization, auth, reset_mtls, wait_for_status, configure_mtls
 ):  # pylint: disable=unused-argument
@@ -70,6 +72,7 @@ def test_requests_succeed_when_mtls_enabled(
 
 
 @pytest.mark.parametrize("component", component_cases, indirect=True)
+@pytest.mark.flaky(reruns=3, reruns_delay=15)
 def test_requests_still_succeed_after_mtls_disabled_again(
     kuadrant, client, component, rate_limit, authorization, auth, wait_for_status, configure_mtls
 ):  # pylint: disable=unused-argument

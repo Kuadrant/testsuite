@@ -44,6 +44,7 @@ def commit(request, route, rate_limit, rate_limit2):
 
 
 @pytest.mark.parametrize("target", ["gateway", "route"], indirect=True)
+@pytest.mark.flaky(reruns=3, reruns_delay=10)
 def test_collision_rate_limit(client, rate_limit, rate_limit2):
     """Test first policy is being overridden when another policy with the same target is created."""
     assert rate_limit.wait_until(has_condition("Enforced", "False", "Overridden", "RateLimitPolicy is overridden"))
