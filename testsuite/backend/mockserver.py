@@ -33,11 +33,13 @@ class MockserverBackendConfig:
     @property
     def volumes(self):
         """Volumes to mount into the MockServer container"""
-        return [ConfigMapVolume(
-            config_map_name=self.config_map.name(),
-            items={k: k for k in self.data},
-            name="init-config",
-        )]
+        return [
+            ConfigMapVolume(
+                config_map_name=self.config_map.name(),
+                items={k: k for k in self.data},
+                name="init-config",
+            )
+        ]
 
     @property
     def volume_mounts(self):
