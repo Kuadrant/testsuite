@@ -3,7 +3,6 @@
 import yaml
 from openshift_client import OpenShiftPythonException, selector
 
-from testsuite.certificates import Certificate
 from testsuite.gateway import Exposer, Gateway, Hostname
 from testsuite.httpx import KuadrantClient, ForceSNIClient
 from testsuite.kubernetes.config_map import ConfigMap
