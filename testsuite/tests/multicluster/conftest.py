@@ -76,7 +76,9 @@ def backends(request, cluster, cluster2, blame, label):
     echo_json = resources.files("testsuite.resources").joinpath("echo_expectation.json").read_text()
     for cluster_client in [cluster, cluster2]:
         config = MockserverBackendConfig(
-            cluster_client, name + "-config", label,
+            cluster_client,
+            name + "-config",
+            label,
             data={"echo_expectation.json": echo_json},
         )
         config.commit()

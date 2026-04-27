@@ -89,11 +89,13 @@ def kuadrant(request, testconfig):
 
 
 @pytest.fixture(scope="session")
-def mockserver_config(request, cluster, blame, label):
+def mockserver_config(cluster, blame, label):
     """Initial MockServer configuration with echo expectation"""
     echo_json = resources.files("testsuite.resources").joinpath("echo_expectation.json").read_text()
     config = MockserverBackendConfig(
-        cluster, blame("mockserver-config"), label,
+        cluster,
+        blame("mockserver-config"),
+        label,
         data={"echo_expectation.json": echo_json},
     )
     config.commit()
