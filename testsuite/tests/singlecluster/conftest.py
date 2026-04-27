@@ -1,22 +1,29 @@
 """Configure all the components through Kuadrant,
 all methods are placeholders for now since we do not work with Kuadrant"""
 
+import uuid
 from importlib import resources
 
 import pytest
 from openshift_client import selector
 
 from testsuite.backend.mockserver import MockserverBackend, MockserverBackendConfig
+from testsuite.config import settings
 from testsuite.gateway import GatewayRoute, Gateway, Hostname, GatewayListener
 from testsuite.gateway.envoy import Envoy
 from testsuite.gateway.envoy.route import EnvoyVirtualRoute
+from testsuite.gateway.exposers import OpenShiftExposer
 from testsuite.gateway.gateway_api.gateway import KuadrantGateway
 from testsuite.gateway.gateway_api.route import HTTPRoute
+from testsuite.httpx import KuadrantClient
 from testsuite.kuadrant import KuadrantCR
 from testsuite.kuadrant.policy.authorization.auth_policy import AuthPolicy
 from testsuite.kuadrant.policy.rate_limit import RateLimitPolicy
 from testsuite.kubernetes.api_key import APIKey
 from testsuite.kubernetes.client import KubernetesClient
+from testsuite.kubernetes.openshift.route import OpenshiftRoute
+from testsuite.kubernetes.service import Service, ServicePort
+from testsuite.mockserver import Mockserver
 
 
 @pytest.fixture(scope="session")
@@ -111,6 +118,34 @@ def backend(request, cluster, blame, label, mockserver_config):
 
 
 @pytest.fixture(scope="session")
+def backend_mockserver(request, backend, cluster, blame, exposer):
+    """Mockserver API client for the backend, bypassing the gateway"""
+    match_labels = {"app": backend.label, "deployment": backend.name}
+
+    if isinstance(exposer, OpenShiftExposer):
+        route = OpenshiftRoute.create_instance(cluster, blame("ms-api"), backend.name, "http")
+        request.addfinalizer(route.delete)
+        route.commit()
+        base_url = f"http://{route.hostname}"
+    else:
+        api_service = Service.create_instance(
+            cluster,
+            blame("ms-api"),
+            selector=match_labels,
+            ports=[ServicePort(name="http", port=8080, targetPort="api")],
+            labels={"app": backend.label},
+            service_type="LoadBalancer",
+        )
+        request.addfinalizer(api_service.delete)
+        api_service.commit()
+        api_service.wait_for_ready(slow_loadbalancers=settings["control_plane"]["slow_loadbalancers"])
+        base_url = f"http://{api_service.refresh().external_ip}:8080"
+
+    with KuadrantClient(base_url=base_url) as http_client:
+        yield Mockserver(http_client)
+
+
+@pytest.fixture(scope="session")
 def gateway(request, kuadrant, cluster, blame, label, testconfig, wildcard_domain) -> Gateway:
     """Deploys Gateway that wires up the Backend behind the reverse-proxy and Authorino instance"""
     if kuadrant:
@@ -159,11 +194,56 @@ def route(request, kuadrant, gateway, blame, hostname, backend, module_label) ->
 
 
 @pytest.fixture(scope="module")
-def client(route, hostname):  # pylint: disable=unused-argument
-    """Returns httpx client to be used for requests"""
-    client = hostname.client()
+def _leak_tracker():
+    """Accumulates tracking IDs of denied requests (401/403/429) for leak detection"""
+    return []
+
+
+DENIED_STATUS_CODES = {401, 403, 429}
+TRACKING_HEADER = "X-Testsuite-Tracking"
+
+
+@pytest.fixture(scope="module")
+def client(route, hostname, _leak_tracker):  # pylint: disable=unused-argument
+    """Returns httpx client to be used for requests, with upstream leak tracking"""
+
+    def _inject_tracking_header(request):
+        request.headers[TRACKING_HEADER] = str(uuid.uuid4())
+
+    def _record_denied_response(response):
+        if response.status_code in DENIED_STATUS_CODES:
+            tracking_id = response.request.headers.get(TRACKING_HEADER)
+            if tracking_id:
+                _leak_tracker.append(tracking_id)
+
+    client = hostname.client(event_hooks={"request": [_inject_tracking_header], "response": [_record_denied_response]})
     yield client
     client.close()
+
+
+@pytest.fixture(scope="module", autouse=True)
+def _assert_no_upstream_leak(_leak_tracker, backend_mockserver):
+    """Asserts that requests denied by the gateway (401/403/429) did not reach the backend"""
+    yield
+
+    if not _leak_tracker:
+        return
+
+    denied_set = set(_leak_tracker)
+    all_requests = backend_mockserver.retrieve_all_requests()
+
+    leaked = []
+    for req in all_requests:
+        headers = req.get("headers", {})
+        for name, values in headers.items():
+            if name.lower() == TRACKING_HEADER.lower() and values:
+                if values[0] in denied_set:
+                    leaked.append(values[0])
+
+    assert not leaked, (
+        f"{len(leaked)} denied request(s) leaked to the upstream backend. "
+        f"The gateway returned a denial status (401/403/429) but the request still reached MockServer."
+    )
 
 
 @pytest.fixture(scope="module")
