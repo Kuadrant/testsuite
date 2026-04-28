@@ -270,5 +270,5 @@ class Exposer(LifecycleObject):
     def base_domain(self) -> str:
         """Returns base domains for all hostnames created by this exposer"""
 
-    def prometheus_client(self):
-        """Returns a KuadrantClient connected to Prometheus, or None if not discoverable"""
+    def prometheus_url(self, project, service_name):
+        """Returns Prometheus URL discovered from the cluster, or None"""

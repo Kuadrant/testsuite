@@ -1,7 +1,7 @@
 """General exposers, not tied to Envoy or Gateway API"""
 
 import yaml
-from openshift_client import OpenShiftPythonException, selector
+from openshift_client import selector
 
 from testsuite.gateway import Exposer, Gateway, Hostname
 from testsuite.httpx import KuadrantClient, ForceSNIClient
@@ -35,23 +35,20 @@ class OpenShiftExposer(Exposer):
         route.commit()
         return route
 
-    def prometheus_client(self):
-        """Discover Prometheus via thanos-querier route in openshift-monitoring"""
-        try:
-            openshift_monitoring = self.cluster.change_project("openshift-monitoring")
-
-            with openshift_monitoring.context:
-                cm = selector("cm/cluster-monitoring-config").object(cls=ConfigMap)
-                if not yaml.safe_load(cm["config.yaml"])["enableUserWorkload"]:
-                    return None
-
-            routes = openshift_monitoring.get_routes_for_service("thanos-querier")
-            if not routes:
+    def prometheus_url(self, project, service_name):
+        """Discovers Prometheus via OpenShift route, checking user workload monitoring is enabled"""
+        monitoring = self.cluster.change_project(project)
+        with monitoring.context:
+            cm = selector("cm/cluster-monitoring-config").object(cls=ConfigMap)
+            if not yaml.safe_load(cm["config.yaml"])["enableUserWorkload"]:
                 return None
-            url = ("https://" if "tls" in routes[0].model.spec else "http://") + routes[0].model.spec.host
-            return KuadrantClient(headers={"Authorization": f"Bearer {self.cluster.token}"}, base_url=url, verify=False)
-        except (OpenShiftPythonException, KeyError, AttributeError, yaml.YAMLError):
+
+        routes = monitoring.get_routes_for_service(service_name)
+        if not routes:
             return None
+        route = routes[0]
+        protocol = "https" if "tls" in route.model.spec else "http"
+        return f"{protocol}://{route.model.spec.host}"
 
     def commit(self):
         return
@@ -91,9 +88,6 @@ class StaticLocalHostname(Hostname):
 class LoadBalancerServiceExposer(Exposer):
     """Exposer using Load Balancer service for Gateway"""
 
-    PROMETHEUS_SERVICE = "prometheus-kube-prometheus-prometheus"
-    PROMETHEUS_NAMESPACE = "monitoring"
-
     def expose_hostname(self, name, gateway: Gateway) -> Hostname:
         hostname = f"{name}.{self.base_domain}"
         return StaticLocalHostname(
@@ -104,16 +98,13 @@ class LoadBalancerServiceExposer(Exposer):
     def base_domain(self) -> str:
         return "test.com"
 
-    def prometheus_client(self):
-        """Discover Prometheus via LoadBalancer service in monitoring namespace"""
-        try:
-            monitoring = self.cluster.change_project(self.PROMETHEUS_NAMESPACE)
-            with monitoring.context:
-                svc = selector(f"service/{self.PROMETHEUS_SERVICE}").object(cls=Service)
-                port = svc.model.spec.ports[0].port
-                return KuadrantClient(base_url=f"http://{svc.external_ip}:{port}", verify=False)
-        except (OpenShiftPythonException, KeyError, AttributeError):
-            return None
+    def prometheus_url(self, project, service_name):
+        """Discovers Prometheus via LoadBalancer service IP"""
+        monitoring = self.cluster.change_project(project)
+        with monitoring.context:
+            svc = selector(f"service/{service_name}").object(cls=Service)
+            port = svc.model.spec.ports[0].port
+            return f"http://{svc.external_ip}:{port}"
 
     def commit(self):
         pass

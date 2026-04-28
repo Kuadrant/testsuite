@@ -52,18 +52,35 @@ def fetch_service(name, protocol: str = None, port: int = None):
     return _fetcher
 
 
-def fetch_service_ip(name, port: int, protocol: str = "http", namespace: str = "tools"):
-    """Fetches load balanced IP for a LoadBalancer service in a given namespace"""
+def fetch_service_ip(name, port: int, protocol: str = "http"):
+    """Fetched load balanced ip for LoadBalancer service"""
 
     def _fetcher(settings, _):
         try:
-            cluster = settings["control_plane"]["cluster"].change_project(namespace)
+            cluster = settings["tools"]
             with cluster.context:
                 ip = selector(f"service/{name}").object(cls=Service).external_ip
                 return f"{protocol}://{ip}:{port}"
         # pylint: disable=broad-except
         except Exception:
-            logger.warning("Unable to fetch service %s from %s", name, namespace)
+            logger.warning("Unable to fetch route %s from tools", name)
+            return None
+
+    return _fetcher
+
+
+def fetch_prometheus_url():
+    """Auto-discovers Prometheus URL using the exposer's platform-specific discovery"""
+
+    def _fetcher(settings, _):
+        try:
+            prometheus = settings["prometheus"]
+            cluster = settings["control_plane"]["cluster"]
+            exposer = settings["default_exposer"](cluster)
+            return exposer.prometheus_url(prometheus["project"], prometheus["service"])
+        # pylint: disable=broad-except
+        except Exception:
+            logger.warning("Unable to fetch Prometheus from monitoring config")
             return None
 
     return _fetcher

@@ -223,31 +223,28 @@ def testconfig():
     return settings
 
 
-def _try_configured_prometheus(testconfig):
-    """Try to create Prometheus KuadrantClient from configured URL"""
+@pytest.fixture(scope="session")
+def prometheus(cluster, testconfig, skip_or_fail):
+    """Prometheus metrics client, auto-discovered via DefaultValueValidator or configured explicitly"""
+    prometheus_conf = testconfig.get("prometheus", {})
+    project = prometheus_conf.get("project", "unknown")
+    service = prometheus_conf.get("service", "unknown")
+    exposer_name = getattr(testconfig.get("default_exposer"), "__name__", "unknown")
     try:
         testconfig.validators.validate(only=["prometheus"])
         url = testconfig["prometheus"]["url"]
-        return KuadrantClient(base_url=url, verify=False)
     except (KeyError, ValidationError):
-        return None
+        skip_or_fail(
+            f"Prometheus not available: {exposer_name} could not discover '{service}' in '{project}'. "
+            f"Set prometheus.url in config."
+        )
+        return
 
+    headers = {}
+    if url.startswith("https"):
+        headers["Authorization"] = f"Bearer {cluster.token}"
 
-@pytest.fixture(scope="session")
-def prometheus(exposer, testconfig, skip_or_fail):
-    """
-    Return Prometheus metrics client
-    Tries configured URL first, then exposer-based service auto-discovery
-    """
-    client = _try_configured_prometheus(testconfig)
-
-    if client is None:
-        client = exposer.prometheus_client()
-
-    if client is None:
-        skip_or_fail("Prometheus not available - set prometheus.url in config or ensure monitoring is configured")
-
-    with client:
+    with KuadrantClient(headers=headers, base_url=url, verify=False) as client:
         yield Prometheus(client)
 
 

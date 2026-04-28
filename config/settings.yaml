@@ -18,6 +18,9 @@ default:
     image: "quay.io/rhn_support_azgabur/mockserver:latest"
   spicedb:
     image: "quay.io/authzed/spicedb:latest"
+  prometheus:
+    project: "openshift-monitoring"
+    service: "thanos-querier"
   service_protection:
     system_project: "kuadrant-system"
     project: "kuadrant"
