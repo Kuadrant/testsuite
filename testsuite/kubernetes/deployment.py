@@ -92,6 +92,7 @@ class Deployment(KubernetesObject):
         readiness_probe: dict[str, Any] = None,
         resources: Optional[ContainerResources] = None,
         lifecycle: dict[str, Any] = None,
+        env: dict[str, str] = None,
     ):  # pylint: disable=too-many-locals
         """
         Creates new instance of Deployment
@@ -142,6 +143,9 @@ class Deployment(KubernetesObject):
 
         if lifecycle:
             container["lifecycle"] = lifecycle
+
+        if env:
+            container["env"] = [{"name": k, "value": v} for k, v in env.items()]
 
         return cls(model, context=cluster.context)
 

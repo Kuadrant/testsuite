@@ -55,7 +55,7 @@ def test_wildcard_first_authorization(client, authorization, wildcard_domain):
     """
     response = client.get("/get")
     assert response.status_code == 200
-    assert response.json()["headers"]["Header"] == '{"anything":"one"}'
+    assert response.json()["headers"]["header"] == '{"anything":"one"}'
 
     assert authorization.model.status.summary.hostsReady == [wildcard_domain]
 
@@ -83,6 +83,6 @@ def test_wildcard_second_authorization(client2, authorization2):
 
     response = client2.get("/get")
     assert response.status_code == 200
-    assert response.json()["headers"]["Header"] == '{"anything":"one"}'
+    assert response.json()["headers"]["header"] == '{"anything":"one"}'
 
     assert authorization2.model.status.summary.hostsReady == []

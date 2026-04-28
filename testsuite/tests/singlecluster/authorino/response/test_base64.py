@@ -30,7 +30,7 @@ def test_base64(auth, client, string):
     response = client.get("/get", auth=auth, headers={"test": encoded})
     assert response.status_code == 200
 
-    data = response.json()["headers"].get("Header")
+    data = response.json()["headers"].get("header")
     assert data
 
     assert json.loads(data)["anything"] == string

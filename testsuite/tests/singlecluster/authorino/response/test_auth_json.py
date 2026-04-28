@@ -42,8 +42,8 @@ def test_auth_json_path(auth, client, path_and_value):
     _, value = path_and_value
     response = client.get("/get", auth=auth)
     assert response.status_code == 200
-    data = response.json()["headers"].get("Header", None)
-    assert data is not None, "Header from response (Header) is missing"
+    data = response.json()["headers"].get("header", None)
+    assert data is not None, "Header from response (header) is missing"
 
     extra_data = json.loads(data)
     assert extra_data["anything"] == value

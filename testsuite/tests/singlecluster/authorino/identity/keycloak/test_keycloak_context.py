@@ -40,7 +40,7 @@ def test_keycloak_context(client, auth, keycloak, realm_role):
     """
     response = client.get("get", auth=auth)
     assert response.status_code == 200
-    auth_json = json.loads(response.json()["headers"]["Auth-Json"])
+    auth_json = json.loads(response.json()["headers"]["auth-json"])
     identity = auth_json["auth"]
     now = time.time()
     assert keycloak.well_known["issuer"] == identity["iss"]
