@@ -1,5 +1,6 @@
 """Module containing classes related to OIDCPolicy"""
 
+import time
 from dataclasses import dataclass
 from typing import Dict, Optional
 from testsuite.gateway import Referencable
@@ -57,3 +58,9 @@ class OIDCPolicy(Policy):
             model["spec"]["targetRef"]["sectionName"] = section_name
 
         return cls(model, context=cluster.context)
+
+    def wait_for_ready(self):
+        """Wait for OIDCPolicy to be enforced"""
+        super().wait_for_ready()
+        # Even after enforced condition OIDCPolicy requires a short sleep
+        time.sleep(5)  # https://github.com/Kuadrant/testsuite/issues/884
