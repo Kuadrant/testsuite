@@ -31,7 +31,10 @@ def _get_metric_value(prometheus, metric, policy_kind):
 @pytest.mark.flaky(reruns=0)
 def test_metric_policy_lifecycle(request, prometheus, cluster, blame, route, module_label):
     """Tests that policy metrics increment on create and decrement on delete"""
-    initial_counts = {m: _get_metric_value(prometheus, m, "RateLimitPolicy") for m in POLICY_METRICS}
+    for metric in POLICY_METRICS:
+        assert prometheus.wait_for_metric(
+            metric, 0, labels=_metric_labels(metric, "RateLimitPolicy")
+        ), f"Expected '{metric}' to be 0 before test, got {_get_metric_value(prometheus, metric, 'RateLimitPolicy')}"
 
     policy = RateLimitPolicy.create_instance(cluster, blame("rlp-lc"), route, labels={"testRun": module_label})
     request.addfinalizer(policy.delete)
@@ -42,10 +45,10 @@ def test_metric_policy_lifecycle(request, prometheus, cluster, blame, route, mod
     for metric in POLICY_METRICS:
         assert prometheus.wait_for_metric(
             metric,
-            initial_counts[metric] + 1,
+            1,
             labels=_metric_labels(metric, "RateLimitPolicy"),
         ), (
-            f"Expected '{metric}' to be {initial_counts[metric] + 1} on policy creation,"
+            f"Expected '{metric}' to be 1 on policy creation,"
             f" got {_get_metric_value(prometheus, metric, 'RateLimitPolicy')}"
         )
 
@@ -54,9 +57,9 @@ def test_metric_policy_lifecycle(request, prometheus, cluster, blame, route, mod
     for metric in POLICY_METRICS:
         assert prometheus.wait_for_metric(
             metric,
-            initial_counts[metric],
+            0,
             labels=_metric_labels(metric, "RateLimitPolicy"),
         ), (
-            f"Expected '{metric}' to be {initial_counts[metric]} on policy deletion,"
+            f"Expected '{metric}' to be 0 on policy deletion,"
             f" got {_get_metric_value(prometheus, metric, 'RateLimitPolicy')}"
         )
