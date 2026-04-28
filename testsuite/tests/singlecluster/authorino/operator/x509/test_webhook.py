@@ -35,10 +35,7 @@ def specific_authorino_name(blame):
 
 @pytest.fixture(scope="module")
 def authorino_domain(cluster, specific_authorino_name):
-    """
-    Hostname of the upstream certificate sent to be validated by APIcast
-    May be overwritten to configure different test cases
-    """
+    """Returns the Authorino service hostname used for webhook configuration"""
     return f"{specific_authorino_name}-authorino-authorization.{cluster.project}.svc"
 
 

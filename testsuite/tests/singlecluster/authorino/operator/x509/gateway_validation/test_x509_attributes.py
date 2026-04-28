@@ -1,4 +1,4 @@
-"""Tests on mTLS authentication with multiple attributes"""
+"""Tests on x509 identity authentication with multiple attributes"""
 
 import pytest
 
@@ -16,15 +16,15 @@ def authorization(authorization, blame, cert_attributes):
     return authorization
 
 
-def test_mtls_multiple_attributes_success(envoy_authority, valid_cert, hostname):
-    """Test successful mtls authentication with two matching attributes"""
+def test_x509_multiple_attributes_success(envoy_authority, valid_cert, hostname):
+    """Test successful x509 authentication with two matching attributes"""
     with hostname.client(verify=envoy_authority, cert=valid_cert) as client:
         response = client.get("/get")
         assert response.status_code == 200
 
 
-def test_mtls_multiple_attributes_fail(envoy_authority, custom_cert, hostname):
-    """Test mtls authentication with one matched and one unmatched attributes"""
+def test_x509_multiple_attributes_fail(envoy_authority, custom_cert, hostname):
+    """Test x509 authentication with one matched and one unmatched attributes"""
     with hostname.client(verify=envoy_authority, cert=custom_cert) as client:
         response = client.get("/get")
         assert response.status_code == 403

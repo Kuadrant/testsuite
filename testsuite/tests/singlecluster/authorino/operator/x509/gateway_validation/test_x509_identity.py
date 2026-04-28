@@ -1,4 +1,4 @@
-"""mTLS authentication tests"""
+"""x509 identity authentication tests"""
 
 from typing import Callable
 import pytest
@@ -8,8 +8,8 @@ from testsuite.httpx import Result
 pytestmark = [pytest.mark.authorino, pytest.mark.standalone_only]
 
 
-def test_mtls_success(envoy_authority, valid_cert, hostname):
-    """Test successful mtls authentication"""
+def test_x509_success(envoy_authority, valid_cert, hostname):
+    """Test successful x509 authentication"""
     with hostname.client(verify=envoy_authority, cert=valid_cert) as client:
         response = client.get("/get")
         assert response.status_code == 200
@@ -24,8 +24,8 @@ def test_mtls_success(envoy_authority, valid_cert, hostname):
         pytest.param("invalid_authority", "valid_cert", Result.has_cert_verify_error, id="Unknown authority"),
     ],
 )
-def test_mtls_fail(request, cert_authority, certificate, check_error: Callable, hostname):
-    """Test failed mtls verification"""
+def test_x509_fail(request, cert_authority, certificate, check_error: Callable, hostname):
+    """Test failed x509 verification"""
     ca = request.getfixturevalue(cert_authority)
     cert = request.getfixturevalue(certificate) if certificate else None
 
@@ -34,7 +34,7 @@ def test_mtls_fail(request, cert_authority, certificate, check_error: Callable, 
         assert check_error(result)
 
 
-def test_mtls_unmatched_attributes(envoy_authority, custom_cert, hostname):
+def test_x509_unmatched_attributes(envoy_authority, custom_cert, hostname):
     """Test certificate that signed by the trusted CA, though their attributes are unmatched"""
     with hostname.client(verify=envoy_authority, cert=custom_cert) as client:
         response = client.get("/get")
