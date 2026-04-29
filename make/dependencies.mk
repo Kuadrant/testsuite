@@ -14,25 +14,9 @@ install-metallb: ## Install MetalLB for LoadBalancer services
 	kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/$(METALLB_VERSION)/config/manifests/metallb-native.yaml
 	kubectl wait --namespace metallb-system --for=condition=Available deployment/controller --timeout=$(METALLB_TIMEOUT)
 	kubectl wait --namespace metallb-system --for=condition=ready pod --selector=component=controller --timeout=$(METALLB_TIMEOUT)
-	@echo "Configuring MetalLB IP pool..."
-	@printf '%s\n' \
-		'apiVersion: metallb.io/v1beta1' \
-		'kind: IPAddressPool' \
-		'metadata:' \
-		'  name: default' \
-		'  namespace: metallb-system' \
-		'spec:' \
-		'  addresses:' \
-		'  - 172.18.255.200-172.18.255.250' \
-		| kubectl apply -f -
-	@printf '%s\n' \
-		'apiVersion: metallb.io/v1beta1' \
-		'kind: L2Advertisement' \
-		'metadata:' \
-		'  name: default' \
-		'  namespace: metallb-system' \
-		| kubectl apply -f -
-	@echo "MetalLB installed with IP pool 172.18.255.200-172.18.255.250"
+	@echo "Configuring MetalLB IP pool from Docker network..."
+	./utils/docker-network-ipaddresspool.sh kind | kubectl apply -n metallb-system -f -
+	@echo "MetalLB installed"
 
 .PHONY: gateway-api-install
 gateway-api-install: ## Install Gateway API CRDs

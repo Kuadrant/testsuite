@@ -3,6 +3,7 @@
 
 # Kind cluster configuration
 KIND_CLUSTER_NAME ?= kuadrant-local
+CONTAINER_ENGINE ?= docker
 
 # Gateway provider (istio or envoygateway)
 GATEWAYAPI_PROVIDER ?= istio
