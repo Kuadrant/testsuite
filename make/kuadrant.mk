@@ -58,6 +58,19 @@ endif
 .PHONY: deploy-kuadrant-cr
 deploy-kuadrant-cr: ## Deploy Kuadrant CR
 	@echo "Creating Kuadrant CR..."
+ifeq ($(INSTALL_PROMETHEUS),true)
+	@echo "Enabling observability in Kuadrant CR..."
+	@printf '%s\n' \
+		'apiVersion: kuadrant.io/v1beta1' \
+		'kind: Kuadrant' \
+		'metadata:' \
+		'  name: kuadrant-sample' \
+		'  namespace: $(KUADRANT_NAMESPACE)' \
+		'spec:' \
+		'  observability:' \
+		'    enable: true' \
+		| kubectl apply -f -
+else
 	@printf '%s\n' \
 		'apiVersion: kuadrant.io/v1beta1' \
 		'kind: Kuadrant' \
@@ -66,5 +79,6 @@ deploy-kuadrant-cr: ## Deploy Kuadrant CR
 		'  namespace: $(KUADRANT_NAMESPACE)' \
 		'spec: {}' \
 		| kubectl apply -f -
+endif
 	kubectl wait kuadrant/kuadrant-sample --for=condition=Ready=True -n $(KUADRANT_NAMESPACE) --timeout=$(KUADRANT_CR_TIMEOUT)
 	@echo "Kuadrant CR ready"

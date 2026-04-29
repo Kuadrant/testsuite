@@ -69,6 +69,23 @@ def fetch_service_ip(name, port: int, protocol: str = "http"):
     return _fetcher
 
 
+def fetch_prometheus_url():
+    """Auto-discovers Prometheus URL using the exposer's platform-specific discovery"""
+
+    def _fetcher(settings, _):
+        try:
+            prometheus = settings["prometheus"]
+            cluster = settings["control_plane"]["cluster"]
+            exposer = settings["default_exposer"](cluster)
+            return exposer.prometheus_url(prometheus["project"], prometheus["service"])
+        # pylint: disable=broad-except
+        except Exception:
+            logger.warning("Unable to fetch Prometheus from monitoring config")
+            return None
+
+    return _fetcher
+
+
 def fetch_secret(name, key):
     """Fetches the key out of a secret with specific name"""
 

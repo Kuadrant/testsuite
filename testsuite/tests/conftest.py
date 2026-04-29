@@ -4,12 +4,11 @@ import operator
 import signal
 from urllib.parse import urlparse
 
-import yaml
 import pytest
+from openshift_client import selector
 from pytest_metadata.plugin import metadata_key  # type: ignore
 from dynaconf import ValidationError
 from keycloak import KeycloakAuthenticationError
-from openshift_client import selector
 
 from testsuite.capabilities import has_kuadrant, kuadrant_version
 from testsuite.certificates import CFSSLClient
@@ -22,7 +21,6 @@ from testsuite.oidc.auth0 import Auth0Provider
 from testsuite.prometheus import Prometheus
 from testsuite.oidc.keycloak import Keycloak
 from testsuite.tracing.jaeger import JaegerClient
-from testsuite.kubernetes.config_map import ConfigMap
 from testsuite.tracing.tempo import RemoteTempoClient
 from testsuite.utils import randomize, _whoami
 
@@ -226,29 +224,27 @@ def testconfig():
 
 
 @pytest.fixture(scope="session")
-def prometheus(cluster):
-    """
-    Return an instance of Thanos metrics client
-    Skip tests if query route is not properly configured
-    """
-    openshift_monitoring = cluster.change_project("openshift-monitoring")
-    # Check if metrics are enabled
+def prometheus(cluster, testconfig, skip_or_fail):
+    """Prometheus metrics client, auto-discovered via DefaultValueValidator or configured explicitly"""
+    prometheus_conf = testconfig.get("prometheus", {})
+    project = prometheus_conf.get("project", "unknown")
+    service = prometheus_conf.get("service", "unknown")
+    exposer_name = getattr(testconfig.get("default_exposer"), "__name__", "unknown")
     try:
-        with openshift_monitoring.context:
-            cm = selector("cm/cluster-monitoring-config").object(cls=ConfigMap)
-            assert yaml.safe_load(cm["config.yaml"])["enableUserWorkload"]
-    except Exception:  # pylint: disable=broad-exception-caught
-        pytest.skip("User workload monitoring is disabled")
+        testconfig.validators.validate(only=["prometheus"])
+        url = testconfig["prometheus"]["url"]
+    except (KeyError, ValidationError):
+        skip_or_fail(
+            f"Prometheus not available: {exposer_name} could not discover '{service}' in '{project}'. "
+            f"Set prometheus.url in config."
+        )
+        return
 
-    # find thanos-querier route in the openshift-monitoring project
-    # this route allows to query metrics
+    headers = {}
+    if url.startswith("https"):
+        headers["Authorization"] = f"Bearer {cluster.token}"
 
-    routes = openshift_monitoring.get_routes_for_service("thanos-querier")
-    if len(routes) == 0:
-        pytest.skip("Skipping metrics tests as query route is not properly configured")
-
-    url = ("https://" if "tls" in routes[0].model.spec else "http://") + routes[0].model.spec.host
-    with KuadrantClient(headers={"Authorization": f"Bearer {cluster.token}"}, base_url=url, verify=False) as client:
+    with KuadrantClient(headers=headers, base_url=url, verify=False) as client:
         yield Prometheus(client)
 
 

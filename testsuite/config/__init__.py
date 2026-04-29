@@ -3,7 +3,7 @@
 from dynaconf import Dynaconf, Validator
 
 from testsuite.utils import hostname_to_ip
-from testsuite.config.tools import fetch_route, fetch_service, fetch_secret, fetch_service_ip
+from testsuite.config.tools import fetch_route, fetch_service, fetch_secret, fetch_service_ip, fetch_prometheus_url
 
 
 # pylint: disable=too-few-public-methods
@@ -78,6 +78,10 @@ settings = Dynaconf(
         DefaultValueValidator(
             "custom_metrics_apiserver.url",
             default=fetch_service_ip("custom-metrics-apiserver", protocol="http", port=8080),
+        ),
+        DefaultValueValidator(
+            "prometheus.url",
+            default=fetch_prometheus_url(),
         ),
     ],
     validate_only=["authorino", "kuadrant", "default_exposer", "control_plane"],

@@ -31,6 +31,10 @@
 #    backend: "jaeger"                          # Tracing backend
 #    collector_url: "rpc://jaeger-collector.com:4317"  # Tracing collector URL (may be internal)
 #    query_url: "http://jaeger-query.com"       # Tracing query URL
+#  prometheus:
+#    url: "http://172.18.255.200:9090"            # Overrides pre-defined auto-discovery (OpenShift/Kind), use with care
+#    project: "openshift-monitoring"              # Project where Prometheus is deployed, default value for OpenShift, for Kind it will be "monitoring"
+#    service: "thanos-querier"                    # Service name of the Prometheus querier, default value for OpenShift, for Kind it will be "prometheus-kube-prometheus-prometheus"
 #  cfssl: "cfssl"  # Path to the CFSSL library for TLS tests
 #  service_protection:
 #    system_project: "kuadrant-system"           # Namespace where Kuadrant resource resides
