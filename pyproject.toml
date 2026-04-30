@@ -26,12 +26,14 @@ weakget = "*"
 pytest-playwright = "*"
 playwright = "1.57.0"
 pytest-rerunfailures = "*"
+hvac = "^2.4.0"
 
 [tool.poetry.group.dev.dependencies]
 mypy = "*"
 pylint = "*"
 types-PyYAML = "*"
 black = {version = "*", extras = ["d"]}
+types-hvac = "^2.4.0.20260408"
 
 
 # Black

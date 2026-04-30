@@ -8,6 +8,8 @@ from testsuite.kuadrant.policy.authorization import (
     Pattern,
     ABCValue,
     ValueFrom,
+    ValueOrSelector,
+    NamedValueOrSelector,
     JsonResponse,
     PlainResponse,
     WristbandResponse,
@@ -201,18 +203,33 @@ class MetadataSection(Section):
     def add_http(
         self,
         name,
-        endpoint,
-        method: Literal["GET", "POST"],
+        endpoint=None,
+        method: Literal["GET", "POST"] = "GET",
         credentials: Credentials = None,
         shared_secret_ref: dict[str, str] = None,
+        *,
+        url_expression: str = None,
+        content_type: Literal["application/x-www-form-urlencoded", "application/json"] = None,
+        body: ValueOrSelector = None,
+        headers: list[NamedValueOrSelector] = None,
         **common_features,
     ):
         """Set metadata http external auth feature"""
-        http_config: dict = {
-            "url": endpoint,
-            "method": method,
-            "headers": {"Accept": {"value": "application/json"}},
-        }
+        if not bool(endpoint) ^ bool(url_expression):
+            raise ValueError("Exactly one of 'endpoint' or 'url_expression' must be provided")
+
+        http_config: dict = {"method": method, "headers": {"Accept": {"value": "application/json"}}}
+        if endpoint:
+            http_config["url"] = endpoint
+        if url_expression:
+            http_config["urlExpression"] = url_expression
+        if content_type:
+            http_config["contentType"] = content_type
+        if body:
+            http_config["body"] = asdict(body)
+        if headers:
+            for h in headers:
+                http_config["headers"].update(asdict(h))
         if credentials:
             http_config["credentials"] = asdict(credentials)
         if shared_secret_ref:

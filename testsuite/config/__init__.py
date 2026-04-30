@@ -22,7 +22,7 @@ class DefaultValueValidator(Validator):
             },
             default=default,
             when=Validator(name, must_exist=False) | Validator(name, eq=None),
-            **kwargs
+            **kwargs,
         )
 
 
@@ -71,6 +71,10 @@ settings = Dynaconf(
         DefaultValueValidator("keycloak.url", default=fetch_service_ip("keycloak", protocol="http", port=8080)),
         DefaultValueValidator("keycloak.password", default=fetch_secret("credential-sso", "ADMIN_PASSWORD")),
         DefaultValueValidator("mockserver.url", default=fetch_service_ip("mockserver", protocol="http", port=1080)),
+        DefaultValueValidator(
+            "vault.url", default=fetch_service_ip("vault", protocol="http", port=8200, namespace="tools-vault")
+        ),
+        DefaultValueValidator("vault.token", default="root"),
         DefaultValueValidator("redis.url", default=fetch_service_ip("redis", protocol="redis", port=6379)),
         DefaultValueValidator("dragonfly.url", default=fetch_service_ip("dragonfly", protocol="redis", port=6379)),
         DefaultValueValidator("valkey.url", default=fetch_service_ip("valkey", protocol="redis", port=6379)),
