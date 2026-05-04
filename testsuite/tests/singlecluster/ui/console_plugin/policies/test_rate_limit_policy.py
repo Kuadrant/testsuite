@@ -4,7 +4,7 @@ import pytest
 from testsuite.kuadrant.policy.rate_limit import RateLimitPolicy, Limit
 from testsuite.page_objects.policies.rate_limit_policy import RateLimitNewPageYaml, RateLimitListPage
 
-pytestmark = [pytest.mark.ui]
+pytestmark = [pytest.mark.ui, pytest.mark.data_plane]
 
 
 @pytest.mark.flaky(reruns=0)

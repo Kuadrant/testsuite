@@ -4,7 +4,7 @@ import pytest
 
 from testsuite.kuadrant.policy import CelPredicate
 
-pytestmark = [pytest.mark.authorino]
+pytestmark = [pytest.mark.authorino, pytest.mark.data_plane]
 
 
 @pytest.fixture(scope="module")

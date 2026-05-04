@@ -66,6 +66,7 @@ markers = [
     "egress_gateway: Test is using egress gateway",
     "min_ocp_version: Minimum OpenShift version required for test (e.g., @pytest.mark.min_ocp_version((4, 20)))",
     "gateway_api_version: Gateway API version requirement (e.g., @pytest.mark.gateway_api_version((1, 5, 0)) or @pytest.mark.gateway_api_version((1, 5, 0), operator.eq))",
+    "data_plane: Test verifies data plane behavior and checks for upstream request leaks",
 ]
 filterwarnings = [
     "ignore: WARNING the new order is not taken into account:UserWarning",

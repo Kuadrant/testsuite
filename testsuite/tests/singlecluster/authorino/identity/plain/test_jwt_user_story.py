@@ -13,7 +13,7 @@ from testsuite.gateway.envoy.jwt_plain_identity import JwtEnvoy
 logger = logging.getLogger(__name__)
 
 
-pytestmark = [pytest.mark.authorino, pytest.mark.standalone_only]
+pytestmark = [pytest.mark.authorino, pytest.mark.standalone_only, pytest.mark.data_plane]
 
 
 @pytest.fixture(scope="module")

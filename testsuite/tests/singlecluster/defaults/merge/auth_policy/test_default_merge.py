@@ -4,7 +4,7 @@ import pytest
 
 from testsuite.kuadrant.policy import has_condition
 
-pytestmark = [pytest.mark.defaults_overrides, pytest.mark.authorino, pytest.mark.kuadrant_only]
+pytestmark = [pytest.mark.defaults_overrides, pytest.mark.authorino, pytest.mark.kuadrant_only, pytest.mark.data_plane]
 
 
 @pytest.fixture(scope="module")

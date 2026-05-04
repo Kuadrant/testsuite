@@ -11,7 +11,7 @@ import pytest
 from testsuite.kuadrant.policy import has_condition
 from testsuite.kuadrant.policy.rate_limit import RateLimitPolicy, Limit
 
-pytestmark = [pytest.mark.limitador]
+pytestmark = [pytest.mark.limitador, pytest.mark.data_plane]
 
 LIMIT = Limit(2, "10s")
 
