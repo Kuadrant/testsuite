@@ -8,7 +8,7 @@ Kuadrant stack, including wasm-shim, Authorino, Limitador, and gateway services.
 import os
 import pytest
 
-pytestmark = [pytest.mark.observability, pytest.mark.limitador, pytest.mark.authorino, pytest.mark.kuadrant_only]
+pytestmark = [pytest.mark.observability, pytest.mark.limitador, pytest.mark.authorino, pytest.mark.kuadrant_only, pytest.mark.data_plane]
 
 
 @pytest.fixture(scope="module")

@@ -4,7 +4,7 @@ Tests the enabling and disabling of mTLS configuration via the Kuadrant CR
 
 import pytest
 
-pytestmark = [pytest.mark.disruptive]
+pytestmark = [pytest.mark.disruptive, pytest.mark.data_plane]
 
 component_cases = [
     pytest.param(["limitador"], id="limitador-only"),

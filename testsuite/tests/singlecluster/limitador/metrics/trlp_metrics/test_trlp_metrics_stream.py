@@ -8,7 +8,7 @@ import pytest
 
 from .conftest import MODEL_NAME, USERS
 
-pytestmark = [pytest.mark.observability, pytest.mark.limitador]
+pytestmark = [pytest.mark.observability, pytest.mark.limitador, pytest.mark.data_plane]
 
 streaming_request = {
     "model": MODEL_NAME,

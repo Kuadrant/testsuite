@@ -12,7 +12,7 @@ from testsuite.gateway import GatewayListener
 from testsuite.gateway.gateway_api.gateway import KuadrantGateway
 from .conftest import XFCC_HEADER_NAME
 
-pytestmark = [pytest.mark.authorino, pytest.mark.kuadrant_only]
+pytestmark = [pytest.mark.authorino, pytest.mark.kuadrant_only, pytest.mark.data_plane]
 
 
 @pytest.fixture(scope="module")

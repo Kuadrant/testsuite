@@ -6,7 +6,7 @@ from testsuite.gateway import RouteMatch, PathMatch, MatchType, HTTPMethod
 from testsuite.kuadrant.policy import CelPredicate
 from testsuite.kuadrant.policy.rate_limit import Limit
 
-pytestmark = [pytest.mark.limitador]
+pytestmark = [pytest.mark.limitador, pytest.mark.data_plane]
 
 
 @pytest.fixture(scope="module")

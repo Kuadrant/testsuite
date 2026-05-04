@@ -6,7 +6,7 @@ from testsuite.httpx.auth import HttpxOidcClientAuth
 from testsuite.kuadrant.policy.authorization.auth_policy import AuthPolicy
 from testsuite.kuadrant.policy.rate_limit import RateLimitPolicy, Limit
 
-pytestmark = [pytest.mark.defaults_overrides, pytest.mark.limitador]
+pytestmark = [pytest.mark.defaults_overrides, pytest.mark.limitador, pytest.mark.data_plane]
 
 LIMIT = Limit(5, "10s")
 

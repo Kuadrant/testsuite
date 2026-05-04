@@ -2,7 +2,7 @@
 
 import pytest
 
-pytestmark = [pytest.mark.authorino, pytest.mark.standalone_only]
+pytestmark = [pytest.mark.authorino, pytest.mark.standalone_only, pytest.mark.data_plane]
 
 
 @pytest.fixture(scope="module", autouse=True)

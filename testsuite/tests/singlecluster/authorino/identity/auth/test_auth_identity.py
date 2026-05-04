@@ -6,7 +6,7 @@ from testsuite.httpx.auth import HttpxOidcClientAuth
 from testsuite.oidc import OIDCProvider
 from testsuite.oidc.keycloak import Keycloak
 
-pytestmark = [pytest.mark.authorino]
+pytestmark = [pytest.mark.authorino, pytest.mark.data_plane]
 
 
 @pytest.fixture(scope="module")
