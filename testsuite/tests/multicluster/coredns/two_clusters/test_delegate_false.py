@@ -18,7 +18,7 @@ pytestmark = [pytest.mark.coredns_one_primary]
 
 
 @pytest.fixture(scope="module")
-def kubeconfig_secrets(testconfig, cluster, cluster2, blame, module_label):
+def kubeconfig_secrets(system_project, cluster2, blame, module_label):
     """Creates Opaque secrets containing kubeconfigs for the secondary cluster2 on the primary cluster"""
     tools2 = cluster2.change_project("tools")
     coredns_sa2 = tools2.get_service_account("coredns")
@@ -26,7 +26,7 @@ def kubeconfig_secrets(testconfig, cluster, cluster2, blame, module_label):
 
     return [
         Secret.create_instance(
-            cluster.change_project(testconfig["service_protection"]["system_project"]),
+            system_project,
             blame("kubecfg"),
             {"kubeconfig": kubeconfig2},
             secret_type="Opaque",

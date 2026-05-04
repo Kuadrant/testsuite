@@ -11,9 +11,8 @@ from testsuite.kubernetes.monitoring.service_monitor import ServiceMonitor
 
 
 @pytest.fixture(scope="package")
-def service_monitor(cluster, request, testconfig, blame, kuadrant):
+def service_monitor(system_project, request, blame, kuadrant):
     """Create ServiceMonitor object to follow limitador-limitador service on /metrics endpoint"""
-    system_project = cluster.change_project(testconfig["service_protection"]["system_project"])
     endpoints = [MetricsEndpoint("/metrics", "http")]
     match_labels = {"app": kuadrant.limitador.name()}
     monitor = ServiceMonitor.create_instance(system_project, blame("sm"), endpoints, match_labels=match_labels)

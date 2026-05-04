@@ -78,14 +78,14 @@ def spicedb_route(exposer, request, spicedb, blame, cluster):
 
 
 @pytest.fixture(scope="module")
-def secret_name(request, cluster, module_label, kuadrant, blame, testconfig, spicedb):
+def secret_name(request, cluster, module_label, kuadrant, blame, system_project, spicedb):
     """
     Creates a secret containing the SpiceDB preshared key for Authorino to use.
     The secret is created in Authorino's namespace.
     """
     secret_name = blame("spicedb")
     if kuadrant:
-        cluster = cluster.change_project(testconfig["service_protection"]["system_project"])
+        cluster = system_project
     secret = Secret.create_instance(
         cluster,
         secret_name,

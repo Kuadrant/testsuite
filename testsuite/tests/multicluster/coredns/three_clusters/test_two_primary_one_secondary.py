@@ -11,7 +11,9 @@ pytestmark = [pytest.mark.coredns_two_primaries]
 
 
 @pytest.fixture(scope="module")
-def kubeconfig_secrets(testconfig, blame, module_label, cluster, cluster2, cluster3):  # pylint: disable=too-many-locals
+def kubeconfig_secrets(
+    system_project, blame, module_label, cluster, cluster2, cluster3
+):  # pylint: disable=too-many-locals
     """Creates Opaque secrets containing kubeconfig for primaries, and secondary cluster3 on the both primaries"""
     tools = cluster.change_project("tools")
     coredns_sa = tools.get_service_account("coredns")
@@ -29,7 +31,7 @@ def kubeconfig_secrets(testconfig, blame, module_label, cluster, cluster2, clust
     for c, k in [(cluster, kubeconfig2), (cluster, kubeconfig3), (cluster2, kubeconfig), (cluster2, kubeconfig3)]:
         kubeconfig_secrets.append(
             Secret.create_instance(
-                c.change_project(testconfig["service_protection"]["system_project"]),
+                c.change_project(system_project.project),
                 blame("kubecfg"),
                 {"kubeconfig": k},
                 secret_type="Opaque",

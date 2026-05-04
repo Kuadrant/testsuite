@@ -62,12 +62,11 @@ def certificate_selector_labels(blame):
 
 
 @pytest.fixture(scope="module")
-def create_secret(blame, request, testconfig, cluster):
+def create_secret(blame, request, system_project):
     """Factory for creating Secrets in the system namespace"""
 
     def _create_secret(name, string_data, labels=None):
-        sys_proj = cluster.change_project(testconfig["service_protection"]["system_project"])
-        secret = Secret.create_instance(sys_proj, blame(name), stringData=string_data, labels=labels)
+        secret = Secret.create_instance(system_project, blame(name), stringData=string_data, labels=labels)
         request.addfinalizer(secret.delete)
         secret.commit()
         return secret

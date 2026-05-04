@@ -21,12 +21,11 @@ def kubectl_dns(testconfig, skip_or_fail):
 
 
 @pytest.fixture(scope="module")
-def kubeconfig_secrets(request, testconfig, cluster, cluster2, kubectl_dns, blame):
+def kubeconfig_secrets(request, system_project, cluster, cluster2, kubectl_dns, blame):
     """Run add-cluster-secret command on merged kubeconfig to generate kubeconfig secret for the secondary cluster"""
-    system_project = testconfig["service_protection"]["system_project"]
     secret_name = blame("kubecfg")
     request.addfinalizer(
-        lambda: cluster.do_action("delete", "secret", secret_name, "-n", system_project, "--ignore-not-found")
+        lambda: cluster.do_action("delete", "secret", secret_name, "-n", system_project.project, "--ignore-not-found")
     )
 
     merged_kubeconfig = cluster.create_merged_kubeconfig(cluster2)
@@ -37,7 +36,7 @@ def kubeconfig_secrets(request, testconfig, cluster, cluster2, kubectl_dns, blam
         "--context",
         cluster2.current_context_name,
         "--namespace",
-        system_project,
+        system_project.project,
         "--service-account",
         "coredns",
         env={"KUBECONFIG": merged_kubeconfig},

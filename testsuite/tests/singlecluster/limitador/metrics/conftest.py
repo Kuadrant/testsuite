@@ -7,12 +7,10 @@ from testsuite.kubernetes.monitoring.pod_monitor import PodMonitor
 
 
 @pytest.fixture(scope="module")
-def pod_monitor(cluster, testconfig, request, blame, limitador):
+def pod_monitor(system_project, request, blame, limitador):
     """Creates Pod Monitor object to watch over '/metrics' endpoint of limitador pod"""
-    project = cluster.change_project(testconfig["service_protection"]["system_project"])
-
     endpoints = [MetricsEndpoint("/metrics", "http")]
-    monitor = PodMonitor.create_instance(project, blame("pd"), endpoints, match_labels={"app": limitador.name()})
+    monitor = PodMonitor.create_instance(system_project, blame("pd"), endpoints, match_labels={"app": limitador.name()})
     request.addfinalizer(monitor.delete)
     monitor.commit()
     return monitor

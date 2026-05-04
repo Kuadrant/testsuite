@@ -22,9 +22,9 @@ def cluster3(testconfig):
 
 
 @pytest.fixture(scope="module")
-def set_delegate_mode(request, cluster3, testconfig):
+def set_delegate_mode(request, cluster3, system_project):
     """Configures cluster3 as a secondary cluster by patching dns-operator configmap with DELEGATION_ROLE: secondary"""
-    system_project = cluster3.change_project(testconfig["service_protection"]["system_project"])
+    system_project = cluster3.change_project(system_project.project)
 
     # add finalizer to remove the DELEGATION_ROLE patch and restart the controller, ORDER MATTERS
     dns_operator_controller = system_project.get_deployment("dns-operator-controller-manager")

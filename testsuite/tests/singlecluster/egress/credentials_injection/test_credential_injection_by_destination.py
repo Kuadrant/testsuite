@@ -82,9 +82,8 @@ def service2_api_secret(request, cluster, blame, module_label):
 
 
 @pytest.fixture(scope="module")
-def sa_token_secret(request, testconfig, cluster, blame, module_label):
+def sa_token_secret(request, system_project, blame, module_label):
     """Opaque Secret containing a token from Authorino's ServiceAccount for K8s API auth"""
-    system_project = cluster.change_project(testconfig["service_protection"]["system_project"])
     authorino_sa = system_project.get_service_account("authorino-authorino")
     token = authorino_sa.get_auth_token()
     secret = Secret.create_instance(

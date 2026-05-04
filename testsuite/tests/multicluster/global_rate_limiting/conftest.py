@@ -13,23 +13,17 @@ from testsuite.gateway.gateway_api.gateway import KuadrantGateway
 
 
 @pytest.fixture(scope="session")
-def kuadrant1(testconfig, cluster):
+def kuadrant1(system_project):
     """Returns the existing Kuadrant instance from the first cluster."""
-    project = testconfig["service_protection"]["system_project"]
-    kuadrant_cluster = cluster.change_project(project)
-
-    with kuadrant_cluster.context:
+    with system_project.context:
         kuadrant = selector("kuadrant").object(cls=KuadrantCR)
     return kuadrant
 
 
 @pytest.fixture(scope="session")
-def kuadrant2(testconfig, cluster2):
+def kuadrant2(system_project, cluster2):
     """Returns the existing Kuadrant instance from the second cluster."""
-    project = testconfig["service_protection"]["system_project"]
-    kuadrant_cluster = cluster2.change_project(project)
-
-    with kuadrant_cluster.context:
+    with cluster2.change_project(system_project.project).context:
         kuadrant = selector("kuadrant").object(cls=KuadrantCR)
     return kuadrant
 
@@ -57,10 +51,8 @@ def storage_service(testconfig, request, skip_or_fail):
 
 
 @pytest.fixture(scope="module")
-def storage_secret1(testconfig, cluster, blame, request, storage_service):
+def storage_secret1(system_project, blame, request, storage_service):
     """Creates the Secret for Limitador in the first cluster."""
-    system_project = cluster.change_project(testconfig["service_protection"]["system_project"])
-
     secret = Secret.create_instance(system_project, blame("storage-secret"), {"URL": storage_service})
     request.addfinalizer(secret.delete)
     secret.commit()
@@ -68,11 +60,10 @@ def storage_secret1(testconfig, cluster, blame, request, storage_service):
 
 
 @pytest.fixture(scope="module")
-def storage_secret2(testconfig, cluster2, blame, request, storage_service):
+def storage_secret2(system_project, cluster2, blame, request, storage_service):
     """Creates the Secret for Limitador in the second cluster."""
-    system_project = cluster2.change_project(testconfig["service_protection"]["system_project"])
-
-    secret = Secret.create_instance(system_project, blame("storage-secret-cl2"), {"URL": storage_service})
+    cluster2_system = cluster2.change_project(system_project.project)
+    secret = Secret.create_instance(cluster2_system, blame("storage-secret-cl2"), {"URL": storage_service})
     request.addfinalizer(secret.delete)
     secret.commit()
     return secret

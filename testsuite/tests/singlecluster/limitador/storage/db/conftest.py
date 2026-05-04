@@ -17,9 +17,8 @@ def storage_service(testconfig, request, skip_or_fail):
 
 
 @pytest.fixture(scope="package")
-def storage_secret(testconfig, cluster, blame, request, storage_service):
+def storage_secret(system_project, blame, request, storage_service):
     """Secret created in system_project for use by LimitadorCR"""
-    system_project = cluster.change_project(testconfig["service_protection"]["system_project"])
     secret = Secret.create_instance(system_project, blame("storage-secret"), {"URL": storage_service})
     request.addfinalizer(secret.delete)
     secret.commit()

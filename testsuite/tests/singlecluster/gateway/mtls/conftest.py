@@ -54,13 +54,12 @@ def wait_for_status(kuadrant):
 
 
 @pytest.fixture(scope="module")
-def wait_for_injected_pod(cluster, testconfig):
+def wait_for_injected_pod(system_project):
     """Waits for a sidecar-injected pod (Authorino or Limitador)"""
 
     @backoff.on_predicate(backoff.fibo, lambda result: result is None, max_tries=7, jitter=None)
     def _wait(component_label):
-        project = cluster.change_project(testconfig["service_protection"]["system_project"])
-        with project.context:
+        with system_project.context:
             pods = selector("pods", labels={f"{component_label}-resource": component_label}).objects()
             for pod in pods:
                 labels = pod.model.metadata.labels

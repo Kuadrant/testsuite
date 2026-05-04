@@ -71,16 +71,12 @@ def commit(request, authorization, rate_limit):
 
 
 @pytest.fixture(scope="session")
-def kuadrant(request, testconfig):
+def kuadrant(request, system_project):
     """Returns Kuadrant instance if exists, or None"""
     if request.config.getoption("--standalone"):
         return None
 
-    ocp = testconfig["control_plane"]["cluster"]
-    project = testconfig["service_protection"]["system_project"]
-    kuadrant_openshift = ocp.change_project(project)
-
-    with kuadrant_openshift.context:
+    with system_project.context:
         kuadrant = selector("kuadrant").object(cls=KuadrantCR)
 
     return kuadrant

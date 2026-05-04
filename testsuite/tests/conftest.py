@@ -387,6 +387,12 @@ def cluster(testconfig):
 
 
 @pytest.fixture(scope="session")
+def system_project(testconfig, cluster):
+    """Kubernetes client for the Kuadrant system namespace"""
+    return cluster.change_project(testconfig["service_protection"]["system_project"])
+
+
+@pytest.fixture(scope="session")
 def exposer(request, testconfig, cluster) -> Exposer:
     """Exposer object instance"""
     exposer = testconfig["default_exposer"](cluster)

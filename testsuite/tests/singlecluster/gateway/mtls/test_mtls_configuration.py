@@ -16,7 +16,7 @@ component_cases = [
 
 @pytest.mark.parametrize("component", component_cases, indirect=True)
 def test_peer_authentication_resource_applied(
-    kuadrant, cluster, component, wait_for_status, reset_mtls, testconfig, rate_limit, authorization, configure_mtls
+    kuadrant, component, wait_for_status, reset_mtls, system_project, rate_limit, authorization, configure_mtls
 ):  # pylint: disable=unused-argument
     """Verify PeerAuthentication with STRICT mode is created when mTLS is enabled"""
     configure_mtls(True)
@@ -24,8 +24,7 @@ def test_peer_authentication_resource_applied(
     for comp in component:
         wait_for_status(expected=True, component=comp)
 
-    project = cluster.change_project(testconfig["service_protection"]["system_project"])
-    with project.context:
+    with system_project.context:
         peer_auths = selector("peerauthentication").objects()
         assert peer_auths, "No PeerAuthentication resources found"
 

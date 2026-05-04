@@ -15,7 +15,7 @@ def set_delegate_mode():
 
 
 @pytest.fixture(scope="module")
-def kubeconfig_secrets(testconfig, cluster, cluster2, blame, module_label):
+def kubeconfig_secrets(system_project, cluster, cluster2, blame, module_label):
     """Creates Opaque secret containing kubeconfigs for both primary clusters on each other"""
     tools = cluster.change_project("tools")
     coredns_sa = tools.get_service_account("coredns")
@@ -29,7 +29,7 @@ def kubeconfig_secrets(testconfig, cluster, cluster2, blame, module_label):
     for c, k in [(cluster, kubeconfig2), (cluster2, kubeconfig)]:
         secrets.append(
             Secret.create_instance(
-                c.change_project(testconfig["service_protection"]["system_project"]),
+                c.change_project(system_project.project),
                 blame("kubecfg"),
                 {"kubeconfig": k},
                 secret_type="Opaque",

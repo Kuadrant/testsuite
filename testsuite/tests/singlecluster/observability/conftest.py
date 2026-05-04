@@ -4,7 +4,6 @@ import backoff
 import pytest
 from openshift_client import selector
 
-from testsuite.config import settings
 from testsuite.kubernetes.monitoring.pod_monitor import PodMonitor
 from testsuite.kubernetes.monitoring.service_monitor import ServiceMonitor
 
@@ -35,9 +34,9 @@ def require_observability_enabled(kuadrant, skip_or_fail):
 
 
 @pytest.fixture(scope="module")
-def service_monitors(cluster, testconfig):
+def service_monitors(system_project):
     """Return all 5 expected ServiceMonitors created when observability is enabled"""
-    context = cluster.change_project(testconfig["service_protection"]["system_project"]).context
+    context = system_project.context
 
     @backoff.on_predicate(backoff.constant, lambda x: len(x) == 5, interval=5, max_tries=12, jitter=None)
     def wait_for_monitors():
@@ -105,9 +104,7 @@ def kuadrant_service_monitor(service_monitors):
 
 
 @pytest.fixture(scope="module")
-def kuadrant_operator_metrics(prometheus, kuadrant_service_monitor):
+def kuadrant_operator_metrics(prometheus, kuadrant_service_monitor, system_project):
     """Return all metrics from the Kuadrant operator metrics endpoint"""
     prometheus.wait_for_scrape(kuadrant_service_monitor, "/metrics")
-    return prometheus.get_metrics(
-        labels={"service": "kuadrant-operator-metrics", "namespace": settings["service_protection"]["system_project"]}
-    )
+    return prometheus.get_metrics(labels={"service": "kuadrant-operator-metrics", "namespace": system_project.project})

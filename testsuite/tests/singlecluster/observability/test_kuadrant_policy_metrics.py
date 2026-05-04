@@ -4,7 +4,6 @@ import operator
 
 import pytest
 
-from testsuite.config import settings
 from testsuite.gateway import Exposer, TLSGatewayListener
 from testsuite.prometheus import has_label
 from testsuite.gateway.gateway_api.gateway import KuadrantGateway
@@ -118,11 +117,11 @@ def test_metric_kuadrant_policies_total(kuadrant_operator_metrics, policy_kind):
 
 
 @pytest.mark.parametrize("policy_kind", POLICY_KINDS)
-def test_metric_kuadrant_policies_enforced(prometheus, policy_kind):
+def test_metric_kuadrant_policies_enforced(prometheus, policy_kind, system_project):
     """Tests that kuadrant_policies_enforced metric has value >= 1 for each enforced policy kind"""
     labels = {
         "service": "kuadrant-operator-metrics",
-        "namespace": settings["service_protection"]["system_project"],
+        "namespace": system_project.project,
         "kind": policy_kind,
         "status": "true",
     }

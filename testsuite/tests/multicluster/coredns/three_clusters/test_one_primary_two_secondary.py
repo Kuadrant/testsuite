@@ -11,9 +11,9 @@ pytestmark = [pytest.mark.coredns_one_primary]
 
 
 @pytest.fixture(scope="module")
-def set_delegate_mode(request, set_delegate_mode, cluster2, testconfig):  # pylint: disable=unused-argument
+def set_delegate_mode(request, set_delegate_mode, cluster2, system_project):  # pylint: disable=unused-argument
     """Configures secondary cluster by patching dns-operator-controller-env configmap with DELEGATION_ROLE: secondary"""
-    system_project = cluster2.change_project(testconfig["service_protection"]["system_project"])
+    system_project = cluster2.change_project(system_project.project)
 
     # add finalizer to remove the DELEGATION_ROLE patch and restart the controller, ORDER MATTERS
     dns_operator_controller = system_project.get_deployment("dns-operator-controller-manager")
@@ -33,7 +33,7 @@ def set_delegate_mode(request, set_delegate_mode, cluster2, testconfig):  # pyli
 
 
 @pytest.fixture(scope="module")
-def kubeconfig_secrets(testconfig, cluster, cluster2, cluster3, blame, module_label):
+def kubeconfig_secrets(system_project, cluster2, cluster3, blame, module_label):
     """Creates Opaque secrets containing kubeconfigs for secondaries cluster2 and cluster3, on the primary cluster"""
     tools2 = cluster2.change_project("tools")
     coredns_sa2 = tools2.get_service_account("coredns")
@@ -47,7 +47,7 @@ def kubeconfig_secrets(testconfig, cluster, cluster2, cluster3, blame, module_la
     for k in [kubeconfig2, kubeconfig3]:
         secrets.append(
             Secret.create_instance(
-                cluster.change_project(testconfig["service_protection"]["system_project"]),
+                system_project,
                 blame("kubecfg"),
                 {"kubeconfig": k},
                 secret_type="Opaque",

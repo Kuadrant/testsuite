@@ -3,24 +3,20 @@
 import pytest
 import openshift_client as oc
 
-from testsuite.config import settings
 from testsuite.tracing.models import Trace
 
 
 @pytest.fixture(scope="module", autouse=True)
-def require_tracing_enabled(cluster, skip_or_fail):
+def require_tracing_enabled(system_project, skip_or_fail):
     """Skip or fail tests if control plane tracing is not enabled on kuadrant-operator"""
-    namespace = settings["service_protection"]["system_project"]
     deployment_name = "kuadrant-operator-controller-manager"
 
     try:
-        namespace_client = cluster.change_project(namespace)
-
-        with namespace_client.context:
+        with system_project.context:
             deployment = oc.selector(f"deployment/{deployment_name}").object()
 
             if not deployment.exists():
-                skip_or_fail(f"Deployment {deployment_name} not found in namespace {namespace}")
+                skip_or_fail(f"Deployment {deployment_name} not found in namespace {system_project.project}")
 
             selector_labels = deployment.model.spec.selector.matchLabels
             if not selector_labels:
