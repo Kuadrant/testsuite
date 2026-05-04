@@ -226,18 +226,11 @@ def testconfig():
 @pytest.fixture(scope="session")
 def prometheus(cluster, testconfig, skip_or_fail):
     """Prometheus metrics client, auto-discovered via DefaultValueValidator or configured explicitly"""
-    prometheus_conf = testconfig.get("prometheus", {})
-    project = prometheus_conf.get("project", "unknown")
-    service = prometheus_conf.get("service", "unknown")
-    exposer_name = getattr(testconfig.get("default_exposer"), "__name__", "unknown")
     try:
         testconfig.validators.validate(only=["prometheus"])
         url = testconfig["prometheus"]["url"]
     except (KeyError, ValidationError):
-        skip_or_fail(
-            f"Prometheus not available: {exposer_name} could not discover '{service}' in '{project}'. "
-            f"Set prometheus.url in config."
-        )
+        skip_or_fail("Prometheus not available. Set prometheus.url in config or ensure monitoring is deployed.")
         return
 
     headers = {}

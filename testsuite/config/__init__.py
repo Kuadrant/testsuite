@@ -84,6 +84,6 @@ settings = Dynaconf(
             default=fetch_prometheus_url(),
         ),
     ],
-    validate_only=["authorino", "kuadrant", "default_exposer", "control_plane"],
+    validate_only=["authorino", "kuadrant", "default_exposer", "control_plane", "prometheus"],
     loaders=["dynaconf.loaders.env_loader", "testsuite.config.openshift_loader", "testsuite.config.exposer"],
 )
