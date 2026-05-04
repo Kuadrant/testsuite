@@ -84,7 +84,7 @@ def client_ca_secret(create_secret, client_ca, certificate_selector_labels):
 @pytest.fixture(scope="module")
 def authorization(authorization, certificate_selector_labels, client_ca_secret):  # pylint: disable=unused-argument
     """AuthPolicy with x509 identity configured, matching certificates secrets selected by the label"""
-    authorization.identity.add_mtls(
+    authorization.identity.add_x509(
         "x509", Selector(matchLabels=certificate_selector_labels), source=X509Source(xfccHeader=XFCC_HEADER_NAME)
     )
     return authorization

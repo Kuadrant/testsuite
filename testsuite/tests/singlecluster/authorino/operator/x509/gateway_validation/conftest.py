@@ -10,7 +10,7 @@ from testsuite.kuadrant.policy.authorization import Pattern
 @pytest.fixture(scope="module", autouse=True)
 def authorization(authorization, blame, selector, cert_attributes):
     """Create AuthConfig with x509 identity and pattern matching rule"""
-    authorization.identity.add_mtls(blame("x509"), selector=selector)
+    authorization.identity.add_x509(blame("x509"), selector=selector)
 
     rule_organization = Pattern("auth.identity.Organization", "incl", cert_attributes["O"])
     authorization.authorization.add_auth_rules(blame("redhat"), [rule_organization])
@@ -20,7 +20,7 @@ def authorization(authorization, blame, selector, cert_attributes):
 
 @pytest.fixture(scope="module")
 def certificates(cfssl, authorino_domain, wildcard_domain, cert_attributes, cert_attributes_other):
-    """Certificate hierarchy used for the mTLS tests"""
+    """Certificate hierarchy used for the x509 tests"""
     chain = {
         "envoy_ca": CertInfo(
             children={

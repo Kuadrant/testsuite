@@ -19,7 +19,7 @@ CERT_HEADER_NAME = "pem-encoded-client-cert"
 def authorization(authorization, certificate_selector_labels, client_ca_secret):  # pylint: disable=unused-argument
     """AuthPolicy with x509 identity configured to extract certificate via CEL expression"""
     authorization.identity.clear_all()
-    authorization.identity.add_mtls(
+    authorization.identity.add_x509(
         "x509",
         Selector(matchLabels=certificate_selector_labels),
         source=X509Source(expression=f'request.headers["{CERT_HEADER_NAME}"]'),

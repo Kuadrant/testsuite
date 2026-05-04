@@ -10,7 +10,7 @@ pytestmark = [pytest.mark.authorino, pytest.mark.standalone_only]
 @pytest.fixture(scope="module", autouse=True)
 def authorization(authorization, blame, selector):
     """AuthConfig with x509 identity using CEL expression for certificate source"""
-    authorization.identity.add_mtls(
+    authorization.identity.add_x509(
         blame("x509"), selector=selector, source=X509Source(expression="source.certificate")
     )
     return authorization

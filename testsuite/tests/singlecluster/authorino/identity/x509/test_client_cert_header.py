@@ -20,7 +20,7 @@ CLIENT_CERT_HEADER_NAME = "Client-Cert"
 def authorization(authorization, certificate_selector_labels, client_ca_secret):  # pylint: disable=unused-argument
     """AuthPolicy with x509 identity configured to read from Client-Cert header"""
     authorization.identity.clear_all()
-    authorization.identity.add_mtls(
+    authorization.identity.add_x509(
         "x509",
         Selector(matchLabels=certificate_selector_labels),
         source=X509Source(clientCertHeader=CLIENT_CERT_HEADER_NAME),
