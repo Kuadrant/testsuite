@@ -14,7 +14,7 @@ from testsuite.kubernetes.openshift.route import OpenshiftRoute
 from testsuite.kubernetes.secret import Secret
 from testsuite.spicedb.spicedb import SpiceDB, SchemaConfig, RelationshipConfig
 
-pytestmark = [pytest.mark.authorino]
+pytestmark = [pytest.mark.authorino, pytest.mark.data_plane]
 
 
 @pytest.fixture(scope="module")

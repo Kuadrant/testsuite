@@ -4,7 +4,7 @@ import pytest
 from testsuite.kuadrant.policy.authorization.auth_policy import AuthPolicy
 from testsuite.page_objects.policies.auth_policy import AuthListPage, AuthNewPageYaml
 
-pytestmark = [pytest.mark.ui]
+pytestmark = [pytest.mark.ui, pytest.mark.data_plane]
 
 
 def test_auth_policy_ui(request, navigator, cluster, blame, gateway, client):

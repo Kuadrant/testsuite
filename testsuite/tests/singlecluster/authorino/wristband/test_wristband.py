@@ -3,7 +3,7 @@
 import pytest
 import jwt
 
-pytestmark = [pytest.mark.authorino, pytest.mark.standalone_only]
+pytestmark = [pytest.mark.authorino, pytest.mark.standalone_only, pytest.mark.data_plane]
 
 
 def test_wristband_token_claims(oidc_provider, auth, wristband_token, wristband_endpoint, certificates):

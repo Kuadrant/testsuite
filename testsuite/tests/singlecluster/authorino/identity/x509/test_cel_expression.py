@@ -10,7 +10,7 @@ import pytest
 from testsuite.kubernetes import Selector
 from testsuite.kuadrant.policy.authorization import X509Source
 
-pytestmark = [pytest.mark.authorino, pytest.mark.kuadrant_only]
+pytestmark = [pytest.mark.authorino, pytest.mark.kuadrant_only, pytest.mark.data_plane]
 
 CERT_HEADER_NAME = "pem-encoded-client-cert"
 

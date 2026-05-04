@@ -4,7 +4,7 @@ Test raw http authorization interface.
 
 import pytest
 
-pytestmark = [pytest.mark.authorino, pytest.mark.standalone_only]
+pytestmark = [pytest.mark.authorino, pytest.mark.standalone_only, pytest.mark.data_plane]
 
 
 def test_authorized_via_http(client, auth):
