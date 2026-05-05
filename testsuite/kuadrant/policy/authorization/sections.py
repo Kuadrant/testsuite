@@ -111,8 +111,8 @@ class IdentitySection(Section):
         super().add_item(name, value, **common_features)
 
     @modify
-    def add_mtls(self, name: str, selector: Selector, *, source: X509Source = None, **common_features):
-        """Adds mTLS identity
+    def add_x509(self, name: str, selector: Selector, *, source: X509Source = None, **common_features):
+        """Adds x509 identity
         Args:
             :param name: name of the identity
             :param selector: selector to match

@@ -83,7 +83,7 @@ def ca_secret_team_b(create_secret, certificates, certificate_selector_labels):
 def authorization(authorization, certificate_selector_labels):
     """AuthPolicy with x509 identity selecting multiple CA secrets by label"""
     authorization.identity.clear_all()
-    authorization.identity.add_mtls(
+    authorization.identity.add_x509(
         "x509",
         Selector(matchLabels=certificate_selector_labels),
         source=X509Source(xfccHeader=XFCC_HEADER_NAME),
