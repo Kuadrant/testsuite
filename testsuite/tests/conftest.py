@@ -230,7 +230,9 @@ def prometheus(cluster, testconfig, skip_or_fail):
         testconfig.validators.validate(only=["prometheus"])
         url = testconfig["prometheus"]["url"]
     except (KeyError, ValidationError):
-        skip_or_fail("Prometheus not available. Set prometheus.project and prometheus.service for your environment, or override with prometheus.url in config.")
+        skip_or_fail(
+            "Prometheus not available. Set prometheus.project and prometheus.service for your environment, or override with prometheus.url in config."
+        )
         return
 
     headers = {}
