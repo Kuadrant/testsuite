@@ -88,6 +88,24 @@ def fetch_prometheus_url():
             logger.warning("Cluster configuration missing for Prometheus discovery: %s", exc)
             return None
 
+        # Try OpenShift route with user workload monitoring check
+        try:
+            with cluster.context:
+                cm = selector("cm/cluster-monitoring-config").object(cls=ConfigMap)
+                if not yaml.safe_load(cm["config.yaml"]).get("enableUserWorkload"):
+                        logger.warning("User workload monitoring is not enabled in cluster-monitoring-config")
+                        return None
+                routes = cluster.get_routes_for_service(service_name)
+                if routes:
+                    route = routes[0]
+                    protocol = "https" if "tls" in route.model.spec else "http"
+                    return f"{protocol}://{route.model.spec.host}"
+                logger.warning("No routes found for service '%s' in '%s'", service_name, project)
+        except OpenShiftPythonException as exc:
+                logger.info("OpenShift route discovery not available: %s", exc)
+        except (KeyError, yaml.YAMLError) as exc:
+                logger.warning("Failed to parse cluster-monitoring-config: %s", exc)
+
         # Try LoadBalancer service (Kind / non-OpenShift)
         try:
             with cluster.context:
@@ -100,24 +118,6 @@ def fetch_prometheus_url():
             logger.info("Service '%s' not found in '%s', trying OpenShift route", service_name, project)
         except (AttributeError, IndexError) as exc:
             logger.warning("Service '%s' in '%s' has no external IP or ports: %s", service_name, project, exc)
-
-        # Try OpenShift route with user workload monitoring check
-        try:
-            with cluster.context:
-                cm = selector("cm/cluster-monitoring-config").object(cls=ConfigMap)
-                if not yaml.safe_load(cm["config.yaml"]).get("enableUserWorkload"):
-                    logger.warning("User workload monitoring is not enabled in cluster-monitoring-config")
-                    return None
-            routes = cluster.get_routes_for_service(service_name)
-            if routes:
-                route = routes[0]
-                protocol = "https" if "tls" in route.model.spec else "http"
-                return f"{protocol}://{route.model.spec.host}"
-            logger.warning("No routes found for service '%s' in '%s'", service_name, project)
-        except OpenShiftPythonException as exc:
-            logger.info("OpenShift route discovery not available: %s", exc)
-        except (KeyError, yaml.YAMLError) as exc:
-            logger.warning("Failed to parse cluster-monitoring-config: %s", exc)
 
         logger.warning("Unable to auto-discover Prometheus URL in '%s'", project)
         return None
