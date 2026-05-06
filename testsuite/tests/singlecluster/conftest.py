@@ -103,13 +103,17 @@ def mockserver_config(cluster, blame, label):
 
 
 @pytest.fixture(scope="session")
-def backend(request, cluster, blame, label, mockserver_config, exposer):
+def backend(request, cluster, blame, label, mockserver_config, testconfig):
     """Deploys MockServer backend"""
     mockserver = MockserverBackend(cluster, blame("mockserver"), label, config=mockserver_config)
     request.addfinalizer(mockserver.delete)
     mockserver.commit()
     mockserver.wait_for_ready()
-    mockserver.expose(exposer, blame("backend"))
+
+    backend_exposer = testconfig["default_exposer"](cluster)
+    request.addfinalizer(backend_exposer.delete)
+    backend_exposer.commit()
+    mockserver.expose(backend_exposer, blame("backend"))
     return mockserver
 
 
