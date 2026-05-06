@@ -14,7 +14,6 @@ from testsuite.utils import asdict
 
 if TYPE_CHECKING:
     from testsuite.kubernetes.client import KubernetesClient
-    from testsuite.backend import Backend
 
 
 class Referencable(ABC):
@@ -147,16 +146,25 @@ class Gateway(LifecycleObject, Referencable):
     Abstraction layer for a Gateway sitting between end-user and Kuadrant
     Simplified: Equals to Gateway Kubernetes object
     """
+class Exposable(ABC):
+    """Object that can be exposed by an Exposer (has a cluster and a service name)"""
 
     @property
     @abstractmethod
     def cluster(self) -> "KubernetesClient":
-        """Returns KubernetesClient for this gateway"""
+        """Returns KubernetesClient"""
 
     @property
     @abstractmethod
     def service_name(self) -> str:
-        """Service name for this gateway"""
+        """Service name to route traffic to"""
+
+
+class Gateway(LifecycleObject, Referencable, Exposable):
+    """
+    Abstraction layer for a Gateway sitting between end-user and Kuadrant
+    Simplified: Equals to Gateway Kubernetes object
+    """
 
     @abstractmethod
     def external_ip(self) -> str:
@@ -276,11 +284,15 @@ class Exposer(LifecycleObject):
         self.verify = None
 
     @abstractmethod
-    def expose_hostname(self, name, gateway: Gateway) -> Hostname:
+    def expose_hostname(self, name, exposable: Exposable) -> Hostname:
         """
         Exposes hostname, so it is accessible from outside
         Actual hostname is generated from "name" and is returned in a form of a Hostname object
         """
+
+    def expose_backend(self, name, backend) -> Hostname:
+        """Exposes a backend for direct external access (admin APIs)"""
+        return self.expose_hostname(name, backend)
 
     @property
     @abstractmethod

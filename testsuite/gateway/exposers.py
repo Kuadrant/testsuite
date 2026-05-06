@@ -1,8 +1,10 @@
 """General exposers, not tied to Envoy or Gateway API"""
 
+from testsuite.config import settings
 from testsuite.gateway import Exposer, Gateway, Hostname
 from testsuite.httpx import KuadrantClient, ForceSNIClient
 from testsuite.kubernetes.openshift.route import OpenshiftRoute
+from testsuite.kubernetes.service import Service, ServicePort
 
 
 class OpenShiftExposer(Exposer):
@@ -16,14 +18,14 @@ class OpenShiftExposer(Exposer):
     def base_domain(self) -> str:
         return self.cluster.apps_url
 
-    def expose_hostname(self, name, gateway: Gateway) -> Hostname:
+    def expose_hostname(self, name, exposable) -> Hostname:
         tls = False
         termination = "edge"
         if self.passthrough:
             tls = True
             termination = "passthrough"
         route = OpenshiftRoute.create_instance(
-            gateway.cluster, name, gateway.service_name, "api", tls=tls, termination=termination
+            exposable.cluster, name, exposable.service_name, "api", tls=tls, termination=termination
         )
         route.verify = self.verify
         self.routes.append(route)
@@ -68,10 +70,29 @@ class StaticLocalHostname(Hostname):
 class LoadBalancerServiceExposer(Exposer):
     """Exposer using Load Balancer service for Gateway"""
 
-    def expose_hostname(self, name, gateway: Gateway) -> Hostname:
+    def expose_hostname(self, name, exposable) -> Hostname:
         hostname = f"{name}.{self.base_domain}"
         return StaticLocalHostname(
-            hostname, gateway.external_ip, lambda: gateway.get_tls_cert(hostname), force_https=self.passthrough
+            hostname, exposable.external_ip, lambda: exposable.get_tls_cert(hostname), force_https=self.passthrough
+        )
+
+    def expose_backend(self, name, backend) -> Hostname:
+        """Creates a LoadBalancer service for direct external access to the backend"""
+        admin_svc_name = f"{backend.service_name}-admin"
+        admin_service = Service.create_instance(
+            backend.cluster,
+            admin_svc_name,
+            selector=backend.match_labels,
+            ports=[ServicePort(name="admin", port=8080, targetPort="api")],
+            labels={"app": backend.label},
+            service_type="LoadBalancer",
+        )
+        admin_service.commit()
+        admin_service.wait_for_ready(slow_loadbalancers=settings["control_plane"]["slow_loadbalancers"])
+        backend._admin_service = admin_service  # pylint: disable=protected-access
+        return StaticLocalHostname(
+            admin_svc_name,
+            lambda: f"{admin_service.refresh().external_ip}:8080",
         )
 
     @property
