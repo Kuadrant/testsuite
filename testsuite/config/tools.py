@@ -97,12 +97,12 @@ def fetch_prometheus_url():
                 if not yaml.safe_load(cm["config.yaml"]).get("enableUserWorkload"):
                     logger.warning("User workload monitoring is not enabled in cluster-monitoring-config")
                     return None
-                routes = cluster.get_routes_for_service(service_name)
-                if routes:
-                    route = routes[0]
-                    protocol = "https" if "tls" in route.model.spec else "http"
-                    return f"{protocol}://{route.model.spec.host}"
-                logger.warning("No routes found for service '%s' in '%s'", service_name, project)
+            routes = cluster.get_routes_for_service(service_name)
+            if routes:
+                route = routes[0]
+                protocol = "https" if "tls" in route.model.spec else "http"
+                return f"{protocol}://{route.model.spec.host}"
+            logger.warning("No routes found for service '%s' in '%s'", service_name, project)
         except OpenShiftPythonException as exc:
             logger.info("OpenShift route discovery not available: %s", exc)
         except (KeyError, yaml.YAMLError) as exc:
