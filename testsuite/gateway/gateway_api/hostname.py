@@ -53,11 +53,15 @@ class DNSPolicyExposer(Exposer):
             ) from exc
         return f'{generate_tail(5)}.{secret.model["metadata"]["annotations"]["base_domain"]}'
 
-    def expose_hostname(self, name, gateway: Gateway) -> Hostname:
+    def expose_hostname(self, name, exposable) -> Hostname:
         return StaticHostname(
             f"{name}.{self.base_domain}",
-            gateway.get_tls_cert if self.verify is None else lambda: self.verify,  # type: ignore
+            exposable.get_tls_cert if self.verify is None else lambda: self.verify,  # type: ignore
         )
+
+    def expose_backend(self, name, backend) -> Hostname:
+        """Exposes a backend without TLS"""
+        return StaticHostname(f"{name}.{self.base_domain}")
 
     def commit(self):
         pass

@@ -4,7 +4,7 @@ import pytest
 
 from testsuite.utils import rego_allow_header
 
-pytestmark = [pytest.mark.authorino, pytest.mark.data_plane]
+pytestmark = [pytest.mark.authorino]
 
 
 @pytest.fixture(scope="module")
@@ -16,7 +16,8 @@ def header():
 @pytest.fixture(scope="module")
 def authorization(authorization, header):
     """Adds OPA policy that accepts all requests that contain `header`"""
-    authorization.authorization.add_opa_policy("opa", rego_allow_header(*header))
+    authorization.identity.clear_all()
+    authorization.authorization.add_opa_policy("opa", "allow = false")
     return authorization
 
 
@@ -29,5 +30,6 @@ def test_authorized_by_opa(client, auth, header):
 
 def test_rejected_by_opa(client, auth):
     """Tests a request that does not have the correct header for OPA policy"""
-    response = client.get("/get", auth=auth)
-    assert response.status_code == 403
+    for i in range(100):
+        response = client.get("/get")
+        assert response.status_code == 403

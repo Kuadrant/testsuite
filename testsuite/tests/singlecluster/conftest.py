@@ -7,11 +7,9 @@ import pytest
 from openshift_client import selector
 
 from testsuite.backend.mockserver import MockserverBackend, MockserverBackendConfig
-from testsuite.config import settings
 from testsuite.gateway import GatewayRoute, Gateway, Hostname, GatewayListener
 from testsuite.gateway.envoy import Envoy
 from testsuite.gateway.envoy.route import EnvoyVirtualRoute
-from testsuite.gateway.exposers import OpenShiftExposer
 from testsuite.gateway.gateway_api.gateway import KuadrantGateway
 from testsuite.gateway.gateway_api.route import HTTPRoute
 from testsuite.httpx import KuadrantClient
@@ -20,8 +18,6 @@ from testsuite.kuadrant.policy.authorization.auth_policy import AuthPolicy
 from testsuite.kuadrant.policy.rate_limit import RateLimitPolicy
 from testsuite.kubernetes.api_key import APIKey
 from testsuite.kubernetes.client import KubernetesClient
-from testsuite.kubernetes.openshift.route import OpenshiftRoute
-from testsuite.kubernetes.service import Service, ServicePort
 from testsuite.mockserver import Mockserver
 
 
@@ -49,7 +45,7 @@ def authorization(request, kuadrant, route, gateway, blame, cluster, label):  # 
     target_ref = request.getfixturevalue(getattr(request, "param", "route"))
 
     if kuadrant:
-        return AuthPolicy.create_instance(cluster, blame("authz"), target_ref, labels={"testRun": label})
+        return AuthPolicy.create_instance(cluster, blame("authz"), gateway, labels={"testRun": label})
     return None
 
 
@@ -105,14 +101,13 @@ def mockserver_config(cluster, blame, label):
 
 
 @pytest.fixture(scope="session")
-def backend(request, cluster, blame, label, mockserver_config):
+def backend(request, cluster, blame, label, mockserver_config, exposer):
     """Deploys MockServer backend"""
-    mockserver = MockserverBackend(
-        cluster, blame("mockserver"), label, service_type="ClusterIP", config=mockserver_config
-    )
+    mockserver = MockserverBackend(cluster, blame("mockserver"), label, config=mockserver_config)
     request.addfinalizer(mockserver.delete)
     mockserver.commit()
     mockserver.wait_for_ready()
+    mockserver.expose(exposer, blame("backend"))
     return mockserver
 
 
@@ -135,6 +130,12 @@ def gateway(request, kuadrant, cluster, blame, label, testconfig, wildcard_domai
     gw.commit()
     gw.wait_for_ready()
     return gw
+
+
+@pytest.fixture(scope="session")
+def backend_hostname(backend) -> Hostname:
+    """Exposed hostname pointing directly at the backend, bypassing the gateway"""
+    return backend.admin_hostname
 
 
 @pytest.fixture(scope="module")
@@ -172,14 +173,20 @@ def client(route, hostname):  # pylint: disable=unused-argument
     client.close()
 
 
-def pytest_runtest_teardown(item):
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_makereport(item, call):  # pylint: disable=unused-argument
     """Verifies that denied requests did not leak to the upstream backend"""
+    outcome = yield
+    report = outcome.get_result()
+
+    if call.when != "call" or not report.passed:
+        return
     if "data_plane" not in [m.name for m in item.iter_markers()]:
         return
 
     client = item.funcargs.get("client")
     backend = item.funcargs.get("backend")
-    if client is None or backend is None or not hasattr(backend, "api_url"):
+    if client is None or backend is None or backend.admin_hostname is None:
         return
 
     denied_ids = set(client.denied_request_ids)
@@ -187,8 +194,10 @@ def pytest_runtest_teardown(item):
     if not denied_ids:
         return
 
-    ms = Mockserver(KuadrantClient(base_url=backend.api_url))
+    backend_client = backend.admin_hostname.client()
+    ms = Mockserver(backend_client)
     all_requests = ms.retrieve_all_requests()
+    backend_client.close()
     tracking_header = KuadrantClient.TRACKING_HEADER.lower()
 
     leaked = []
@@ -198,7 +207,8 @@ def pytest_runtest_teardown(item):
                 leaked.append(values[0])
 
     if leaked:
-        pytest.fail(
+        report.outcome = "failed"
+        report.longrepr = (
             f"{len(leaked)} denied request(s) leaked to the upstream backend. "
             f"The gateway returned a denial status (401/403/429) but the request still reached MockServer."
         )
