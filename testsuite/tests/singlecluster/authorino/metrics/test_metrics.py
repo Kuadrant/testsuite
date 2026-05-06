@@ -44,11 +44,11 @@ def metrics_keys(authorino, service_monitor, prometheus, client, auth):
     Send a simple get request so that a few metrics can appear and
     return all metrics defined for the Authorino metrics service
     """
-    response = client.get("/get", auth=auth)
-    assert response.status_code == 200
-
     prometheus.wait_for_scrape(service_monitor, "/metrics")
     prometheus.wait_for_scrape(service_monitor, "/server-metrics")
+
+    response = client.get("/get", auth=auth)
+    assert response.status_code == 200
 
     return prometheus.get_metrics(labels={"service": authorino.metrics_service.name()}).names
 

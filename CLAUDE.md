@@ -17,13 +17,14 @@ make poetry
 make poetry-no-dev
 
 # Complete local setup (creates kind cluster + installs all components)
+# By default, includes Prometheus stack for observability testing
 make local-setup                                                       # Default: components mode (latest from GitHub)
 
 # Use Helm instead of components mode
 KUADRANT_DEPLOY_MODE=helm make local-setup
 
-# Enable Prometheus CRDs for observability testing (ServiceMonitor, PodMonitor)
-INSTALL_PROMETHEUS=true make local-setup
+# Disable Prometheus if not needed (enabled by default)
+INSTALL_PROMETHEUS=false make local-setup
 
 # Apply additional manifests during setup (e.g., DNS credentials, secrets)
 ADDITIONAL_MANIFESTS=./my-secrets.yaml make local-setup

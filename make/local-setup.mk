@@ -18,7 +18,7 @@ local-setup: ## Complete local environment setup (kind cluster + all dependencie
 	$(MAKE) gateway-api-install
 	$(MAKE) install-cert-manager
 	$(MAKE) create-cluster-issuer
-	$(MAKE) install-prometheus-crds
+	$(MAKE) install-prometheus
 	$(MAKE) $(GATEWAYAPI_PROVIDER)-install
 	$(MAKE) create-test-namespaces
 	$(MAKE) apply-additional-manifests
@@ -29,8 +29,20 @@ local-setup: ## Complete local environment setup (kind cluster + all dependencie
 	@echo "Local environment setup complete!"
 	@echo "   Cluster: $(KIND_CLUSTER_NAME)"
 	@echo "   Gateway Provider: $(GATEWAYAPI_PROVIDER)"
+ifeq ($(INSTALL_PROMETHEUS),true)
+	@echo "   Prometheus: Enabled (namespace: $(PROMETHEUS_NAMESPACE))"
+	@HOST=$$(kubectl get svc -n $(PROMETHEUS_NAMESPACE) prometheus-kube-prometheus-prometheus \
+		-o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null); \
+	[ -z "$$HOST" ] && HOST=$$(kubectl get svc -n $(PROMETHEUS_NAMESPACE) prometheus-kube-prometheus-prometheus \
+		-o jsonpath='{.status.loadBalancer.ingress[0].hostname}' 2>/dev/null); \
+	[ -n "$$HOST" ] && echo "   Prometheus URL: http://$$HOST:9090"
+endif
 	@echo ""
 	@echo "Run tests with: make kuadrant"
+ifeq ($(INSTALL_PROMETHEUS),true)
+	@echo ""
+	@echo "For observability tests: make observability"
+endif
 
 .PHONY: local-cleanup
 local-cleanup: ## Delete local kind cluster

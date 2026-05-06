@@ -122,6 +122,14 @@ reportportal: polish-junit  ## Upload results to reportportal. Appropriate varia
 help: ## Display this help.
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_0-9-]+:.*?##/ { printf "  \033[36m%-30s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
 
+.PHONY: get-prometheus-url
+get-prometheus-url: ## Get Prometheus LoadBalancer URL (for config/settings.local.yaml)
+	@HOST=$$(kubectl get svc -n $(PROMETHEUS_NAMESPACE) prometheus-kube-prometheus-prometheus \
+		-o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null); \
+	[ -z "$$HOST" ] && HOST=$$(kubectl get svc -n $(PROMETHEUS_NAMESPACE) prometheus-kube-prometheus-prometheus \
+		-o jsonpath='{.status.loadBalancer.ingress[0].hostname}' 2>/dev/null); \
+	[ -n "$$HOST" ] && echo "http://$$HOST:9090" || echo ""
+
 CR_NAMES = $\
 authorinos.operator.authorino.kuadrant.io,$\
 gateways.networking.istio.io,$\
