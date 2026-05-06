@@ -63,4 +63,4 @@ class OIDCPolicy(Policy):
         """Wait for OIDCPolicy to be enforced"""
         super().wait_for_ready()
         # Even after enforced condition OIDCPolicy requires a short sleep
-        time.sleep(5)  # https://github.com/Kuadrant/testsuite/issues/884
+        time.sleep(10)  # https://github.com/Kuadrant/testsuite/issues/884
