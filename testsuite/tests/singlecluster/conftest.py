@@ -1,8 +1,10 @@
 """Configure all the components through Kuadrant,
 all methods are placeholders for now since we do not work with Kuadrant"""
 
+import logging
 from importlib import resources
 
+import httpx
 import pytest
 from openshift_client import selector
 
@@ -181,8 +183,6 @@ def pytest_runtest_makereport(item, call):  # pylint: disable=unused-argument
 
     if call.when != "call" or not report.passed:
         return
-    if "data_plane" not in [m.name for m in item.iter_markers()]:
-        return
 
     client = item.funcargs.get("client")
     backend = item.funcargs.get("backend")
@@ -196,15 +196,18 @@ def pytest_runtest_makereport(item, call):  # pylint: disable=unused-argument
 
     backend_client = backend.admin_hostname.client()
     ms = Mockserver(backend_client)
-    all_requests = ms.retrieve_all_requests()
-    backend_client.close()
-    tracking_header = KuadrantClient.TRACKING_HEADER.lower()
+    tracking_header = KuadrantClient.TRACKING_HEADER
 
     leaked = []
-    for req in all_requests:
-        for name, values in req.get("headers", {}).items():
-            if name.lower() == tracking_header and values and values[0] in denied_ids:
-                leaked.append(values[0])
+    try:
+        for denied_id in denied_ids:
+            if ms.retrieve_requests_by_header(tracking_header, denied_id):
+                leaked.append(denied_id)
+    except (httpx.RequestError, httpx.HTTPStatusError):
+        logging.warning("Failed to check for upstream leaks via MockServer", exc_info=True)
+        return
+    finally:
+        backend_client.close()
 
     if leaked:
         report.outcome = "failed"
