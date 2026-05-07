@@ -159,6 +159,14 @@ class Exposable(ABC):
     def service_name(self) -> str:
         """Service name to route traffic to"""
 
+    def external_ip(self) -> str:
+        """Returns external IP and port for external access"""
+        raise NotImplementedError(f"{type(self).__name__} does not support external_ip")
+
+    def get_tls_cert(self, hostname: str) -> Optional[Certificate]:  # pylint: disable=unused-argument
+        """Returns TLS cert or None"""
+        return None
+
 
 class Gateway(LifecycleObject, Referencable, Exposable):
     """
@@ -290,9 +298,10 @@ class Exposer(LifecycleObject):
         Actual hostname is generated from "name" and is returned in a form of a Hostname object
         """
 
-    def expose_backend(self, name, backend) -> Hostname:
-        """Exposes a backend for direct external access (admin APIs)"""
-        return self.expose_hostname(name, backend)
+    @property
+    def backend_service_type(self) -> Optional[Literal["ClusterIP", "LoadBalancer", "NodePort", "ExternalName"]]:
+        """Service type to create when exposing a backend directly. None means no extra service needed."""
+        return None
 
     @property
     @abstractmethod
