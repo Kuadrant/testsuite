@@ -9,7 +9,7 @@ from playwright.sync_api import Page, TimeoutError as PlaywrightTimeoutError, Er
 
 NAV_META = "nav_meta"
 NAV_KWARGS = "nav_kwargs"
-step_tree = {}
+step_tree: dict = {}
 
 
 def step(cls, **kwargs):
