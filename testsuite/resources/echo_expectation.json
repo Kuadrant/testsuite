@@ -1,5 +1,14 @@
 [
   {
+    "id": "not-found",
+    "httpRequest": {
+      "path": "/unknown-endpoint"
+    },
+    "httpResponse": {
+      "statusCode": 404
+    }
+  },
+  {
     "id": "echo",
     "httpRequest": {},
     "httpResponseTemplate": {

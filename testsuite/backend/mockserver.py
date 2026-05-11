@@ -96,10 +96,12 @@ class MockserverBackend(Backend):
         self.service.commit()
 
     def delete(self):
-        if self.config:
-            with self.cluster.context:
-                self.config.delete()
-        super().delete()
+        try:
+            if self.config:
+                with self.cluster.context:
+                    self.config.delete()
+        finally:
+            super().delete()
 
     def wait_for_ready(self, timeout=60 * 5):
         """Waits until Deployment and Service is marked as ready"""
