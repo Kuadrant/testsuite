@@ -6,6 +6,7 @@ from typing import Optional
 import openshift_client as oc
 
 from testsuite.certificates import Certificate
+from testsuite.config import settings
 from testsuite.gateway import Gateway
 from testsuite.kubernetes import Selector
 from testsuite.kubernetes.client import KubernetesClient
@@ -98,6 +99,7 @@ class Envoy(Gateway):  # pylint: disable=too-many-instance-attributes
             service_type="LoadBalancer",
         )
         self.service.commit()
+        self.service.wait_for_ready(slow_loadbalancers=settings["control_plane"]["slow_loadbalancers"])
 
     def get_tls_cert(self, _) -> Optional[Certificate]:
         return None

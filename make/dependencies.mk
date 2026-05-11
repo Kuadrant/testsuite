@@ -8,31 +8,37 @@ install-metrics-server: ## Install metrics-server
 	kubectl patch deployment metrics-server -n kube-system --type=json -p '[{"op":"add","path":"/spec/template/spec/containers/0/args/-","value":"--kubelet-insecure-tls"}]'
 	@echo "metrics-server installed"
 
-.PHONY: install-metallb
-install-metallb: ## Install MetalLB for LoadBalancer services
-	@echo "Installing MetalLB $(METALLB_VERSION)..."
-	kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/$(METALLB_VERSION)/config/manifests/metallb-native.yaml
-	kubectl wait --namespace metallb-system --for=condition=Available deployment/controller --timeout=$(METALLB_TIMEOUT)
-	kubectl wait --namespace metallb-system --for=condition=ready pod --selector=component=controller --timeout=$(METALLB_TIMEOUT)
-	@echo "Configuring MetalLB IP pool..."
-	@printf '%s\n' \
-		'apiVersion: metallb.io/v1beta1' \
-		'kind: IPAddressPool' \
-		'metadata:' \
-		'  name: default' \
-		'  namespace: metallb-system' \
-		'spec:' \
-		'  addresses:' \
-		'  - 172.18.255.200-172.18.255.250' \
-		| kubectl apply -f -
-	@printf '%s\n' \
-		'apiVersion: metallb.io/v1beta1' \
-		'kind: L2Advertisement' \
-		'metadata:' \
-		'  name: default' \
-		'  namespace: metallb-system' \
-		| kubectl apply -f -
-	@echo "MetalLB installed with IP pool 172.18.255.200-172.18.255.250"
+.PHONY: start-cloud-provider
+start-cloud-provider: ## Start cloud-provider-kind for LoadBalancer services
+	@if ! command -v cloud-provider-kind >/dev/null 2>&1; then \
+		echo "ERROR: cloud-provider-kind not found."; \
+		echo "Install it with: go install sigs.k8s.io/cloud-provider-kind@latest"; \
+		echo "  or on macOS: brew install cloud-provider-kind"; \
+		exit 1; \
+	fi
+	@if pgrep -x cloud-provider-kind >/dev/null 2>&1; then \
+		echo "cloud-provider-kind is already running"; \
+	elif [ "$$(uname)" = "Darwin" ]; then \
+		echo "Starting cloud-provider-kind (macOS, requires sudo)..."; \
+		sudo cloud-provider-kind > /tmp/cloud-provider-kind.log 2>&1 & \
+		sleep 2; \
+		echo "cloud-provider-kind started (log: /tmp/cloud-provider-kind.log)"; \
+	else \
+		echo "Starting cloud-provider-kind..."; \
+		cloud-provider-kind > /tmp/cloud-provider-kind.log 2>&1 & \
+		sleep 2; \
+		echo "cloud-provider-kind started (log: /tmp/cloud-provider-kind.log)"; \
+	fi
+
+.PHONY: stop-cloud-provider
+stop-cloud-provider: ## Stop cloud-provider-kind background process
+	@echo "Stopping cloud-provider-kind..."
+	@if [ "$$(uname)" = "Darwin" ]; then \
+		sudo pkill -f cloud-provider-kind 2>/dev/null || true; \
+	else \
+		kill [c]loud-provider-kind 2>/dev/null || true; \
+	fi
+	@echo "cloud-provider-kind stopped"
 
 .PHONY: gateway-api-install
 gateway-api-install: ## Install Gateway API CRDs

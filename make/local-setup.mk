@@ -14,7 +14,7 @@ local-setup: ## Complete local environment setup (kind cluster + all dependencie
 	$(MAKE) kind-delete-cluster
 	$(MAKE) kind-create-cluster
 	$(MAKE) install-metrics-server
-	$(MAKE) install-metallb
+	$(MAKE) start-cloud-provider
 	$(MAKE) gateway-api-install
 	$(MAKE) install-cert-manager
 	$(MAKE) create-cluster-issuer
@@ -45,5 +45,6 @@ ifeq ($(INSTALL_PROMETHEUS),true)
 endif
 
 .PHONY: local-cleanup
-local-cleanup: ## Delete local kind cluster
+local-cleanup: ## Delete local kind cluster and stop background processes
+	$(MAKE) stop-cloud-provider
 	$(MAKE) kind-delete-cluster
