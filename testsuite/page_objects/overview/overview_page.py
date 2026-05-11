@@ -37,6 +37,10 @@ class OverviewPage(Navigable):
         """Check if HTTPRoute appears in HTTPRoutes section"""
         return self.page.wait_for_selector(f"//tr//a[@data-test-id='{route_name}']")
 
+    def has_grpcroute_in_section(self, route_name: str):
+        """Check if GRPCRoute appears in GRPCRoutes section"""
+        return self.page.wait_for_selector(f"//tr//a[@data-test-id='{route_name}']")
+
     def has_policy_in_section(self, policy_name: str):
         """Check if policy appears in Policies section"""
         return self.page.wait_for_selector(f"//tr//a[@data-test-id='{policy_name}']")

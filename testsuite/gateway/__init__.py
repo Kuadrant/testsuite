@@ -125,6 +125,23 @@ class RouteMatch:
     method: Optional[HTTPMethod] = None
 
 
+@dataclass
+class GRPCMethodMatch:
+    """GRPCMethodMatch describes how to match a gRPC route by method."""
+
+    method: str
+    service: Optional[str] = None
+    type: Optional[str] = None
+
+
+@dataclass
+class GRPCRouteMatch:
+    """GRPCRouteMatch defines the predicate used to match requests to a GRPCRoute rule."""
+
+    method: Optional[GRPCMethodMatch] = None
+    headers: Optional[List[HeadersMatch]] = None
+
+
 class Gateway(LifecycleObject, Referencable):
     """
     Abstraction layer for a Gateway sitting between end-user and Kuadrant

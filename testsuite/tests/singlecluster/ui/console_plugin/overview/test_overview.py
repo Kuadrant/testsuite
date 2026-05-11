@@ -3,6 +3,7 @@
 import pytest
 from testsuite.gateway import GatewayListener
 from testsuite.gateway.gateway_api.gateway import KuadrantGateway
+from testsuite.gateway.gateway_api.grpc_route import GRPCRoute
 from testsuite.gateway.gateway_api.route import HTTPRoute
 from testsuite.kuadrant.policy.authorization.auth_policy import AuthPolicy
 from testsuite.page_objects.overview.overview_page import OverviewPage
@@ -23,6 +24,7 @@ def test_overview_page_sections_and_links(navigator):
     assert overview_page.page.get_by_role("heading", name="Gateways - Traffic Analysis", exact=True).is_visible()
     assert overview_page.page.get_by_role("heading", name="Policies", exact=True).is_visible()
     assert overview_page.page.get_by_role("heading", name="HTTPRoutes", exact=True).is_visible()
+    assert overview_page.page.get_by_role("heading", name="GRPCRoutes", exact=True).is_visible()
 
     # Verify Getting started resources panel has clickable links
     getting_started_section = getting_started.locator("xpath=ancestor::section").first
@@ -44,6 +46,10 @@ def test_creation_buttons(navigator):
     # Verify Create HTTPRoute button is visible and clickable
     create_httproute = overview_page.page.get_by_text("Create HTTPRoute")
     assert create_httproute.is_visible() and create_httproute.is_enabled()
+
+    # Verify Create GRPCRoute button is visible and clickable
+    create_grpcroute = overview_page.page.get_by_text("Create GRPCRoute")
+    assert create_grpcroute.is_visible() and create_grpcroute.is_enabled()
 
     # Verify Create Policy button is visible and clickable, then open dropdown
     create_policy = overview_page.page.get_by_text("Create Policy")
@@ -78,7 +84,7 @@ def test_additional_policy_types_in_dropdown(navigator):
 
 
 def test_resources_appear_in_sections(request, navigator, cluster, blame, module_label, wildcard_domain, backend):
-    """Verify gateway, HTTPRoute, and policy resources appear in their respective section panels"""
+    """Verify gateway, HTTPRoute, GRPCRoute, and policy resources appear in their respective section panels"""
     # Create resources programmatically
     gateway_name = blame("gw")
     gateway = KuadrantGateway.create_instance(cluster, gateway_name, {"app": module_label})
@@ -91,6 +97,10 @@ def test_resources_appear_in_sections(request, navigator, cluster, blame, module
     route.add_backend(backend)
     request.addfinalizer(route.delete)
     route.commit()
+
+    grpc_route = GRPCRoute.create_instance(cluster, blame("grpc"), gateway)
+    request.addfinalizer(grpc_route.delete)
+    grpc_route.commit()
 
     policy_name = blame("policy")
     policy = AuthPolicy.create_instance(cluster, policy_name, gateway)
@@ -111,6 +121,11 @@ def test_resources_appear_in_sections(request, navigator, cluster, blame, module
     assert overview_page.has_httproute_in_section(
         route_name
     ), f"HTTPRoute '{route_name}' not visible in HTTPRoutes section panel"
+
+    # Verify GRPCRoute appears in GRPCRoutes section panel
+    assert overview_page.has_grpcroute_in_section(
+        grpc_route.model.metadata.name
+    ), "GRPCRoute not visible in GRPCRoutes section panel"
 
     # Verify policy appears in Policies section panel
     assert overview_page.has_policy_in_section(

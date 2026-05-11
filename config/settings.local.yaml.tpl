@@ -20,6 +20,8 @@
 #    client_id: "CLIENT_ID"
 #    client_secret: "CLIENT_SECRET"
 #    url: "AUTH0_URL"
+#  grpcbin:
+#    image: "quay.io/kuadrant/grpcbin:latest"      # Grpcbin image for gRPC backend tests
 #  httpbin:
 #    image: "HTTPBIN_IMAGE"
 #  llm_sim:

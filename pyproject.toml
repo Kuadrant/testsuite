@@ -19,6 +19,8 @@ PyJWT = "*"
 lxml = "*"
 cryptography = "*"
 backoff = "*"
+grpcio = "*"
+protobuf = ">=6.31.1,<7"
 httpx = { version = "*", extras = ["http2"] }
 openshift-client = ">=2"
 apyproxy = "*"
@@ -77,6 +79,9 @@ junit_family = "xunit2"
 xfail_strict = true
 
 # Pylint:
+[tool.pylint.MAIN]
+ignore-paths = ["testsuite/backend/grpc/grpcbin_pb2.py"]
+
 [tool.pylint.FORMAT]
 max-line-length = 120
 disable = [
@@ -86,6 +91,9 @@ disable = [
     "too-many-arguments",
     "too-many-positional-arguments",
     "too-few-public-methods"]
+
+[tool.pylint.TYPECHECK]
+generated-members = ["grpcbin_pb2.*"]
 
 [tool.pylint.BASIC]
 good-names=["i","j","k",
@@ -98,7 +106,7 @@ good-names=["i","j","k",
 implicit_optional = true
 
 [[tool.mypy.overrides]]
-module = ["dynaconf.*", "keycloak.*", "weakget.*", "openshift_client.*", "apyproxy.*", "click.*", "py.*"]
+module = ["dynaconf.*", "keycloak.*", "weakget.*", "openshift_client.*", "apyproxy.*", "click.*", "py.*", "grpc.*", "google.protobuf.*"]
 ignore_missing_imports = true
 
 [build-system]

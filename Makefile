@@ -1,4 +1,4 @@
-.PHONY: commit-acceptance pylint mypy black reformat test authorino poetry poetry-no-dev mgc container-image polish-junit reportportal authorino-standalone limitador kuadrant kuadrant-only disruptive kuadrantctl multicluster ui playwright-install collect
+.PHONY: commit-acceptance pylint mypy black reformat test authorino poetry poetry-no-dev mgc container-image polish-junit reportportal authorino-standalone limitador kuadrant kuadrant-only disruptive kuadrantctl multicluster ui playwright-install collect grpc
 
 TB ?= short
 LOGLEVEL ?= INFO
@@ -46,6 +46,9 @@ authorino-standalone: poetry-no-dev  ## Run only test capable of running with st
 
 limitador: poetry-no-dev  ## Run only Limitador related tests
 	$(PYTEST) -n4 -m 'limitador and not disruptive' --dist loadfile --enforce $(flags) testsuite/tests/singlecluster/
+
+grpc: poetry-no-dev  ## Run GRPCRoute related tests
+	$(PYTEST) -n4 --dist loadfile --enforce $(flags) testsuite/tests/singlecluster/grpc/
 
 dnstls: poetry-no-dev  ## Run DNS and TLS tests
 	$(PYTEST) -n4 -m '(dnspolicy or tlspolicy) and not disruptive' --dist loadfile --enforce $(flags) testsuite/tests/singlecluster/
