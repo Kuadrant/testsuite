@@ -24,7 +24,9 @@ def test_topology_page_loads(navigator):
     assert svg_graph.is_visible(), "Topology graph SVG not visible"
 
 
-def test_topology_resources_appear(navigator, gateway, route, authorization, rate_limit, dns_policy, tls_policy):
+def test_topology_resources_appear(
+    navigator, gateway, route, grpc_route, authorization, rate_limit, dns_policy, tls_policy
+):
     """Verify topology displays all resources and their connections"""
     # Navigate to topology page
     topology_page = navigator.navigate(TopologyPage)
@@ -33,6 +35,7 @@ def test_topology_resources_appear(navigator, gateway, route, authorization, rat
     # Verify all resources and policies are visible in topology
     assert topology_page.has_resource_node(gateway.model.metadata.name), "Gateway not found in topology"
     assert topology_page.has_resource_node(route.model.metadata.name), "HTTPRoute not found in topology"
+    assert topology_page.has_resource_node(grpc_route.model.metadata.name), "GRPCRoute not found in topology"
     assert topology_page.has_resource_node(authorization.model.metadata.name), "AuthPolicy not found in topology"
     assert topology_page.has_resource_node(rate_limit.model.metadata.name), "RateLimitPolicy not found in topology"
     assert topology_page.has_resource_node(dns_policy.model.metadata.name), "DNSPolicy not found in topology"
@@ -43,7 +46,7 @@ def test_topology_resources_appear(navigator, gateway, route, authorization, rat
 
 
 @pytest.mark.min_ocp_version((4, 20))
-def test_topology_filters_work(navigator, gateway, route, cluster):
+def test_topology_filters_work(navigator, gateway, route, grpc_route, cluster):
     """Verify namespace and resource filters control which resources are shown (OCP 4.20+ / PF6)
 
     Skipped on OCP < 4.20 due to unreliable PF5 filter behavior
@@ -68,19 +71,26 @@ def test_topology_filters_work(navigator, gateway, route, cluster):
     # Apply filters and verify resources appear
     topology_page.apply_resource_filter("Gateway")
     topology_page.apply_resource_filter("HTTPRoute")
+    topology_page.apply_resource_filter("GRPCRoute")
     assert topology_page.is_filter_active("Gateway"), "Gateway filter not active"
     assert topology_page.is_filter_active("HTTPRoute"), "HTTPRoute filter not active"
+    assert topology_page.is_filter_active("GRPCRoute"), "GRPCRoute filter not active"
     assert topology_page.has_resource_node(gateway.model.metadata.name), "Gateway not visible with filter active"
     assert topology_page.has_resource_node(route.model.metadata.name), "HTTPRoute not visible with filter active"
+    assert topology_page.has_resource_node(grpc_route.model.metadata.name), "GRPCRoute not visible with filter active"
 
     # Remove Gateway filter and verify it disappears
     topology_page.remove_filter("Gateway")
     assert not topology_page.is_filter_active("Gateway"), "Gateway filter still active after removal"
     assert topology_page.is_filter_active("HTTPRoute"), "HTTPRoute filter was removed when removing Gateway filter"
+    assert topology_page.is_filter_active("GRPCRoute"), "GRPCRoute filter was removed when removing Gateway filter"
     assert topology_page.resource_node_hidden(gateway.model.metadata.name), "Gateway still visible after filter removal"
     assert topology_page.has_resource_node(
         route.model.metadata.name
     ), "HTTPRoute not visible after removing Gateway filter"
+    assert topology_page.has_resource_node(
+        grpc_route.model.metadata.name
+    ), "GRPCRoute not visible after removing Gateway filter"
 
     # Reset all filters
     topology_page.reset_all_filters()

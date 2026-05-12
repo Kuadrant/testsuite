@@ -1,6 +1,7 @@
 """Conftest for topology UI tests"""
 
 import pytest
+from testsuite.gateway.gateway_api.grpc_route import GRPCRoute
 from testsuite.kuadrant.policy.dns import DNSPolicy
 from testsuite.kuadrant.policy.rate_limit import Limit
 from testsuite.kuadrant.policy.tls import TLSPolicy
@@ -18,6 +19,15 @@ def rate_limit(rate_limit):
     """Configure RateLimitPolicy for topology tests"""
     rate_limit.add_limit("basic", [Limit(5, "10s")])
     return rate_limit
+
+
+@pytest.fixture(scope="module")
+def grpc_route(request, gateway, cluster, blame, module_label):
+    """Creates a GRPCRoute for topology tests"""
+    grpc_route = GRPCRoute.create_instance(cluster, blame("grpc"), gateway, {"app": module_label})
+    request.addfinalizer(grpc_route.delete)
+    grpc_route.commit()
+    return grpc_route
 
 
 @pytest.fixture(scope="module")
