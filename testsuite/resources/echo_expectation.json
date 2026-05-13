@@ -1,0 +1,20 @@
+[
+  {
+    "id": "not-found",
+    "httpRequest": {
+      "path": "/unknown-endpoint"
+    },
+    "httpResponse": {
+      "statusCode": 404
+    }
+  },
+  {
+    "id": "echo",
+    "httpRequest": {},
+    "httpResponseTemplate": {
+      "templateType": "JAVASCRIPT",
+      "template": "var headers = {}; for (var key in request.headers) { headers[key] = String(request.headers[key][0]); } return { statusCode: 200, headers: { 'content-type': ['application/json'] }, body: JSON.stringify({ headers: headers, method: request.method, url: request.path }) };"
+    },
+    "priority": -10
+  }
+]
