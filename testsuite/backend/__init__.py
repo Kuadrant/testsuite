@@ -6,6 +6,7 @@ from functools import cached_property
 from testsuite.gateway import Referencable
 from testsuite.lifecycle import LifecycleObject
 from testsuite.kubernetes.client import KubernetesClient
+from testsuite.utils.constants import HTTP_API_PORT
 
 
 class Backend(LifecycleObject, Referencable):
@@ -21,7 +22,13 @@ class Backend(LifecycleObject, Referencable):
 
     @property
     def reference(self):
-        return {"group": "", "kind": "Service", "port": 8080, "name": self.name, "namespace": self.cluster.project}
+        return {
+            "group": "",
+            "kind": "Service",
+            "port": HTTP_API_PORT,
+            "name": self.name,
+            "namespace": self.cluster.project,
+        }
 
     @property
     def url(self):

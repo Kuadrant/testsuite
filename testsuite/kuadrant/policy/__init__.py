@@ -5,6 +5,7 @@ from enum import Enum
 
 from testsuite.kubernetes import KubernetesObject
 from testsuite.utils import check_condition
+from testsuite.utils.constants import POLICY_ENFORCEMENT_TIMEOUT
 
 
 class Strategy(Enum):
@@ -90,7 +91,7 @@ class Policy(KubernetesObject):
         )
         assert success, f"{self.kind(False)} did not get partially enforced in time"
 
-    def wait_for_full_enforced(self, timelimit=60):
+    def wait_for_full_enforced(self, timelimit=POLICY_ENFORCEMENT_TIMEOUT):
         """Wait for a Policy to be fully Enforced"""
         success = self.wait_until(
             has_condition("Enforced", "True", "Enforced", f"{self.kind(False)} has been successfully enforced"),

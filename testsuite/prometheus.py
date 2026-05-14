@@ -10,6 +10,14 @@ from httpx import Client
 
 from testsuite.kubernetes.monitoring.pod_monitor import PodMonitor
 from testsuite.kubernetes.monitoring.service_monitor import ServiceMonitor
+from testsuite.utils.constants import (
+    PROMETHEUS_POLL_INTERVAL,
+    PROMETHEUS_MAX_RETRIES,
+    PROMETHEUS_SCRAPE_RETRIES,
+    PROMETHEUS_METRIC_RETRIES,
+    PROMETHEUS_FAST_INTERVAL,
+    PROMETHEUS_VERIFY_NO_TARGETS_RETRIES,
+)
 
 
 def _params(key: str = "", labels: dict[str, str] = None) -> dict[str, str]:
@@ -75,7 +83,9 @@ class Prometheus:
 
         return Metrics(response.json()["data"]["result"])
 
-    @backoff.on_predicate(backoff.constant, interval=10, jitter=None, max_tries=35)
+    @backoff.on_predicate(
+        backoff.constant, interval=PROMETHEUS_POLL_INTERVAL, jitter=None, max_tries=PROMETHEUS_MAX_RETRIES
+    )
     def is_reconciled(self, monitor: ServiceMonitor | PodMonitor):
         """True, if all endpoints in ServiceMonitor are active targets"""
         scrape_pools = set(target["scrapePool"].lower() for target in self.get_active_targets())
@@ -95,7 +105,9 @@ class Prometheus:
         """Wait before next metrics scrape on service is finished"""
         call_time = datetime.now(timezone.utc)
 
-        @backoff.on_predicate(backoff.constant, interval=10, jitter=None, max_tries=4)
+        @backoff.on_predicate(
+            backoff.constant, interval=PROMETHEUS_POLL_INTERVAL, jitter=None, max_tries=PROMETHEUS_SCRAPE_RETRIES
+        )
         def _wait_for_scrape():
             """Wait for new scrape after the function call time"""
             for target in self.get_active_targets():
@@ -119,7 +131,9 @@ class Prometheus:
         Treats missing metrics as value 0.
         Supports any comparison via operator module (e.g. operator.eq, operator.ge, operator.lt)."""
 
-        @backoff.on_predicate(backoff.constant, interval=10, jitter=None, max_tries=5)
+        @backoff.on_predicate(
+            backoff.constant, interval=PROMETHEUS_POLL_INTERVAL, jitter=None, max_tries=PROMETHEUS_METRIC_RETRIES
+        )
         def _wait():
             metrics = self.get_metrics(key=metric_name, labels=labels)
             values = metrics.values
@@ -131,7 +145,9 @@ class Prometheus:
 
         return _wait()
 
-    @backoff.on_predicate(backoff.constant, interval=5, max_tries=12, jitter=None)
+    @backoff.on_predicate(
+        backoff.constant, interval=PROMETHEUS_FAST_INTERVAL, max_tries=PROMETHEUS_VERIFY_NO_TARGETS_RETRIES, jitter=None
+    )
     def verify_no_observability_targets(self, label_filters: dict[str, list[str]]) -> bool:
         """Verify that no observability targets are active in Prometheus"""
         targets = self.get_active_targets()

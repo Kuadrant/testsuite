@@ -13,6 +13,7 @@ from testsuite.kubernetes import KubernetesObject, modify
 from testsuite.kuadrant.policy import Policy
 from testsuite.kubernetes.deployment import Deployment
 from testsuite.utils import check_condition, asdict, domain_match
+from testsuite.utils.constants import GATEWAY_READY_TIMEOUT, SLOW_LOADBALANCER_WAIT
 
 
 class KuadrantGateway(KubernetesObject, Gateway):
@@ -92,12 +93,12 @@ class KuadrantGateway(KubernetesObject, Gateway):
                 return True
         return False
 
-    def wait_for_ready(self, timeout: int = 10 * 60):
+    def wait_for_ready(self, timeout: int = GATEWAY_READY_TIMEOUT):
         """Waits for the gateway to be ready in the sense of is_ready(self)"""
         success = self.wait_until(lambda obj: self.__class__(obj.model).is_ready(), timelimit=timeout)
         assert success, f"Gateway didn't reach required state, instead it was: {self.model.status.conditions}"
         if settings["control_plane"]["slow_loadbalancers"]:
-            sleep(60)
+            sleep(SLOW_LOADBALANCER_WAIT)
 
     def is_affected_by(self, policy: Policy) -> bool:
         """Returns True, if affected by status is found within the object for the specific policy"""

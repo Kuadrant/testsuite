@@ -7,6 +7,7 @@ from typing import Literal
 from openshift_client import timeout, Missing
 
 from testsuite.kubernetes import KubernetesObject
+from testsuite.utils.constants import SERVICE_DELETE_TIMEOUT, SERVICE_READY_TIMEOUT, SLOW_LOADBALANCER_WAIT
 
 
 @dataclass
@@ -73,11 +74,11 @@ class Service(KubernetesObject):
 
     def delete(self, ignore_not_found=True, cmd_args=None):
         """Deletes Service, introduces bigger waiting times due to LoadBalancer type"""
-        with timeout(10 * 60):
+        with timeout(SERVICE_DELETE_TIMEOUT):
             deleted = super(KubernetesObject, self).delete(ignore_not_found, cmd_args)
             return deleted
 
-    def wait_for_ready(self, timeout=60 * 5, slow_loadbalancers=False):
+    def wait_for_ready(self, timeout=SERVICE_READY_TIMEOUT, slow_loadbalancers=False):
         """Waits until LoadBalancer service gets ready."""
         if self.model.spec.type != "LoadBalancer":
             return
@@ -88,4 +89,4 @@ class Service(KubernetesObject):
         )
         assert success, f"Service {self.name()} did not get ready in time"
         if slow_loadbalancers:
-            sleep(60)
+            sleep(SLOW_LOADBALANCER_WAIT)

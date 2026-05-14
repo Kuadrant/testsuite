@@ -11,6 +11,7 @@ from testsuite.kubernetes import KubernetesObject
 from testsuite.kubernetes.client import KubernetesClient
 from testsuite.kuadrant.policy import Policy
 from testsuite.utils import asdict, check_condition
+from testsuite.utils.constants import DNS_POLICY_ENFORCEMENT_TIMEOUT
 
 
 def has_record_condition(condition_type, status="True", reason=None, message=None):
@@ -199,6 +200,6 @@ class DNSPolicy(Policy):
             dns_probe = dns_record.get_owned("DNSHealthCheckProbe")[0]
         return DNSHealthCheckProbe(dns_probe.model, context=self.context)
 
-    def wait_for_full_enforced(self, timelimit=300):
+    def wait_for_full_enforced(self, timelimit=DNS_POLICY_ENFORCEMENT_TIMEOUT):
         """Wait for a Policy to be fully Enforced with increased timelimit for DNSPolicy"""
         super().wait_for_full_enforced(timelimit=timelimit)

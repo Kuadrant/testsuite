@@ -7,6 +7,7 @@ from testsuite.kubernetes.client import KubernetesClient
 from testsuite.kubernetes import KubernetesObject, modify
 from testsuite.kuadrant.policy import Policy
 from testsuite.utils import asdict, check_condition
+from testsuite.utils.constants import ROUTE_READY_TIMEOUT
 
 if typing.TYPE_CHECKING:
     from testsuite.backend import Backend
@@ -125,5 +126,5 @@ class GRPCRoute(KubernetesObject, GatewayRoute):
                     return all(x.status == "True" for x in condition_set.conditions)
             return False
 
-        success = self.wait_until(_ready, timelimit=10)
+        success = self.wait_until(_ready, timelimit=ROUTE_READY_TIMEOUT)
         assert success, f"{self.kind()} did not get ready in time"

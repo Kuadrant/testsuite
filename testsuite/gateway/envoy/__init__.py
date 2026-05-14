@@ -12,6 +12,14 @@ from testsuite.kubernetes.client import KubernetesClient
 from testsuite.gateway.envoy.config import EnvoyConfig
 from testsuite.kubernetes.deployment import Deployment, VolumeMount, ConfigMapVolume
 from testsuite.kubernetes.service import Service, ServicePort
+from testsuite.utils.constants import (
+    ENVOY_STARTUP_SETTLE,
+    GATEWAY_READY_TIMEOUT,
+    HTTP_API_PORT,
+    ENVOY_ADMIN_PORT,
+    ENVOY_READINESS_INITIAL_DELAY,
+    ENVOY_READINESS_PERIOD,
+)
 
 
 class Envoy(Gateway):  # pylint: disable=too-many-instance-attributes
@@ -54,9 +62,9 @@ class Envoy(Gateway):  # pylint: disable=too-many-instance-attributes
         """Restarts Envoy to apply newest config changes"""
         self.cluster.do_action("rollout", ["restart", f"deployment/{self.name}"])
         self.wait_for_ready()
-        time.sleep(3)  # or some reason wait_for_ready is not enough, needs more investigation
+        time.sleep(ENVOY_STARTUP_SETTLE)  # or some reason wait_for_ready is not enough, needs more investigation
 
-    def wait_for_ready(self, timeout: int = 10 * 60):
+    def wait_for_ready(self, timeout: int = GATEWAY_READY_TIMEOUT):
         with oc.timeout(timeout):
             assert self.cluster.do_action(
                 "rollout", ["status", f"deployment/{self.name}"]
@@ -69,7 +77,7 @@ class Envoy(Gateway):  # pylint: disable=too-many-instance-attributes
             self.name,
             container_name="envoy",
             image=self.image,
-            ports={"api": 8080, "admin": 8001},
+            ports={"api": HTTP_API_PORT, "admin": ENVOY_ADMIN_PORT},
             selector=Selector(matchLabels={"deployment": self.name, **self.labels}),
             labels=self.labels,
             command_args=[
@@ -79,7 +87,11 @@ class Envoy(Gateway):  # pylint: disable=too-many-instance-attributes
             ],
             volumes=[ConfigMapVolume(config_map_name=self.name, name="config", items={"envoy.yaml": "envoy.yaml"})],
             volume_mounts=[VolumeMount(mountPath="/usr/local/etc/envoy", name="config", readOnly=True)],
-            readiness_probe={"httpGet": {"path": "/ready", "port": 8001}, "initialDelaySeconds": 3, "periodSeconds": 4},
+            readiness_probe={
+                "httpGet": {"path": "/ready", "port": ENVOY_ADMIN_PORT},
+                "initialDelaySeconds": ENVOY_READINESS_INITIAL_DELAY,
+                "periodSeconds": ENVOY_READINESS_PERIOD,
+            },
         )
 
     def commit(self):
@@ -94,7 +106,7 @@ class Envoy(Gateway):  # pylint: disable=too-many-instance-attributes
             self.cluster,
             self.name,
             selector={"deployment": self.name, **self.labels},
-            ports=[ServicePort(name="api", port=8080, targetPort="api")],
+            ports=[ServicePort(name="api", port=HTTP_API_PORT, targetPort="api")],
             service_type="LoadBalancer",
         )
         self.service.commit()

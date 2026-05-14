@@ -5,6 +5,7 @@ from testsuite.kubernetes import Selector
 from testsuite.kubernetes.client import KubernetesClient
 from testsuite.kubernetes.deployment import Deployment
 from testsuite.kubernetes.service import Service, ServicePort
+from testsuite.utils.constants import HTTP_API_PORT
 
 
 class Httpbin(Backend):
@@ -22,7 +23,7 @@ class Httpbin(Backend):
             self.name,
             container_name="httpbin",
             image=self.image,
-            ports={"api": 8080},
+            ports={"api": HTTP_API_PORT},
             selector=Selector(matchLabels=match_labels),
             labels={"app": self.label},
         )
@@ -33,7 +34,7 @@ class Httpbin(Backend):
             self.cluster,
             self.name,
             selector=match_labels,
-            ports=[ServicePort(name="http", port=8080, targetPort="api")],
+            ports=[ServicePort(name="http", port=HTTP_API_PORT, targetPort="api")],
             labels={"app": self.label},
         )
         self.service.commit()

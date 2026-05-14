@@ -9,6 +9,7 @@ from httpx import Client
 
 from testsuite.tracing import TracingClient
 from testsuite.tracing.models import Trace
+from testsuite.utils.constants import TRACING_MAX_RETRIES
 
 
 class JaegerClient(TracingClient):
@@ -32,7 +33,7 @@ class JaegerClient(TracingClient):
     def query_url(self):
         return self._query_url
 
-    @backoff.on_predicate(backoff.fibo, lambda x: x == [], max_tries=7, jitter=None)
+    @backoff.on_predicate(backoff.fibo, lambda x: x == [], max_tries=TRACING_MAX_RETRIES, jitter=None)
     def get_traces(self, service: str, tags: Optional[dict[str, str]] = None, min_processes: int = 0) -> list[Trace]:
         """Gets trace from tracing backend Tempo or Jaeger.
         If min_processes is set, retries until at least that many service processes are present.

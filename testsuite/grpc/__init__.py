@@ -7,6 +7,7 @@ from google.protobuf.message_factory import GetMessageClass
 
 from testsuite.httpx import ResultList
 from testsuite.backend.grpc import grpcbin_pb2
+from testsuite.utils.constants import GRPC_CALL_TIMEOUT
 
 SERVICE_DESCRIPTOR = grpcbin_pb2.DESCRIPTOR.services_by_name["GRPCBin"]
 
@@ -59,7 +60,7 @@ class GRPCClient:
             response_deserializer=GetMessageClass(SERVICE_DESCRIPTOR.methods_by_name[method].output_type).FromString,
         )
         try:
-            response = make_call(grpcbin_pb2.EmptyMessage(), metadata=metadata or None, timeout=10)
+            response = make_call(grpcbin_pb2.EmptyMessage(), metadata=metadata or None, timeout=GRPC_CALL_TIMEOUT)
             return GRPCResult(StatusCode.OK, response=response)
         except grpc.RpcError as e:
             return GRPCResult(e.code(), error=e)  # pylint: disable=no-member

@@ -7,6 +7,7 @@ from openshift_client import invoke
 
 from testsuite.kubernetes import KubernetesObject, Selector, modify
 from testsuite.utils import asdict
+from testsuite.utils.constants import DEPLOYMENT_READY_TIMEOUT
 
 # pylint: disable=invalid-name
 
@@ -149,12 +150,12 @@ class Deployment(KubernetesObject):
 
         return cls(model, context=cluster.context)
 
-    def wait_for_ready(self, timeout=90):
+    def wait_for_ready(self, timeout=DEPLOYMENT_READY_TIMEOUT):
         """Waits until Deployment is marked as ready"""
         success = self.wait_until(lambda obj: "readyReplicas" in obj.model.status, timelimit=timeout)
         assert success, f"Deployment {self.name()} did not get ready in time"
 
-    def wait_for_replicas(self, replicas: int, timeout=90):
+    def wait_for_replicas(self, replicas: int, timeout=DEPLOYMENT_READY_TIMEOUT):
         """Waits until Deployment has at least the given number of replicas"""
         success = self.wait_until(
             lambda obj: "readyReplicas" in obj.model.status and obj.model.status["readyReplicas"] >= replicas,
@@ -201,7 +202,7 @@ class Deployment(KubernetesObject):
         self.set_replicas(original_replicas)
         self.wait_for_replicas(original_replicas)
 
-    def rollout(self, hard=False, timeout=90):
+    def rollout(self, hard=False, timeout=DEPLOYMENT_READY_TIMEOUT):
         """
         Performs rollout on the Deployment and waits until complete.
         Setting hard to true performs a direct pod deletion without grace period
