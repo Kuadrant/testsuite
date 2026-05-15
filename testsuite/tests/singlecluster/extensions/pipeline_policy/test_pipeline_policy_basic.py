@@ -4,7 +4,8 @@ import pytest
 
 pytestmark = [pytest.mark.kuadrant_only, pytest.mark.extensions]
 
-
+# if not action method is configured, these cel expression won't be evaluated
+# need to talk with the team about this..
 @pytest.fixture(scope="module")
 def pipeline_policy(pipeline_policy):
     """Configure PipelinePolicy with allow action and response headers."""
