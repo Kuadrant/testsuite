@@ -131,7 +131,7 @@ class HTTPRoute(KubernetesObject, GatewayRoute):
                     condition_set.controllerName in expected_controllers
                     or "gateway-controller" in condition_set.controllerName  # fallback
                 ):
-                    return (all(x.status == "True" for x in condition_set.conditions),)
+                    return all(x.status == "True" for x in condition_set.conditions)
             return False
 
         success = self.wait_until(_ready, timelimit=10)
