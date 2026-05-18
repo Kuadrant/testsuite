@@ -26,6 +26,7 @@ def route(request, gateway, blame, hostname, backend, module_label):
     route.add_backend(backend)
     request.addfinalizer(route.delete)
     route.commit()
+    route.wait_for_ready()
     return route
 
 
