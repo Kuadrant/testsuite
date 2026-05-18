@@ -34,7 +34,7 @@ ifeq ($(INSTALL_TRACING),true)
 	@echo "Configuring OTEL tracing on limitador-operator..."
 	@kubectl set env deployment/limitador-operator-controller-manager \
 		-n $(KUADRANT_NAMESPACE) \
-		OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger-collector.$(TOOLS_NAMESPACE).svc.cluster.local:4318 \
+		OTEL_EXPORTER_OTLP_ENDPOINT=$(JAEGER_COLLECTOR_ENDPOINT) \
 		OTEL_EXPORTER_OTLP_INSECURE=true
 	@kubectl rollout status deployment/limitador-operator-controller-manager \
 		-n $(KUADRANT_NAMESPACE) --timeout=$(KUBECTL_TIMEOUT)
