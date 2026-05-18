@@ -38,11 +38,13 @@ For local development and testing, you can set up a complete Kuadrant environmen
 
 ### Prerequisites
 * [Kind](https://kind.sigs.k8s.io/docs/user/quick-start/#installation)
+* [cloud-provider-kind](https://github.com/kubernetes-sigs/cloud-provider-kind) (LoadBalancer support)
 * [Helm](https://helm.sh/docs/intro/install/)
 * [jq](https://jqlang.github.io/jq/download/) (JSON processor)
 
-> **⚠️ macOS Limitation:**
-> MetalLB LoadBalancer services have limited functionality on macOS due to Docker Desktop's VM isolation. While MetalLB will work inside the cluster, LoadBalancer IPs won't be accessible from your Mac host machine. **For macOS users, we recommend running tests in containers** (see [From a Container](#from-a-container) section above) in addition to the local Kind setup.
+> **Podman users:** Set `CONTAINER_ENGINE=podman` when running `make local-setup`. Docker is used by default.
+
+> **macOS container runtime:** Use [Podman Desktop](https://podman-desktop.io/) or [Docker Desktop](https://www.docker.com/products/docker-desktop/) as the container runtime. Other Docker-compatible runtimes (e.g. OrbStack) may not work due to LoadBalancer networking incompatibilities with `cloud-provider-kind`.
 
 ### Quick Start
 
@@ -67,7 +69,7 @@ GATEWAYAPI_PROVIDER=envoygateway INSTALL_PROMETHEUS=true ADDITIONAL_MANIFESTS=./
 
 This will:
 1. Create a Kind cluster named `kuadrant-local`
-2. Install metrics-server and MetalLB (LoadBalancer support)
+2. Install metrics-server and start cloud-provider-kind (LoadBalancer support)
 3. Install Gateway API CRDs
 4. Install cert-manager and create a self-signed ClusterIssuer
 5. Install Prometheus stack (enabled by default, disable with `INSTALL_PROMETHEUS=false`) - full monitoring stack with Prometheus Operator, Prometheus Server, and Grafana exposed via LoadBalancer
