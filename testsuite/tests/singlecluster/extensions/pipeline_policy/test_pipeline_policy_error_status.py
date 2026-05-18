@@ -76,8 +76,7 @@ def test_nonexistent_url(request, cluster, blame, route):
 def test_wrong_service_name(request, cluster, blame, route, threat_assessment_service):
     """PipelinePolicy reports error when action method references a non-existent gRPC service name."""
     svc_url = (
-        f"grpc://{threat_assessment_service.name()}"
-        f".{threat_assessment_service.namespace()}.svc.cluster.local:8080"
+        f"grpc://{threat_assessment_service.name()}" f".{threat_assessment_service.namespace()}.svc.cluster.local:8080"
     )
     policy = PipelinePolicy.create_instance(cluster, blame("bad-svc"), route)
     policy.add_action_method(
@@ -103,8 +102,7 @@ def test_wrong_service_name(request, cluster, blame, route, threat_assessment_se
 def test_wrong_method_name(request, cluster, blame, route, threat_assessment_service):
     """PipelinePolicy reports error when action method references a non-existent gRPC method."""
     svc_url = (
-        f"grpc://{threat_assessment_service.name()}"
-        f".{threat_assessment_service.namespace()}.svc.cluster.local:8080"
+        f"grpc://{threat_assessment_service.name()}" f".{threat_assessment_service.namespace()}.svc.cluster.local:8080"
     )
     policy = PipelinePolicy.create_instance(cluster, blame("bad-meth"), route)
     policy.add_action_method(

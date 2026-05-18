@@ -4,6 +4,7 @@ import pytest
 
 pytestmark = [pytest.mark.kuadrant_only, pytest.mark.extensions]
 
+
 # if not action method is configured, these cel expression won't be evaluated
 # need to talk with the team about this..
 @pytest.fixture(scope="module")

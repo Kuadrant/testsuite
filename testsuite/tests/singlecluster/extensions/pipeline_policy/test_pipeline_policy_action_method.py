@@ -42,7 +42,9 @@ THREAT_THRESHOLD = 50
 @pytest.fixture(scope="module")
 def pipeline_policy(pipeline_policy, threat_assessment_service):  # pylint: disable=unused-argument
     """Configure PipelinePolicy with threat assessment gRPC action and conditional headers."""
-    svc_url = f"grpc://{threat_assessment_service.name()}.{threat_assessment_service.namespace()}.svc.cluster.local:8080"
+    svc_url = (
+        f"grpc://{threat_assessment_service.name()}.{threat_assessment_service.namespace()}.svc.cluster.local:8080"
+    )
     pipeline_policy.add_action_method(
         name="assess-threat",
         url=svc_url,
