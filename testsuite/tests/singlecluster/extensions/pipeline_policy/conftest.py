@@ -4,6 +4,7 @@ import pytest
 
 from testsuite.kuadrant.extensions.pipeline_policy import PipelinePolicy
 
+
 @pytest.fixture(scope="module")
 def pipeline_policy(cluster, blame, route):
     """PipelinePolicy targeting the test HTTPRoute"""
