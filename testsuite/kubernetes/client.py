@@ -1,6 +1,8 @@
 """This module implements an KubernetesCLI interface using oc/kubectl binary commands."""
 
+import logging
 from functools import cached_property
+from typing import Optional
 from urllib.parse import urlparse
 import tempfile
 import yaml
@@ -13,6 +15,8 @@ from testsuite.kubernetes.service import Service
 from .service_account import ServiceAccount
 from .deployment import Deployment
 from .secret import Secret
+
+logger = logging.getLogger(__name__)
 
 
 class KubernetesClient:
@@ -99,6 +103,30 @@ class KubernetesClient:
         except OpenShiftPythonException:
             return False
         return True
+
+    @property
+    def is_reachable(self):
+        """Returns True if the cluster is reachable, without depending on any specific namespace."""
+        try:
+            self.do_action("api-versions")
+        except OpenShiftPythonException as e:
+            logger.warning("Cluster is not reachable: %s", e)
+            return False
+        return True
+
+    @property
+    def ocp_version(self) -> Optional[str]:
+        """Returns the OpenShift version (major.minor) or None if not available."""
+        result = self.do_action(
+            "get", "clusterversion", "version", "-o", "jsonpath={.status.history[0].version}", auto_raise=False
+        )
+        if result.status() != 0:
+            return None
+        version_str = result.out().strip()
+        parts = version_str.split(".")
+        if len(parts) >= 2:
+            return f"{parts[0]}.{parts[1]}"
+        return None
 
     def get_secret(self, name):
         """Returns dict-like structure for accessing secret data"""

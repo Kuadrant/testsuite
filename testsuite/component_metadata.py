@@ -21,13 +21,14 @@ class ReportPortalMetadataCollector:
 
     def collect_all_clusters(self):
         """Collect metadata from all configured clusters."""
-        clusters_config = self._get_cluster_configurations()
+        clusters_config = self.get_cluster_configurations()
         for cluster_name, cluster_client in clusters_config:
             metadata = self._collect_single_cluster(cluster_client)
             if metadata:
                 self.all_cluster_metadata[cluster_name] = metadata
 
-    def _get_cluster_configurations(self):
+    @staticmethod
+    def get_cluster_configurations():
         """Get cluster configurations from settings."""
         clusters_config = [("cluster1", settings["control_plane"]["cluster"])]
         if cluster2 := settings["control_plane"].get("cluster2"):
@@ -38,14 +39,16 @@ class ReportPortalMetadataCollector:
 
     def _collect_single_cluster(self, cluster_client):
         """Collect metadata for a single cluster."""
-        project = cluster_client.change_project(settings["service_protection"]["system_project"])
-        if not project.connected:
+        if not cluster_client.is_reachable:
             return None
 
+        project = cluster_client.change_project(settings["service_protection"]["system_project"])
+        metadata = self._get_kuadrant_metadata(project) if project.connected else {"kuadrant_image": "not installed"}
+
         return {
-            "metadata": self._get_kuadrant_metadata(project),
+            "metadata": metadata,
             "console_url": self._get_console_url(cluster_client.api_url),
-            "ocp_version": self.get_ocp_version(project),
+            "ocp_version": cluster_client.ocp_version,
         }
 
     @staticmethod
@@ -77,23 +80,6 @@ class ReportPortalMetadataCollector:
             console_hostname = hostname.replace("api.", "console-openshift-console.apps.", 1)
             return f"https://{console_hostname}"
         return api_url
-
-    @staticmethod
-    def get_ocp_version(project) -> Optional[str]:
-        """Retrieve and format OCP version from cluster."""
-        try:
-            with project.context:
-                version_result = oc.selector("clusterversion").objects()
-                if version_result:
-                    ocp_version = version_result[0].model.status.history[0].version
-                    if ocp_version:
-                        parts = ocp_version.split(".")
-                        if len(parts) >= 2:
-                            return f"{parts[0]}.{parts[1]}"
-        except (oc.OpenShiftPythonException, AttributeError, KeyError, IndexError, ValueError) as e:
-            logger.warning("Failed to get OCP version: %s", e)
-
-        return None
 
     @staticmethod
     def get_kubernetes_version(project) -> Optional[str]:

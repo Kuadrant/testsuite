@@ -30,6 +30,16 @@ from testsuite.config import settings
 
 logger = logging.getLogger(__name__)
 
+
+def _first_connected(namespace):
+    """Return the first (cluster_client, project) connected to the given namespace, or (None, None)."""
+    for _, cluster in ReportPortalMetadataCollector.get_cluster_configurations():
+        project = cluster.change_project(namespace)
+        if project.connected:
+            return cluster, project
+    return None, None
+
+
 pytestmark = pytest.mark.skipif(
     not os.environ.get("COLLECTOR_ENABLE"),
     reason="collector was not explicitly enabled",
@@ -37,12 +47,13 @@ pytestmark = pytest.mark.skipif(
 
 
 def gather_cluster_versions() -> dict:
-    """gather all particular versions into a dictionary"""
-    cluster_client = settings["control_plane"]["cluster"]
-    project = cluster_client.change_project(settings["service_protection"]["system_project"])
+    """Gather cluster versions from the first cluster with Kuadrant system namespace."""
+    cluster, project = _first_connected(settings["service_protection"]["system_project"])
+    if project is None:
+        return {}
     return {
         "kubernetes": ReportPortalMetadataCollector.get_kubernetes_version(project),
-        "openshift": ReportPortalMetadataCollector.get_ocp_version(project),
+        "openshift": cluster.ocp_version,
     }
 
 
@@ -79,17 +90,21 @@ def test_cluster_properties(record_testsuite_property):
 
 
 def test_kube_context(record_testsuite_property):
-    """Record current kube context"""
-    kube_context = settings["control_plane"]["cluster"].kubeconfig_path
+    """Record kube context from the first cluster with kuadrant-system."""
+    cluster_client, _ = _first_connected(settings["service_protection"]["system_project"])
+    if cluster_client is None:
+        return
+    kube_context = cluster_client.kubeconfig_path
     print(f"{kube_context=}")
     if kube_context:
         record_testsuite_property("kube_context", kube_context)
 
 
 def test_kuadrant_properties(record_testsuite_property):
-    """Record kuadrant related properties"""
-    cluster_client = settings["control_plane"]["cluster"]
-    project = cluster_client.change_project("kuadrant-system")
+    """Record kuadrant related properties from the first cluster with kuadrant-system."""
+    _, project = _first_connected(settings["service_protection"]["system_project"])
+    if project is None:
+        return
     kuadrant_images = ReportPortalMetadataCollector.get_component_images(project)
     if kuadrant_images:
         print(f"Kuadrant images: {kuadrant_images}")
@@ -98,9 +113,10 @@ def test_kuadrant_properties(record_testsuite_property):
 
 
 def test_istio_properties(record_testsuite_property):
-    """Record Istio related properties"""
-    cluster_client = settings["control_plane"]["cluster"]
-    project = cluster_client.change_project("istio-system")
+    """Record Istio related properties from the first cluster with istio-system."""
+    _, project = _first_connected("istio-system")
+    if project is None:
+        return
     istio_metadata = ReportPortalMetadataCollector.get_istio_metadata(project)
     for key, value in istio_metadata.items():
         print(f"{key}: {value}")
