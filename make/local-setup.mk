@@ -30,10 +30,6 @@ endif
 endif
 	$(MAKE) deploy-kuadrant-operator
 	$(MAKE) deploy-kuadrant-cr
-ifeq ($(INSTALL_TRACING),true)
-	$(MAKE) configure-kuadrant-tracing-operator
-	$(MAKE) configure-kuadrant-tracing-cr
-endif
 	@echo ""
 	@echo "Local environment setup complete!"
 	@echo "   Cluster: $(KIND_CLUSTER_NAME)"

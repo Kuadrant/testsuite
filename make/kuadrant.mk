@@ -30,6 +30,15 @@ endif
 	$(MAKE) patch-kuadrant-operator-env
 	@echo "Kuadrant Operator $(KUADRANT_OPERATOR_VERSION) installed from Helm"
 endif
+ifeq ($(INSTALL_TRACING),true)
+	@echo "Configuring OTEL tracing on limitador-operator..."
+	@kubectl set env deployment/limitador-operator-controller-manager \
+		-n $(KUADRANT_NAMESPACE) \
+		OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger-collector.$(TOOLS_NAMESPACE).svc.cluster.local:4318 \
+		OTEL_EXPORTER_OTLP_INSECURE=true
+	@kubectl rollout status deployment/limitador-operator-controller-manager \
+		-n $(KUADRANT_NAMESPACE) --timeout=$(KUBECTL_TIMEOUT)
+endif
 
 .PHONY: patch-kuadrant-operator-env
 patch-kuadrant-operator-env: ## Patch Kuadrant Operator deployment with custom env vars
@@ -58,8 +67,7 @@ endif
 .PHONY: deploy-kuadrant-cr
 deploy-kuadrant-cr: ## Deploy Kuadrant CR
 	@echo "Creating Kuadrant CR..."
-ifeq ($(INSTALL_PROMETHEUS),true)
-	@echo "Enabling observability in Kuadrant CR..."
+ifeq ($(INSTALL_TRACING),true)
 	@printf '%s\n' \
 		'apiVersion: kuadrant.io/v1beta1' \
 		'kind: Kuadrant' \
@@ -69,6 +77,13 @@ ifeq ($(INSTALL_PROMETHEUS),true)
 		'spec:' \
 		'  observability:' \
 		'    enable: true' \
+		'    dataPlane:' \
+		'      defaultLevels:' \
+		'      - debug: "true"' \
+		'      httpHeaderIdentifier: x-request-id' \
+		'    tracing:' \
+		'      defaultEndpoint: "$(JAEGER_COLLECTOR_ENDPOINT)"' \
+		'      insecure: true' \
 		| kubectl apply -f -
 else
 	@printf '%s\n' \
@@ -82,21 +97,3 @@ else
 endif
 	kubectl wait kuadrant/kuadrant-sample --for=condition=Ready=True -n $(KUADRANT_NAMESPACE) --timeout=$(KUADRANT_CR_TIMEOUT)
 	@echo "Kuadrant CR ready"
-
-.PHONY: configure-kuadrant-tracing-operator
-configure-kuadrant-tracing-operator: ## Configure OTEL env vars on kuadrant-operator (control plane tracing)
-	@echo "Configuring OTEL environment variables on kuadrant-operator..."
-	@kubectl set env deployment/kuadrant-operator-controller-manager \
-		-n $(KUADRANT_NAMESPACE) \
-		OTEL_EXPORTER_OTLP_ENDPOINT=$(JAEGER_COLLECTOR_ENDPOINT) \
-		OTEL_EXPORTER_OTLP_INSECURE=true \
-		LOG_LEVEL=debug
-	@kubectl rollout status deployment/kuadrant-operator-controller-manager \
-		-n $(KUADRANT_NAMESPACE) --timeout=$(KUBECTL_TIMEOUT)
-	@echo "Control plane tracing configured on operator"
-
-.PHONY: configure-kuadrant-tracing-cr
-configure-kuadrant-tracing-cr: ## Configure tracing in Kuadrant CR (data plane tracing)
-	@echo "Configuring observability (tracing + data plane) in Kuadrant CR..."
-	@kubectl patch kuadrant kuadrant-sample -n $(KUADRANT_NAMESPACE) --type=merge -p '{"spec":{"observability":{"enable":true,"dataPlane":{"defaultLevels":[{"debug":"true"}],"httpHeaderIdentifier":"x-request-id"},"tracing":{"defaultEndpoint":"$(JAEGER_COLLECTOR_ENDPOINT)","insecure":true}}}}'
-	@echo "Data plane tracing configured in Kuadrant CR"
