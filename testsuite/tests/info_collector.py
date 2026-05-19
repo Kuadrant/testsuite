@@ -30,31 +30,37 @@ from testsuite.config import settings
 
 logger = logging.getLogger(__name__)
 
-
-def _first_connected(namespace):
-    """Return the first (cluster_client, project) connected to the given namespace, or (None, None)."""
-    for _, cluster in ReportPortalMetadataCollector.get_cluster_configurations():
-        project = cluster.change_project(namespace)
-        if project.connected:
-            return cluster, project
-    return None, None
-
-
 pytestmark = pytest.mark.skipif(
     not os.environ.get("COLLECTOR_ENABLE"),
     reason="collector was not explicitly enabled",
 )
 
 
-def gather_cluster_versions() -> dict:
-    """Gather cluster versions from the first cluster with Kuadrant system namespace."""
-    cluster, project = _first_connected(settings["service_protection"]["system_project"])
-    if project is None:
-        return {}
-    return {
-        "kubernetes": ReportPortalMetadataCollector.get_kubernetes_version(project),
-        "openshift": cluster.ocp_version,
-    }
+def _all_cluster_projects(namespace):
+    """Yield (cluster_name, cluster_client, project or None) for each configured cluster."""
+    for cluster_name, cluster in ReportPortalMetadataCollector.get_cluster_configurations():
+        project = cluster.change_project(namespace)
+        yield cluster_name, cluster, (project if project.connected else None)
+
+
+def _print_cluster_data(cluster_data):
+    """Print collected data per cluster."""
+    for cluster_name, lines in cluster_data.items():
+        print(f"\n{cluster_name}:")
+        for line in lines:
+            print(f"  {line}")
+
+
+def _record_unique(record_testsuite_property, properties):
+    """Record properties, only adding unique ones as attributes."""
+    seen = set()
+    for key, value in properties:
+        if not value:
+            continue
+        if (key, value) not in seen:
+            seen.add((key, value))
+            record_testsuite_property(key, value)
+            logger.info("recording property %s:%s", key, value)
 
 
 def get_cluster_information() -> dict:
@@ -81,44 +87,62 @@ def test_launch_description(record_testsuite_property):
 
 
 def test_cluster_properties(record_testsuite_property):
-    """Collect cluster properties"""
-    cluster_versions = gather_cluster_versions()
-    for k, v in cluster_versions.items():
-        print(f"recording property {k}:{v}")
-        if v:  # filter out None values
-            record_testsuite_property(k, v)
+    """Collect cluster version properties from all clusters."""
+    system_ns = settings["service_protection"]["system_project"]
+    properties = []
+    cluster_data = {}
+    for cluster_name, cluster, project in _all_cluster_projects(system_ns):
+        if project is None:
+            cluster_data[cluster_name] = [f"namespace '{system_ns}' not found"]
+            continue
+        versions = {
+            "kubernetes": ReportPortalMetadataCollector.get_kubernetes_version(project),
+            "openshift": cluster.ocp_version,
+        }
+        cluster_data[cluster_name] = [f"{k}:{v}" for k, v in versions.items()]
+        for key, value in versions.items():
+            properties.append((key, value))
 
-
-def test_kube_context(record_testsuite_property):
-    """Record kube context from the first cluster with kuadrant-system."""
-    cluster_client, _ = _first_connected(settings["service_protection"]["system_project"])
-    if cluster_client is None:
-        return
-    kube_context = cluster_client.kubeconfig_path
-    print(f"{kube_context=}")
-    if kube_context:
-        record_testsuite_property("kube_context", kube_context)
+    _print_cluster_data(cluster_data)
+    _record_unique(record_testsuite_property, properties)
 
 
 def test_kuadrant_properties(record_testsuite_property):
-    """Record kuadrant related properties from the first cluster with kuadrant-system."""
-    _, project = _first_connected(settings["service_protection"]["system_project"])
-    if project is None:
-        return
-    kuadrant_images = ReportPortalMetadataCollector.get_component_images(project)
-    if kuadrant_images:
-        print(f"Kuadrant images: {kuadrant_images}")
-        for name, tag, _ in kuadrant_images:
-            record_testsuite_property(name, tag)
+    """Record kuadrant related properties from all clusters."""
+    system_ns = settings["service_protection"]["system_project"]
+    properties = []
+    cluster_data = {}
+    for cluster_name, _, project in _all_cluster_projects(system_ns):
+        if project is None:
+            cluster_data[cluster_name] = [f"namespace '{system_ns}' not found"]
+            continue
+        cluster_data[cluster_name] = []
+        kuadrant_images = ReportPortalMetadataCollector.get_component_images(project)
+        for name, tag, full_image in kuadrant_images:
+            if tag:
+                cluster_data[cluster_name].append(f"{name}:{tag} ({full_image})")
+                properties.append((name, tag))
+            else:
+                cluster_data[cluster_name].append(full_image)
+
+    _print_cluster_data(cluster_data)
+    _record_unique(record_testsuite_property, properties)
 
 
 def test_istio_properties(record_testsuite_property):
-    """Record Istio related properties from the first cluster with istio-system."""
-    _, project = _first_connected("istio-system")
-    if project is None:
-        return
-    istio_metadata = ReportPortalMetadataCollector.get_istio_metadata(project)
-    for key, value in istio_metadata.items():
-        print(f"{key}: {value}")
-        if key == "istio_version":
-            record_testsuite_property(key, value)
+    """Record Istio related properties from all clusters."""
+    properties = []
+    cluster_data = {}
+    for cluster_name, _, project in _all_cluster_projects("istio-system"):
+        if project is None:
+            cluster_data[cluster_name] = ["namespace 'istio-system' not found"]
+            continue
+        cluster_data[cluster_name] = []
+        istio_metadata = ReportPortalMetadataCollector.get_istio_metadata(project)
+        for key, value in istio_metadata.items():
+            cluster_data[cluster_name].append(f"{key}:{value}")
+            if key == "istio_version":
+                properties.append((key, value))
+
+    _print_cluster_data(cluster_data)
+    _record_unique(record_testsuite_property, properties)

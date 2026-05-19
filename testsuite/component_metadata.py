@@ -116,13 +116,12 @@ class ReportPortalMetadataCollector:
                     if normalised_image in seen:
                         continue
                     seen.add(normalised_image)
-                    print(f"{image=}")
                     image_name = normalised_image.split("/")[-1]
                     if ":" in image_name:
                         name, tag = image_name.rsplit(":", 1)
                         images.append((name, tag, image))
                     else:
-                        logger.debug("Skipping image without tag: %s", image)
+                        images.append((image_name, None, image))
         except (oc.OpenShiftPythonException, AttributeError, KeyError, IndexError, ValueError) as e:
             logger.warning("Failed to get images from %s: %s", project, e)
 
