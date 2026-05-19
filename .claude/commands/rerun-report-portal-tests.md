@@ -1,30 +1,73 @@
 ---
-description: Run tests from a dot-notation list with options to copy or execute
+description: Run tests from a test list with options to copy or execute
 ---
 
 # Run Tests
 
-Convert a list of test names (dot-notation) into a pytest command, then either copy it to clipboard or execute it directly and analyze results.
+Fetch failed tests from Report Portal using rptool, or accept a manually provided test list, then build a pytest command to either copy to clipboard or execute directly and analyze results.
 
 ## Input Format
 
-The user provides:
-- A list of test names in **dot-notation** format (e.g., `testsuite.tests.singlecluster.gateway.test_basic.test_gateway_basic_dns_tls`)
-- Optional pytest flags (e.g., `-n4`, `-vv`, `--dist loadfile`)
+The user provides one of the following:
+- **rptool arguments**: An RP project, launch name, and test target to fetch failed tests from Report Portal (e.g., `rp project nightly-testsuite launch name "nightly-all #565" test target kuadrant`)
+- **A list of test names** in either format:
+  - **Pytest path format** (preferred): `testsuite/tests/singlecluster/gateway/test_basic.py::test_gateway_basic_dns_tls`
+  - **Dot-notation format** (legacy): `testsuite.tests.singlecluster.gateway.test_basic.test_gateway_basic_dns_tls`
+- **No input**: The user will be asked how they want to provide tests
+
+Optional: pytest flags (e.g., `-n4`, `-vv`, `--dist loadfile`)
 
 ## Instructions
 
-### Step 1: Parse test names
+### Step 0: Determine input source
 
-1. Convert each dot-notation test name to pytest file::function format:
+1. **If the user's message contains rptool-related arguments** (a launch name and/or test target for Report Portal), go to **Step 1a** (Fetch from Report Portal).
+2. **If the user's message contains test names** (either pytest path format or dot-notation), go to **Step 1b** (Parse test names).
+3. **Otherwise**, ask the user via AskUserQuestion:
+
+   **"How would you like to provide the tests?"**
+
+   Options:
+   1. **Fetch from Report Portal** — Fetch failed tests from a Report Portal launch using rptool
+   2. **Provide test list manually** — Paste a list of failed tests
+
+   - If "Fetch from Report Portal" is selected, go to **Step 1a**
+   - If "Provide test list manually" is selected, ask the user for the list, then go to **Step 1b**
+
+### Step 1a: Fetch failed tests from Report Portal
+
+1. If the user has not already provided all required values, ask for the missing ones:
+   - **RP project** (optional) — e.g., `nightly-testsuite`. If not provided, omit the `--rp-project` flag and rptool will use the default from the user's configuration.
+   - **Launch name** (required) — e.g., `"nightly-all #565"`
+   - **Test target** (required) — e.g., `kuadrant`
+
+2. Run the rptool command via Bash:
+   ```
+   rptool query [--rp-project <rp-project>] --launch-name "<launch-name>" --test-target <test-target> --status FAILED --names-only
+   ```
+
+3. Parse the output — each line is a test name in pytest path format (e.g., `testsuite/tests/.../test_file.py::test_name`).
+
+4. If no failed tests are found (empty output), inform the user and stop.
+
+5. Show the user the list of failed tests and the count, then continue to **Step 1b** with these test names.
+
+### Step 1b: Parse test names
+
+1. **Detect the format** of the provided test names:
+   - **Pytest path format**: Contains `/` and `::` (e.g., `testsuite/tests/singlecluster/gateway/test_basic.py::test_gateway_basic_dns_tls`) — use as-is, no conversion needed.
+   - **Dot-notation format**: Contains only dots and no `/` or `::` (e.g., `testsuite.tests.singlecluster.gateway.test_basic.test_gateway_basic_dns_tls`) — convert to pytest path format.
+
+2. **Convert dot-notation names** (only if detected in step 1):
    - Replace dots with `/` up to and including the test file name
    - Add `.py::` before the test function name
    - Example: `testsuite.tests.singlecluster.gateway.test_basic.test_gateway_basic_dns_tls` becomes `testsuite/tests/singlecluster/gateway/test_basic.py::test_gateway_basic_dns_tls`
 
-2. Handle **parameterized tests** (names containing `[...]`):
+3. Handle **parameterized tests** (names containing `[...]`):
    - Preserve the bracket and parameter portion (e.g., `test_deny_invalid_org_id[321]` stays as `test_deny_invalid_org_id[321]`)
    - This runs only the specific parameter variant that failed, not all variants
-   - Example: `testsuite.tests.singlecluster.authorino.test_org.test_deny_invalid_org_id[321]` becomes `testsuite/tests/singlecluster/authorino/test_org.py::test_deny_invalid_org_id[321]`
+   - Dot-notation example: `testsuite.tests.singlecluster.authorino.test_org.test_deny_invalid_org_id[321]` becomes `testsuite/tests/singlecluster/authorino/test_org.py::test_deny_invalid_org_id[321]`
+   - Pytest path example: `testsuite/tests/singlecluster/authorino/test_org.py::test_deny_invalid_org_id[321]` — used as-is
 
 ### Step 2: Build the pytest command
 
@@ -75,7 +118,7 @@ Options:
 
 4. If "Rerun failed tests" is selected, repeat from Step 4b (run, analyze, ask again)
 5. If "Copy failed tests command" is selected, copy to clipboard and ask again with the same options
-6. If "Provide new test list" is selected, go back to Step 1 with the new input
+6. If "Provide new test list" is selected, go back to Step 0 with the new input
 7. Continue this loop until the user selects "Done"
 
 ## Important Notes
