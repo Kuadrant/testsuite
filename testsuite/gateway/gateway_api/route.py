@@ -113,7 +113,10 @@ class HTTPRoute(KubernetesObject, GatewayRoute):
 
     @modify
     def add_backend(self, backend: "Backend", prefix="/", name: str = None):
-        rule: dict[str, typing.Any] = {"backendRefs": [backend.reference], "matches": [{"path": {"value": prefix, "type": "PathPrefix"}}]}
+        rule: dict[str, typing.Any] = {
+            "backendRefs": [backend.reference],
+            "matches": [{"path": {"value": prefix, "type": "PathPrefix"}}],
+        }
         if name:
             rule["name"] = name
         self.model.spec.rules.append(rule)
