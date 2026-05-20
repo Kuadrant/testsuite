@@ -30,6 +30,15 @@ endif
 	$(MAKE) patch-kuadrant-operator-env
 	@echo "Kuadrant Operator $(KUADRANT_OPERATOR_VERSION) installed from Helm"
 endif
+ifeq ($(INSTALL_TRACING),true)
+	@echo "Configuring OTEL tracing on limitador-operator..."
+	@kubectl set env deployment/limitador-operator-controller-manager \
+		-n $(KUADRANT_NAMESPACE) \
+		OTEL_EXPORTER_OTLP_ENDPOINT=$(JAEGER_COLLECTOR_ENDPOINT) \
+		OTEL_EXPORTER_OTLP_INSECURE=true
+	@kubectl rollout status deployment/limitador-operator-controller-manager \
+		-n $(KUADRANT_NAMESPACE) --timeout=$(KUBECTL_TIMEOUT)
+endif
 
 .PHONY: patch-kuadrant-operator-env
 patch-kuadrant-operator-env: ## Patch Kuadrant Operator deployment with custom env vars
@@ -56,29 +65,26 @@ else
 endif
 
 .PHONY: deploy-kuadrant-cr
-deploy-kuadrant-cr: ## Deploy Kuadrant CR
+deploy-kuadrant-cr: ## Deploy Kuadrant CR (composed from INSTALL_PROMETHEUS and INSTALL_TRACING flags)
 	@echo "Creating Kuadrant CR..."
-ifeq ($(INSTALL_PROMETHEUS),true)
-	@echo "Enabling observability in Kuadrant CR..."
-	@printf '%s\n' \
-		'apiVersion: kuadrant.io/v1beta1' \
-		'kind: Kuadrant' \
-		'metadata:' \
-		'  name: kuadrant-sample' \
-		'  namespace: $(KUADRANT_NAMESPACE)' \
-		'spec:' \
-		'  observability:' \
-		'    enable: true' \
-		| kubectl apply -f -
-else
-	@printf '%s\n' \
-		'apiVersion: kuadrant.io/v1beta1' \
-		'kind: Kuadrant' \
-		'metadata:' \
-		'  name: kuadrant-sample' \
-		'  namespace: $(KUADRANT_NAMESPACE)' \
-		'spec: {}' \
-		| kubectl apply -f -
-endif
+	@{ \
+		echo 'apiVersion: kuadrant.io/v1beta1'; \
+		echo 'kind: Kuadrant'; \
+		echo 'metadata:'; \
+		echo '  name: kuadrant-sample'; \
+		echo '  namespace: $(KUADRANT_NAMESPACE)'; \
+		echo 'spec:'; \
+		echo '  observability:'; \
+		echo '    enable: $(INSTALL_PROMETHEUS)'; \
+		if [ "$(INSTALL_TRACING)" = "true" ]; then \
+			echo '    dataPlane:'; \
+			echo '      defaultLevels:'; \
+			echo '      - debug: "true"'; \
+			echo '      httpHeaderIdentifier: x-request-id'; \
+			echo '    tracing:'; \
+			echo '      defaultEndpoint: "$(JAEGER_COLLECTOR_ENDPOINT)"'; \
+			echo '      insecure: true'; \
+		fi; \
+	} | kubectl apply -f -
 	kubectl wait kuadrant/kuadrant-sample --for=condition=Ready=True -n $(KUADRANT_NAMESPACE) --timeout=$(KUADRANT_CR_TIMEOUT)
 	@echo "Kuadrant CR ready"
