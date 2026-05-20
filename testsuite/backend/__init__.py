@@ -18,6 +18,7 @@ class Backend(LifecycleObject, Referencable, Exposable):
 
     def __init__(self, cluster: KubernetesClient, name: str, label: str):
         self._cluster = cluster
+
         self.name = name
         self.label = label
 
