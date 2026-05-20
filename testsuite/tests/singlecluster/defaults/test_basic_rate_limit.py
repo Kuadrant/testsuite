@@ -4,7 +4,7 @@ import pytest
 
 from testsuite.kuadrant.policy.rate_limit import Limit
 
-pytestmark = [pytest.mark.defaults_overrides, pytest.mark.limitador, pytest.mark.data_plane]
+pytestmark = [pytest.mark.defaults_overrides, pytest.mark.limitador]
 
 LIMIT = Limit(3, "5s")
 

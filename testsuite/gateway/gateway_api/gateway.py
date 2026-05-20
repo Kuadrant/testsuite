@@ -16,7 +16,7 @@ from testsuite.utils import check_condition, asdict, domain_match
 from testsuite.utils.constants import GATEWAY_READY_TIMEOUT, SLOW_LOADBALANCER_WAIT
 
 
-class KuadrantGateway(KubernetesObject, Gateway):
+class KuadrantGateway(KubernetesObject, Gateway):  # pylint: disable=too-many-ancestors
     """Gateway object for Kuadrant"""
 
     # Name of the GatewayClass that is to be used for all the instances

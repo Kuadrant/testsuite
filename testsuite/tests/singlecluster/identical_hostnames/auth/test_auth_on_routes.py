@@ -9,7 +9,7 @@ import pytest
 
 from testsuite.kuadrant.policy.authorization.auth_policy import AuthPolicy
 
-pytestmark = [pytest.mark.authorino, pytest.mark.kuadrant_only, pytest.mark.data_plane]
+pytestmark = [pytest.mark.authorino, pytest.mark.kuadrant_only]
 
 
 @pytest.fixture(scope="module")

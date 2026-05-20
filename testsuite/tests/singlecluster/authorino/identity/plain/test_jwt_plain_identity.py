@@ -8,7 +8,7 @@ import pytest
 from testsuite.utils import extract_response
 from testsuite.gateway.envoy.jwt_plain_identity import JwtEnvoy
 
-pytestmark = [pytest.mark.authorino, pytest.mark.standalone_only, pytest.mark.data_plane]
+pytestmark = [pytest.mark.authorino, pytest.mark.standalone_only]
 
 
 @pytest.fixture(scope="module")
