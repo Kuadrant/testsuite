@@ -12,12 +12,7 @@ resource cannot be created. Gateway service assertions are conditional on user-m
 import os
 import pytest
 
-pytestmark = [
-    pytest.mark.observability,
-    pytest.mark.limitador,
-    pytest.mark.authorino,
-    pytest.mark.kuadrant_only,
-]
+pytestmark = [pytest.mark.observability, pytest.mark.limitador, pytest.mark.authorino, pytest.mark.kuadrant_only]
 
 
 @pytest.fixture(scope="module")
