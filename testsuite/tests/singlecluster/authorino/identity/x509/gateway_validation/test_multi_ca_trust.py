@@ -15,7 +15,12 @@ from testsuite.kubernetes import Selector
 from testsuite.kuadrant.policy.authorization import X509Source
 from ..conftest import XFCC_HEADER_NAME
 
-pytestmark = [pytest.mark.authorino, pytest.mark.kuadrant_only, pytest.mark.gateway_api_version((1, 5, 0)), pytest.mark.data_plane]
+pytestmark = [
+    pytest.mark.authorino,
+    pytest.mark.kuadrant_only,
+    pytest.mark.gateway_api_version((1, 5, 0)),
+    ,
+]
 
 
 @pytest.fixture(scope="module")
