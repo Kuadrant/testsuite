@@ -103,13 +103,22 @@ def mockserver_config(cluster, blame, label):
 
 
 @pytest.fixture(scope="session")
-def backend(request, cluster, blame, label, mockserver_config, exposer):
+def backend_exposer(request, testconfig, cluster):
+    """Dedicated session-scoped exposer for the backend, avoids ScopeMismatch with module-scoped exposer overrides"""
+    exp = testconfig["default_exposer"](cluster)
+    request.addfinalizer(exp.delete)
+    exp.commit()
+    return exp
+
+
+@pytest.fixture(scope="session")
+def backend(request, cluster, blame, label, mockserver_config, backend_exposer):
     """Deploys MockServer backend"""
     mockserver = MockserverBackend(cluster, blame("mockserver"), label, config=mockserver_config)
     request.addfinalizer(mockserver.delete)
     mockserver.commit()
     mockserver.wait_for_ready()
-    mockserver.expose(exposer, blame("backend"))
+    mockserver.expose(backend_exposer, blame("backend"))
     return mockserver
 
 
