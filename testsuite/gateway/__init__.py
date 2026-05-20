@@ -13,6 +13,7 @@ from testsuite.lifecycle import LifecycleObject
 from testsuite.utils import asdict
 
 if TYPE_CHECKING:
+    from testsuite.backend import Backend
     from testsuite.kubernetes.client import KubernetesClient
 
 
