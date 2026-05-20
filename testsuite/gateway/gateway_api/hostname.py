@@ -8,7 +8,7 @@ from openshift_client import selector, OpenShiftPythonException
 from testsuite.certificates import Certificate
 from testsuite.config import settings
 from testsuite.httpx import KuadrantClient
-from testsuite.gateway import Hostname, Exposer
+from testsuite.gateway import Exposable, Hostname, Exposer
 from testsuite.utils import generate_tail
 
 
@@ -53,7 +53,7 @@ class DNSPolicyExposer(Exposer):
             ) from exc
         return f'{generate_tail(5)}.{secret.model["metadata"]["annotations"]["base_domain"]}'
 
-    def expose_hostname(self, name, exposable) -> Hostname:
+    def expose_hostname(self, name, exposable: Exposable) -> Hostname:
         return StaticHostname(
             f"{name}.{self.base_domain}",
             exposable.get_tls_cert if self.verify is None else lambda _hostname: self.verify,  # type: ignore
