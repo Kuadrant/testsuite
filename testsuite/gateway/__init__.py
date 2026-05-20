@@ -141,11 +141,6 @@ class GRPCRouteMatch:
     headers: Optional[List[HeadersMatch]] = None
 
 
-class Gateway(LifecycleObject, Referencable):
-    """
-    Abstraction layer for a Gateway sitting between end-user and Kuadrant
-    Simplified: Equals to Gateway Kubernetes object
-    """
 class Exposable(ABC):
     """Object that can be exposed by an Exposer (has a cluster and a service name)"""
 

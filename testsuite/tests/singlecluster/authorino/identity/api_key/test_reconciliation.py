@@ -5,7 +5,7 @@ import pytest
 from testsuite.httpx.auth import HeaderApiKeyAuth
 from testsuite.kubernetes import Selector
 
-pytestmark = [pytest.mark.authorino, pytest.mark.data_plane]
+pytestmark = [pytest.mark.authorino]
 
 
 @pytest.fixture(scope="function")

@@ -2,7 +2,7 @@
 
 import pytest
 
-pytestmark = [pytest.mark.authorino, pytest.mark.data_plane]
+pytestmark = [pytest.mark.authorino]
 
 
 @pytest.fixture(scope="module")

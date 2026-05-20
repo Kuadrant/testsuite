@@ -5,7 +5,7 @@ import pytest
 
 from testsuite.httpx import Result
 
-pytestmark = [pytest.mark.authorino, pytest.mark.standalone_only, pytest.mark.data_plane]
+pytestmark = [pytest.mark.authorino, pytest.mark.standalone_only]
 
 
 def test_x509_success(envoy_authority, valid_cert, hostname):

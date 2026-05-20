@@ -11,7 +11,7 @@ import pytest
 
 from .conftest import FREE_USER_LIMIT, PAID_USER_LIMIT
 
-pytestmark = [pytest.mark.limitador, pytest.mark.authorino, pytest.mark.kuadrant_only, pytest.mark.data_plane]
+pytestmark = [pytest.mark.limitador, pytest.mark.authorino, pytest.mark.kuadrant_only]
 
 basic_request = {
     "model": "meta-llama/Llama-3.1-8B-Instruct",

@@ -8,7 +8,7 @@ import pytest
 
 from testsuite.kuadrant.policy.rate_limit import Limit, RateLimitPolicy
 
-pytestmark = [pytest.mark.observability, pytest.mark.limitador, pytest.mark.data_plane]
+pytestmark = [pytest.mark.observability, pytest.mark.limitador]
 
 
 @pytest.fixture(scope="module")

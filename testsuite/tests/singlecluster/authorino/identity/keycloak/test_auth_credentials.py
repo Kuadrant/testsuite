@@ -4,7 +4,7 @@ import pytest
 
 from testsuite.kuadrant.policy.authorization import Credentials
 
-pytestmark = [pytest.mark.authorino, pytest.mark.data_plane]
+pytestmark = [pytest.mark.authorino]
 
 
 @pytest.fixture(scope="module", params=["authorizationHeader", "customHeader", "queryString", "cookie"])

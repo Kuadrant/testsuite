@@ -12,7 +12,7 @@ import pytest
 
 from testsuite.utils import ContentType
 
-pytestmark = [pytest.mark.authorino, pytest.mark.data_plane]
+pytestmark = [pytest.mark.authorino]
 
 
 ALLOWED_COUNTRY = {"countryCode": "SK"}

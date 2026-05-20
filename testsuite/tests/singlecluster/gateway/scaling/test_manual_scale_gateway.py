@@ -7,7 +7,7 @@ import pytest
 
 from testsuite.tests.singlecluster.gateway.scaling.conftest import LIMIT
 
-pytestmark = [pytest.mark.limitador, pytest.mark.authorino, pytest.mark.kuadrant_only, pytest.mark.data_plane]
+pytestmark = [pytest.mark.limitador, pytest.mark.authorino, pytest.mark.kuadrant_only]
 
 
 @pytest.mark.flaky(reruns=0)

@@ -5,7 +5,7 @@ import pytest
 from testsuite.kuadrant.limitador import Disk
 from ..conftest import LIMIT
 
-pytestmark = [pytest.mark.limitador, pytest.mark.disruptive, pytest.mark.data_plane]
+pytestmark = [pytest.mark.limitador, pytest.mark.disruptive]
 
 
 @pytest.fixture(scope="module")

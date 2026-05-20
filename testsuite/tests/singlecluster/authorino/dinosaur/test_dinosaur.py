@@ -4,7 +4,7 @@ Test for complex AuthConfig
 
 import pytest
 
-pytestmark = [pytest.mark.authorino, pytest.mark.data_plane]
+pytestmark = [pytest.mark.authorino]
 
 ERROR_MESSAGE = {
     "kind": "Error",

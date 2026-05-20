@@ -47,7 +47,7 @@ def authorization(request, kuadrant, route, gateway, blame, cluster, label):  # 
     target_ref = request.getfixturevalue(getattr(request, "param", "route"))
 
     if kuadrant:
-        return AuthPolicy.create_instance(cluster, blame("authz"), gateway, labels={"testRun": label})
+        return AuthPolicy.create_instance(cluster, blame("authz"), target_ref, labels={"testRun": label})
     return None
 
 
