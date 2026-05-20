@@ -19,7 +19,6 @@ pytestmark = [
     pytest.mark.authorino,
     pytest.mark.kuadrant_only,
     pytest.mark.gateway_api_version((1, 5, 0)),
-    ,
 ]
 
 

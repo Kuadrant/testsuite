@@ -13,7 +13,6 @@ pytestmark = [
     pytest.mark.limitador,
     pytest.mark.authorino,
     pytest.mark.kuadrant_only,
-    ,
 ]
 
 
