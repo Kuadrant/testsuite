@@ -33,7 +33,7 @@ istio-install: ## Install Istio via SAIL operator
 configure-istio-tracing: ## Configure Istio for distributed tracing
 	@echo "Configuring Istio for tracing with Jaeger..."
 	@# Patch Istio CR to add tracing extension provider and JSON access logs
-	@kubectl patch istio default -n istio-system --type=merge -p "$$(printf '%s' \
+	@printf '%s' \
 		'{"spec":{"values":{"meshConfig":{' \
 		'"accessLogFile":"/dev/stdout",' \
 		'"accessLogEncoding":"JSON",' \
@@ -63,7 +63,7 @@ configure-istio-tracing: ## Configure Istio for distributed tracing
 		'"service":"jaeger-collector.$(TOOLS_NAMESPACE).svc.cluster.local"' \
 		'}}]' \
 		'}}}}' \
-	)"
+		| kubectl patch istio default -n istio-system --type=merge --patch-file /dev/stdin
 	@# Create Telemetry resource to enable tracing
 	@printf '%s\n' \
 		'apiVersion: telemetry.istio.io/v1' \
