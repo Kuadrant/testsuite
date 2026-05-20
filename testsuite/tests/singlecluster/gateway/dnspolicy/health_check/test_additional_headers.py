@@ -62,7 +62,7 @@ def headers_secret(request, cluster, blame):
 @pytest.fixture(scope="module")
 def mockserver_client(backend):
     """Returns Mockserver client from externally exposed backend"""
-    return Mockserver(backend.admin_hostname.client())
+    return Mockserver(backend.external_hostname.client())
 
 
 @pytest.fixture(scope="module")
