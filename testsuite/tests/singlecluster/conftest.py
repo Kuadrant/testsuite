@@ -175,17 +175,20 @@ def pytest_runtest_makereport(item, call):  # pylint: disable=unused-argument
     outcome = yield
     report = outcome.get_result()
 
-    if call.when != "call" or not report.passed:
+    if call.when != "call":
         return
 
     client = item.funcargs.get("client")
-    backend = item.funcargs.get("backend")
-    if client is None or backend is None or backend.external_hostname is None:
+    if not isinstance(client, KuadrantClient):
         return
 
     denied_ids = set(client.denied_request_ids)
     client.denied_request_ids.clear()
-    if not denied_ids:
+
+    backend = item.funcargs.get("backend")
+    if not report.passed or backend is None or not hasattr(backend, "external_hostname"):
+        return
+    if backend.external_hostname is None or not denied_ids:
         return
 
     backend_client = backend.external_hostname.client()
