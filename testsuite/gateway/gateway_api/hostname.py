@@ -56,7 +56,7 @@ class DNSPolicyExposer(Exposer):
     def expose_hostname(self, name, exposable) -> Hostname:
         return StaticHostname(
             f"{name}.{self.base_domain}",
-            exposable.get_tls_cert if self.verify is None else lambda: self.verify,  # type: ignore
+            exposable.get_tls_cert if self.verify is None else lambda _hostname: self.verify,  # type: ignore
         )
 
     def commit(self):
