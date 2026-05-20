@@ -103,17 +103,13 @@ def mockserver_config(cluster, blame, label):
 
 
 @pytest.fixture(scope="session")
-def backend(request, cluster, blame, label, mockserver_config, testconfig):
+def backend(request, cluster, blame, label, mockserver_config, exposer):
     """Deploys MockServer backend"""
     mockserver = MockserverBackend(cluster, blame("mockserver"), label, config=mockserver_config)
     request.addfinalizer(mockserver.delete)
     mockserver.commit()
     mockserver.wait_for_ready()
-
-    backend_exposer = testconfig["default_exposer"](cluster)
-    request.addfinalizer(backend_exposer.delete)
-    backend_exposer.commit()
-    mockserver.expose(backend_exposer, blame("backend"))
+    mockserver.expose(exposer, blame("backend"))
     return mockserver
 
 
@@ -136,12 +132,6 @@ def gateway(request, kuadrant, cluster, blame, label, testconfig, wildcard_domai
     gw.commit()
     gw.wait_for_ready()
     return gw
-
-
-@pytest.fixture(scope="session")
-def backend_hostname(backend) -> Hostname:
-    """Exposed hostname pointing directly at the backend, bypassing the gateway"""
-    return backend.admin_hostname
 
 
 @pytest.fixture(scope="module")
@@ -190,7 +180,7 @@ def pytest_runtest_makereport(item, call):  # pylint: disable=unused-argument
 
     client = item.funcargs.get("client")
     backend = item.funcargs.get("backend")
-    if client is None or backend is None or backend.admin_hostname is None:
+    if client is None or backend is None or backend.external_hostname is None:
         return
 
     denied_ids = set(client.denied_request_ids)
@@ -198,7 +188,7 @@ def pytest_runtest_makereport(item, call):  # pylint: disable=unused-argument
     if not denied_ids:
         return
 
-    backend_client = backend.admin_hostname.client()
+    backend_client = backend.external_hostname.client()
     ms = Mockserver(backend_client)
     tracking_header = KuadrantClient.TRACKING_HEADER
 
