@@ -42,12 +42,11 @@ ifeq ($(INSTALL_PROMETHEUS),true)
 		-o jsonpath='{.status.loadBalancer.ingress[0].hostname}' 2>/dev/null); \
 	[ -n "$$HOST" ] && echo "   Prometheus URL: http://$$HOST:9090"
 endif
+ifeq ($(INSTALL_TRACING),true)
+	@echo "   Tracing: Enabled"
+endif
 	@echo ""
 	@echo "Run tests with: make kuadrant"
-ifeq ($(INSTALL_PROMETHEUS),true)
-	@echo ""
-	@echo "For observability tests: make observability"
-endif
 
 .PHONY: local-cleanup
 local-cleanup: ## Delete local kind cluster and stop background processes
