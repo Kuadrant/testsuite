@@ -159,6 +159,11 @@ class Exposable(ABC):
         """Returns external IP and port for external access"""
         raise NotImplementedError(f"{type(self).__name__} does not support external_ip")
 
+    @property
+    def port_name(self) -> str:
+        """Service port name used when creating external routes"""
+        return "api"
+
     def get_tls_cert(self, hostname: str) -> Optional[Certificate]:  # pylint: disable=unused-argument
         """Returns TLS cert or None"""
         return None
