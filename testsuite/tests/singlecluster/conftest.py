@@ -195,7 +195,7 @@ def pytest_runtest_makereport(item, call):  # pylint: disable=unused-argument
     client.denied_request_ids.clear()
 
     backend = item.funcargs.get("backend")
-    if not report.passed or backend is None or not hasattr(backend, "external_hostname"):
+    if not report.passed or backend is None or not isinstance(backend, MockserverBackend):
         return
     if backend.external_hostname is None or not denied_ids:
         return

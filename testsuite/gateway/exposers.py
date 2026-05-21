@@ -25,7 +25,7 @@ class OpenShiftExposer(Exposer):
             tls = True
             termination = "passthrough"
         route = OpenshiftRoute.create_instance(
-            exposable.cluster, name, exposable.service_name, "api", tls=tls, termination=termination
+            exposable.cluster, name, exposable.service_name, exposable.port_name, tls=tls, termination=termination
         )
         route.verify = self.verify
         self.routes.append(route)
