@@ -1,16 +1,14 @@
-"""Basic happy-path tests for PipelinePolicy: allow action and response headers."""
+"""Basic happy-path tests for PipelinePolicy: deny action and response headers."""
 
 import pytest
 
 pytestmark = [pytest.mark.kuadrant_only, pytest.mark.extensions]
 
 
-# if not action method is configured, these cel expression won't be evaluated
-# need to talk with the team about this..
 @pytest.fixture(scope="module")
 def pipeline_policy(pipeline_policy):
-    """Configure PipelinePolicy with allow action and response headers."""
-    pipeline_policy.add_request_allow('request.url_path != "/blocked"')
+    """Configure PipelinePolicy with deny action and response headers."""
+    pipeline_policy.add_request_deny(predicate='request.url_path == "/blocked"', with_status=403)
     pipeline_policy.add_response_headers([["x-pipeline-policy", "active"]])
     return pipeline_policy
 
@@ -23,6 +21,6 @@ def test_allowed_path(client):
 
 
 def test_blocked_path(client):
-    """Request to /blocked is denied by the allow action."""
+    """Request to /blocked is denied by the deny action."""
     response = client.get("/blocked")
     assert response.status_code == 403

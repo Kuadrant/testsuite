@@ -60,7 +60,7 @@ def test_nonexistent_url(request, cluster, blame, route):
         method="AssessRequest",
         message_template="threat.v1.ThreatRequest{uri: request.path}",
     )
-    policy.add_request_allow('request.url_path != "/blocked"')
+    policy.add_request_deny(predicate='request.url_path == "/blocked"', with_status=403)
     policy.add_request_grpc_method(method="bad-method")
 
     request.addfinalizer(policy.delete)
@@ -86,7 +86,7 @@ def test_wrong_service_name(request, cluster, blame, route, threat_assessment_se
         method="DoSomething",
         message_template="nonexistent.v1.FakeRequest{uri: request.path}",
     )
-    policy.add_request_allow('request.url_path != "/blocked"')
+    policy.add_request_deny(predicate='request.url_path == "/blocked"', with_status=403)
     policy.add_request_grpc_method(method="bad-service")
 
     request.addfinalizer(policy.delete)
@@ -112,7 +112,7 @@ def test_wrong_method_name(request, cluster, blame, route, threat_assessment_ser
         method="NonExistentMethod",
         message_template="threat.v1.ThreatRequest{uri: request.path}",
     )
-    policy.add_request_allow('request.url_path != "/blocked"')
+    policy.add_request_deny(predicate='request.url_path == "/blocked"', with_status=403)
     policy.add_request_grpc_method(method="wrong-method")
 
     request.addfinalizer(policy.delete)

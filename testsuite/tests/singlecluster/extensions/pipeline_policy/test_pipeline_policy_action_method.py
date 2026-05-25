@@ -1,4 +1,4 @@
-"""Basic happy-path tests for PipelinePolicy: action method calling a gRPC backend and conditional response headers."""
+"""Tests for PipelinePolicy: action method calling a gRPC backend and conditional response headers."""
 
 import pytest
 
@@ -55,12 +55,15 @@ def pipeline_policy(pipeline_policy, threat_assessment_service):  # pylint: disa
         message_template="threat.v1.ThreatRequest{uri: request.path, source_ip: source.address}",
     )
 
-    pipeline_policy.add_request_allow('request.url_path != "/blocked"')
     pipeline_policy.add_request_grpc_method(
         method="assess-threat",
         var="threatResponse",
-        intention=f"threatResponse.threat_level < {THREAT_THRESHOLD}",
         predicate='"x-assess-threat" in request.headers',
+    )
+    pipeline_policy.add_request_deny(predicate='request.url_path == "/blocked"', with_status=403)
+    pipeline_policy.add_request_deny(
+        predicate=f"threatResponse.threat_level >= {THREAT_THRESHOLD}",
+        with_status=403,
     )
 
     pipeline_policy.add_response_headers(
@@ -72,6 +75,7 @@ def pipeline_policy(pipeline_policy, threat_assessment_service):  # pylint: disa
         predicate='!("x-assess-threat" in request.headers)',
     )
     pipeline_policy.add_response_headers([["x-threat-threshold", str(THREAT_THRESHOLD)]])
+
     return pipeline_policy
 
 
@@ -79,6 +83,7 @@ def test_allowed_path(client):
     """Request to an allowed path returns 200 without threat assessment."""
     response = client.get("/get")
     assert response.status_code == 200
+
     assert response.headers.get("x-threat-assessed") == "false"
     assert response.headers.get("x-threat-threshold") == str(THREAT_THRESHOLD)
 
