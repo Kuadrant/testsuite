@@ -105,6 +105,7 @@ def mockserver_config(cluster, blame, label):
 @pytest.fixture(scope="session")
 def backend_exposer(request, testconfig, cluster):
     """Dedicated session-scoped exposer for the backend, avoids ScopeMismatch with module-scoped exposer overrides"""
+    testconfig.validators.validate(only="default_exposer")
     exp = testconfig["default_exposer"](cluster)
     request.addfinalizer(exp.delete)
     exp.commit()
@@ -193,6 +194,9 @@ def pytest_runtest_makereport(item, call):  # pylint: disable=unused-argument
 
     denied_ids = set(client.denied_request_ids)
     client.denied_request_ids.clear()
+
+    if item.config.getoption("--verify-denials") != "true":
+        return
 
     backend = item.funcargs.get("backend")
     if not report.passed or backend is None or not isinstance(backend, MockserverBackend):
