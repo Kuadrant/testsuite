@@ -9,6 +9,7 @@ from testsuite.kubernetes import modify
 from testsuite.kubernetes.client import KubernetesClient
 from testsuite.kuadrant.policy import Policy, CelPredicate, CelExpression, Strategy
 from testsuite.utils import asdict
+from testsuite.utils.constants import RLP_POST_ENFORCEMENT_WAIT
 
 
 @dataclass
@@ -114,4 +115,4 @@ class RateLimitPolicy(Policy):
         """Wait for RLP to be enforced"""
         super().wait_for_ready()
         # Even after enforced condition RLP requires a short sleep
-        time.sleep(5)
+        time.sleep(RLP_POST_ENFORCEMENT_WAIT)

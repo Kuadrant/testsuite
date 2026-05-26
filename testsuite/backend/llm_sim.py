@@ -5,6 +5,7 @@ from testsuite.kubernetes import Selector
 from testsuite.kubernetes.client import KubernetesClient
 from testsuite.kubernetes.deployment import Deployment
 from testsuite.kubernetes.service import Service, ServicePort
+from testsuite.utils.constants import HTTP_API_PORT
 
 
 class LlmSim(Backend):
@@ -23,10 +24,10 @@ class LlmSim(Backend):
             self.name,
             container_name="llm-sim",
             image=self.image,
-            ports={"api": 8080},
+            ports={"api": HTTP_API_PORT},
             selector=Selector(matchLabels=match_labels),
             labels={"app": self.label},
-            command_args=["--model", self.model, "--port", "8080"],
+            command_args=["--model", self.model, "--port", str(HTTP_API_PORT)],
         )
         self.deployment.commit()
         self.deployment.wait_for_ready()
@@ -35,6 +36,6 @@ class LlmSim(Backend):
             self.cluster,
             self.name,
             selector=match_labels,
-            ports=[ServicePort(name="http", port=8080, targetPort="api")],
+            ports=[ServicePort(name="http", port=HTTP_API_PORT, targetPort="api")],
         )
         self.service.commit()

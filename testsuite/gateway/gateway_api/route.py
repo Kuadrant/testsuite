@@ -8,6 +8,7 @@ from testsuite.httpx import KuadrantClient
 from testsuite.gateway import Gateway, GatewayRoute, PathMatch, MatchType, RouteMatch, URLRewriteFilter
 from testsuite.kubernetes.client import KubernetesClient
 from testsuite.kubernetes import KubernetesObject, modify
+from testsuite.utils.constants import ROUTE_READY_TIMEOUT
 from testsuite.kuadrant.policy import Policy
 from testsuite.utils import asdict, check_condition
 
@@ -134,5 +135,5 @@ class HTTPRoute(KubernetesObject, GatewayRoute):
                     return all(x.status == "True" for x in condition_set.conditions)
             return False
 
-        success = self.wait_until(_ready, timelimit=10)
+        success = self.wait_until(_ready, timelimit=ROUTE_READY_TIMEOUT)
         assert success, f"{self.kind()} did not get ready in time"

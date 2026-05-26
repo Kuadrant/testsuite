@@ -6,12 +6,13 @@ import backoff
 
 from testsuite.tracing.jaeger import JaegerClient
 from testsuite.tracing.models import Trace
+from testsuite.utils.constants import TRACING_MAX_RETRIES
 
 
 class RemoteTempoClient(JaegerClient):
     """Client to a Tempo that is deployed remotely"""
 
-    @backoff.on_predicate(backoff.fibo, lambda x: x == [], max_tries=7, jitter=None)
+    @backoff.on_predicate(backoff.fibo, lambda x: x == [], max_tries=TRACING_MAX_RETRIES, jitter=None)
     def get_traces(self, service: str, tags: Optional[dict[str, str]] = None, min_processes: int = 0) -> list[Trace]:
         """Gets trace from Tempo tracing backend.
         If min_processes is set, retries until at least that many service processes are present"""

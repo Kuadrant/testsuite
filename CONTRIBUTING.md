@@ -69,6 +69,15 @@ gateway, route, authorization)
 - `multicluster/` for multi-cluster scenarios
 - Group tests by feature area (authorino, limitador, gateway, etc.)
 
+**Using Constants:**
+
+- All shared magic numbers (timeouts, ports, retry configs) live in `testsuite/utils/constants.py`
+- Import constants instead of hardcoding values, e.g. `from testsuite.utils.constants import K8S_WAIT_UNTIL_TIMEOUT`
+- When adding a new timeout, port, or retry value, check `constants.py` first. A suitable constant may already exist
+- If no suitable constant exists, add a new one to `constants.py` rather than hardcoding the value locally
+- Name constants clearly by domain and purpose (e.g. `PROMETHEUS_VERIFY_NO_TARGETS_RETRIES`)
+- Follow the `*_MAX_RETRIES` pattern for retry counts and `*_TIMEOUT` for durations
+
 ### Reformat, Commit Acceptance & Cleanup
 
 Before committing your changes, make sure the code is properly formatted, and all commit checks pass. Otherwise, your pull request may fail the GitHub Actions **Code Static Analysis** checks.

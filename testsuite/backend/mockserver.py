@@ -6,6 +6,7 @@ from testsuite.kubernetes import Selector
 from testsuite.kubernetes.config_map import ConfigMap
 from testsuite.kubernetes.deployment import Deployment, ContainerResources, ConfigMapVolume, VolumeMount
 from testsuite.kubernetes.service import Service, ServicePort
+from testsuite.utils.constants import MOCKSERVER_INTERNAL_PORT, HTTP_API_PORT, SERVICE_READY_TIMEOUT
 
 INIT_JSON_MOUNT = "/config/mockserver"
 
@@ -74,7 +75,7 @@ class MockserverBackend(Backend):
             self.name,
             container_name="mockserver",
             image=settings["mockserver"]["image"],
-            ports={"api": 1080},
+            ports={"api": MOCKSERVER_INTERNAL_PORT},
             selector=Selector(matchLabels=match_labels),
             labels={"app": self.label},
             resources=ContainerResources(limits_memory="2G"),
@@ -89,7 +90,7 @@ class MockserverBackend(Backend):
             self.cluster,
             self.name,
             selector=match_labels,
-            ports=[ServicePort(name="http", port=8080, targetPort="api")],
+            ports=[ServicePort(name="http", port=HTTP_API_PORT, targetPort="api")],
             labels={"app": self.label},
             service_type=self.service_type,
         )
@@ -103,7 +104,7 @@ class MockserverBackend(Backend):
         finally:
             super().delete()
 
-    def wait_for_ready(self, timeout=60 * 5):
+    def wait_for_ready(self, timeout=SERVICE_READY_TIMEOUT):
         """Waits until Deployment and Service is marked as ready"""
         self.deployment.wait_for_ready(timeout)
         self.service.wait_for_ready(timeout, settings["control_plane"]["slow_loadbalancers"])

@@ -7,6 +7,8 @@ from typing import Optional, Literal
 
 from openshift_client import APIObject, timeout, OpenShiftPythonException
 
+from testsuite.utils.constants import K8S_DELETE_TIMEOUT, K8S_WAIT_UNTIL_TIMEOUT
+
 from testsuite.lifecycle import LifecycleObject
 from testsuite.utils import asdict
 
@@ -53,12 +55,12 @@ class KubernetesObject(APIObject, LifecycleObject):
 
     def delete(self, ignore_not_found=True, cmd_args=None):
         """Deletes the resource, by default ignored not found"""
-        with timeout(30):
+        with timeout(K8S_DELETE_TIMEOUT):
             deleted = super().delete(ignore_not_found, cmd_args)
             self._committed = False
             return deleted
 
-    def wait_until(self, test_function, timelimit=60):
+    def wait_until(self, test_function, timelimit=K8S_WAIT_UNTIL_TIMEOUT):
         """Waits until the test function succeeds for this object"""
         try:
             with timeout(timelimit):

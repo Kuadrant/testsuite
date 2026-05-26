@@ -10,6 +10,14 @@ from testsuite.kubernetes import Selector
 from testsuite.kubernetes.client import KubernetesClient
 from testsuite.kubernetes.deployment import Deployment
 from testsuite.kubernetes.service import Service, ServicePort
+from testsuite.utils.constants import (
+    SPICEDB_CONNECTION_TIMEOUT,
+    SPICEDB_RETRY_INTERVAL,
+    SPICEDB_MAX_RETRIES,
+    SPICEDB_GRPC_PORT,
+    SPICEDB_HTTP_PORT,
+    SERVICE_READY_TIMEOUT,
+)
 
 
 @dataclass
@@ -69,7 +77,7 @@ class SpiceDBClient:
         self.client = KuadrantClient(
             base_url=self.server_url,
             headers={"Authorization": f"Bearer {token}"},
-            timeout=30.0,
+            timeout=SPICEDB_CONNECTION_TIMEOUT,
         )
 
     def create_schema(self, schema_config: SchemaConfig):
@@ -139,8 +147,8 @@ class SpiceDBClient:
     @backoff.on_predicate(
         backoff.constant,
         lambda x: x is False,
-        max_tries=3,
-        interval=5,
+        max_tries=SPICEDB_MAX_RETRIES,
+        interval=SPICEDB_RETRY_INTERVAL,
         jitter=None,
         on_giveup=lambda details: (_ for _ in ()).throw(
             TimeoutError(f"SpiceDB relationships not ready after {details['tries']} tries.")
@@ -234,7 +242,7 @@ class SpiceDB(Backend):
             self.name,
             container_name="spicedb",
             image=self.image,
-            ports={"grpc": 50051, "http": 8443},
+            ports={"grpc": SPICEDB_GRPC_PORT, "http": SPICEDB_HTTP_PORT},
             selector=Selector(matchLabels=match_labels),
             labels={"app": self.label},
             command_args=[
@@ -254,13 +262,13 @@ class SpiceDB(Backend):
             self.name,
             selector=match_labels,
             ports=[
-                ServicePort(name="grpc", port=50051, targetPort="grpc"),
-                ServicePort(name="http", port=8443, targetPort="http"),
+                ServicePort(name="grpc", port=SPICEDB_GRPC_PORT, targetPort="grpc"),
+                ServicePort(name="http", port=SPICEDB_HTTP_PORT, targetPort="http"),
             ],
             labels={"app": self.label},
         )
         self.service.commit()
 
-    def wait_for_ready(self, timeout=60 * 5):
+    def wait_for_ready(self, timeout=SERVICE_READY_TIMEOUT):
         """Waits until Deployment is marked as ready"""
         self.deployment.wait_for_ready(timeout)

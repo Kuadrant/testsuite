@@ -3,6 +3,7 @@
 from testsuite.gateway import Referencable
 from testsuite.kubernetes.client import KubernetesClient
 from testsuite.kuadrant.policy import Policy
+from testsuite.utils.constants import TLS_POLICY_ENFORCEMENT_TIMEOUT
 
 
 class TLSPolicy(Policy):
@@ -49,6 +50,6 @@ class TLSPolicy(Policy):
     def __getitem__(self, key):
         return self.model.spec[key]
 
-    def wait_for_full_enforced(self, timelimit=450):
+    def wait_for_full_enforced(self, timelimit=TLS_POLICY_ENFORCEMENT_TIMEOUT):
         """Wait for a Policy to be fully Enforced with increased timelimit for ACME challenges"""
         super().wait_for_full_enforced(timelimit=timelimit)

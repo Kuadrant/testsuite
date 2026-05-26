@@ -7,6 +7,7 @@ from testsuite.gateway import Referencable
 from testsuite.kubernetes.client import KubernetesClient
 from testsuite.kuadrant.policy import Policy
 from testsuite.utils import asdict
+from testsuite.utils.constants import OIDC_POST_ENFORCEMENT_WAIT
 
 
 @dataclass
@@ -63,4 +64,4 @@ class OIDCPolicy(Policy):
         """Wait for OIDCPolicy to be enforced"""
         super().wait_for_ready()
         # Even after enforced condition OIDCPolicy requires a short sleep
-        time.sleep(10)  # https://github.com/Kuadrant/testsuite/issues/884
+        time.sleep(OIDC_POST_ENFORCEMENT_WAIT)  # Workaround for issue #884

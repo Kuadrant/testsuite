@@ -23,6 +23,7 @@ from httpx._types import (
 )
 
 from testsuite.certificates import Certificate
+from testsuite.utils.constants import HTTP_BACKOFF_MAX_RETRIES
 
 
 def create_tmp_file(content: str):
@@ -151,7 +152,9 @@ class KuadrantClient(Client):
         self.retry_codes.add(code)
 
     # pylint: disable=too-many-locals
-    @backoff.on_predicate(backoff.fibo, lambda result: result.should_backoff(), max_tries=8, jitter=None)
+    @backoff.on_predicate(
+        backoff.fibo, lambda result: result.should_backoff(), max_tries=HTTP_BACKOFF_MAX_RETRIES, jitter=None
+    )
     def request(
         self,
         method: str,
