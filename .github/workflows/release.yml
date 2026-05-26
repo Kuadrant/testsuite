@@ -46,7 +46,7 @@ jobs:
           image: ${{ env.IMG_NAME }}
           tags: ${{ env.IMG_TAGS }}
           layers: true
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64,linux/arm64,linux/ppc64le
           containerfiles: |
             ./Dockerfile
 
