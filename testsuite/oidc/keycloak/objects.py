@@ -123,6 +123,20 @@ class Client:
             resource["ownerManagedAccess"] = True
         return self.admin.create_client_authz_resource(self.client_id, resource)
 
+    def add_audience_mapper(self, audience_client_id):
+        """Adds an audience mapper that includes the specified client in the token's aud claim"""
+        mapper_config = {
+            "name": f"{audience_client_id}-audience-mapper",
+            "protocol": "openid-connect",
+            "protocolMapper": "oidc-audience-mapper",
+            "config": {
+                "included.client.audience": audience_client_id,
+                "id.token.claim": "false",
+                "access.token.claim": "true",
+            },
+        }
+        return self.admin.add_mapper_to_client(self.client_id, mapper_config)
+
     def add_user_attribute_mapper(
         self, attribute_name, token_claim_name, add_to_access_token=True, add_to_id_token=True
     ):

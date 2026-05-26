@@ -29,6 +29,7 @@ def authorization(client_secret, authorization, keycloak):
     endpoint. It's credentials are referenced from the secret created before.
     """
     authorization.identity.add_oauth2_introspection("default", keycloak, client_secret)
+    keycloak.client.add_audience_mapper(keycloak.client.auth_id)
     return authorization
 
 
