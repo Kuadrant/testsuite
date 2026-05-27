@@ -2,7 +2,6 @@
 
 import pytest
 
-from testsuite.httpx import KuadrantClient
 from testsuite.mockserver import Mockserver
 from testsuite.gateway import GatewayListener
 from testsuite.gateway.gateway_api.gateway import KuadrantGateway
@@ -40,12 +39,13 @@ def gateway(request, cluster, blame, base_domain, module_label, subdomain):
 
 
 @pytest.fixture(scope="module")
-def backend(request, cluster, blame, label):
+def backend(request, cluster, blame, label, exposer):
     """Use mockserver as backend for health check requests to verify additional headers"""
     mockserver = MockserverBackend(cluster, blame("mocksrv"), label)
     request.addfinalizer(mockserver.delete)
     mockserver.commit()
     mockserver.wait_for_ready()
+    mockserver.expose(exposer, blame("mocksrv-admin"))
     return mockserver
 
 
@@ -61,8 +61,8 @@ def headers_secret(request, cluster, blame):
 
 @pytest.fixture(scope="module")
 def mockserver_client(backend):
-    """Returns Mockserver client from load-balanced service IP"""
-    return Mockserver(KuadrantClient(base_url=f"http://{backend.service.refresh().external_ip}:8080"))
+    """Returns Mockserver client from externally exposed backend"""
+    return Mockserver(backend.external_hostname.client())
 
 
 @pytest.fixture(scope="module")

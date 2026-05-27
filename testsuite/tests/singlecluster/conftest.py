@@ -1,8 +1,10 @@
 """Configure all the components through Kuadrant,
 all methods are placeholders for now since we do not work with Kuadrant"""
 
+import logging
 from importlib import resources
 
+import httpx
 import pytest
 from openshift_client import selector
 
@@ -12,11 +14,13 @@ from testsuite.gateway.envoy import Envoy
 from testsuite.gateway.envoy.route import EnvoyVirtualRoute
 from testsuite.gateway.gateway_api.gateway import KuadrantGateway
 from testsuite.gateway.gateway_api.route import HTTPRoute
+from testsuite.httpx import KuadrantClient
 from testsuite.kuadrant import KuadrantCR
 from testsuite.kuadrant.policy.authorization.auth_policy import AuthPolicy
 from testsuite.kuadrant.policy.rate_limit import RateLimitPolicy
 from testsuite.kubernetes.api_key import APIKey
 from testsuite.kubernetes.client import KubernetesClient
+from testsuite.mockserver import Mockserver
 
 
 @pytest.fixture(scope="session")
@@ -99,14 +103,23 @@ def mockserver_config(cluster, blame, label):
 
 
 @pytest.fixture(scope="session")
-def backend(request, cluster, blame, label, mockserver_config):
+def backend_exposer(request, testconfig, cluster):
+    """Dedicated session-scoped exposer for the backend, avoids ScopeMismatch with module-scoped exposer overrides"""
+    testconfig.validators.validate(only="default_exposer")
+    exp = testconfig["default_exposer"](cluster)
+    request.addfinalizer(exp.delete)
+    exp.commit()
+    return exp
+
+
+@pytest.fixture(scope="session")
+def backend(request, cluster, blame, label, mockserver_config, backend_exposer):
     """Deploys MockServer backend"""
-    mockserver = MockserverBackend(
-        cluster, blame("mockserver"), label, service_type="ClusterIP", config=mockserver_config
-    )
+    mockserver = MockserverBackend(cluster, blame("mockserver"), label, config=mockserver_config)
     request.addfinalizer(mockserver.delete)
     mockserver.commit()
     mockserver.wait_for_ready()
+    mockserver.expose(backend_exposer, blame("backend"))
     return mockserver
 
 
@@ -164,6 +177,54 @@ def client(route, hostname):  # pylint: disable=unused-argument
     client = hostname.client()
     yield client
     client.close()
+
+
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_makereport(item, call):  # pylint: disable=unused-argument
+    """Verifies that denied requests did not leak to the upstream backend"""
+    outcome = yield
+    report = outcome.get_result()
+
+    if call.when != "call":
+        return
+
+    client = item.funcargs.get("client")
+    if not isinstance(client, KuadrantClient):
+        return
+
+    denied_ids = set(client.denied_request_ids)
+    client.denied_request_ids.clear()
+
+    if item.config.getoption("--verify-denials") != "true":
+        return
+
+    backend = item.funcargs.get("backend")
+    if not report.passed or backend is None or not isinstance(backend, MockserverBackend):
+        return
+    if backend.external_hostname is None or not denied_ids:
+        return
+
+    backend_client = backend.external_hostname.client()
+    ms = Mockserver(backend_client)
+    tracking_header = KuadrantClient.TRACKING_HEADER
+
+    leaked = []
+    try:
+        for denied_id in denied_ids:
+            if ms.retrieve_requests_by_header(tracking_header, denied_id):
+                leaked.append(denied_id)
+    except (httpx.RequestError, httpx.HTTPStatusError):
+        logging.warning("Failed to check for upstream leaks via MockServer", exc_info=True)
+        return
+    finally:
+        backend_client.close()
+
+    if leaked:
+        report.outcome = "failed"
+        report.longrepr = (
+            f"{len(leaked)} denied request(s) leaked to the upstream backend. "
+            f"The gateway returned a denial status (401/403/429) but the request still reached MockServer."
+        )
 
 
 @pytest.fixture(scope="module")
