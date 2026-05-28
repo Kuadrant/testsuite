@@ -7,23 +7,50 @@ and AuthPolicy with x509 identity to extract and validate the client certificate
 from the X-Forwarded-Client-Cert (XFCC) header.
 """
 
+import yaml
 import pytest
 
 from testsuite.gateway import TLSGatewayListener
 from testsuite.gateway.gateway_api.gateway import KuadrantGateway
-from testsuite.kubernetes.deployment import SecretVolume, VolumeMount
+from testsuite.kubernetes.config_map import ConfigMap
 from testsuite.kubernetes.envoy_filter import EnvoyFilter
-from testsuite.kubernetes.secret import Secret
 
 pytestmark = [pytest.mark.authorino, pytest.mark.kuadrant_only]
 
+CA_MOUNT_PATH = "/etc/istio/client-ca-certs"
+
 
 @pytest.fixture(scope="module")
-def gateway(request, cluster, blame, wildcard_domain, module_label):
-    """Gateway with TLS listener without frontend validation (EnvoyFilter handles L4 validation)"""
+def gateway_infra_configmap(request, cluster, blame, client_ca_config_map):
+    """ConfigMap with deployment overlay for mounting CA cert into the gateway pod via infrastructure.parametersRef"""
+    volume_mount_dict = {
+        "spec": {
+            "template": {
+                "spec": {
+                    "volumes": [{"name": "client-ca", "configMap": {"name": client_ca_config_map.name()}}],
+                    "containers": [
+                        {
+                            "name": "istio-proxy",
+                            "volumeMounts": [{"name": "client-ca", "mountPath": CA_MOUNT_PATH, "readOnly": True}],
+                        }
+                    ],
+                }
+            }
+        }
+    }
+    configmap = ConfigMap.create_instance(cluster, blame("gw-infra"), data={"deployment": yaml.dump(volume_mount_dict)})
+    request.addfinalizer(configmap.delete)
+    configmap.commit()
+    return configmap
+
+
+@pytest.fixture(scope="module")
+def gateway(request, cluster, blame, wildcard_domain, module_label, gateway_infra_configmap):
+    """Gateway with TLS listener and infrastructure params for CA cert volume mount"""
     gateway_name = blame("gw")
     gw = KuadrantGateway.create_instance(cluster, gateway_name, labels={"app": module_label})
     gw.add_listener(TLSGatewayListener(hostname=wildcard_domain, gateway_name=gateway_name))
+    gw.set_infrastructure_params(gateway_infra_configmap.name())
     request.addfinalizer(gw.delete)
     gw.commit()
     gw.wait_for_ready()
@@ -31,23 +58,10 @@ def gateway(request, cluster, blame, wildcard_domain, module_label):
 
 
 @pytest.fixture(scope="module")
-def gateway_ca_secret(request, cluster, blame, client_ca):
-    """CA secret in the gateway namespace for EnvoyFilter volume mount"""
-    secret = Secret.create_instance(cluster, blame("gw-ca"), stringData={"ca.crt": client_ca.certificate})
-    request.addfinalizer(secret.delete)
-    secret.commit()
-    return secret
-
-
-@pytest.fixture(scope="module")
-def envoy_filter(request, cluster, blame, gateway, gateway_ca_secret, module_label):
+def envoy_filter(request, cluster, blame, gateway, module_label):
     """EnvoyFilter that enables client certificate validation on the gateway"""
-    ca_mount_path = "/etc/istio/client-ca-certs"
-    gateway.deployment.add_volume(SecretVolume(secret_name=gateway_ca_secret.name(), name="client-ca"))
-    gateway.deployment.add_mount(VolumeMount(mountPath=ca_mount_path, name="client-ca"))
-
     envoy_filter = EnvoyFilter.create_instance(cluster, blame("ef"), gateway=gateway, labels={"app": module_label})
-    envoy_filter.add_client_cert_validation(port_number=TLSGatewayListener.port, ca_cert_path=f"{ca_mount_path}/ca.crt")
+    envoy_filter.add_client_cert_validation(port_number=TLSGatewayListener.port, ca_cert_path=f"{CA_MOUNT_PATH}/ca.crt")
     request.addfinalizer(envoy_filter.delete)
     envoy_filter.commit()
     return envoy_filter

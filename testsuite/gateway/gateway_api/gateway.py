@@ -48,6 +48,16 @@ class KuadrantGateway(KubernetesObject, Gateway):
         self.model.spec.listeners.append(asdict(listener))
 
     @modify
+    def set_infrastructure_params(self, configmap_name: str):
+        """Sets infrastructure.parametersRef to a ConfigMap for deployment customization via Strategic Merge Patch"""
+        self.model.spec.setdefault("infrastructure", {})
+        self.model.spec.infrastructure["parametersRef"] = {
+            "group": "",
+            "kind": "ConfigMap",
+            "name": configmap_name,
+        }
+
+    @modify
     def set_frontend_tls_validation(self, ca_certificate_refs: list[dict], mode: str = "AllowValidOnly"):
         """Configures Gateway API v1.5+ frontend TLS client certificate validation"""
         self.model.spec.tls = {
