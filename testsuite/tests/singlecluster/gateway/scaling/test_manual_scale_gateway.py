@@ -5,6 +5,8 @@ This module contains tests for scaling the gateway deployment by manually increa
 import time
 import pytest
 
+from testsuite.utils.constants import RLP_WINDOW_RESET_WAIT
+
 from testsuite.tests.singlecluster.gateway.scaling.conftest import LIMIT
 
 pytestmark = [pytest.mark.limitador, pytest.mark.authorino, pytest.mark.kuadrant_only]
@@ -25,7 +27,7 @@ def test_scale_gateway(gateway, client, auth):
     gateway.deployment.set_replicas(2)
     gateway.deployment.wait_for_ready()
 
-    time.sleep(5)  # sleep in order to reset the rate limit policy time limit.
+    time.sleep(RLP_WINDOW_RESET_WAIT)  # sleep in order to reset the rate limit policy time limit.
 
     anon_auth_resp = client.get("/anything/auth")
     assert anon_auth_resp is not None

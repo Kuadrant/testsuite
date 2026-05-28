@@ -7,6 +7,7 @@ from time import sleep
 import pytest
 
 from testsuite.kuadrant.policy.rate_limit import Limit
+from testsuite.utils.constants import RLP_ITERATION_WINDOW_RESET_WAIT
 
 pytestmark = [pytest.mark.limitador]
 
@@ -26,4 +27,4 @@ def test_multiple_iterations(client):
         responses = client.get_many("/get", 5)
         responses.assert_all(status_code=200)
         assert client.get("/get").status_code == 429
-        sleep(10)
+        sleep(RLP_ITERATION_WINDOW_RESET_WAIT)

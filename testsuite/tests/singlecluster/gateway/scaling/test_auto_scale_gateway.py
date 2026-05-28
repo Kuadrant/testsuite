@@ -6,8 +6,8 @@ import time
 
 import pytest
 
-
 from testsuite.kubernetes.horizontal_pod_autoscaler import HorizontalPodAutoscaler
+from testsuite.utils.constants import RLP_WINDOW_RESET_WAIT
 from testsuite.tests.singlecluster.gateway.scaling.conftest import LIMIT
 
 pytestmark = [pytest.mark.limitador, pytest.mark.authorino, pytest.mark.kuadrant_only]
@@ -70,7 +70,7 @@ def test_auto_scale_gateway(
 
     assert client.get("/anything/limit", auth=auth).status_code == 429
 
-    time.sleep(5)  # sleep in order to reset the rate limit policy time limit.
+    time.sleep(RLP_WINDOW_RESET_WAIT)  # sleep in order to reset the rate limit policy time limit.
 
     # Write the metric to the custom metrics apiserver and trigger the scaling
     assert (

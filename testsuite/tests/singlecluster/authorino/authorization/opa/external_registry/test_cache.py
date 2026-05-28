@@ -8,6 +8,7 @@ from time import sleep
 import pytest
 
 from testsuite.utils import rego_allow_header
+from testsuite.utils.constants import OPA_CACHE_TTL_WAIT
 
 pytestmark = [pytest.mark.authorino]
 
@@ -20,7 +21,7 @@ VALUE = "test-value"
 def reset_expectation(mockserver, module_label):
     """Updates Expectation with updated header"""
     mockserver.create_response_expectation(module_label, rego_allow_header(KEY, VALUE))
-    sleep(2)  # waits for cache to reset because of ttl=1
+    sleep(OPA_CACHE_TTL_WAIT)  # waits for cache to reset because of ttl=1
 
 
 def test_caching(client, auth, mockserver, blame, module_label):
@@ -40,7 +41,7 @@ def test_cache_refresh(client, auth, mockserver, blame, module_label):
     assert response.status_code == 200
 
     mockserver.create_response_expectation(module_label, rego_allow_header(blame(KEY), blame(VALUE)))
-    sleep(2)
+    sleep(OPA_CACHE_TTL_WAIT)
 
     response = client.get("/get", auth=auth, headers={KEY: VALUE})
     assert response.status_code == 403

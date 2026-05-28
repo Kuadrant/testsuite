@@ -9,6 +9,7 @@ from time import sleep
 import pytest
 
 from testsuite.kuadrant.policy.rate_limit import RateLimitPolicy, Limit
+from testsuite.utils.constants import RLP_COUNTER_RESET_WAIT
 
 pytestmark = [pytest.mark.limitador]
 
@@ -19,7 +20,7 @@ LIMIT = Limit(2, "10s")
 def rate_limit2(route2, blame, cluster, label):
     """2nd RateLimitPolicy allowing 2 requests per 10 seconds (a.k.a. '2rp10s' RateLimitPolicy)"""
     rlp = RateLimitPolicy.create_instance(cluster, blame("2rp10s"), route2, labels={"testRun": label})
-    rlp.add_limit("2rp10m", [LIMIT])
+    rlp.add_limit("2rp10s", [LIMIT])
     return rlp
 
 
@@ -40,8 +41,8 @@ def test_identical_hostnames_rlp_on_routes(client, rate_limit2):
     RateLimitPolicy got successfully enforced on 'route2' in the interim.
     Setup:
         - Two HTTPRoutes declaring identical hostnames but different paths: '/anything/route1' and '/anything/route2'
-        - '1rp10m' RateLimitPolicy enforced on the '/anything/route1' HTTPRoute
-        - '2rp10m' RateLimitPolicy (created after '1rp10s' RateLimitPolicy) enforced on the '/anything/route2' HTTPRoute
+        - '1rp10s' RateLimitPolicy enforced on the '/anything/route1' HTTPRoute
+        - '2rp10s' RateLimitPolicy (created after '1rp10s' RateLimitPolicy) enforced on the '/anything/route2' HTTPRoute
     Test:
         - Send a request via 'route' and assert that no 429s (Too Many Requests) are returned
         - Send a request via 'route2' and assert that no 429s (Too Many Requests) are returned
@@ -63,12 +64,12 @@ def test_identical_hostnames_rlp_on_routes(client, rate_limit2):
     response = client.get("/anything/route2/get")
     assert response.status_code == 429
 
-    # Deletion of '2rp10m' RateLimitPolicy
+    # Deletion of '2rp10s' RateLimitPolicy
     rate_limit2.delete()
 
     # Access via 'route' should now be still limited via '1rp10s' RateLimitPolicy
     # Wait for 15s to make sure the counter is reset
-    sleep(15)
+    sleep(RLP_COUNTER_RESET_WAIT)
     response = client.get("/anything/route1/get")
     assert response.status_code == 200
     response = client.get("/anything/route1/get")
