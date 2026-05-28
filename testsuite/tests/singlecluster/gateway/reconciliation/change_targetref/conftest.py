@@ -12,6 +12,7 @@ from testsuite.gateway.gateway_api.hostname import DNSPolicyExposer
 from testsuite.gateway.gateway_api.route import HTTPRoute
 from testsuite.kuadrant.policy.dns import DNSPolicy, has_record_condition
 from testsuite.utils import is_nxdomain
+from testsuite.utils.constants import DNS_POLICY_ENFORCEMENT_TIMEOUT, RLP_WINDOW_RESET_WAIT
 
 
 @pytest.fixture(scope="module")
@@ -103,7 +104,7 @@ def dns_policy2(blame, gateway2, module_label, dns_provider_secret, request, hos
     policy.commit()
     policy.wait_for_ready()
     policy.wait_until(has_record_condition("Ready", "True"))
-    policy.wait_until(lambda _: not is_nxdomain(hostname2.hostname), timelimit=300)
+    policy.wait_until(lambda _: not is_nxdomain(hostname2.hostname), timelimit=DNS_POLICY_ENFORCEMENT_TIMEOUT)
 
     return policy
 
@@ -123,6 +124,8 @@ def change_target_ref():
         policy.model.spec.targetRef = gateway.reference
         policy.apply()
         policy.wait_for_ready()
-        time.sleep(5)  # Extra wait to avoid inconsistent DNS issues, wait_for_ready isn't always enough
+        time.sleep(
+            RLP_WINDOW_RESET_WAIT
+        )  # Extra wait to avoid inconsistent DNS issues, wait_for_ready isn't always enough
 
     return _change_targetref

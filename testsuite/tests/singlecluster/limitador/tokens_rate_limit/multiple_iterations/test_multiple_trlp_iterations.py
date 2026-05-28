@@ -5,6 +5,7 @@ Tests that a TokenRateLimitPolicy limit is enforced and resets as expected over 
 from time import sleep
 import pytest
 
+from testsuite.utils.constants import TRLP_ITERATION_RESET_WAIT
 from .conftest import LIMIT
 
 pytestmark = [pytest.mark.limitador]
@@ -41,7 +42,7 @@ def test_multiple_trlp_limit_iterations(client):
             response.status_code == 429
         ), f"Iteration {i+1}/10: Expected 429 after {total_tokens}/{LIMIT.limit} tokens, but got {response.status_code}"
 
-        sleep(20)
+        sleep(TRLP_ITERATION_RESET_WAIT)
         response = client.post("/v1/chat/completions", json={**basic_request})
         assert (
             response.status_code == 200

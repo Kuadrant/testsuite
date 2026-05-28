@@ -6,6 +6,7 @@ import pytest
 import dns.resolver
 
 from testsuite.kuadrant.policy.dns import has_record_condition
+from testsuite.utils.constants import DNS_PROPAGATION_WAIT
 
 pytestmark = [pytest.mark.multicluster]
 
@@ -32,5 +33,5 @@ def test_change_lb_strategy(hostname, gateway, gateway2, dns_policy2, dns_server
         )
     ), f"DNSPolicy did not reach expected record status, instead it was: {dns_policy2.model.status.recordConditions}"
 
-    sleep(300)  # wait for DNS propagation on providers
+    sleep(DNS_PROPAGATION_WAIT)  # wait for DNS propagation on providers
     assert resolver.resolve(hostname.hostname)[0].address == gateway.external_ip().split(":")[0]

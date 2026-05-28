@@ -13,6 +13,7 @@ from testsuite.certificates import CertInfo
 from testsuite.utils import cert_builder
 from testsuite.kubernetes import Selector
 from testsuite.kuadrant.policy.authorization import X509Source
+from testsuite.utils.constants import WASM_PLUGIN_SYNC_WAIT
 from ..conftest import XFCC_HEADER_NAME
 
 pytestmark = [pytest.mark.authorino, pytest.mark.kuadrant_only, pytest.mark.gateway_api_version((1, 5, 0))]
@@ -98,7 +99,9 @@ def commit(request, tls_policy, authorization, ca_secret_team_a, ca_secret_team_
         request.addfinalizer(component.delete)
         component.commit()
         component.wait_for_ready()
-    time.sleep(15)  # Kind workaround before https://github.com/envoyproxy/envoy/pull/43928 is released in istio 1.30
+    time.sleep(
+        WASM_PLUGIN_SYNC_WAIT
+    )  # Kind workaround before https://github.com/envoyproxy/envoy/pull/43928 is released in istio 1.30
 
 
 def test_multi_ca_trust(hostname, server_ca, cert_team_a, cert_team_b, cert_untrusted):

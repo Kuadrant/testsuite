@@ -9,6 +9,7 @@ import pytest
 from testsuite.gateway.gateway_api.route import HTTPRoute
 from testsuite.kuadrant.policy.authorization.auth_policy import AuthPolicy
 from testsuite.kubernetes import Selector
+from testsuite.utils.constants import OBJECT_DELETION_TIMEOUT
 
 pytestmark = [pytest.mark.observability, pytest.mark.limitador, pytest.mark.authorino, pytest.mark.kuadrant_only]
 
@@ -44,7 +45,7 @@ def test_orphaned_policy_reconciliation_traced(orphan_test_route, orphan_test_po
     """
     # Delete the route (orphaning the policy)
     orphan_test_route.delete()
-    orphan_test_route.wait_until(lambda obj: not obj.exists(), timelimit=30)
+    orphan_test_route.wait_until(lambda obj: not obj.exists(), timelimit=OBJECT_DELETION_TIMEOUT)
 
     # Look for traces with error indicators or warnings
     policy_traces = tracing.get_traces(

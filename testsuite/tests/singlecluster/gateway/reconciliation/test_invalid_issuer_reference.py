@@ -5,6 +5,7 @@ import pytest
 from testsuite.gateway import CustomReference
 from testsuite.kuadrant.policy.tls import TLSPolicy
 from testsuite.kuadrant.policy import has_condition
+from testsuite.utils.constants import POLICY_CONDITION_TIMEOUT
 
 pytestmark = [pytest.mark.tlspolicy]
 
@@ -57,5 +58,5 @@ def test_non_existing_issuer(request, gateway, cluster, blame, module_label):
 
     assert policy.wait_until(
         has_condition("Accepted", "False", "Invalid", "TLSPolicy target is invalid: unable to find issuer"),
-        timelimit=20,
+        timelimit=POLICY_CONDITION_TIMEOUT,
     ), f"Policy did not reach expected status, instead it was: {policy.refresh().model.status.conditions}"

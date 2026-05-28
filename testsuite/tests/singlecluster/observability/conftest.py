@@ -6,6 +6,7 @@ from openshift_client import selector
 
 from testsuite.kubernetes.monitoring.pod_monitor import PodMonitor
 from testsuite.kubernetes.monitoring.service_monitor import ServiceMonitor
+from testsuite.utils.constants import OBSERVABILITY_MONITOR_POLL_INTERVAL, OBSERVABILITY_MONITOR_MAX_RETRIES
 
 SERVICE_MONITOR_SERVICES = [
     "kuadrant-operator-metrics",
@@ -35,10 +36,17 @@ def require_observability_enabled(kuadrant, skip_or_fail):
 
 @pytest.fixture(scope="module")
 def service_monitors(system_project):
-    """Return all 5 expected ServiceMonitors created when observability is enabled"""
+    """Return expected ServiceMonitors created when observability is enabled"""
     context = system_project.context
 
-    @backoff.on_predicate(backoff.constant, lambda x: len(x) == 5, interval=5, max_tries=12, jitter=None)
+    # Return until all 5 expected ServiceMonitors are found
+    @backoff.on_predicate(
+        backoff.constant,
+        lambda x: len(x) != 5,
+        interval=OBSERVABILITY_MONITOR_POLL_INTERVAL,
+        max_tries=OBSERVABILITY_MONITOR_MAX_RETRIES,
+        jitter=None,
+    )
     def wait_for_monitors():
         return selector("ServiceMonitor", labels={"kuadrant.io/observability": "true"}, static_context=context).objects(
             cls=ServiceMonitor
@@ -54,7 +62,13 @@ def service_monitors(system_project):
 def pod_monitor(cluster):
     """Return PodMonitor created when observability is enabled"""
 
-    @backoff.on_predicate(backoff.constant, lambda x: len(x) == 1, interval=5, max_tries=12, jitter=None)
+    @backoff.on_predicate(
+        backoff.constant,
+        lambda x: len(x) != 1,
+        interval=OBSERVABILITY_MONITOR_POLL_INTERVAL,
+        max_tries=OBSERVABILITY_MONITOR_MAX_RETRIES,
+        jitter=None,
+    )
     def wait_for_monitor():
         return selector(
             "PodMonitor", labels={"kuadrant.io/observability": "true"}, static_context=cluster.context

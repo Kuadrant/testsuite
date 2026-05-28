@@ -5,6 +5,7 @@ import pytest
 from testsuite.kuadrant.policy.tls import TLSPolicy
 from testsuite.kuadrant.policy.dns import DNSPolicy
 from testsuite.kuadrant.policy import has_condition
+from testsuite.utils.constants import POLICY_CONDITION_TIMEOUT
 
 pytestmark = [pytest.mark.authorino, pytest.mark.kuadrant_only]
 
@@ -45,7 +46,7 @@ def test_two_policies_one_gw(
             "Conflicted",
             f"{policy_new.model.kind} is conflicted by {policy.namespace()}/{policy.name()}: conflicting policy",
         ),
-        timelimit=20,
+        timelimit=POLICY_CONDITION_TIMEOUT,
     ), f"Policy did not reach expected status, instead it was: {policy_new.refresh().model.status.conditions}"
 
     # Test that the original policy still works
