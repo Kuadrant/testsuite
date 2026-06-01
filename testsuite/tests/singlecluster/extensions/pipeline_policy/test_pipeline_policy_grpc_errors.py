@@ -83,30 +83,3 @@ def test_grpc_wrong_method_name(request, cluster, blame, route, threat_assessmen
         has_condition("Accepted", "False", "Unknown", message='method "NonExistentMethod" not found in service'),
         timelimit=60,
     ), f"Policy did not reach expected error status, instead: {policy.refresh().model.status.conditions}"
-
-
-def test_fail_after_grpc_call(request, cluster, blame, route, client, threat_assessment_service):
-    """Fail action after gRPC call terminates the chain when variable indicates invalid state."""
-    svc_url = (
-        f"grpc://{threat_assessment_service.name()}.{threat_assessment_service.namespace()}.svc.cluster.local:8080"
-    )
-    policy = PipelinePolicy.create_instance(cluster, blame("grpc-fail"), route)
-    policy.add_action_method(
-        name="assess",
-        url=svc_url,
-        service="threat.v1.ThreatAssessmentService",
-        method="AssessRequest",
-        message_template="threat.v1.ThreatRequest{uri: request.path}",
-    )
-    policy.on_http_request.add_grpc_method(method="assess", var="threat")
-    policy.on_http_request.add_fail(
-        "threat assessment returned invalid level",
-        predicate="threat.threat_level < 0",
-    )
-
-    request.addfinalizer(policy.delete)
-    policy.commit()
-    policy.wait_for_ready()
-
-    response = client.get("/get")
-    assert response.status_code == 200

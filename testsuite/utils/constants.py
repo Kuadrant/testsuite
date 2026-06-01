@@ -165,6 +165,19 @@ ENVOY_READINESS_PERIOD = 4
 # DNS propagation wait.
 DNS_PROPAGATION_WAIT = 300  # 5 minutes
 
+# --- Threat Assessment Service ---
+
+# Threat level threshold for deny actions in PipelinePolicy gRPC tests.
+# Set intentionally high (max possible score is ~13) so the threat-level-based
+# deny never triggers, allowing tests to verify gRPC call execution and
+# response variable propagation without interference from the deny action.
+THREAT_ASSESSMENT_THRESHOLD = 50
+
+# --- Extension Policy ---
+
+# Wait for EnvoyFilter to propagate before checking isolation (testing absence of leaking).
+EXTENSION_POLICY_PROPAGATION_WAIT = 10
+
 # --- Miscellaneous Workarounds (seconds) ---
 
 # Workaround for https://github.com/Kuadrant/testsuite/issues/884 — remove when fixed

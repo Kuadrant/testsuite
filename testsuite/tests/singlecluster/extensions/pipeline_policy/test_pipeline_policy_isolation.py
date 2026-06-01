@@ -7,13 +7,9 @@ import pytest
 from testsuite.gateway import GatewayListener
 from testsuite.gateway.gateway_api.gateway import KuadrantGateway
 from testsuite.gateway.gateway_api.route import HTTPRoute
+from testsuite.utils.constants import EXTENSION_POLICY_PROPAGATION_WAIT
 
 pytestmark = [pytest.mark.kuadrant_only, pytest.mark.extensions]
-
-PROPAGATION_WAIT = 10
-
-
-# --- Same gateway, different route ---
 
 
 @pytest.fixture(scope="module")
@@ -39,9 +35,6 @@ def client2(route2, hostname2):  # pylint: disable=unused-argument
     client = hostname2.client()
     yield client
     client.close()
-
-
-# --- Different gateway ---
 
 
 @pytest.fixture(scope="module")
@@ -80,17 +73,11 @@ def client3(route3, hostname3):  # pylint: disable=unused-argument
     client.close()
 
 
-# --- Policy ---
-
-
 @pytest.fixture(scope="module")
 def pipeline_policy(pipeline_policy):
     """PipelinePolicy with response header targeting only the first route."""
     pipeline_policy.on_http_response.add_headers([["x-pipeline-policy", "active"]])
     return pipeline_policy
-
-
-# --- Tests ---
 
 
 def test_policy_affects_targeted_route(client):
@@ -102,7 +89,7 @@ def test_policy_affects_targeted_route(client):
 
 def test_policy_does_not_affect_other_route(client2):
     """Route without PipelinePolicy on the same gateway does not get the response header."""
-    time.sleep(PROPAGATION_WAIT)
+    time.sleep(EXTENSION_POLICY_PROPAGATION_WAIT)
     response = client2.get("/get")
     assert response.status_code == 200
     assert response.headers.get("x-pipeline-policy") is None
@@ -110,7 +97,7 @@ def test_policy_does_not_affect_other_route(client2):
 
 def test_policy_does_not_affect_other_gateway(client3):
     """Route on a different gateway does not get the response header."""
-    time.sleep(PROPAGATION_WAIT)
+    time.sleep(EXTENSION_POLICY_PROPAGATION_WAIT)
     response = client3.get("/get")
     assert response.status_code == 200
     assert response.headers.get("x-pipeline-policy") is None

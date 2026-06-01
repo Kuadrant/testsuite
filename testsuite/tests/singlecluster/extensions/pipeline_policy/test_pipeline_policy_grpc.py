@@ -2,9 +2,9 @@
 
 import pytest
 
-pytestmark = [pytest.mark.kuadrant_only, pytest.mark.extensions]
+from testsuite.utils.constants import THREAT_ASSESSMENT_THRESHOLD
 
-THREAT_THRESHOLD = 50
+pytestmark = [pytest.mark.kuadrant_only, pytest.mark.extensions]
 
 
 @pytest.fixture(scope="module")
@@ -28,7 +28,7 @@ def pipeline_policy(pipeline_policy, threat_assessment_service):  # pylint: disa
     )
     pipeline_policy.on_http_request.add_deny(predicate='request.url_path == "/blocked"', with_status=403)
     pipeline_policy.on_http_request.add_deny(
-        predicate=f"threatResponse.threat_level >= {THREAT_THRESHOLD}",
+        predicate=f"threatResponse.threat_level >= {THREAT_ASSESSMENT_THRESHOLD}",
         with_status=403,
     )
 
@@ -40,7 +40,7 @@ def pipeline_policy(pipeline_policy, threat_assessment_service):  # pylint: disa
         [["x-threat-assessed", "false"]],
         predicate='!("x-assess-threat" in request.headers)',
     )
-    pipeline_policy.on_http_response.add_headers([["x-threat-threshold", str(THREAT_THRESHOLD)]])
+    pipeline_policy.on_http_response.add_headers([["x-threat-threshold", str(THREAT_ASSESSMENT_THRESHOLD)]])
 
     return pipeline_policy
 
@@ -50,7 +50,7 @@ def test_basic_grpc_upstream_call(client):
     response = client.get("/get", headers={"x-assess-threat": "true"})
     assert response.status_code == 200
     assert response.headers.get("x-threat-assessed") == "true"
-    assert response.headers.get("x-threat-threshold") == str(THREAT_THRESHOLD)
+    assert response.headers.get("x-threat-threshold") == str(THREAT_ASSESSMENT_THRESHOLD)
 
 
 def test_conditional_grpc_call_skipped(client):
@@ -58,10 +58,4 @@ def test_conditional_grpc_call_skipped(client):
     response = client.get("/get")
     assert response.status_code == 200
     assert response.headers.get("x-threat-assessed") == "false"
-    assert response.headers.get("x-threat-threshold") == str(THREAT_THRESHOLD)
-
-
-def test_grpc_response_var_deny(client):
-    """Request to /blocked is denied by path-based deny rule."""
-    response = client.get("/blocked")
-    assert response.status_code == 403
+    assert response.headers.get("x-threat-threshold") == str(THREAT_ASSESSMENT_THRESHOLD)

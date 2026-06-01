@@ -11,7 +11,7 @@ def pipeline_policy(pipeline_policy):
     # Path-based deny
     pipeline_policy.on_http_request.add_deny(predicate='request.url_path == "/deny-path"', with_status=403)
     # Header-based deny
-    pipeline_policy.on_http_request.add_deny(predicate='"x-deny-me" in request.headers', with_status=403)
+    pipeline_policy.on_http_request.add_deny(predicate='"x-deny-me" in request.headers', with_status=401)
     # Custom status code
     pipeline_policy.on_http_request.add_deny(predicate='request.url_path == "/custom-status"', with_status=429)
     # Custom headers
@@ -63,7 +63,7 @@ def test_cel_predicate_does_not_deny(client):
 def test_header_based_deny(client):
     """Request with a header matching the deny predicate is denied."""
     response = client.get("/get", headers={"x-deny-me": "true"})
-    assert response.status_code == 403
+    assert response.status_code == 401
 
 
 def test_header_based_deny_absent(client):
@@ -75,7 +75,7 @@ def test_header_based_deny_absent(client):
 def test_multiple_deny_actions_or_behavior(client):
     """Multiple deny actions behave as OR: any matching predicate denies the request."""
     assert client.get("/deny-path").status_code == 403
-    assert client.get("/get", headers={"x-deny-me": "true"}).status_code == 403
+    assert client.get("/get", headers={"x-deny-me": "true"}).status_code == 401
     assert client.get("/get").status_code == 200
 
 

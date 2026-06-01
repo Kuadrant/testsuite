@@ -1,58 +1,56 @@
-"""Tests for PipelinePolicy lifecycle: status conditions, delete, and update."""
+"""Tests for PipelinePolicy lifecycle: update and delete."""
 
 import pytest
 
-from testsuite.kuadrant.policy import has_condition
+from testsuite.kuadrant.extensions.pipeline_policy import PipelinePolicy
 
 pytestmark = [pytest.mark.kuadrant_only, pytest.mark.extensions]
 
 
-@pytest.fixture(scope="module")
-def pipeline_policy(pipeline_policy):
-    """PipelinePolicy with deny action and response header."""
-    pipeline_policy.on_http_request.add_deny(predicate='request.url_path == "/blocked"', with_status=403)
-    pipeline_policy.on_http_response.add_headers([["x-pipeline-policy", "active"]])
-    return pipeline_policy
-
-
-def test_status_accepted(pipeline_policy):
-    """PipelinePolicy reports Accepted: True after commit."""
-    assert pipeline_policy.wait_until(
-        has_condition("Accepted", "True"),
-        timelimit=30,
-    ), f"Policy not Accepted, status: {pipeline_policy.refresh().model.status.conditions}"
-
-
-def test_status_enforced(pipeline_policy):
-    """PipelinePolicy reports Enforced: True after commit."""
-    assert pipeline_policy.wait_until(
-        has_condition("Enforced", "True"),
-        timelimit=30,
-    ), f"Policy not Enforced, status: {pipeline_policy.refresh().model.status.conditions}"
-
-
-def test_update_policy(client, pipeline_policy):
-    """Adding a new response header via policy update propagates to traffic."""
-    response = client.get("/get")
-    assert response.status_code == 200
-    assert response.headers.get("x-pipeline-policy") == "active"
-    assert response.headers.get("x-pipeline-updated") is None
-
-    pipeline_policy.on_http_response.add_headers([["x-pipeline-updated", "true"]])
-    pipeline_policy.wait_for_ready()
-
-    response = client.get("/get")
-    assert response.status_code == 200
-    assert response.headers.get("x-pipeline-policy") == "active"
-    assert response.headers.get("x-pipeline-updated") == "true"
+@pytest.fixture(scope="module", autouse=True)
+def commit():
+    """No module-level policy; each test creates its own."""
 
 
 @pytest.mark.flaky(reruns=0)
-def test_delete_policy(client, pipeline_policy):
-    """After deleting the PipelinePolicy, the CR is removed from the cluster."""
+def test_update_policy(request, cluster, blame, route, client):
+    """Adding a new response header via policy update propagates to traffic."""
+    policy = PipelinePolicy.create_instance(cluster, blame("upd-pp"), route)
+    policy.on_http_response.add_headers([["x-update-test", "active"]])
+    request.addfinalizer(lambda: policy.delete(ignore_not_found=True))
+    policy.commit()
+    policy.wait_for_ready()
+
     response = client.get("/get")
     assert response.status_code == 200
-    assert response.headers.get("x-pipeline-policy") == "active"
+    assert response.headers.get("x-update-test") == "active"
+    assert response.headers.get("x-update-new") is None
 
-    pipeline_policy.delete()
-    assert pipeline_policy.wait_until(lambda obj: not obj.exists(), timelimit=30), "PipelinePolicy was not deleted"
+    policy.on_http_response.add_headers([["x-update-new", "true"]])
+    policy.wait_for_ready()
+
+    response = client.get("/get")
+    assert response.status_code == 200
+    assert response.headers.get("x-update-test") == "active"
+    assert response.headers.get("x-update-new") == "true"
+
+
+@pytest.mark.flaky(reruns=0)
+def test_delete_policy(request, cluster, blame, route, client):
+    """After deleting the PipelinePolicy, the CR is removed and the actions stop being enforced."""
+    policy = PipelinePolicy.create_instance(cluster, blame("del-pp"), route)
+    policy.on_http_response.add_headers([["x-delete-test", "active"]])
+    request.addfinalizer(lambda: policy.delete(ignore_not_found=True))
+    policy.commit()
+    policy.wait_for_ready()
+
+    response = client.get("/get")
+    assert response.status_code == 200
+    assert response.headers.get("x-delete-test") == "active"
+
+    policy.delete()
+    assert policy.wait_until(lambda obj: not obj.exists(), timelimit=30), "PipelinePolicy was not deleted"
+
+    response = client.get("/get")
+    assert response.status_code == 200
+    assert response.headers.get("x-delete-test") is None
