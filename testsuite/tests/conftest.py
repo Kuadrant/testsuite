@@ -45,6 +45,10 @@ def pytest_runtest_setup(item):
     # error is raised during has_kuadrant()
     if item.config.getoption("--setup-plan"):
         return
+
+    if item.fspath.basename == "info_collector.py":
+        return
+
     marks = [i.name for i in item.iter_markers()]
     skip_or_fail = pytest.fail if item.config.getoption("--enforce") else pytest.skip
     standalone = item.config.getoption("--standalone")
@@ -422,16 +426,14 @@ def dns_provider_secret(testconfig):
 
 
 @pytest.fixture(scope="session")
-def openshift_version(cluster):
+def openshift_version(testconfig):
     """Get OpenShift cluster version"""
-    result = cluster.do_action(
-        "get", "clusterversion", "version", "-o", "jsonpath={.status.desired.version}", auto_raise=False
-    )
-    if result.status() != 0:
+    cluster = testconfig["control_plane"]["cluster"]
+    version = cluster.ocp_version
+    if version is None:
         return None
-    version_str = result.out().strip()
-    parts = version_str.split(".")
-    return tuple(int(p.split("-")[0]) for p in parts[:2])  # Convert "4.20.0" -> (4, 20)
+    parts = version.split(".")
+    return tuple(int(p.split("-")[0]) for p in parts[:2])  # Convert "4.20" -> (4, 20)
 
 
 @pytest.fixture(autouse=True)
