@@ -1,10 +1,7 @@
-"""Tests that PipelinePolicy surfaces error status conditions for invalid action method configurations."""
+"""Tests for PipelinePolicy gRPC error handling: unavailable services, wrong names, and fail actions."""
 
 import pytest
 
-from testsuite.kubernetes import Selector
-from testsuite.kubernetes.deployment import Deployment
-from testsuite.kubernetes.service import Service, ServicePort
 from testsuite.kuadrant.extensions.pipeline_policy import PipelinePolicy
 from testsuite.kuadrant.policy import has_condition
 
@@ -13,41 +10,10 @@ pytestmark = [pytest.mark.kuadrant_only, pytest.mark.extensions]
 
 @pytest.fixture(scope="module", autouse=True)
 def commit():
-    """No module-level policy; each test creates its own policy with bad configuration."""
+    """No module-level policy; each test creates its own PipelinePolicy."""
 
 
-@pytest.fixture(scope="module")
-def threat_assessment_service(request, cluster, blame, module_label):
-    """Deploys the ThreatAssessmentService gRPC backend"""
-    name = blame("threat")
-    match_labels = {"app": module_label, "deployment": name}
-
-    deployment = Deployment.create_instance(
-        cluster,
-        name,
-        container_name="threat-assessment",
-        image="quay.io/kuadrant/threat-assessment-service:latest",
-        ports={"grpc": 8080},
-        selector=Selector(matchLabels=match_labels),
-        labels={"app": module_label},
-    )
-    request.addfinalizer(deployment.delete)
-    deployment.commit()
-    deployment.wait_for_ready()
-
-    service = Service.create_instance(
-        cluster,
-        name,
-        selector=match_labels,
-        ports=[ServicePort(name="grpc", port=8080, targetPort="grpc")],
-        labels={"app": module_label},
-    )
-    request.addfinalizer(service.delete)
-    service.commit()
-    return service
-
-
-def test_nonexistent_url(request, cluster, blame, route):
+def test_grpc_upstream_unavailable(request, cluster, blame, route):
     """PipelinePolicy reports error when action method URL points to a non-existent service."""
     policy = PipelinePolicy.create_instance(cluster, blame("bad-url"), route)
     policy.add_action_method(
@@ -63,17 +29,16 @@ def test_nonexistent_url(request, cluster, blame, route):
     request.addfinalizer(policy.delete)
     policy.commit()
 
-    # TODO: add expected message assertion
     assert policy.wait_until(
         has_condition("Accepted", "False", "Unknown"),
         timelimit=60,
     ), f"Policy did not reach expected error status, instead: {policy.refresh().model.status.conditions}"
 
 
-def test_wrong_service_name(request, cluster, blame, route, threat_assessment_service):
+def test_grpc_wrong_service_name(request, cluster, blame, route, threat_assessment_service):
     """PipelinePolicy reports error when action method references a non-existent gRPC service name."""
     svc_url = (
-        f"grpc://{threat_assessment_service.name()}" f".{threat_assessment_service.namespace()}.svc.cluster.local:8080"
+        f"grpc://{threat_assessment_service.name()}.{threat_assessment_service.namespace()}.svc.cluster.local:8080"
     )
     policy = PipelinePolicy.create_instance(cluster, blame("bad-svc"), route)
     policy.add_action_method(
@@ -89,17 +54,16 @@ def test_wrong_service_name(request, cluster, blame, route, threat_assessment_se
     request.addfinalizer(policy.delete)
     policy.commit()
 
-    # TODO: add expected message assertion
     assert policy.wait_until(
         has_condition("Accepted", "False", "Unknown"),
         timelimit=60,
     ), f"Policy did not reach expected error status, instead: {policy.refresh().model.status.conditions}"
 
 
-def test_wrong_method_name(request, cluster, blame, route, threat_assessment_service):
+def test_grpc_wrong_method_name(request, cluster, blame, route, threat_assessment_service):
     """PipelinePolicy reports error when action method references a non-existent gRPC method."""
     svc_url = (
-        f"grpc://{threat_assessment_service.name()}" f".{threat_assessment_service.namespace()}.svc.cluster.local:8080"
+        f"grpc://{threat_assessment_service.name()}.{threat_assessment_service.namespace()}.svc.cluster.local:8080"
     )
     policy = PipelinePolicy.create_instance(cluster, blame("bad-meth"), route)
     policy.add_action_method(
@@ -115,8 +79,34 @@ def test_wrong_method_name(request, cluster, blame, route, threat_assessment_ser
     request.addfinalizer(policy.delete)
     policy.commit()
 
-    # TODO: add expected message assertion
     assert policy.wait_until(
         has_condition("Accepted", "False", "Unknown"),
         timelimit=60,
     ), f"Policy did not reach expected error status, instead: {policy.refresh().model.status.conditions}"
+
+
+def test_fail_after_grpc_call(request, cluster, blame, route, client, threat_assessment_service):
+    """Fail action after gRPC call terminates the chain when variable indicates invalid state."""
+    svc_url = (
+        f"grpc://{threat_assessment_service.name()}.{threat_assessment_service.namespace()}.svc.cluster.local:8080"
+    )
+    policy = PipelinePolicy.create_instance(cluster, blame("grpc-fail"), route)
+    policy.add_action_method(
+        name="assess",
+        url=svc_url,
+        service="threat.v1.ThreatAssessmentService",
+        method="AssessRequest",
+        message_template="threat.v1.ThreatRequest{uri: request.path}",
+    )
+    policy.add_request_grpc_method(method="assess", var="threat")
+    policy.add_request_fail(
+        "threat assessment returned invalid level",
+        predicate="threat.threat_level < 0",
+    )
+
+    request.addfinalizer(policy.delete)
+    policy.commit()
+    policy.wait_for_ready()
+
+    response = client.get("/get")
+    assert response.status_code == 200
