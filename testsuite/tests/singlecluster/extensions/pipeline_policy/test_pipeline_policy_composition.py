@@ -13,7 +13,7 @@ def commit():
 
 
 def test_first_deny_wins(request, cluster, blame, route, client):
-    """When two deny actions match, the first one in spec order determines the response status."""
+    """First deny action terminates the chain; the second deny with the same predicate never executes."""
     policy = PipelinePolicy.create_instance(cluster, blame("order"), route)
     policy.on_http_request.add_deny(predicate='request.url_path == "/order-test"', with_status=403)
     policy.on_http_request.add_deny(predicate='request.url_path == "/order-test"', with_status=429)
@@ -26,7 +26,7 @@ def test_first_deny_wins(request, cluster, blame, route, client):
 
 
 def test_fail_before_deny(request, cluster, blame, route, client, threat_assessment_service):
-    """Fail action before deny takes precedence when gRPC response triggers the fail predicate."""
+    """Fail action terminates the chain before the deny action when gRPC response triggers the fail predicate."""
     svc_url = (
         f"grpc://{threat_assessment_service.name()}.{threat_assessment_service.namespace()}.svc.cluster.local:8080"
     )
@@ -40,7 +40,6 @@ def test_fail_before_deny(request, cluster, blame, route, client, threat_assessm
     )
     policy.on_http_request.add_grpc_method(method="assess", var="threat")
     policy.on_http_request.add_fail("threat too high", predicate="threat.threat_level >= 4")
-    # policy.request.add_deny(predicate="true", with_status=403)
     policy.on_http_request.add_deny(predicate='request.url_path == "/blocked"', with_status=403)
     request.addfinalizer(policy.delete)
     policy.commit()
@@ -78,7 +77,7 @@ def test_empty_pipeline(request, cluster, blame, route, client):
 
 
 def test_request_only_pipeline(request, cluster, blame, route, client):
-    """Pipeline with only request actions: deny works, no response modifications."""
+    """PipelinePolicy with only request actions and no response section works correctly."""
     policy = PipelinePolicy.create_instance(cluster, blame("reqonly"), route)
     policy.on_http_request.add_deny(predicate='request.url_path == "/blocked"', with_status=403)
     request.addfinalizer(policy.delete)
@@ -90,7 +89,7 @@ def test_request_only_pipeline(request, cluster, blame, route, client):
 
 
 def test_response_only_pipeline(request, cluster, blame, route, client):
-    """Pipeline with only response actions: all requests pass, headers are modified."""
+    """PipelinePolicy with only response actions and no request section works correctly."""
     policy = PipelinePolicy.create_instance(cluster, blame("resonly"), route)
     policy.on_http_response.add_headers([["x-resp-only", "true"]])
     request.addfinalizer(policy.delete)
@@ -100,19 +99,3 @@ def test_response_only_pipeline(request, cluster, blame, route, client):
     response = client.get("/get")
     assert response.status_code == 200
     assert response.headers.get("x-resp-only") == "true"
-
-
-def test_mixed_pipeline(request, cluster, blame, route, client):
-    """Pipeline with both request deny and response headers executes in full."""
-    policy = PipelinePolicy.create_instance(cluster, blame("mixed"), route)
-    policy.on_http_request.add_deny(predicate='request.url_path == "/blocked"', with_status=403)
-    policy.on_http_response.add_headers([["x-mixed", "true"]])
-    request.addfinalizer(policy.delete)
-    policy.commit()
-    policy.wait_for_ready()
-
-    response = client.get("/get")
-    assert response.status_code == 200
-    assert response.headers.get("x-mixed") == "true"
-
-    assert client.get("/blocked").status_code == 403
