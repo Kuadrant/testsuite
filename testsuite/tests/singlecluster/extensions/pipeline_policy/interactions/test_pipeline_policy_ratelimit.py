@@ -2,16 +2,7 @@
 
 import pytest
 
-from testsuite.kuadrant.policy.rate_limit import Limit
-
 pytestmark = [pytest.mark.kuadrant_only, pytest.mark.extensions]
-
-
-@pytest.fixture(scope="module")
-def rate_limit(rate_limit):
-    """RateLimitPolicy with a low limit for testing."""
-    rate_limit.add_limit("basic", [Limit(3, "10s")])
-    return rate_limit
 
 
 @pytest.fixture(scope="module")

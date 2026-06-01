@@ -2,22 +2,7 @@
 
 import pytest
 
-from testsuite.httpx.auth import HttpxOidcClientAuth
-
 pytestmark = [pytest.mark.kuadrant_only, pytest.mark.extensions]
-
-
-@pytest.fixture(scope="module")
-def authorization(authorization, oidc_provider):
-    """AuthPolicy with OIDC identity verification."""
-    authorization.identity.add_oidc("default", oidc_provider.well_known["issuer"])
-    return authorization
-
-
-@pytest.fixture(scope="module")
-def auth(oidc_provider):
-    """Valid OIDC authentication for requests."""
-    return HttpxOidcClientAuth(oidc_provider.get_token, "authorization")
 
 
 @pytest.fixture(scope="module")
