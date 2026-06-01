@@ -30,7 +30,7 @@ def test_grpc_upstream_unavailable(request, cluster, blame, route):
     policy.commit()
 
     assert policy.wait_until(
-        has_condition("Accepted", "False", "Unknown"),
+        has_condition("Accepted", "False", "Unknown", message="produced zero addresses"),
         timelimit=60,
     ), f"Policy did not reach expected error status, instead: {policy.refresh().model.status.conditions}"
 
@@ -55,7 +55,7 @@ def test_grpc_wrong_service_name(request, cluster, blame, route, threat_assessme
     policy.commit()
 
     assert policy.wait_until(
-        has_condition("Accepted", "False", "Unknown"),
+        has_condition("Accepted", "False", "Unknown", message="failed to fetch service"),
         timelimit=60,
     ), f"Policy did not reach expected error status, instead: {policy.refresh().model.status.conditions}"
 
@@ -80,7 +80,7 @@ def test_grpc_wrong_method_name(request, cluster, blame, route, threat_assessmen
     policy.commit()
 
     assert policy.wait_until(
-        has_condition("Accepted", "False", "Unknown"),
+        has_condition("Accepted", "False", "Unknown", message='method "NonExistentMethod" not found in service'),
         timelimit=60,
     ), f"Policy did not reach expected error status, instead: {policy.refresh().model.status.conditions}"
 

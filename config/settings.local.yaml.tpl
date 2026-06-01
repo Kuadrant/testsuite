@@ -16,6 +16,8 @@
 #      password: "testPassword"
 #  spicedb:
 #    image: "SPICEDB_IMAGE"
+#  pipeline_policy_extension_service:
+#    image: "PIPELINE_POLICY_EXTENSION_SERVICE_IMAGE"
 #  auth0:
 #    client_id: "CLIENT_ID"
 #    client_secret: "CLIENT_SECRET"

@@ -15,7 +15,7 @@ def pipeline_policy(cluster, blame, route):
 
 
 @pytest.fixture(scope="module")
-def threat_assessment_service(request, cluster, blame, module_label):
+def threat_assessment_service(request, cluster, blame, module_label, testconfig):
     """Deploys the ThreatAssessmentService gRPC backend"""
     name = blame("threat")
     match_labels = {"app": module_label, "deployment": name}
@@ -24,7 +24,7 @@ def threat_assessment_service(request, cluster, blame, module_label):
         cluster,
         name,
         container_name="threat-assessment",
-        image="quay.io/kuadrant/threat-assessment-service:latest",
+        image=testconfig["pipeline_policy_extension_service"]["image"],
         ports={"grpc": 8080},
         selector=Selector(matchLabels=match_labels),
         labels={"app": module_label},
