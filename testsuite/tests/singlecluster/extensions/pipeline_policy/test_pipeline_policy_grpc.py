@@ -21,26 +21,26 @@ def pipeline_policy(pipeline_policy, threat_assessment_service):  # pylint: disa
         message_template="threat.v1.ThreatRequest{uri: request.path, source_ip: source.address}",
     )
 
-    pipeline_policy.add_request_grpc_method(
+    pipeline_policy.on_http_request.add_grpc_method(
         method="assess-threat",
         var="threatResponse",
         predicate='"x-assess-threat" in request.headers',
     )
-    pipeline_policy.add_request_deny(predicate='request.url_path == "/blocked"', with_status=403)
-    pipeline_policy.add_request_deny(
+    pipeline_policy.on_http_request.add_deny(predicate='request.url_path == "/blocked"', with_status=403)
+    pipeline_policy.on_http_request.add_deny(
         predicate=f"threatResponse.threat_level >= {THREAT_THRESHOLD}",
         with_status=403,
     )
 
-    pipeline_policy.add_response_headers(
+    pipeline_policy.on_http_response.add_headers(
         [["x-threat-assessed", "true"]],
         predicate='"x-assess-threat" in request.headers',
     )
-    pipeline_policy.add_response_headers(
+    pipeline_policy.on_http_response.add_headers(
         [["x-threat-assessed", "false"]],
         predicate='!("x-assess-threat" in request.headers)',
     )
-    pipeline_policy.add_response_headers([["x-threat-threshold", str(THREAT_THRESHOLD)]])
+    pipeline_policy.on_http_response.add_headers([["x-threat-threshold", str(THREAT_THRESHOLD)]])
 
     return pipeline_policy
 

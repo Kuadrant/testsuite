@@ -23,8 +23,8 @@ def test_grpc_upstream_unavailable(request, cluster, blame, route):
         method="AssessRequest",
         message_template="threat.v1.ThreatRequest{uri: request.path}",
     )
-    policy.add_request_deny(predicate='request.url_path == "/blocked"', with_status=403)
-    policy.add_request_grpc_method(method="bad-method")
+    policy.on_http_request.add_deny(predicate='request.url_path == "/blocked"', with_status=403)
+    policy.on_http_request.add_grpc_method(method="bad-method")
 
     request.addfinalizer(policy.delete)
     policy.commit()
@@ -48,8 +48,8 @@ def test_grpc_wrong_service_name(request, cluster, blame, route, threat_assessme
         method="DoSomething",
         message_template="nonexistent.v1.FakeRequest{uri: request.path}",
     )
-    policy.add_request_deny(predicate='request.url_path == "/blocked"', with_status=403)
-    policy.add_request_grpc_method(method="bad-service")
+    policy.on_http_request.add_deny(predicate='request.url_path == "/blocked"', with_status=403)
+    policy.on_http_request.add_grpc_method(method="bad-service")
 
     request.addfinalizer(policy.delete)
     policy.commit()
@@ -73,8 +73,8 @@ def test_grpc_wrong_method_name(request, cluster, blame, route, threat_assessmen
         method="NonExistentMethod",
         message_template="threat.v1.ThreatRequest{uri: request.path}",
     )
-    policy.add_request_deny(predicate='request.url_path == "/blocked"', with_status=403)
-    policy.add_request_grpc_method(method="wrong-method")
+    policy.on_http_request.add_deny(predicate='request.url_path == "/blocked"', with_status=403)
+    policy.on_http_request.add_grpc_method(method="wrong-method")
 
     request.addfinalizer(policy.delete)
     policy.commit()
@@ -98,8 +98,8 @@ def test_fail_after_grpc_call(request, cluster, blame, route, client, threat_ass
         method="AssessRequest",
         message_template="threat.v1.ThreatRequest{uri: request.path}",
     )
-    policy.add_request_grpc_method(method="assess", var="threat")
-    policy.add_request_fail(
+    policy.on_http_request.add_grpc_method(method="assess", var="threat")
+    policy.on_http_request.add_fail(
         "threat assessment returned invalid level",
         predicate="threat.threat_level < 0",
     )

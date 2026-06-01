@@ -86,7 +86,7 @@ def client3(route3, hostname3):  # pylint: disable=unused-argument
 @pytest.fixture(scope="module")
 def pipeline_policy(pipeline_policy):
     """PipelinePolicy with response header targeting only the first route."""
-    pipeline_policy.add_response_headers([["x-pipeline-policy", "active"]])
+    pipeline_policy.on_http_response.add_headers([["x-pipeline-policy", "active"]])
     return pipeline_policy
 
 

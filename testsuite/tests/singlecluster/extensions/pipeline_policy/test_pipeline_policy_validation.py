@@ -22,7 +22,7 @@ def test_invalid_target_ref(request, cluster, blame):
         name="does-not-exist",
     )
     policy = PipelinePolicy.create_instance(cluster, blame("bad-target"), target)
-    policy.add_request_deny(predicate='request.url_path == "/blocked"', with_status=403)
+    policy.on_http_request.add_deny(predicate='request.url_path == "/blocked"', with_status=403)
 
     request.addfinalizer(policy.delete)
     policy.commit()
@@ -41,7 +41,7 @@ def test_invalid_gateway_target_ref(request, cluster, blame):
         name="does-not-exist",
     )
     policy = PipelinePolicy.create_instance(cluster, blame("bad-gw"), target)
-    policy.add_request_deny(predicate='request.url_path == "/blocked"', with_status=403)
+    policy.on_http_request.add_deny(predicate='request.url_path == "/blocked"', with_status=403)
 
     request.addfinalizer(policy.delete)
     policy.commit()
@@ -55,7 +55,7 @@ def test_invalid_gateway_target_ref(request, cluster, blame):
 def test_invalid_cel_expression(request, cluster, blame, route):
     """PipelinePolicy with malformed CEL predicate fails to enforce."""
     policy = PipelinePolicy.create_instance(cluster, blame("bad-cel"), route)
-    policy.add_request_deny(predicate="INVALID CEL !!!", with_status=403)
+    policy.on_http_request.add_deny(predicate="INVALID CEL !!!", with_status=403)
 
     request.addfinalizer(policy.delete)
     policy.commit()
@@ -70,8 +70,8 @@ def test_variable_forward_reference(request, cluster, blame, route):
     """PipelinePolicy referencing a variable before it is defined should fail validation."""
     var_name = "threatResponse"
     policy = PipelinePolicy.create_instance(cluster, blame("fwd-ref"), route)
-    policy.add_request_deny(predicate=f"{var_name}.threat_level >= 50", with_status=403)
-    policy.add_request_grpc_method(method="nonexistent-method", var=var_name)
+    policy.on_http_request.add_deny(predicate=f"{var_name}.threat_level >= 50", with_status=403)
+    policy.on_http_request.add_grpc_method(method="nonexistent-method", var=var_name)
 
     request.addfinalizer(policy.delete)
     policy.commit()
@@ -86,8 +86,8 @@ def test_duplicate_variable_name(request, cluster, blame, route):
     """PipelinePolicy with two gRPC methods using the same variable name should fail validation."""
     var_name = "dupVar"
     policy = PipelinePolicy.create_instance(cluster, blame("dup-var"), route)
-    policy.add_request_grpc_method(method="method-a", var=var_name)
-    policy.add_request_grpc_method(method="method-b", var=var_name)
+    policy.on_http_request.add_grpc_method(method="method-a", var=var_name)
+    policy.on_http_request.add_grpc_method(method="method-b", var=var_name)
 
     request.addfinalizer(policy.delete)
     policy.commit()

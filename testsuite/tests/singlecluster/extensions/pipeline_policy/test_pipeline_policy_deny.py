@@ -9,37 +9,37 @@ pytestmark = [pytest.mark.kuadrant_only, pytest.mark.extensions]
 def pipeline_policy(pipeline_policy):
     """PipelinePolicy with multiple deny configurations covering all deny variants."""
     # Path-based deny
-    pipeline_policy.add_request_deny(predicate='request.url_path == "/deny-path"', with_status=403)
+    pipeline_policy.on_http_request.add_deny(predicate='request.url_path == "/deny-path"', with_status=403)
     # Header-based deny
-    pipeline_policy.add_request_deny(predicate='"x-deny-me" in request.headers', with_status=403)
+    pipeline_policy.on_http_request.add_deny(predicate='"x-deny-me" in request.headers', with_status=403)
     # Custom status code
-    pipeline_policy.add_request_deny(predicate='request.url_path == "/custom-status"', with_status=429)
+    pipeline_policy.on_http_request.add_deny(predicate='request.url_path == "/custom-status"', with_status=429)
     # Custom headers
-    pipeline_policy.add_request_deny(
+    pipeline_policy.on_http_request.add_deny(
         predicate='request.url_path == "/custom-headers"',
         with_status=403,
         with_headers='[["x-deny-reason", "blocked"]]',
     )
     # Custom body
-    pipeline_policy.add_request_deny(
+    pipeline_policy.on_http_request.add_deny(
         predicate='request.url_path == "/custom-body"',
         with_status=403,
         with_body="Access denied",
     )
     # All response fields
-    pipeline_policy.add_request_deny(
+    pipeline_policy.on_http_request.add_deny(
         predicate='request.url_path == "/custom-all"',
         with_status=451,
         with_headers='[["x-deny-reason", "full-custom"]]',
         with_body="Fully customized denial",
     )
     # Response phase deny — status override
-    pipeline_policy.add_response_deny(
+    pipeline_policy.on_http_response.add_deny(
         predicate='"x-override-code" in request.headers',
         with_status=503,
     )
     # Response phase deny — all fields
-    pipeline_policy.add_response_deny(
+    pipeline_policy.on_http_response.add_deny(
         predicate='"x-resp-deny" in request.headers',
         with_status=418,
         with_headers='[["x-deny-phase", "response"]]',

@@ -8,8 +8,8 @@ pytestmark = [pytest.mark.kuadrant_only, pytest.mark.extensions]
 @pytest.fixture(scope="module")
 def pipeline_policy(pipeline_policy):
     """Configure PipelinePolicy with deny action and response headers."""
-    pipeline_policy.add_request_deny(predicate='request.url_path == "/blocked"', with_status=403)
-    pipeline_policy.add_response_headers([["x-pipeline-policy", "active"]])
+    pipeline_policy.on_http_request.add_deny(predicate='request.url_path == "/blocked"', with_status=403)
+    pipeline_policy.on_http_response.add_headers([["x-pipeline-policy", "active"]])
     return pipeline_policy
 
 

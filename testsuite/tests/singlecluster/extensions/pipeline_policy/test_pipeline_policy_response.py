@@ -8,20 +8,20 @@ pytestmark = [pytest.mark.kuadrant_only, pytest.mark.extensions]
 @pytest.fixture(scope="module")
 def pipeline_policy(pipeline_policy):
     """PipelinePolicy with various add_headers response actions for testing."""
-    pipeline_policy.add_response_headers([["x-single", "one"]])
-    pipeline_policy.add_response_headers([["x-multi-a", "alpha"], ["x-multi-b", "bravo"]])
-    pipeline_policy.add_response_headers([["x-separate", "separate-value"]])
+    pipeline_policy.on_http_response.add_headers([["x-single", "one"]])
+    pipeline_policy.on_http_response.add_headers([["x-multi-a", "alpha"], ["x-multi-b", "bravo"]])
+    pipeline_policy.on_http_response.add_headers([["x-separate", "separate-value"]])
 
-    pipeline_policy.add_response_headers(
+    pipeline_policy.on_http_response.add_headers(
         [["x-conditional", "present"]],
         predicate='"x-trigger" in request.headers',
     )
 
-    pipeline_policy.add_response_headers(
+    pipeline_policy.on_http_response.add_headers(
         [["x-mode", "active"]],
         predicate='"x-trigger" in request.headers',
     )
-    pipeline_policy.add_response_headers(
+    pipeline_policy.on_http_response.add_headers(
         [["x-mode", "inactive"]],
         predicate='!("x-trigger" in request.headers)',
     )
