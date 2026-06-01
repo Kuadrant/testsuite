@@ -114,7 +114,7 @@ class KubernetesClient:
             return False
         return True
 
-    @property
+    @cached_property
     def ocp_version(self) -> Optional[str]:
         """Returns the OpenShift version (major.minor) or None if not available."""
         result = self.do_action(
