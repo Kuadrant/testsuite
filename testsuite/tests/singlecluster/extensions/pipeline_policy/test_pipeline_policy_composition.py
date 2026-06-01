@@ -15,8 +15,8 @@ def commit():
 def test_first_deny_wins(request, cluster, blame, route, client):
     """When two deny actions match, the first one in spec order determines the response status."""
     policy = PipelinePolicy.create_instance(cluster, blame("order"), route)
-    policy.add_request_deny(predicate='request.url_path == "/order-test"', with_status=403)
-    policy.add_request_deny(predicate='request.url_path == "/order-test"', with_status=429)
+    policy.on_http_request.add_deny(predicate='request.url_path == "/order-test"', with_status=403)
+    policy.on_http_request.add_deny(predicate='request.url_path == "/order-test"', with_status=429)
     request.addfinalizer(policy.delete)
     policy.commit()
     policy.wait_for_ready()
@@ -38,10 +38,10 @@ def test_fail_before_deny(request, cluster, blame, route, client, threat_assessm
         method="AssessRequest",
         message_template="threat.v1.ThreatRequest{uri: request.path}",
     )
-    policy.add_request_grpc_method(method="assess", var="threat")
-    policy.add_request_fail("threat too high", predicate="threat.threat_level >= 4")
-    # policy.add_request_deny(predicate="true", with_status=403)
-    policy.add_request_deny(predicate='request.url_path == "/blocked"', with_status=403)
+    policy.on_http_request.add_grpc_method(method="assess", var="threat")
+    policy.on_http_request.add_fail("threat too high", predicate="threat.threat_level >= 4")
+    # policy.request.add_deny(predicate="true", with_status=403)
+    policy.on_http_request.add_deny(predicate='request.url_path == "/blocked"', with_status=403)
     request.addfinalizer(policy.delete)
     policy.commit()
     policy.wait_for_ready()
@@ -53,8 +53,8 @@ def test_fail_before_deny(request, cluster, blame, route, client, threat_assessm
 def test_response_action_ordering(request, cluster, blame, route, client):
     """Response actions execute in spec order; both headers from separate actions are present."""
     policy = PipelinePolicy.create_instance(cluster, blame("respord"), route)
-    policy.add_response_headers([["x-first", "alpha"]])
-    policy.add_response_headers([["x-second", "bravo"]])
+    policy.on_http_response.add_headers([["x-first", "alpha"]])
+    policy.on_http_response.add_headers([["x-second", "bravo"]])
     request.addfinalizer(policy.delete)
     policy.commit()
     policy.wait_for_ready()
@@ -80,7 +80,7 @@ def test_empty_pipeline(request, cluster, blame, route, client):
 def test_request_only_pipeline(request, cluster, blame, route, client):
     """Pipeline with only request actions: deny works, no response modifications."""
     policy = PipelinePolicy.create_instance(cluster, blame("reqonly"), route)
-    policy.add_request_deny(predicate='request.url_path == "/blocked"', with_status=403)
+    policy.on_http_request.add_deny(predicate='request.url_path == "/blocked"', with_status=403)
     request.addfinalizer(policy.delete)
     policy.commit()
     policy.wait_for_ready()
@@ -92,7 +92,7 @@ def test_request_only_pipeline(request, cluster, blame, route, client):
 def test_response_only_pipeline(request, cluster, blame, route, client):
     """Pipeline with only response actions: all requests pass, headers are modified."""
     policy = PipelinePolicy.create_instance(cluster, blame("resonly"), route)
-    policy.add_response_headers([["x-resp-only", "true"]])
+    policy.on_http_response.add_headers([["x-resp-only", "true"]])
     request.addfinalizer(policy.delete)
     policy.commit()
     policy.wait_for_ready()
@@ -105,8 +105,8 @@ def test_response_only_pipeline(request, cluster, blame, route, client):
 def test_mixed_pipeline(request, cluster, blame, route, client):
     """Pipeline with both request deny and response headers executes in full."""
     policy = PipelinePolicy.create_instance(cluster, blame("mixed"), route)
-    policy.add_request_deny(predicate='request.url_path == "/blocked"', with_status=403)
-    policy.add_response_headers([["x-mixed", "true"]])
+    policy.on_http_request.add_deny(predicate='request.url_path == "/blocked"', with_status=403)
+    policy.on_http_response.add_headers([["x-mixed", "true"]])
     request.addfinalizer(policy.delete)
     policy.commit()
     policy.wait_for_ready()

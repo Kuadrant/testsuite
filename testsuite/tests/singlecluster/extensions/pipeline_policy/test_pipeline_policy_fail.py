@@ -18,12 +18,12 @@ def pipeline_policy(pipeline_policy, threat_assessment_service):
         method="AssessRequest",
         message_template="threat.v1.ThreatRequest{uri: request.path}",
     )
-    pipeline_policy.add_request_grpc_method(method="assess", var="threat")
-    pipeline_policy.add_request_fail(
+    pipeline_policy.on_http_request.add_grpc_method(method="assess", var="threat")
+    pipeline_policy.on_http_request.add_fail(
         "threat level too high",
         predicate="threat.threat_level >= 4",
     )
-    pipeline_policy.add_response_headers([["x-pipeline-active", "true"]])
+    pipeline_policy.on_http_response.add_headers([["x-pipeline-active", "true"]])
     return pipeline_policy
 
 
