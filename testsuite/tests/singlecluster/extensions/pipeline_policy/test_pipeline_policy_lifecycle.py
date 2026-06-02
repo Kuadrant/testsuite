@@ -17,7 +17,7 @@ def test_update_policy(request, cluster, blame, route, client):
     """Adding a new response header via policy update propagates to traffic."""
     policy = PipelinePolicy.create_instance(cluster, blame("upd-pp"), route)
     policy.on_http_response.add_headers([["x-update-test", "active"]])
-    request.addfinalizer(lambda: policy.delete(ignore_not_found=True))
+    request.addfinalizer(policy.delete)
     policy.commit()
     policy.wait_for_ready()
 
@@ -35,12 +35,14 @@ def test_update_policy(request, cluster, blame, route, client):
     assert response.headers.get("x-update-new") == "true"
 
 
+@pytest.mark.issue("https://github.com/Kuadrant/kuadrant-operator/issues/2009")
+@pytest.mark.xfail(reason="https://github.com/Kuadrant/kuadrant-operator/issues/2009")
 @pytest.mark.flaky(reruns=0)
 def test_delete_policy(request, cluster, blame, route, client):
     """After deleting the PipelinePolicy, the CR is removed and the actions stop being enforced."""
     policy = PipelinePolicy.create_instance(cluster, blame("del-pp"), route)
     policy.on_http_response.add_headers([["x-delete-test", "active"]])
-    request.addfinalizer(lambda: policy.delete(ignore_not_found=True))
+    request.addfinalizer(policy.delete)
     policy.commit()
     policy.wait_for_ready()
 

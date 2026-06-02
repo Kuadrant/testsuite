@@ -20,30 +20,30 @@ def pipeline_policy(pipeline_policy):
         with_status=403,
         with_headers='[["x-deny-reason", "blocked"]]',
     )
-    # Custom body
+    # Custom body (CEL expression)
     pipeline_policy.on_http_request.add_deny(
         predicate='request.url_path == "/custom-body"',
         with_status=403,
-        with_body="Access denied",
+        with_body="'Access denied'",
     )
-    # All response fields
+    # All response fields (CEL expression in body)
     pipeline_policy.on_http_request.add_deny(
         predicate='request.url_path == "/custom-all"',
         with_status=451,
         with_headers='[["x-deny-reason", "full-custom"]]',
-        with_body="Fully customized denial",
+        with_body="'Fully customized denial'",
     )
     # Response phase deny — status override
     pipeline_policy.on_http_response.add_deny(
         predicate='"x-override-code" in request.headers',
         with_status=503,
     )
-    # Response phase deny — all fields
+    # Response phase deny — all fields (CEL expression in body)
     pipeline_policy.on_http_response.add_deny(
         predicate='"x-resp-deny" in request.headers',
         with_status=418,
         with_headers='[["x-deny-phase", "response"]]',
-        with_body="Teapot response",
+        with_body="'Teapot response'",
     )
     return pipeline_policy
 
@@ -92,15 +92,19 @@ def test_deny_custom_headers(client):
     assert response.headers.get("x-deny-reason") == "blocked"
 
 
+@pytest.mark.issue("https://github.com/Kuadrant/kuadrant-operator/issues/2018")
+@pytest.mark.xfail(reason="https://github.com/Kuadrant/kuadrant-operator/issues/2018")
 def test_deny_custom_body(client):
-    """Deny with withBody returns custom body text."""
+    """Deny with withBody as CEL expression returns custom body text."""
     response = client.get("/custom-body")
     assert response.status_code == 403
     assert response.text == "Access denied"
 
 
+@pytest.mark.issue("https://github.com/Kuadrant/kuadrant-operator/issues/2018")
+@pytest.mark.xfail(reason="https://github.com/Kuadrant/kuadrant-operator/issues/2018")
 def test_deny_all_response_fields(client):
-    """Deny with withStatus, withHeaders, and withBody all set returns all fields."""
+    """Deny with withStatus, withHeaders, and withBody as CEL expression returns all fields."""
     response = client.get("/custom-all")
     assert response.status_code == 451
     assert response.headers.get("x-deny-reason") == "full-custom"
@@ -119,8 +123,10 @@ def test_response_deny_no_override(client):
     assert response.status_code == 200
 
 
+@pytest.mark.issue("https://github.com/Kuadrant/kuadrant-operator/issues/2018")
+@pytest.mark.xfail(reason="https://github.com/Kuadrant/kuadrant-operator/issues/2018")
 def test_response_deny_with_headers_and_body(client):
-    """Response deny with all fields replaces the backend response."""
+    """Response deny with all fields as CEL expressions replaces the backend response."""
     response = client.get("/get", headers={"x-resp-deny": "true"})
     assert response.status_code == 418
     assert response.headers.get("x-deny-phase") == "response"
