@@ -2,6 +2,8 @@
 
 import pytest
 
+from openshift_client import OpenShiftPythonException
+
 from testsuite.kubernetes import Selector
 from testsuite.kubernetes.deployment import Deployment
 from testsuite.kubernetes.service import Service, ServicePort
@@ -13,7 +15,7 @@ def check_pipeline_policy_crd(cluster, skip_or_fail):
     """Skip all PipelinePolicy tests if the CRD is not installed on the cluster."""
     try:
         cluster.do_action("get", "crd/pipelinepolicies.extensions.kuadrant.io")
-    except Exception:  # pylint: disable=broad-except
+    except OpenShiftPythonException:
         skip_or_fail("PipelinePolicy CRD is not installed on the cluster")
 
 
@@ -57,7 +59,6 @@ def threat_assessment_service(request, cluster, blame, module_label, testconfig)
 @pytest.fixture(scope="module", autouse=True)
 def commit(request, pipeline_policy):
     """Commit and wait for PipelinePolicy to be ready."""
-    for component in [pipeline_policy]:
-        request.addfinalizer(component.delete)
-        component.commit()
-        component.wait_for_ready()
+    request.addfinalizer(pipeline_policy.delete)
+    pipeline_policy.commit()
+    pipeline_policy.wait_for_ready()

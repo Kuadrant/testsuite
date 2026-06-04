@@ -49,8 +49,6 @@ def test_fail_before_deny(request, cluster, blame, route, client, threat_assessm
     assert response.status_code == 500
 
 
-@pytest.mark.issue("https://github.com/Kuadrant/wasm-shim/issues/371")
-@pytest.mark.xfail(reason="https://github.com/Kuadrant/wasm-shim/issues/371")
 def test_deny_after_grpc_call(request, cluster, blame, route, client, threat_assessment_service):
     """Deny action after gRPC call works when the deny predicate matches."""
     svc_url = (
@@ -100,8 +98,6 @@ def test_deny_based_on_grpc_var(request, cluster, blame, route, client, threat_a
     assert response.status_code == 200
 
 
-@pytest.mark.issue("https://github.com/Kuadrant/kuadrant-operator/issues/2018")
-@pytest.mark.xfail(reason="https://github.com/Kuadrant/kuadrant-operator/issues/2018")
 def test_deny_with_dynamic_body(request, cluster, blame, route, client, threat_assessment_service):
     """Deny action with CEL expression in withBody interpolates gRPC response variable."""
     svc_url = (

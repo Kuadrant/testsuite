@@ -36,8 +36,6 @@ def test_auth_and_pipeline_unauthorized(client):
     assert response.headers.get("x-pipeline-policy") is None
 
 
-@pytest.mark.issue("https://github.com/Kuadrant/wasm-shim/issues/371")
-@pytest.mark.xfail(reason="https://github.com/Kuadrant/wasm-shim/issues/371")
 def test_auth_and_pipeline_blocked_path(client, auth):
     """Authenticated request to blocked path is denied by PipelinePolicy deny action."""
     response = client.get("/blocked", auth=auth)

@@ -1,8 +1,11 @@
 """Tests for PipelinePolicy lifecycle: update and delete."""
 
+import time
+
 import pytest
 
 from testsuite.kuadrant.extensions.pipeline_policy import PipelinePolicy
+from testsuite.utils.constants import EXTENSION_POLICY_PROPAGATION_WAIT
 
 pytestmark = [pytest.mark.kuadrant_only, pytest.mark.extensions]
 
@@ -35,8 +38,6 @@ def test_update_policy(request, cluster, blame, route, client):
     assert response.headers.get("x-update-new") == "true"
 
 
-@pytest.mark.issue("https://github.com/Kuadrant/kuadrant-operator/issues/2009")
-@pytest.mark.xfail(reason="https://github.com/Kuadrant/kuadrant-operator/issues/2009")
 @pytest.mark.flaky(reruns=0)
 def test_delete_policy(request, cluster, blame, route, client):
     """After deleting the PipelinePolicy, the CR is removed and the actions stop being enforced."""
@@ -51,7 +52,8 @@ def test_delete_policy(request, cluster, blame, route, client):
     assert response.headers.get("x-delete-test") == "active"
 
     policy.delete()
-    assert policy.wait_until(lambda obj: not obj.exists(), timelimit=30), "PipelinePolicy was not deleted"
+    assert not policy.committed, "PipelinePolicy was not deleted"
+    time.sleep(EXTENSION_POLICY_PROPAGATION_WAIT)
 
     response = client.get("/get")
     assert response.status_code == 200

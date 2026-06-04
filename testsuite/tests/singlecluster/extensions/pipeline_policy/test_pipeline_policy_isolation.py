@@ -80,28 +80,27 @@ def pipeline_policy(pipeline_policy):
     return pipeline_policy
 
 
-def test_policy_affects_targeted_route(client):
-    """Route with PipelinePolicy gets the response header."""
+def test_policy_does_not_affect_other_route(client, client2):
+    """Route without PipelinePolicy on the same gateway does not get the response header."""
+    time.sleep(EXTENSION_POLICY_PROPAGATION_WAIT)
+
     response = client.get("/get")
     assert response.status_code == 200
     assert response.headers.get("x-pipeline-policy") == "active"
 
-
-@pytest.mark.issue("https://github.com/Kuadrant/kuadrant-operator/issues/2023")
-@pytest.mark.xfail(reason="https://github.com/Kuadrant/kuadrant-operator/issues/2023")
-def test_policy_does_not_affect_other_route(client2):
-    """Route without PipelinePolicy on the same gateway does not get the response header."""
-    time.sleep(EXTENSION_POLICY_PROPAGATION_WAIT)
     response = client2.get("/get")
     assert response.status_code == 200
     assert response.headers.get("x-pipeline-policy") is None
 
 
-@pytest.mark.issue("https://github.com/Kuadrant/kuadrant-operator/issues/2023")
-@pytest.mark.xfail(reason="https://github.com/Kuadrant/kuadrant-operator/issues/2023")
-def test_policy_does_not_affect_other_gateway(client3):
+def test_policy_does_not_affect_other_gateway(client, client3):
     """Route on a different gateway does not get the response header."""
     time.sleep(EXTENSION_POLICY_PROPAGATION_WAIT)
+
+    response = client.get("/get")
+    assert response.status_code == 200
+    assert response.headers.get("x-pipeline-policy") == "active"
+
     response = client3.get("/get")
     assert response.status_code == 200
     assert response.headers.get("x-pipeline-policy") is None
