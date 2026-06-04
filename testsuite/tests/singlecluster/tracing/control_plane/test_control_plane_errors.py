@@ -23,6 +23,7 @@ def orphan_test_route(request, cluster, blame, gateway, module_label, backend):
     orphan_route.add_backend(backend)
     request.addfinalizer(orphan_route.delete)
     orphan_route.commit()
+    orphan_route.wait_for_ready()
     return orphan_route
 
 
