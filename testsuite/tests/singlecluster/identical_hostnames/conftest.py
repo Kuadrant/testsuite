@@ -22,4 +22,5 @@ def route2(request, gateway, blame, hostname, backend, module_label) -> GatewayR
     route.add_backend(backend, "/anything/route2")
     request.addfinalizer(route.delete)
     route.commit()
+    route.wait_for_ready()
     return route

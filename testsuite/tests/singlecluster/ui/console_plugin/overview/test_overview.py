@@ -97,10 +97,12 @@ def test_resources_appear_in_sections(request, navigator, cluster, blame, module
     route.add_backend(backend)
     request.addfinalizer(route.delete)
     route.commit()
+    route.wait_for_ready()
 
     grpc_route = GRPCRoute.create_instance(cluster, blame("grpc"), gateway)
     request.addfinalizer(grpc_route.delete)
     grpc_route.commit()
+    grpc_route.wait_for_ready()
 
     policy_name = blame("policy")
     policy = AuthPolicy.create_instance(cluster, policy_name, gateway)

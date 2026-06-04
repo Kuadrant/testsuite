@@ -27,6 +27,7 @@ def grpc_route(request, gateway, cluster, blame, module_label):
     grpc_route = GRPCRoute.create_instance(cluster, blame("grpc"), gateway, {"app": module_label})
     request.addfinalizer(grpc_route.delete)
     grpc_route.commit()
+    grpc_route.wait_for_ready()
     return grpc_route
 
 
