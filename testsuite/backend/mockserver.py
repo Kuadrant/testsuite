@@ -119,6 +119,11 @@ class MockserverBackend(Backend):
         finally:
             super().delete()
 
+    def external_ip(self) -> str:
+        """Returns the LoadBalancer external IP with port"""
+        assert self.service is not None
+        return f"{self.service.external_ip}:{HTTP_API_PORT}"
+
     def wait_for_ready(self, timeout=SERVICE_READY_TIMEOUT):
         """Waits until Deployment and Service is marked as ready"""
         self.deployment.wait_for_ready(timeout)
