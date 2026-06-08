@@ -58,7 +58,7 @@ class Backend(LifecycleObject, Referencable, Exposable):
 
     def expose(self, exposer: "Exposer", name: str):
         """Creates external access for admin APIs via the exposer"""
-        self._admin_hostname = exposer.expose_backend(name, self)
+        self._admin_hostname = exposer.expose_hostname(name, self)
 
     @property
     def url(self):
