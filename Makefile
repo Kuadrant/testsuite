@@ -2,6 +2,7 @@
 
 TB ?= short
 LOGLEVEL ?= INFO
+VERIFY_DENIALS ?= true # Set to false to skip verification of expected denials (e.g., 403 responses) in tests marked with `verify_denials` (e.g., `authorino` tests). This can be useful when debugging test failures that may be related to unexpected denials, but should generally be left enabled to ensure proper test validation.
 
 ifdef WORKSPACE  # Yes, this is for jenkins
 resultsdir = $(WORKSPACE)
@@ -14,6 +15,10 @@ RUNSCRIPT = poetry run ./scripts/
 
 ifdef junit
 PYTEST += --junitxml=$(resultsdir)/junit-$(@F).xml -o junit_suite_name=$(@F)
+endif
+
+ifdef VERIFY_DENIALS # Only add the flag if VERIFY_DENIALS is set to a non-empty value (default is "true")
+PYTEST += --verify-denials=$(VERIFY_DENIALS)
 endif
 
 # Collector PYTEST Override
