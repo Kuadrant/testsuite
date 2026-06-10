@@ -102,6 +102,14 @@ class ReportPortalMetadataCollector:
     @staticmethod
     def get_component_images(project) -> list[tuple]:
         """Get container images from pods in a namespace using openshift_client."""
+        return [(name, tag, image) for name, tag, image, _ in ReportPortalMetadataCollector.get_pod_images(project)]
+
+    @staticmethod
+    def get_pod_images(project) -> list[tuple[str, str, str, str]]:
+        """Get container images from pods with resolved image digests from status.
+
+        Returns list of (name, tag, full_image, digest) tuples.
+        """
         images = []
         try:
             with project.context:
@@ -109,6 +117,11 @@ class ReportPortalMetadataCollector:
 
             seen = set()
             for pod in pods:
+                status_map = {}
+                for cs in pod.model.status.containerStatuses or []:
+                    if cs.name and cs.imageID:
+                        status_map[cs.name] = cs.imageID
+
                 for container in pod.model.spec.containers:
                     image = container.image
                     if not image:
@@ -117,14 +130,18 @@ class ReportPortalMetadataCollector:
                     if normalised_image in seen:
                         continue
                     seen.add(normalised_image)
-                    image_name = normalised_image.split("/")[-1]
-                    if ":" in image_name:
-                        name, tag = image_name.rsplit(":", 1)
-                        images.append((name, tag, image))
+
+                    image_id = str(status_map.get(container.name, ""))
+                    digest = image_id.split("@", 1)[1] if "@" in image_id else ""
+
+                    name = normalised_image.split("/")[-1]
+                    if ":" in name:
+                        name, tag = name.rsplit(":", 1)
                     else:
-                        images.append((image_name, None, image))
-        except (oc.OpenShiftPythonException, AttributeError, KeyError, IndexError, ValueError) as e:
-            logger.warning("Failed to get images from %s: %s", project, e)
+                        tag = ""
+                    images.append((name, tag, image, digest))
+        except (oc.OpenShiftPythonException, AttributeError, KeyError, IndexError, ValueError) as exc:
+            logger.warning("Failed to get pod images from %s: %s", project, exc)
 
         return images
 
