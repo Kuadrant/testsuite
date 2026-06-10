@@ -24,7 +24,12 @@ def authorization(authorization, api_key, credentials):
 
 @pytest.mark.parametrize(
     "credentials",
-    [pytest.param("authorizationHeader", marks=pytest.mark.smoke), "customHeader", "queryString", "cookie"],
+    [
+        pytest.param("authorizationHeader", marks=[pytest.mark.smoke, pytest.mark.disconnected]),
+        "customHeader",
+        "queryString",
+        "cookie",
+    ],
     indirect=True,
 )
 def test_custom_selector(client, auth, credentials):
