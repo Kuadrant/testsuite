@@ -25,6 +25,7 @@ import pytest
 from dynaconf import ValidationError
 
 from testsuite.component_metadata import ReportPortalMetadataCollector
+from testsuite.container_image_versions import SEMVER_PATTERN, ContainerRegistryResolver
 from testsuite.template_utils import render_template
 from testsuite.config import settings
 
@@ -119,9 +120,57 @@ def test_kuadrant_properties(record_testsuite_property):
         cluster_data[cluster_name] = []
         kuadrant_images = ReportPortalMetadataCollector.get_component_images(project)
         for name, tag, full_image in kuadrant_images:
+            if "testsuite-pipelines-tools" in full_image:
+                continue
             if tag:
                 cluster_data[cluster_name].append(f"{name}:{tag} ({full_image})")
                 properties.append((name, tag))
+            else:
+                cluster_data[cluster_name].append(full_image)
+
+    _print_cluster_data(cluster_data)
+    _record_unique(record_testsuite_property, properties)
+
+
+def _resolve_tools_versions(tools_images):
+    """Resolve tool image digests to semver version tags."""
+    results = []
+    to_resolve = []
+    for name, tag, full_image, digest in tools_images:
+        if tag and SEMVER_PATTERN.match(tag):
+            results.append((name, tag, full_image))
+        else:
+            to_resolve.append((name, tag, full_image, digest))
+
+    if to_resolve:
+        try:
+            with ContainerRegistryResolver() as resolver:
+                for name, tag, full_image, digest in to_resolve:
+                    resolved = resolver.resolve_digest_to_tag(full_image, digest)
+                    results.append((name, resolved or tag, full_image))
+        except Exception as exc:  # pylint: disable=broad-except
+            logger.warning("Registry resolution failed: %s", exc)
+            for name, tag, full_image, _ in to_resolve:
+                results.append((name, tag, full_image))
+
+    return results
+
+
+def test_tools_properties(record_testsuite_property):
+    """Record tools version properties from all clusters."""
+    properties = []
+    cluster_data = {}
+    for cluster_name, _, project in _all_cluster_projects("tools"):
+        if project is None:
+            cluster_data[cluster_name] = ["namespace 'tools' not found"]
+            continue
+        cluster_data[cluster_name] = []
+        tools_images = ReportPortalMetadataCollector.get_pod_images(project)
+        resolved = _resolve_tools_versions(tools_images)
+        for name, version, full_image in resolved:
+            if version:
+                cluster_data[cluster_name].append(f"{name}:{version} ({full_image})")
+                properties.append((name, version))
             else:
                 cluster_data[cluster_name].append(full_image)
 
