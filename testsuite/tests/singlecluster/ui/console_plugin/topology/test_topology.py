@@ -35,7 +35,9 @@ def test_topology_resources_appear(
     # Verify all resources and policies are visible in topology
     assert topology_page.has_resource_node(gateway.model.metadata.name), "Gateway not found in topology"
     assert topology_page.has_resource_node(route.model.metadata.name), "HTTPRoute not found in topology"
-    assert topology_page.has_resource_node(grpc_route.model.metadata.name), "GRPCRoute not found in topology"
+    # GRPCRoute only on OCP 4.20+
+    if grpc_route is not None:
+        assert topology_page.has_resource_node(grpc_route.model.metadata.name), "GRPCRoute not found in topology"
     assert topology_page.has_resource_node(authorization.model.metadata.name), "AuthPolicy not found in topology"
     assert topology_page.has_resource_node(rate_limit.model.metadata.name), "RateLimitPolicy not found in topology"
     assert topology_page.has_resource_node(dns_policy.model.metadata.name), "DNSPolicy not found in topology"

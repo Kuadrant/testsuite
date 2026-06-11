@@ -11,7 +11,7 @@ from testsuite.page_objects.overview.overview_page import OverviewPage
 pytestmark = [pytest.mark.ui]
 
 
-def test_overview_page_sections_and_links(navigator):
+def test_overview_page_sections_and_links(navigator, openshift_version):
     """Verify all section panels are visible and Getting started resources has clickable links"""
     # Navigate to overview page
     overview_page = navigator.navigate(OverviewPage)
@@ -24,7 +24,9 @@ def test_overview_page_sections_and_links(navigator):
     assert overview_page.page.get_by_role("heading", name="Gateways - Traffic Analysis", exact=True).is_visible()
     assert overview_page.page.get_by_role("heading", name="Policies", exact=True).is_visible()
     assert overview_page.page.get_by_role("heading", name="HTTPRoutes", exact=True).is_visible()
-    assert overview_page.page.get_by_role("heading", name="GRPCRoutes", exact=True).is_visible()
+    # GRPCRoutes section only on OCP 4.20+
+    if openshift_version >= (4, 20):
+        assert overview_page.page.get_by_role("heading", name="GRPCRoutes", exact=True).is_visible()
 
     # Verify Getting started resources panel has clickable links
     getting_started_section = getting_started.locator("xpath=ancestor::section").first
@@ -33,7 +35,7 @@ def test_overview_page_sections_and_links(navigator):
     assert len(clickable_links) > 0, "No clickable links found in Getting started resources panel"
 
 
-def test_creation_buttons(navigator):
+def test_creation_buttons(navigator, openshift_version):
     """Verify creation buttons are clickable and policy dropdown shows available policy types"""
     # Navigate to overview page
     overview_page = navigator.navigate(OverviewPage)
@@ -47,9 +49,10 @@ def test_creation_buttons(navigator):
     create_httproute = overview_page.page.get_by_text("Create HTTPRoute")
     assert create_httproute.is_visible() and create_httproute.is_enabled()
 
-    # Verify Create GRPCRoute button is visible and clickable
-    create_grpcroute = overview_page.page.get_by_text("Create GRPCRoute")
-    assert create_grpcroute.is_visible() and create_grpcroute.is_enabled()
+    # Verify Create GRPCRoute button is visible and clickable (OCP 4.20+)
+    if openshift_version >= (4, 20):
+        create_grpcroute = overview_page.page.get_by_text("Create GRPCRoute")
+        assert create_grpcroute.is_visible() and create_grpcroute.is_enabled()
 
     # Verify Create Policy button is visible and clickable, then open dropdown
     create_policy = overview_page.page.get_by_text("Create Policy")
@@ -83,32 +86,38 @@ def test_additional_policy_types_in_dropdown(navigator):
         assert menu_item.is_enabled(), f"{policy_type} should be enabled"
 
 
-def test_resources_appear_in_sections(request, navigator, cluster, blame, module_label, wildcard_domain, backend):
-    """Verify gateway, HTTPRoute, GRPCRoute, and policy resources appear in their respective section panels"""
-    # Create resources programmatically
-    gateway_name = blame("gw")
-    gateway = KuadrantGateway.create_instance(cluster, gateway_name, {"app": module_label})
-    gateway.add_listener(GatewayListener(hostname=wildcard_domain))
-    request.addfinalizer(gateway.delete)
-    gateway.commit()
+def test_resources_appear_in_sections(
+    request, navigator, cluster, blame, module_label, wildcard_domain, backend, openshift_version
+):
+    """Verify gateway, HTTPRoute, GRPCRoute (OCP 4.20+), and policy resources appear in section panels"""
+    # Create gateway
+    gw_name = blame("gw")
+    gw = KuadrantGateway.create_instance(cluster, gw_name, {"app": module_label})
+    gw.add_listener(GatewayListener(hostname=wildcard_domain))
+    request.addfinalizer(gw.delete)
+    gw.commit()
 
-    route_name = blame("route")
-    route = HTTPRoute.create_instance(cluster, route_name, gateway)
-    route.add_backend(backend)
-    request.addfinalizer(route.delete)
-    route.commit()
-    route.wait_for_ready()
+    # Create HTTPRoute
+    http_route = HTTPRoute.create_instance(cluster, blame("route"), gw)
+    http_route.add_backend(backend)
+    request.addfinalizer(http_route.delete)
+    http_route.commit()
+    http_route.wait_for_ready()
 
-    grpc_route = GRPCRoute.create_instance(cluster, blame("grpc"), gateway)
-    request.addfinalizer(grpc_route.delete)
-    grpc_route.commit()
-    grpc_route.wait_for_ready()
+    # Create GRPCRoute only on OCP 4.20+
+    grpc_route = None
+    if openshift_version >= (4, 20):
+        grpc_route = GRPCRoute.create_instance(cluster, blame("grpc"), gw)
+        request.addfinalizer(grpc_route.delete)
+        grpc_route.commit()
+        grpc_route.wait_for_ready()
 
-    policy_name = blame("policy")
-    policy = AuthPolicy.create_instance(cluster, policy_name, gateway)
-    policy.authorization.add_opa_policy("denyAll", "allow = false")
-    request.addfinalizer(policy.delete)
-    policy.commit()
+    # Create AuthPolicy
+    auth_name = blame("policy")
+    auth = AuthPolicy.create_instance(cluster, auth_name, gw)
+    auth.authorization.add_opa_policy("denyAll", "allow = false")
+    request.addfinalizer(auth.delete)
+    auth.commit()
 
     # Navigate to overview page
     overview_page = navigator.navigate(OverviewPage)
@@ -116,23 +125,22 @@ def test_resources_appear_in_sections(request, navigator, cluster, blame, module
 
     # Verify gateway appears in Gateways - Traffic Analysis section panel
     assert overview_page.has_gateway_in_traffic_analysis(
-        gateway_name
-    ), f"Gateway '{gateway_name}' not visible in traffic analysis section panel"
+        gw_name
+    ), f"Gateway '{gw_name}' not visible in traffic analysis section panel"
 
     # Verify HTTPRoute appears in HTTPRoutes section panel
     assert overview_page.has_httproute_in_section(
-        route_name
-    ), f"HTTPRoute '{route_name}' not visible in HTTPRoutes section panel"
+        http_route.model.metadata.name
+    ), f"HTTPRoute '{http_route.model.metadata.name}' not visible in HTTPRoutes section panel"
 
-    # Verify GRPCRoute appears in GRPCRoutes section panel
-    assert overview_page.has_grpcroute_in_section(
-        grpc_route.model.metadata.name
-    ), "GRPCRoute not visible in GRPCRoutes section panel"
+    # Verify GRPCRoute appears in GRPCRoutes section panel (OCP 4.20+)
+    if grpc_route:
+        assert overview_page.has_grpcroute_in_section(
+            grpc_route.model.metadata.name
+        ), f"GRPCRoute '{grpc_route.model.metadata.name}' not visible in GRPCRoutes section panel"
 
     # Verify policy appears in Policies section panel
-    assert overview_page.has_policy_in_section(
-        policy_name
-    ), f"Policy '{policy_name}' not visible in Policies section panel"
+    assert overview_page.has_policy_in_section(auth_name), f"Policy '{auth_name}' not visible in Policies section panel"
 
 
 def test_gateway_section_status(request, navigator, cluster, blame, module_label, wildcard_domain):
