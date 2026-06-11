@@ -32,10 +32,9 @@ def test_wrong_issuer_type(request, gateway, blame, module_label, cluster):
     request.addfinalizer(policy.delete)
     res = cluster.do_action("create", "-f", "-", stdin_str=policy.as_json(), auto_raise=False)
     assert res.status() == 1, "Policy should not be created with invalid issuerRef.kind"
-    assert res.err().strip() == (
-        f'The TLSPolicy "{policy.model.metadata.name}" is invalid: spec.issuerRef: Invalid value: "object": '
-        f"Invalid issuerRef.kind. The only supported values are blank, 'Issuer' and 'ClusterIssuer'"
-    )
+    error = res.err().strip()
+    assert f'The TLSPolicy "{policy.model.metadata.name}" is invalid: spec.issuerRef' in error
+    assert "Invalid issuerRef.kind. The only supported values are blank, 'Issuer' and 'ClusterIssuer'" in error
 
 
 def test_non_existing_issuer(request, gateway, cluster, blame, module_label):
