@@ -1,4 +1,4 @@
-.PHONY: commit-acceptance pylint mypy black reformat test authorino poetry poetry-no-dev mgc container-image polish-junit reportportal authorino-standalone limitador kuadrant kuadrant-only disruptive kuadrantctl multicluster ui playwright-install collect grpc
+.PHONY: commit-acceptance pylint mypy black reformat test authorino poetry poetry-no-dev mgc container-image polish-junit reportportal authorino-standalone limitador kuadrant kuadrant-only disruptive disconnected kuadrantctl multicluster ui playwright-install collect grpc
 
 TB ?= short
 LOGLEVEL ?= INFO
@@ -67,6 +67,9 @@ ui: playwright-install ## Run UI (console plugin) tests
 
 disruptive: poetry-no-dev  ## Run disruptive tests
 	$(PYTEST) -m 'disruptive' $(flags) testsuite/tests/
+
+disconnected: poetry-no-dev  ## Run tests compatible with disconnected clusters
+	$(PYTEST) -n4 -m 'disconnected' --dist loadfile --enforce $(flags) testsuite/tests/
 
 egress-gateway: poetry-no-dev  ## Run egress gateway tests
 	$(PYTEST) -n4 -m 'egress_gateway' --dist loadfile --enforce $(flags) testsuite/tests/singlecluster/egress/
