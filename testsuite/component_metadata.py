@@ -128,6 +128,31 @@ class ReportPortalMetadataCollector:
         return images
 
     @staticmethod
+    def get_istio_type(cluster) -> tuple[str, Optional[str]]:
+        """Determine Istio installation type and namespace from cluster-wide Istio CRs.
+
+        Returns (istio_type, namespace) where istio_type is one of:
+        - "gateway-api-managed" with namespace from the Istio CR spec
+        - "user-managed-ossm" with namespace from the Istio CR spec
+        - "none" with None
+        """
+        try:
+            with cluster.context:
+                istios = oc.selector("Istio", all_namespaces=True).objects()
+                if not istios:
+                    return "none", None
+                gateway_istio = next((i for i in istios if i.name() == "openshift-gateway"), None)
+                if gateway_istio:
+                    return "gateway-api-managed", gateway_istio.model.spec.namespace
+                ossm_istio = next((i for i in istios if i.name() == "default"), None)
+                if ossm_istio:
+                    return "user-managed-ossm", ossm_istio.model.spec.namespace
+                return "none", None
+        except (oc.OpenShiftPythonException, AttributeError, KeyError) as e:
+            logger.warning("Failed to detect Istio type: %s", e)
+            return "none", None
+
+    @staticmethod
     def get_istio_metadata(project) -> dict[str, str]:
         """Get Istio version and istiod image from the cluster."""
         metadata: dict[str, str] = {}
