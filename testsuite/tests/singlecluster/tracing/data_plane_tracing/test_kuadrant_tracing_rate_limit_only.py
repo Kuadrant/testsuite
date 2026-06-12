@@ -1,5 +1,9 @@
 """
 Tests for distributed tracing with only a RateLimitPolicy configured (no AuthPolicy).
+
+With Gateway API-managed Istio, gateway traces are not available because the Istio CR cannot be
+modified to enable tracing (meshConfig.enableTracing, extensionProviders) and the Telemetry
+resource cannot be created. Gateway service assertions are conditional on has_ossm.
 """
 
 import os
@@ -28,7 +32,7 @@ def commit(request, rate_limit):
 
 
 @pytest.fixture(scope="module")
-def trace_429(client, tracing):
+def trace_429(client, tracing, has_ossm):
     """
     Sends requests to exhaust the rate limit, produces a 429 response,
     and fetches the full wasm-shim trace.
@@ -40,19 +44,23 @@ def trace_429(client, tracing):
     assert response_429.status_code == 429
 
     request_id = response_429.headers.get("x-request-id")
-    traces = tracing.get_traces(service="wasm-shim", min_processes=3, tags={"request_id": request_id})
+    min_procs = 3 if has_ossm else 2
+    traces = tracing.get_traces(service="wasm-shim", min_processes=min_procs, tags={"request_id": request_id})
     assert len(traces) == 1, f"No trace was found in tracing backend with request_id: {request_id}"
     return traces[0]
 
 
-def test_relevant_services_rate_limit_only(trace_429, label):
+def test_relevant_services_rate_limit_only(trace_429, label, has_ossm):
     """
-    Test that traces with only a RateLimitPolicy include all relevant services (wasm-shim, limitador, and gateway).
+    Test that traces with only a RateLimitPolicy include relevant Kuadrant services.
+    Gateway service is only present with full OSSM3 Istio installation.
     Trace should not contain authorino since no authorization is involved.
     """
 
     process_services = trace_429.get_process_services()
-    services = ["wasm-shim", "limitador", f"{label}.kuadrant"]
+    services = ["wasm-shim", "limitador"]
+    if has_ossm:
+        services.append(f"{label}.kuadrant")
     for service in services:
         assert service in process_services, f"Service '{service}' not found in trace processes: {process_services}"
 

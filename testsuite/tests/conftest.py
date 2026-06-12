@@ -446,3 +446,20 @@ def check_min_ocp_version(request, openshift_version):
             pytest.skip("Could not detect OpenShift version")
         if openshift_version < required_version:
             pytest.skip(f"Requires OCP {'.'.join(map(str, required_version))}+")
+
+
+@pytest.fixture(scope="session")
+def has_ossm(cluster):
+    """True if a full OSSM3 Istio installation exists (not just Gateway API-managed Istio)"""
+    with cluster.context:
+        istios = selector("Istio", all_namespaces=True).objects()
+        return bool(istios) and not any(i.name() == "openshift-gateway" for i in istios)
+
+
+@pytest.fixture(autouse=True)
+def check_required_ossm(request, has_ossm, skip_or_fail):
+    """Skip tests that require a user-managed OSSM3 Istio (e.g. mTLS, sidecar injection).
+    Gateway API-managed Istio does not allow modifications to the Istio CR."""
+    marker = request.node.get_closest_marker("required_ossm")
+    if marker and not has_ossm:
+        skip_or_fail("Test requires user-managed OSSM3 Istio; Gateway API-managed Istio cannot be modified")
