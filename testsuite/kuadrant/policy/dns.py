@@ -5,7 +5,6 @@ from typing import Optional, Literal
 
 import backoff
 import openshift_client as oc
-
 from testsuite.gateway import Referencable
 from testsuite.kubernetes import KubernetesObject
 from testsuite.kubernetes.client import KubernetesClient
