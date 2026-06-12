@@ -9,6 +9,7 @@ from time import sleep
 
 import pytest
 
+from testsuite.utils.constants import TRLP_FREE_USER_RESET_WAIT, TRLP_PAID_USER_RESET_WAIT
 from .conftest import FREE_USER_LIMIT, PAID_USER_LIMIT
 
 pytestmark = [pytest.mark.limitador, pytest.mark.authorino, pytest.mark.kuadrant_only]
@@ -67,7 +68,7 @@ def test_trlp_limit_and_reset_free_user(client, free_user_auth):
     ), f"Expected 429 after {total_tokens}/{FREE_USER_LIMIT.limit} tokens, but got {response.status_code}"
 
     # Assert quota resets after wait period
-    sleep(30)
+    sleep(TRLP_FREE_USER_RESET_WAIT)
     response = client.post("/v1/chat/completions", auth=free_user_auth, json={**basic_request})
     assert response.status_code == 200, f"Expected 200 after reset, but got {response.status_code}"
 
@@ -101,6 +102,6 @@ def test_trlp_limit_and_reset_paid_user(client, paid_user_auth):
         response.status_code == 429
     ), f"Expected 429 after {total_tokens}/{PAID_USER_LIMIT.limit} tokens, but got {response.status_code}"
 
-    sleep(60)
+    sleep(TRLP_PAID_USER_RESET_WAIT)
     response = client.post("/v1/chat/completions", auth=paid_user_auth, json={**basic_request})
     assert response.status_code == 200, f"Expected 200 after reset, but got {response.status_code}"
