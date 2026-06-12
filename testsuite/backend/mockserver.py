@@ -70,6 +70,7 @@ class MockserverBackend(Backend):
 
     def commit(self):
         match_labels = {"app": self.label, "deployment": self.name}
+        env_limit = {"JAVA_TOOL_OPTIONS": "-Xmx220m"}
         self.deployment = Deployment.create_instance(
             self.cluster,
             self.name,
@@ -78,11 +79,13 @@ class MockserverBackend(Backend):
             ports={"api": MOCKSERVER_INTERNAL_PORT},
             selector=Selector(matchLabels=match_labels),
             labels={"app": self.label},
-            resources=ContainerResources(limits_memory="2G"),
+            resources=ContainerResources(
+                limits_cpu="100m", requests_cpu="10m", limits_memory="300Mi", requests_memory="200Mi"
+            ),
             lifecycle={"postStart": {"exec": {"command": ["/bin/sh", "init-mockserver"]}}},
             volumes=self.config.volumes if self.config else None,
             volume_mounts=self.config.volume_mounts if self.config else None,
-            env=self.config.env if self.config else None,
+            env=env_limit | self.config.env if self.config else env_limit,
         )
         self.deployment.commit()
 
