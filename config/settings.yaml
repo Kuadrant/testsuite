@@ -18,6 +18,8 @@ default:
     image: "quay.io/rhn_support_azgabur/mockserver:latest"
   spicedb:
     image: "quay.io/authzed/spicedb:latest"
+  pipeline_policy_extension_service:
+    image: "quay.io/kuadrant/threat-assessment-service:latest"
   prometheus:
     project: "openshift-monitoring"
     service: "thanos-querier"
