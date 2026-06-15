@@ -5,7 +5,7 @@ Tests mTLS configuration and readiness after Kuadrant CR changes
 import pytest
 from openshift_client import selector
 
-pytestmark = [pytest.mark.disruptive, pytest.mark.required_ossm]
+pytestmark = [pytest.mark.disruptive, pytest.mark.user_managed_istio]
 
 component_cases = [
     pytest.param(["limitador"], id="limitador-only"),

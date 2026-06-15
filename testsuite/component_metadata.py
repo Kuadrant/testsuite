@@ -132,8 +132,8 @@ class ReportPortalMetadataCollector:
         """Determine Istio installation type and namespace from cluster-wide Istio CRs.
 
         Returns (istio_type, namespace) where istio_type is one of:
-        - "gateway-api-managed" with namespace from the Istio CR spec
-        - "user-managed-ossm" with namespace from the Istio CR spec
+        - "ocp-managed" with namespace from the Istio CR spec
+        - "user-managed" with namespace from the Istio CR spec
         - "none" with None
         """
         try:
@@ -143,14 +143,13 @@ class ReportPortalMetadataCollector:
                     return "none", None
                 gateway_istio = next((i for i in istios if i.name() == "openshift-gateway"), None)
                 if gateway_istio:
-                    return "gateway-api-managed", gateway_istio.model.spec.namespace
-                ossm_istio = next((i for i in istios if i.name() == "default"), None)
-                if ossm_istio:
-                    return "user-managed-ossm", ossm_istio.model.spec.namespace
-                return "none", None
+                    return "ocp-managed", gateway_istio.model.spec.namespace
+                default_istio = next((i for i in istios if i.name() == "default"), None)
+                if default_istio:
+                    return "user-managed", default_istio.model.spec.namespace
         except (oc.OpenShiftPythonException, AttributeError, KeyError) as e:
             logger.warning("Failed to detect Istio type: %s", e)
-            return "none", None
+        return "none", None
 
     @staticmethod
     def get_istio_metadata(project) -> dict[str, str]:
