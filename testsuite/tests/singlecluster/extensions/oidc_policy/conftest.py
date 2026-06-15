@@ -8,11 +8,10 @@ from testsuite.gateway import Gateway, GatewayListener
 from testsuite.gateway.gateway_api.gateway import KuadrantGateway
 from testsuite.kuadrant.extensions.oidc_policy import OIDCPolicy, Provider
 
-
 @pytest.fixture(scope="module")
 def gateway(request, domain_name, base_domain, cluster, blame, label) -> Gateway:
     """Create and configure the test Gateway."""
-    fqdn = f"{domain_name}-kuadrant.{base_domain}"
+    fqdn = f"{domain_name}-{cluster.project}.{base_domain}"
     gw = KuadrantGateway.create_instance(cluster, blame("gw"), {"app": label})
     gw.add_listener(GatewayListener(hostname=fqdn))
     request.addfinalizer(gw.delete)
