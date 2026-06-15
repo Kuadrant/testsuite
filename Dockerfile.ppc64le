@@ -1,0 +1,97 @@
+FROM --platform=${BUILDPLATFORM} quay.io/centos/centos:stream9 AS builder
+
+RUN dnf install -y \
+    python3.11 \
+    python3.11-pip \
+    python3.11-devel \
+    gcc \
+    gcc-c++ \
+    make \
+    git \
+    libxml2-devel \
+    libxslt-devel \
+    libffi-devel \
+    openssl-devel \
+    zlib-devel \
+    && dnf clean all
+
+# Install poetry + export plugin natively
+RUN python3.11 -m pip --no-cache-dir install \
+    poetry \
+    poetry-plugin-export
+
+WORKDIR /opt/workdir/kuadrant-testsuite
+COPY . .
+
+# Export deps excluding playwright (no ppc64le wheel)
+RUN poetry export \
+    --without-hashes \
+    --without dev \
+    -f requirements.txt \
+    -o /tmp/requirements.txt && \
+    grep -v "playwright" /tmp/requirements.txt \
+    > /tmp/requirements-ppc64le.txt && \
+    python3.11 -m pip install \
+    --no-cache-dir \
+    --target /tmp/ppc64le-deps \
+    -r /tmp/requirements-ppc64le.txt
+
+FROM quay.io/centos/centos:stream9
+LABEL description="Run Kuadrant integration tests \
+Default ENTRYPOINT: 'make' and CMD: 'test' \
+Bind dynaconf settings to /opt/secrets.yaml \
+Bind kubeconfig to /opt/kubeconfig \
+Bind a dir to /test-run-results to get reports "
+
+ARG TARGETARCH=ppc64le
+
+RUN useradd --no-log-init -u 1001 -g root -m testsuite
+
+RUN dnf install -y \
+    python3.11 \
+    python3.11-pip \
+    make \
+    git \
+    && dnf clean all
+
+RUN curl -LO \
+    "https://dl.k8s.io/release/v1.30.2/bin/linux/${TARGETARCH}/kubectl" && \
+    mv kubectl /usr/local/bin && \
+    chmod +x /usr/local/bin/kubectl
+
+RUN curl -L \
+    "https://github.com/cloudflare/cfssl/releases/download/v1.6.4/cfssl_1.6.4_linux_${TARGETARCH}" \
+    >/usr/bin/cfssl && \
+    chmod +x /usr/bin/cfssl
+
+RUN curl -fL \
+    "https://github.com/kube-burner/kube-burner/releases/download/v1.16.4/kube-burner-V1.16.4-linux-ppc64le.tar.gz" \
+    -o /tmp/kube-burner.tar.gz && \
+    tar -xz -C /usr/bin --wildcards "kube-burner" \
+    -f /tmp/kube-burner.tar.gz && \
+    chmod 0755 /usr/bin/kube-burner && \
+    rm /tmp/kube-burner.tar.gz
+
+COPY --from=builder /tmp/ppc64le-deps /usr/local/lib/python3.11/site-packages/
+COPY --from=builder /opt/workdir /opt/workdir
+
+RUN mkdir -p -m 0770 /test-run-results && \
+    chmod 0750 /opt/workdir/virtualenvs 2>/dev/null || true && \
+    chown testsuite -R /opt/workdir/ && \
+    chown testsuite /test-run-results
+
+RUN touch /run/kubeconfig && \
+    chmod 660 /run/kubeconfig && \
+    chown testsuite /run/kubeconfig
+
+USER testsuite
+
+ENV KUBECONFIG=/run/kubeconfig \
+    SECRETS_FOR_DYNACONF=/run/secrets.yaml \
+    POETRY_VIRTUALENVS_PATH=/opt/workdir/virtualenvs/ \
+    SSL_CERT_FILE=/etc/pki/tls/certs/ca-bundle.crt \
+    junit=yes \
+    resultsdir=/test-run-results
+
+ENTRYPOINT [ "make" ]
+CMD [ "test" ]
