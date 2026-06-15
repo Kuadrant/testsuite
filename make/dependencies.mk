@@ -18,14 +18,29 @@ start-cloud-provider: ## Start cloud-provider-kind for LoadBalancer services
 	fi
 	@if pgrep -x cloud-provider-kind >/dev/null 2>&1; then \
 		echo "cloud-provider-kind is already running"; \
-	elif [ "$$(uname)" = "Darwin" ]; then \
-		echo "Starting cloud-provider-kind (macOS, requires sudo)..."; \
-		sudo cloud-provider-kind > /tmp/cloud-provider-kind.log 2>&1 & \
-		sleep 2; \
-		echo "cloud-provider-kind started (log: /tmp/cloud-provider-kind.log)"; \
 	else \
+		DOCKER_HOST_ENV=""; \
+		if $(CONTAINER_ENGINE) --version 2>/dev/null | grep -qi podman; then \
+			if [ "$$(uname)" = "Darwin" ]; then \
+				SOCKET="$$(podman machine inspect --format '{{.ConnectionInfo.PodmanSocket.Path}}' 2>/dev/null)"; \
+			else \
+				SOCKET="$$(podman info --format '{{.Host.RemoteSocket.Path}}' 2>/dev/null)"; \
+			fi; \
+			if [ -n "$$SOCKET" ] && [ -S "$$SOCKET" ]; then \
+				DOCKER_HOST_ENV="DOCKER_HOST=unix://$$SOCKET"; \
+				echo "Detected podman, using socket: $$SOCKET"; \
+			else \
+				echo "ERROR: Podman detected, but no Docker-compatible socket was found."; \
+				echo "  On Linux, enable the podman socket: systemctl --user start podman.socket"; \
+				exit 1; \
+			fi; \
+		fi; \
 		echo "Starting cloud-provider-kind..."; \
-		cloud-provider-kind > /tmp/cloud-provider-kind.log 2>&1 & \
+		if [ "$$(uname)" = "Darwin" ]; then \
+			sudo env $$DOCKER_HOST_ENV cloud-provider-kind > /tmp/cloud-provider-kind.log 2>&1 & \
+		else \
+			env $$DOCKER_HOST_ENV cloud-provider-kind > /tmp/cloud-provider-kind.log 2>&1 & \
+		fi; \
 		sleep 2; \
 		echo "cloud-provider-kind started (log: /tmp/cloud-provider-kind.log)"; \
 	fi
