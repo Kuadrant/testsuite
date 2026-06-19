@@ -16,42 +16,54 @@ start-cloud-provider: ## Start cloud-provider-kind for LoadBalancer services
 		echo "  or on macOS: brew install cloud-provider-kind"; \
 		exit 1; \
 	fi
-	@if pgrep -x cloud-provider-kind >/dev/null 2>&1; then \
-		echo "cloud-provider-kind is already running"; \
-	else \
-		DOCKER_HOST_ENV=""; \
-		if $(CONTAINER_ENGINE) --version 2>/dev/null | grep -qi podman; then \
-			if [ "$$(uname)" = "Darwin" ]; then \
-				SOCKET="$$(podman machine inspect --format '{{.ConnectionInfo.PodmanSocket.Path}}' 2>/dev/null)"; \
-			else \
-				SOCKET="$$(podman info --format '{{.Host.RemoteSocket.Path}}' 2>/dev/null)"; \
-			fi; \
-			if [ -n "$$SOCKET" ] && [ -S "$$SOCKET" ]; then \
-				DOCKER_HOST_ENV="DOCKER_HOST=unix://$$SOCKET"; \
-				echo "Detected podman, using socket: $$SOCKET"; \
-			else \
-				echo "ERROR: Podman detected, but no Docker-compatible socket was found."; \
-				echo "  On Linux, enable the podman socket: systemctl --user start podman.socket"; \
-				exit 1; \
-			fi; \
-		fi; \
-		echo "Starting cloud-provider-kind..."; \
-		if [ "$$(uname)" = "Darwin" ]; then \
-			sudo env $$DOCKER_HOST_ENV cloud-provider-kind > /tmp/cloud-provider-kind.log 2>&1 & \
-		else \
-			env $$DOCKER_HOST_ENV cloud-provider-kind > /tmp/cloud-provider-kind.log 2>&1 & \
-		fi; \
-		sleep 2; \
-		echo "cloud-provider-kind started (log: /tmp/cloud-provider-kind.log)"; \
+	@if [ "$$(uname)" = "Darwin" ]; then \
+		sudo pkill -f cloud-provider-kind 2>/dev/null || true; \
+	elif [ -f /tmp/cloud-provider-kind.pid ]; then \
+		PID=$$(cat /tmp/cloud-provider-kind.pid); \
+		kill -9 $$PID 2>/dev/null || true; \
+		rm -f /tmp/cloud-provider-kind.pid; \
+		echo "Stopped existing cloud-provider-kind (PID $$PID)"; \
 	fi
+	@DOCKER_HOST_ENV=""; \
+	if $(CONTAINER_ENGINE) --version 2>/dev/null | grep -qi podman; then \
+		if [ "$$(uname)" = "Darwin" ]; then \
+			SOCKET="$$(podman machine inspect --format '{{.ConnectionInfo.PodmanSocket.Path}}' 2>/dev/null)"; \
+		else \
+			SOCKET="$$(podman info --format '{{.Host.RemoteSocket.Path}}' 2>/dev/null)"; \
+		fi; \
+		if [ -n "$$SOCKET" ] && [ -S "$$SOCKET" ]; then \
+			DOCKER_HOST_ENV="DOCKER_HOST=unix://$$SOCKET"; \
+			echo "Detected podman, using socket: $$SOCKET"; \
+		else \
+			echo "ERROR: Podman detected, but no Docker-compatible socket was found."; \
+			if [ "$$(uname)" = "Darwin" ]; then \
+				echo "ERROR: Check 'podman machine start' or 'podman machine inspect'."; \
+			else \
+				echo "ERROR: Use 'systemctl --user status podman.socket' to check status."; \
+				echo "  On Linux, enable the podman socket: systemctl --user start podman.socket"; \
+			fi; \
+			exit 1; \
+		fi; \
+	fi; \
+	echo "Starting cloud-provider-kind..."; \
+	if [ "$$(uname)" = "Darwin" ]; then \
+		sudo env $$DOCKER_HOST_ENV cloud-provider-kind > /tmp/cloud-provider-kind.log 2>&1 & \
+	else \
+		env $$DOCKER_HOST_ENV cloud-provider-kind --enable-lb-port-mapping > /tmp/cloud-provider-kind.log 2>&1 & \
+		echo $$! > /tmp/cloud-provider-kind.pid; \
+	fi; \
+	sleep 2; \
+	echo "cloud-provider-kind started (log: /tmp/cloud-provider-kind.log)"
 
 .PHONY: stop-cloud-provider
 stop-cloud-provider: ## Stop cloud-provider-kind background process
 	@echo "Stopping cloud-provider-kind..."
 	@if [ "$$(uname)" = "Darwin" ]; then \
 		sudo pkill -f cloud-provider-kind 2>/dev/null || true; \
-	else \
-		kill [c]loud-provider-kind 2>/dev/null || true; \
+	elif [ -f /tmp/cloud-provider-kind.pid ]; then \
+		PID=$$(cat /tmp/cloud-provider-kind.pid); \
+		kill -9 $$PID 2>/dev/null || true; \
+		rm -f /tmp/cloud-provider-kind.pid; \
 	fi
 	@echo "cloud-provider-kind stopped"
 
