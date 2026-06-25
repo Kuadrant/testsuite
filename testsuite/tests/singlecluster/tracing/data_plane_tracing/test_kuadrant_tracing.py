@@ -109,31 +109,31 @@ def test_relevant_services_on_auth_denied(trace_401, label):
 
 
 @pytest.mark.parametrize(
-    "operation_name, policy, policy_kind",
+    "action, policy, policy_kind",
     [
         ("auth", "authorization", "authpolicy"),
         ("ratelimit", "rate_limit", "ratelimitpolicy"),
     ],
 )
-def test_spans_have_correct_policy_source_references(trace_200, operation_name, policy, policy_kind, request):
+def test_spans_have_correct_policy_source_references(trace_200, action, policy, policy_kind, request):
     """
     Test that trace spans contain correct policy source references.
 
-    Validates that authorization and rate limiting spans include a "sources" tag
+    Validates that authorization and rate limiting grpc spans include a "sources" tag
     that references the specific Kuadrant policy (AuthPolicy or RateLimitPolicy)
     responsible for the operation. This enables operators to trace policy enforcement
     back to specific policy resources.
 
     Parametrized to test both:
-    - auth spans → AuthPolicy source reference
-    - ratelimit spans → RateLimitPolicy source reference
+    - auth grpc spans → AuthPolicy source reference
+    - ratelimit grpc spans → RateLimitPolicy source reference
     """
     policy_obj = request.getfixturevalue(policy)
     expected_sources = f"{policy_kind}.kuadrant.io:kuadrant/{policy_obj.model.metadata['name']}"
     policy_spans = trace_200.filter_spans(
-        lambda s: s.operation_name == operation_name and s.has_tag("sources", expected_sources)
+        lambda s: s.operation_name == "grpc" and s.has_tag("action", action) and s.has_tag("sources", expected_sources)
     )
-    assert len(policy_spans) > 0, f"No {operation_name} span with sources '{expected_sources}' found in trace"
+    assert len(policy_spans) > 0, f"No grpc span with action '{action}' and sources '{expected_sources}' found in trace"
 
 
 @pytest.mark.parametrize("expected_status_code, trace_fixture", [(429, "trace_429"), (401, "trace_401")])
@@ -171,14 +171,50 @@ def test_send_reply_span_not_on_successful_response(trace_200):
     ), f"Expected no send_reply spans for successful response, but found {len(send_reply_spans)}"
 
 
-def assert_parent_child(trace, parent_op, child_op):
-    """Assert that child_op span is a direct child of parent_op span."""
-    parent_span = trace.filter_spans(lambda s: s.operation_name == parent_op)[0]
-    child_span = trace.filter_spans(lambda s: s.operation_name == child_op)[0]
-    parent_id = child_span.get_parent_id()
-    assert (
-        parent_id == parent_span.span_id
-    ), f"Expected '{child_op}' to be a child of '{parent_op}', but got parent {parent_id}"
+@pytest.mark.parametrize(
+    "expected_limited, trace_fixture",
+    [
+        (False, "trace_200"),
+        (True, "trace_429"),
+    ],
+)
+def test_ratelimit_limited_tag(expected_limited, trace_fixture, request):
+    """
+    Test that the should_rate_limit span has the correct ratelimit.limited tag.
+
+    When a request is allowed (200), ratelimit.limited should be false.
+    When a request is rate limited (429), ratelimit.limited should be true.
+    """
+    trace = request.getfixturevalue(trace_fixture)
+    srl_spans = trace.filter_spans(
+        lambda s: s.operation_name == "should_rate_limit" and s.has_tag("ratelimit.limited", expected_limited)
+    )
+    assert len(srl_spans) > 0, f"No should_rate_limit span with ratelimit.limited={expected_limited} found in trace"
+
+
+def test_ratelimit_limit_name_tag(trace_429, rate_limit):
+    """
+    Test that the should_rate_limit span has the correct ratelimit.limit_name tag
+    matching the limit name configured in the RateLimitPolicy.
+    """
+    limit_name = list(rate_limit.model.spec.limits)[0]
+    srl_spans = trace_429.filter_spans(
+        lambda s: s.operation_name == "should_rate_limit" and s.has_tag("ratelimit.limit_name", limit_name)
+    )
+    assert len(srl_spans) > 0, f"No should_rate_limit span with ratelimit.limit_name='{limit_name}' found in trace"
+
+
+def assert_child(trace, parent_span, child_op, **tags):
+    """Assert that parent_span has a direct child with the given operation name and tags. Returns the child span."""
+    children = trace.get_children(parent_span.span_id)
+    matches = [c for c in children if c.operation_name == child_op]
+    for key, value in tags.items():
+        matches = [c for c in matches if c.has_tag(key, value)]
+    assert len(matches) == 1, (
+        f"Expected exactly one '{child_op}' child of '{parent_span.operation_name}' "
+        f"(tags={tags}), found {len(matches)}"
+    )
+    return matches[0]
 
 
 def test_span_hierarchy(trace_200):
@@ -187,23 +223,27 @@ def test_span_hierarchy(trace_200):
     Validates parent-child relationships between spans across wasm-shim, authorino, and limitador.
     """
 
-    spans = trace_200.spans
-    assert len(spans) > 0, "No spans found in trace"
+    assert len(trace_200.spans) > 0, "No spans found in trace"
 
-    expected_operations_hierarchy = {
-        "kuadrant_filter": ["auth", "ratelimit"],
-        "auth": ["auth_request", "auth_response"],
-        "ratelimit": ["ratelimit_request", "ratelimit_response"],
-        "auth_request": ["envoy.service.auth.v3.Authorization/Check"],
-        "envoy.service.auth.v3.Authorization/Check": ["Check"],
-        "ratelimit_request": ["should_rate_limit"],
-        "should_rate_limit": ["check_and_update"],
-    }
+    kuadrant_filters = trace_200.filter_spans(lambda s: s.operation_name == "kuadrant_filter")
+    assert kuadrant_filters, "No 'kuadrant_filter' span found in trace"
+    kuadrant_filter = kuadrant_filters[0]
 
-    for parent_op, child_ops in expected_operations_hierarchy.items():
-        parent_spans = [s for s in trace_200.spans if s.operation_name == parent_op]
-        assert parent_spans, f"Expected operation '{parent_op}' not found in trace spans"
-        for child_op in child_ops:
-            child_spans = [s for s in trace_200.spans if s.operation_name == child_op]
-            assert child_spans, f"Expected operation '{child_op}' not found in trace spans"
-            assert_parent_child(trace_200, parent_op, child_op)
+    # Auth grpc span and its children
+    auth_grpc = assert_child(trace_200, kuadrant_filter, "grpc", action="auth")
+    auth_req = assert_child(trace_200, auth_grpc, "grpc_request", grpc_service="envoy.service.auth.v3.Authorization")
+    assert_child(trace_200, auth_grpc, "grpc_response", grpc_service="envoy.service.auth.v3.Authorization")
+    auth_check = assert_child(trace_200, auth_req, "envoy.service.auth.v3.Authorization/Check")
+    assert_child(trace_200, auth_check, "Check")
+
+    # Ratelimit grpc span and its children
+    rl_grpc = assert_child(trace_200, kuadrant_filter, "grpc", action="ratelimit")
+    rl_req = assert_child(
+        trace_200, rl_grpc, "grpc_request", grpc_service="envoy.service.ratelimit.v3.RateLimitService"
+    )
+    assert_child(trace_200, rl_grpc, "grpc_response", grpc_service="envoy.service.ratelimit.v3.RateLimitService")
+    should_rate_limit = assert_child(trace_200, rl_req, "should_rate_limit")
+    assert_child(trace_200, should_rate_limit, "check_and_update")
+
+    # Headers span
+    assert_child(trace_200, kuadrant_filter, "headers")
