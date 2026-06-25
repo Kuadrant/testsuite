@@ -29,6 +29,9 @@ ifeq ($(GATEWAYAPI_PROVIDER),istio)
 endif
 endif
 	$(MAKE) deploy-kuadrant-operator
+ifeq ($(INSTALL_EXTENSIONS),true)
+	$(MAKE) deploy-extensions
+endif
 	$(MAKE) deploy-kuadrant-cr
 	@echo ""
 	@echo "Local environment setup complete!"
@@ -44,6 +47,9 @@ ifeq ($(INSTALL_PROMETHEUS),true)
 endif
 ifeq ($(INSTALL_TRACING),true)
 	@echo "   Tracing: Enabled"
+endif
+ifeq ($(INSTALL_EXTENSIONS),true)
+	@echo "   Extensions: Enabled (image: $(EXTENSIONS_IMAGE))"
 endif
 	@echo ""
 	@echo "Run tests with: make kuadrant"
