@@ -9,7 +9,7 @@ else
 resultsdir ?= .
 endif
 
-ROOTLESS_NETNS := $(shell if $(CONTAINER_ENGINE) --version 2>/dev/null | grep -qi podman && $(CONTAINER_ENGINE) info --format '{{.Host.Security.Rootless}}' 2>/dev/null | grep -q true; then echo "podman unshare --rootless-netns"; fi)
+ROOTLESS_NETNS := $(shell if [ "$$(uname)" = "Linux" ] && $(CONTAINER_ENGINE) --version 2>/dev/null | grep -qi podman && $(CONTAINER_ENGINE) info --format '{{.Host.Security.Rootless}}' 2>/dev/null | grep -q true; then echo "podman unshare --rootless-netns"; fi)
 PYTEST = $(ROOTLESS_NETNS) poetry run python -m pytest --tb=$(TB) --reruns 3 --reruns-delay 2 -o cache_dir=$(resultsdir)/.pytest_cache.$(@F)
 RUNSCRIPT = poetry run ./scripts/
 
