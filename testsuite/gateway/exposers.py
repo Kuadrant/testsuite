@@ -1,7 +1,5 @@
 """General exposers, not tied to Envoy or Gateway API"""
 
-from typing import Literal
-
 from testsuite.gateway import Exposer, Hostname
 from testsuite.httpx import KuadrantClient, ForceSNIClient
 from testsuite.kubernetes.openshift.route import OpenshiftRoute
@@ -75,10 +73,6 @@ class LoadBalancerServiceExposer(Exposer):
         return StaticLocalHostname(
             hostname, exposable.external_ip, lambda: exposable.get_tls_cert(hostname), force_https=self.passthrough
         )
-
-    @property
-    def backend_service_type(self) -> Literal["LoadBalancer"]:
-        return "LoadBalancer"
 
     @property
     def base_domain(self) -> str:

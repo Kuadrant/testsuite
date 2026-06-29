@@ -25,7 +25,6 @@ class Backend(LifecycleObject, Referencable, Exposable):
         self.deployment = None
         self.service = None
         self._admin_hostname: Optional["Hostname"] = None
-        self._admin_service = None
 
     @property
     def cluster(self) -> KubernetesClient:
@@ -77,9 +76,6 @@ class Backend(LifecycleObject, Referencable, Exposable):
     def delete(self):
         """Clean-up the backend"""
         with self.cluster.context:
-            if self._admin_service:
-                self._admin_service.delete()
-                self._admin_service = None
             if self.service:
                 self.service.delete()
                 self.service = None

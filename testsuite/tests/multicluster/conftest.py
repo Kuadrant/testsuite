@@ -82,7 +82,7 @@ def backends(request, cluster, cluster2, blame, label):
             data={"echo_expectation.json": echo_json},
         )
         config.commit()
-        mockserver = MockserverBackend(cluster_client, name, label, config=config)
+        mockserver = MockserverBackend(cluster_client, name, label, service_type="ClusterIP", config=config)
         request.addfinalizer(mockserver.delete)
         mockserver.commit()
         mockserver.wait_for_ready()
