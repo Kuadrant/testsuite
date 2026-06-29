@@ -300,11 +300,6 @@ class Exposer(LifecycleObject):
         """
 
     @property
-    def backend_service_type(self) -> Optional[Literal["ClusterIP", "LoadBalancer", "NodePort", "ExternalName"]]:
-        """Service type to create when exposing a backend directly. None means no extra service needed."""
-        return None
-
-    @property
     @abstractmethod
     def base_domain(self) -> str:
         """Returns base domains for all hostnames created by this exposer"""
