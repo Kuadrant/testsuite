@@ -195,7 +195,7 @@ def pytest_runtest_makereport(item, call):  # pylint: disable=unused-argument
     denied_ids = set(client.denied_request_ids)
     client.denied_request_ids.clear()
 
-    if item.config.getoption("--verify-denials") != "true":
+    if item.config.getoption("--verify-denials").strip().lower() != "true":
         return
 
     backend = item.funcargs.get("backend")
