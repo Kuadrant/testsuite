@@ -91,7 +91,9 @@ class HTTPRoute(KubernetesObject, GatewayRoute):
         self.model.spec.hostnames = []
 
     @modify
-    def add_rule(self, backend: "Backend", *route_matches: RouteMatch, filters: list[URLRewriteFilter] = None):
+    def add_rule(
+        self, backend: "Backend", *route_matches: RouteMatch, filters: list[URLRewriteFilter] = None, name: str = None
+    ):
         """Adds rule to the Route"""
         rules: dict[str, typing.Any] = {"backendRefs": [backend.reference]}
         matches = list(route_matches)
@@ -101,6 +103,8 @@ class HTTPRoute(KubernetesObject, GatewayRoute):
         rules["matches"] = [asdict(match) for match in matches]
         if filters:
             rules["filters"] = [asdict(f) for f in filters]
+        if name:
+            rules["name"] = name
         self.model.spec.rules.append(rules)
 
     @modify
@@ -109,10 +113,14 @@ class HTTPRoute(KubernetesObject, GatewayRoute):
         self.model.spec.rules = []
 
     @modify
-    def add_backend(self, backend: "Backend", prefix="/"):
-        self.model.spec.rules.append(
-            {"backendRefs": [backend.reference], "matches": [{"path": {"value": prefix, "type": "PathPrefix"}}]}
-        )
+    def add_backend(self, backend: "Backend", prefix="/", name: str = None):
+        rule: dict[str, typing.Any] = {
+            "backendRefs": [backend.reference],
+            "matches": [{"path": {"value": prefix, "type": "PathPrefix"}}],
+        }
+        if name:
+            rule["name"] = name
+        self.model.spec.rules.append(rule)
 
     @modify
     def remove_all_backend(self):
