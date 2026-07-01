@@ -2,6 +2,14 @@
 
 import pytest
 
+from testsuite.gateway.gateway_api.gateway import KuadrantGateway
+
+
+@pytest.fixture(scope="session")
+def has_ocp_managed_istio(cluster):
+    """True if the cluster uses 'openshift-default' GatewayClass (OCP-managed Istio)"""
+    return KuadrantGateway.get_gateway_class_name(cluster) == "openshift-default"
+
 
 @pytest.fixture(scope="module", autouse=True)
 def require_tracing_enabled(kuadrant, skip_or_fail):

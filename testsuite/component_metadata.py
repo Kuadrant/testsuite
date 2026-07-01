@@ -9,6 +9,7 @@ from urllib.parse import urlparse
 import openshift_client as oc
 
 from testsuite.config import settings
+from testsuite.gateway.gateway_api.gateway import KuadrantGateway
 
 logger = logging.getLogger(__name__)
 
@@ -129,27 +130,22 @@ class ReportPortalMetadataCollector:
 
     @staticmethod
     def get_istio_type(cluster) -> tuple[str, Optional[str]]:
-        """Determine Istio installation type and namespace from cluster-wide Istio CRs.
+        """Determine Istio installation type via GatewayClass and namespace from Istio CRs.
 
         Returns (istio_type, namespace) where istio_type is one of:
-        - "ocp-managed" with namespace from the Istio CR spec
-        - "user-managed" with namespace from the Istio CR spec
+        - "ocp-managed" if 'openshift-default' GatewayClass exists
+        - "user-managed" if 'istio' GatewayClass exists
         - "none" with None
         """
         try:
-            with cluster.context:
-                istios = oc.selector("Istio", all_namespaces=True).objects()
-                if not istios:
-                    return "none", None
-                gateway_istio = next((i for i in istios if i.name() == "openshift-gateway"), None)
-                if gateway_istio:
-                    return "ocp-managed", gateway_istio.model.spec.namespace
-                default_istio = next((i for i in istios if i.name() == "default"), None)
-                if default_istio:
-                    return "user-managed", default_istio.model.spec.namespace
-        except (oc.OpenShiftPythonException, AttributeError, KeyError) as e:
-            logger.warning("Failed to detect Istio type: %s", e)
-        return "none", None
+            gw_class = KuadrantGateway.get_gateway_class_name(cluster)
+        except (KeyError, oc.OpenShiftPythonException) as e:
+            logger.warning("Failed to detect GatewayClass: %s", e)
+            return "none", None
+
+        if gw_class == "openshift-default":
+            return "ocp-managed", "openshift-ingress"
+        return "user-managed", "istio-system"
 
     @staticmethod
     def get_istio_metadata(project) -> dict[str, str]:
@@ -168,6 +164,10 @@ class ReportPortalMetadataCollector:
                     image = pods[0].model.spec.containers[0].image
                     if image:
                         metadata["istiod_image"] = image
+                    if "istio_version" not in metadata:
+                        version = pods[0].model.metadata.labels.get("app.kubernetes.io/version")
+                        if version:
+                            metadata["istio_version"] = version
         except (oc.OpenShiftPythonException, AttributeError, KeyError, IndexError, ValueError) as e:
             logger.warning("Failed to get Istio metadata: %s", e)
         return metadata

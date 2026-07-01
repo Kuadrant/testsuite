@@ -32,7 +32,7 @@ def commit(request, rate_limit):
 
 
 @pytest.fixture(scope="module")
-def trace_429(client, tracing, has_user_managed_istio):
+def trace_429(client, tracing, has_ocp_managed_istio):
     """
     Sends requests to exhaust the rate limit, produces a 429 response,
     and fetches the full wasm-shim trace.
@@ -44,22 +44,22 @@ def trace_429(client, tracing, has_user_managed_istio):
     assert response_429.status_code == 429
 
     request_id = response_429.headers.get("x-request-id")
-    min_procs = 3 if has_user_managed_istio else 2
+    min_procs = 2 if has_ocp_managed_istio else 3
     traces = tracing.get_traces(service="wasm-shim", min_processes=min_procs, tags={"request_id": request_id})
     assert len(traces) == 1, f"No trace was found in tracing backend with request_id: {request_id}"
     return traces[0]
 
 
-def test_relevant_services_rate_limit_only(trace_429, label, has_user_managed_istio):
+def test_relevant_services_rate_limit_only(trace_429, label, has_ocp_managed_istio):
     """
     Test that traces with only a RateLimitPolicy include relevant Kuadrant services.
-    Gateway service is only present with user-managed Istio.
+    Gateway service is not present with OCP-managed Istio.
     Trace should not contain authorino since no authorization is involved.
     """
 
     process_services = trace_429.get_process_services()
     services = ["wasm-shim", "limitador"]
-    if has_user_managed_istio:
+    if not has_ocp_managed_istio:
         services.append(f"{label}.kuadrant")
     for service in services:
         assert service in process_services, f"Service '{service}' not found in trace processes: {process_services}"

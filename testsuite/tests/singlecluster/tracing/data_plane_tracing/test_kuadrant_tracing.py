@@ -43,39 +43,39 @@ def trace_request_ids(client, auth):
 
 
 @pytest.fixture(scope="module")
-def trace_200(trace_request_ids, tracing, has_user_managed_istio):
+def trace_200(trace_request_ids, tracing, has_ocp_managed_istio):
     """Fetches and caches the full wasm-shim trace for the 200 response."""
     request_id = trace_request_ids[0]
-    min_procs = 4 if has_user_managed_istio else 3
+    min_procs = 3 if has_ocp_managed_istio else 4
     traces = tracing.get_traces(service="wasm-shim", min_processes=min_procs, tags={"request_id": request_id})
     assert len(traces) == 1, f"No trace was found in tracing backend with request_id: {request_id}"
     return traces[0]
 
 
 @pytest.fixture(scope="module")
-def trace_429(trace_request_ids, tracing, has_user_managed_istio):
+def trace_429(trace_request_ids, tracing, has_ocp_managed_istio):
     """Fetches and caches the full wasm-shim trace for the 429 response."""
     request_id = trace_request_ids[1]
-    min_procs = 4 if has_user_managed_istio else 3
+    min_procs = 3 if has_ocp_managed_istio else 4
     traces = tracing.get_traces(service="wasm-shim", min_processes=min_procs, tags={"request_id": request_id})
     assert len(traces) == 1, f"No trace was found in tracing backend with request_id: {request_id}"
     return traces[0]
 
 
 @pytest.fixture(scope="module")
-def trace_401(client, tracing, has_user_managed_istio):
+def trace_401(client, tracing, has_ocp_managed_istio):
     """Sends request producing 401 response and fetches the full wasm-shim trace"""
     response_401 = client.get("/get", headers={"Traceparent": f"00-{os.urandom(16).hex()}-{os.urandom(8).hex()}-01"})
     assert response_401.status_code == 401
 
     request_id = response_401.headers.get("x-request-id")
-    min_procs = 3 if has_user_managed_istio else 2
+    min_procs = 2 if has_ocp_managed_istio else 3
     traces = tracing.get_traces(service="wasm-shim", min_processes=min_procs, tags={"request_id": request_id})
     assert len(traces) == 1, f"No trace was found in tracing backend with request_id: {request_id}"
     return traces[0]
 
 
-def test_trace_includes_all_kuadrant_services(trace_200, label, has_user_managed_istio):
+def test_trace_includes_all_kuadrant_services(trace_200, label, has_ocp_managed_istio):
     """
     Test that distributed tracing captures all Kuadrant components in a single trace.
 
@@ -84,31 +84,31 @@ def test_trace_includes_all_kuadrant_services(trace_200, label, has_user_managed
     - wasm-shim: WASM plugin processing requests
     - authorino: Authorization service
     - limitador: Rate limiting service
-    - gateway: Istio/Envoy gateway service (only with user-managed Istio)
+    - gateway: Istio/Envoy gateway service (not with OCP-managed Istio)
     """
 
     process_services = trace_200.get_process_services()
 
     services = ["wasm-shim", "authorino", "limitador"]
-    if has_user_managed_istio:
+    if not has_ocp_managed_istio:
         services.append(f"{label}.kuadrant")
     for service in services:
         assert service in process_services, f"Service '{service}' not found in trace processes: {process_services}"
 
 
-def test_relevant_services_on_auth_denied(trace_401, label, has_user_managed_istio):
+def test_relevant_services_on_auth_denied(trace_401, label, has_ocp_managed_istio):
     """
     Test that auth-denied traces only include services up to the authorization step.
 
     When a request is rejected with 401, the trace should contain wasm-shim and authorino
     but not limitador, since the request is short-circuited before reaching the rate limiter.
-    Gateway service is only present with user-managed Istio.
+    Gateway service is not present with OCP-managed Istio.
     """
 
     process_services = trace_401.get_process_services()
 
     services = ["wasm-shim", "authorino"]
-    if has_user_managed_istio:
+    if not has_ocp_managed_istio:
         services.append(f"{label}.kuadrant")
     for service in services:
         assert service in process_services, f"Service '{service}' not found in trace processes: {process_services}"
