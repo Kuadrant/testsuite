@@ -130,14 +130,22 @@ def test_kuadrant_properties(record_testsuite_property):
 
 
 def test_istio_properties(record_testsuite_property):
-    """Record Istio related properties from all clusters."""
+    """Record Istio installation type and metadata from all clusters."""
     properties = []
     cluster_data = {}
-    for cluster_name, _, project in _all_cluster_projects("istio-system"):
-        if project is None:
-            cluster_data[cluster_name] = ["namespace 'istio-system' not found"]
+    for cluster_name, cluster, _ in _all_cluster_projects("default"):
+        istio_type, namespace = ReportPortalMetadataCollector.get_istio_type(cluster)
+        cluster_data[cluster_name] = [f"istio_type:{istio_type}"]
+        properties.append(("istio_type", istio_type))
+
+        if namespace is None:
             continue
-        cluster_data[cluster_name] = []
+
+        project = cluster.change_project(namespace)
+        if not project.connected:
+            cluster_data[cluster_name].append(f"namespace '{namespace}' not found")
+            continue
+
         istio_metadata = ReportPortalMetadataCollector.get_istio_metadata(project)
         for key, value in istio_metadata.items():
             cluster_data[cluster_name].append(f"{key}:{value}")
