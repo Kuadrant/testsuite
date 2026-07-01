@@ -115,6 +115,11 @@ ENVOY_READINESS_INITIAL_DELAY = 3
 # Envoy readiness probe period.
 ENVOY_READINESS_PERIOD = 4
 
+# --- Mockserver readiness (seconds) ---
+
+MOCKSERVER_READINESS_INITIAL_DELAY = 2
+MOCKSERVER_READINESS_PERIOD = 2
+
 # --- Miscellaneous Workarounds (seconds) ---
 
 # Workaround for https://github.com/Kuadrant/testsuite/issues/884 — remove when fixed
