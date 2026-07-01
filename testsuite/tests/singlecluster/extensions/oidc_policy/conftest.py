@@ -1,4 +1,4 @@
-"""Shared pytest fixtures for OIDC policy testing."""
+"""Shared pytest fixtures for OIDC policy testing. Client-specific fixtures are in each test file."""
 
 from contextlib import contextmanager
 
@@ -7,6 +7,8 @@ import pytest
 from testsuite.gateway import Gateway, GatewayListener
 from testsuite.gateway.gateway_api.gateway import KuadrantGateway
 from testsuite.kuadrant.extensions.oidc_policy import OIDCPolicy, Provider
+from testsuite.oidc import Token
+
 
 @pytest.fixture(scope="module")
 def gateway(request, domain_name, base_domain, cluster, blame, label) -> Gateway:
@@ -45,6 +47,18 @@ def oidc_policy_provider_config(oidc_provider, keycloak_client):
 def oidc_policy(cluster, blame, oidc_policy_provider_config, gateway):
     """Create OIDC policy instance targeting the gateway."""
     return OIDCPolicy.create_instance(cluster, blame("oidc-policy"), gateway, provider=oidc_policy_provider_config)
+
+
+@pytest.fixture(scope="module")
+def auth(keycloak_client, keycloak):
+    """Get a Token for the test user via password grant."""
+
+    def _refresh(refresh_token):
+        data = keycloak_client.refresh_token(refresh_token)
+        return Token(data["access_token"], _refresh, data.get("refresh_token", ""))
+
+    data = keycloak_client.token(keycloak.test_username, keycloak.test_password)
+    return Token(data["access_token"], _refresh, data.get("refresh_token", ""))
 
 
 @pytest.fixture(scope="module", autouse=True)

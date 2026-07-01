@@ -15,7 +15,6 @@ from keycloak import KeycloakOpenID
 from testsuite.gateway import GatewayListener
 from testsuite.gateway.exposers import StaticLocalHostname
 from testsuite.gateway.gateway_api.gateway import KuadrantGateway
-from testsuite.oidc import Token
 from testsuite.oidc.keycloak.objects import ClientConfig
 from testsuite.tests.singlecluster.extensions.oidc_policy.conftest import set_jwt_cookie
 
@@ -32,7 +31,7 @@ CUSTOM_PORT = 8001
 @pytest.fixture(scope="module")
 def gateway(request, domain_name, base_domain, cluster, blame, label):
     """Gateway with a non-standard listener port to test port inclusion in redirect URI."""
-    fqdn = f"{domain_name}-kuadrant.{base_domain}"
+    fqdn = f"{domain_name}-{cluster.project}.{base_domain}"
     gw = KuadrantGateway.create_instance(cluster, blame("gw"), {"app": label})
     gw.add_listener(GatewayListener(hostname=fqdn, port=CUSTOM_PORT))
     request.addfinalizer(gw.delete)
@@ -42,9 +41,9 @@ def gateway(request, domain_name, base_domain, cluster, blame, label):
 
 
 @pytest.fixture(scope="module")
-def hostname(gateway, domain_name, exposer):
+def hostname(gateway, domain_name, cluster, exposer):
     """Hostname that connects on the non-standard gateway port."""
-    fqdn = f"{domain_name}-kuadrant.{exposer.base_domain}"
+    fqdn = f"{domain_name}-{cluster.project}.{exposer.base_domain}"
     ip = gateway.refresh().model.status.addresses[0].value
 
     return StaticLocalHostname(fqdn, lambda: f"{ip}:{CUSTOM_PORT}")
@@ -55,7 +54,6 @@ def keycloak_client(keycloak, hostname, blame):
     """Create confidential OIDC client on Keycloak."""
     config = ClientConfig(
         client_id=blame("redirect"),
-        client_type="confidential",
         public_client=False,
         redirect_uris=[f"http://{hostname.hostname}/*"],
         web_origins=[f"http://{hostname.hostname}"],
@@ -69,18 +67,6 @@ def keycloak_client(keycloak, hostname, blame):
         realm_name=keycloak.realm_name,
         client_secret_key=kc_client.secret,
     )
-
-
-@pytest.fixture(scope="module")
-def auth(keycloak_client, keycloak):
-    """Get a Token for the test user."""
-
-    def _refresh(refresh_token):
-        data = keycloak_client.refresh_token(refresh_token)
-        return Token(data["access_token"], _refresh, data.get("refresh_token", ""))
-
-    data = keycloak_client.token(keycloak.test_username, keycloak.test_password)
-    return Token(data["access_token"], _refresh, data.get("refresh_token", ""))
 
 
 def test_redirect_uri_includes_listener_port(client, gateway):

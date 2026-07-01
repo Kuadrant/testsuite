@@ -7,7 +7,6 @@ import pytest
 
 from keycloak import KeycloakOpenID
 
-from testsuite.oidc import Token
 from testsuite.oidc.keycloak.objects import ClientConfig
 from testsuite.tests.singlecluster.extensions.oidc_policy.conftest import set_jwt_cookie
 
@@ -19,7 +18,6 @@ def keycloak_client(keycloak, hostname, blame):
     """Create confidential OIDC client on Keycloak."""
     config = ClientConfig(
         client_id=blame("confidential"),
-        client_type="confidential",
         public_client=False,
         redirect_uris=[f"http://{hostname.hostname}/*"],
         web_origins=[f"http://{hostname.hostname}"],
@@ -33,18 +31,6 @@ def keycloak_client(keycloak, hostname, blame):
         realm_name=keycloak.realm_name,
         client_secret_key=kc_client.secret,
     )
-
-
-@pytest.fixture(scope="module")
-def auth(keycloak_client, keycloak):
-    """Get a Token for the test user."""
-
-    def _refresh(refresh_token):
-        data = keycloak_client.refresh_token(refresh_token)
-        return Token(data["access_token"], _refresh, data.get("refresh_token", ""))
-
-    data = keycloak_client.token(keycloak.test_username, keycloak.test_password)
-    return Token(data["access_token"], _refresh, data.get("refresh_token", ""))
 
 
 def test_unauthenticated_redirect(client, keycloak_client, gateway):

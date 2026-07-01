@@ -17,7 +17,6 @@ def keycloak_client(keycloak, hostname, blame):
     """Create service OIDC client on Keycloak."""
     config = ClientConfig(
         client_id=blame("service"),
-        client_type="service",
         public_client=False,
         standard_flow_enabled=False,
         service_accounts_enabled=True,
@@ -60,11 +59,11 @@ def test_jwt_cookie_authentication(client, auth):
         assert response.status_code == 200
 
 
-def test_token_claims(auth, keycloak_client):
+def test_token_claims(auth, keycloak_client, keycloak):
     """Service client token has client context but no user identity."""
     token = jwt_lib.decode(auth.access_token, options={"verify_signature": False})
 
     assert token["typ"] == "Bearer"
     assert "openid" in token["scope"]
     assert token["azp"] == keycloak_client.client_id
-    assert token.get("preferred_username") != "testuser"
+    assert token.get("preferred_username", "").lower() != keycloak.test_username.lower()

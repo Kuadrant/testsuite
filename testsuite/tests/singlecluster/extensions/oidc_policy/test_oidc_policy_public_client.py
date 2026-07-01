@@ -7,7 +7,6 @@ import pytest
 
 from keycloak import KeycloakOpenID
 
-from testsuite.oidc import Token
 from testsuite.oidc.keycloak.objects import ClientConfig
 from testsuite.tests.singlecluster.extensions.oidc_policy.conftest import set_jwt_cookie
 
@@ -19,7 +18,6 @@ def keycloak_client(keycloak, hostname, blame):
     """Create public OIDC client on Keycloak."""
     config = ClientConfig(
         client_id=blame("public"),
-        client_type="public",
         public_client=True,
         redirect_uris=[f"http://{hostname.hostname}/*"],
         web_origins=[f"http://{hostname.hostname}"],
@@ -33,18 +31,6 @@ def keycloak_client(keycloak, hostname, blame):
     )
 
 
-@pytest.fixture(scope="module")
-def auth(keycloak_client, keycloak):
-    """Get a Token for the test user."""
-
-    def _refresh(refresh_token):
-        data = keycloak_client.refresh_token(refresh_token)
-        return Token(data["access_token"], _refresh, data.get("refresh_token", ""))
-
-    data = keycloak_client.token(keycloak.test_username, keycloak.test_password)
-    return Token(data["access_token"], _refresh, data.get("refresh_token", ""))
-
-
 def test_unauthenticated_redirect(client, keycloak_client, gateway):
     """Unauthenticated request redirects to OIDC provider with PKCE params."""
     response = client.get("/")
@@ -55,7 +41,6 @@ def test_unauthenticated_redirect(client, keycloak_client, gateway):
     assert "response_type=code" in location
     assert "scope=openid" in location
     assert keycloak_client.client_id in location
-    assert "code_challenge" in location or "response_type=code" in location
 
     expected_redirect_uri = f"redirect_uri=http%3A%2F%2F{quote(gateway.model.spec.listeners[0].hostname, safe=':.')}"
     assert expected_redirect_uri in location

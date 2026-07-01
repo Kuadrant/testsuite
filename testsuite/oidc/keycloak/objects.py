@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass, field
 from functools import cached_property
-from typing import List, Literal
+from typing import List
 
 from keycloak import KeycloakOpenID, KeycloakAdmin
 
@@ -12,7 +12,6 @@ class ClientConfig:  # pylint: disable=too-many-instance-attributes
     """Configuration for creating OIDC test clients"""
 
     client_id: str
-    client_type: Literal["confidential", "public", "service"]
     redirect_uris: list[str]
     web_origins: list[str]
     root_url: str
