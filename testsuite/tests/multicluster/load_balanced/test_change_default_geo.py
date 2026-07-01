@@ -5,6 +5,7 @@ from time import sleep
 import pytest
 import dns.resolver
 from testsuite.config import settings
+from testsuite.utils.constants import DNS_PROPAGATION_WAIT
 
 pytestmark = [pytest.mark.multicluster]
 
@@ -29,5 +30,5 @@ def test_change_default_geo(hostname, gateway, gateway2, dns_policy, dns_policy2
     dns_policy2.apply()
     dns_policy2.wait_for_ready()
 
-    sleep(300)  # wait for DNS propagation on providers
+    sleep(DNS_PROPAGATION_WAIT)  # wait for DNS propagation on providers
     assert resolver.resolve(hostname.hostname)[0].address == gateway2.external_ip().split(":")[0]

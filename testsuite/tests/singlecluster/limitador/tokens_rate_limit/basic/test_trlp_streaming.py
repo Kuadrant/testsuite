@@ -7,6 +7,7 @@ from time import sleep
 
 import pytest
 
+from testsuite.utils.constants import TRLP_FREE_USER_RESET_WAIT
 from .conftest import FREE_USER_LIMIT
 
 pytestmark = [pytest.mark.limitador, pytest.mark.authorino, pytest.mark.kuadrant_only]
@@ -63,6 +64,6 @@ def test_trlp_streaming_limit_and_reset(client, free_user_auth):
     ), f"Expected 429 after {total_tokens}/{FREE_USER_LIMIT.limit} tokens, but got {response.status_code}"
 
     # Assert quota resets after wait period
-    sleep(30)
+    sleep(TRLP_FREE_USER_RESET_WAIT)
     response = client.post("/v1/chat/completions", auth=free_user_auth, json={**streaming_request})
     assert response.status_code == 200, f"Expected 200 after reset, but got {response.status_code}"

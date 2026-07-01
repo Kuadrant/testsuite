@@ -6,6 +6,7 @@ from testsuite.gateway import CustomReference
 from testsuite.kuadrant.policy.tls import TLSPolicy
 from testsuite.kuadrant.policy.dns import DNSPolicy
 from testsuite.kuadrant.policy import has_condition
+from testsuite.utils.constants import POLICY_CONDITION_TIMEOUT
 
 
 @pytest.fixture(scope="module")
@@ -37,5 +38,6 @@ def test_no_gw(request, policy_cr, issuer_or_secret, cluster, blame, module_labe
     policy.commit()
 
     assert policy.wait_until(
-        has_condition("Accepted", "False", "TargetNotFound", "target does-not-exist was not found"), timelimit=20
+        has_condition("Accepted", "False", "TargetNotFound", "target does-not-exist was not found"),
+        timelimit=POLICY_CONDITION_TIMEOUT,
     ), f"Policy did not reach expected status, instead it was: {policy.refresh().model.status.conditions}"

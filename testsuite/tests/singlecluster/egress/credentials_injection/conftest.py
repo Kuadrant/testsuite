@@ -8,6 +8,7 @@ import pytest
 from testsuite.backend.mockserver import MockserverBackend
 from testsuite.httpx import KuadrantClient
 from testsuite.mockserver import Mockserver
+from testsuite.utils.constants import HTTP_API_PORT
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -31,7 +32,7 @@ def backend(request, cluster, blame, label):
 @pytest.fixture(scope="module")
 def mockserver_client(backend):
     """Mockserver client for creating expectations and direct requests"""
-    return Mockserver(KuadrantClient(base_url=f"http://{backend.service.refresh().external_ip}:8080"))
+    return Mockserver(KuadrantClient(base_url=f"http://{backend.service.refresh().external_ip}:{HTTP_API_PORT}"))
 
 
 @pytest.fixture(scope="module")

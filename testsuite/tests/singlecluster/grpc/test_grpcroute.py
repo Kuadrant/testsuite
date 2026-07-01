@@ -7,6 +7,7 @@ from grpc import StatusCode
 
 from testsuite.httpx.auth import HttpxOidcClientAuth
 from testsuite.kuadrant.policy.rate_limit import Limit
+from testsuite.utils.constants import RLP_WINDOW_RESET_WAIT_BUFFERED
 
 pytestmark = [pytest.mark.authorino, pytest.mark.limitador, pytest.mark.kuadrant_only]
 
@@ -49,5 +50,5 @@ def test_grpcroute(client, auth):
     responses.assert_all(status_code=StatusCode.OK)
     assert client.call("/HeadersUnary", auth=auth).status_code == StatusCode.UNAVAILABLE
 
-    time.sleep(5 + 1)
+    time.sleep(RLP_WINDOW_RESET_WAIT_BUFFERED)
     assert client.call("/HeadersUnary", auth=auth).status_code == StatusCode.OK
