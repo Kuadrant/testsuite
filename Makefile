@@ -2,7 +2,7 @@
 
 TB ?= short
 LOGLEVEL ?= INFO
-VERIFY_DENIALS ?= true # Set to false to skip verification of expected denials (e.g., 403 responses) in tests marked with `verify_denials` (e.g., `authorino` tests). This can be useful when debugging test failures that may be related to unexpected denials, but should generally be left enabled to ensure proper test validation.
+VERIFY_DENIALS ?= true # Set to false to skip the --verify-denials check that ensures denied requests (401/403/429) did not leak to the upstream backend.
 
 ifdef WORKSPACE  # Yes, this is for jenkins
 resultsdir = $(WORKSPACE)

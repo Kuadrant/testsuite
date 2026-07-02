@@ -33,7 +33,7 @@ def pytest_addoption(parser):
     )
     parser.addoption("--standalone", action="store_true", default=False, help="Runs testsuite in standalone mode")
     parser.addoption(
-        "--verify-denials", default="false", help="Verifies that denied requests did not leak to the upstream backend"
+        "--verify-denials", default="true", help="Verifies that denied requests did not leak to the upstream backend"
     )
 
 
