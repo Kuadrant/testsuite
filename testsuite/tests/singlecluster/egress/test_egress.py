@@ -16,7 +16,11 @@ from testsuite.httpx.auth import HttpxOidcClientAuth
 from testsuite.kuadrant.policy.rate_limit import Limit
 from .conftest import EGRESS_HOSTNAME
 
-pytestmark = [pytest.mark.kuadrant_only, pytest.mark.egress_gateway, pytest.mark.data_plane, pytest.mark.flaky(reruns=0)]
+pytestmark = [
+    pytest.mark.kuadrant_only,
+    pytest.mark.egress_gateway,
+    pytest.mark.flaky(reruns=0),
+]
 
 LIMIT = Limit(3, "5s")
 
