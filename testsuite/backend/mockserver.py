@@ -69,7 +69,6 @@ class MockserverBackend(Backend):
         self.config = config
 
     def commit(self):
-        match_labels = {"app": self.label, "deployment": self.name}
         env_limit = {"JAVA_TOOL_OPTIONS": "-Xmx220m"}
         self.deployment = Deployment.create_instance(
             self.cluster,
