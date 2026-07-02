@@ -2,23 +2,34 @@
 
 from abc import abstractmethod
 from functools import cached_property
+from typing import TYPE_CHECKING, Optional
 
-from testsuite.gateway import Referencable
+from testsuite.gateway import Referencable, Exposable
 from testsuite.lifecycle import LifecycleObject
 from testsuite.kubernetes.client import KubernetesClient
 from testsuite.utils.constants import HTTP_API_PORT
 
+if TYPE_CHECKING:
+    from testsuite.gateway import Hostname, Exposer
 
-class Backend(LifecycleObject, Referencable):
+
+class Backend(LifecycleObject, Referencable, Exposable):
     """Backend (workload) deployed in Kubernetes"""
 
     def __init__(self, cluster: KubernetesClient, name: str, label: str):
-        self.cluster = cluster
+        self._cluster = cluster
+
         self.name = name
         self.label = label
 
         self.deployment = None
         self.service = None
+        self._admin_hostname: Optional["Hostname"] = None
+
+    @property
+    def cluster(self) -> KubernetesClient:
+        """Returns KubernetesClient"""
+        return self._cluster
 
     @property
     def reference(self):
@@ -29,6 +40,30 @@ class Backend(LifecycleObject, Referencable):
             "name": self.name,
             "namespace": self.cluster.project,
         }
+
+    @property
+    def service_name(self) -> str:
+        """Returns the Kubernetes Service name for this backend"""
+        return self.name
+
+    @property
+    def port_name(self) -> str:
+        """Service port name used when creating external routes"""
+        return "http"
+
+    @property
+    def match_labels(self) -> dict[str, str]:
+        """Pod selector labels used by this backend's deployment"""
+        return {"app": self.label, "deployment": self.name}
+
+    @property
+    def admin_hostname(self) -> Optional["Hostname"]:
+        """Returns Hostname for external admin access, or None if not exposed"""
+        return self._admin_hostname
+
+    def expose(self, exposer: "Exposer", name: str):
+        """Creates external access for admin APIs via the exposer"""
+        self._admin_hostname = exposer.expose_hostname(name, self)
 
     @property
     def url(self):

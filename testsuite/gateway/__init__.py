@@ -13,8 +13,8 @@ from testsuite.lifecycle import LifecycleObject
 from testsuite.utils import asdict
 
 if TYPE_CHECKING:
-    from testsuite.kubernetes.client import KubernetesClient
     from testsuite.backend import Backend
+    from testsuite.kubernetes.client import KubernetesClient
 
 
 class Referencable(ABC):
@@ -142,21 +142,38 @@ class GRPCRouteMatch:
     headers: Optional[List[HeadersMatch]] = None
 
 
-class Gateway(LifecycleObject, Referencable):
-    """
-    Abstraction layer for a Gateway sitting between end-user and Kuadrant
-    Simplified: Equals to Gateway Kubernetes object
-    """
+class Exposable(ABC):
+    """Object that can be exposed by an Exposer (has a cluster and a service name)"""
 
     @property
     @abstractmethod
     def cluster(self) -> "KubernetesClient":
-        """Returns KubernetesClient for this gateway"""
+        """Returns KubernetesClient"""
 
     @property
     @abstractmethod
     def service_name(self) -> str:
-        """Service name for this gateway"""
+        """Service name to route traffic to"""
+
+    def external_ip(self) -> str:
+        """Returns external IP and port for external access"""
+        raise NotImplementedError(f"{type(self).__name__} does not support external_ip")
+
+    @property
+    def port_name(self) -> str:
+        """Service port name used when creating external routes"""
+        return "api"
+
+    def get_tls_cert(self, hostname: str) -> Optional[Certificate]:  # pylint: disable=unused-argument
+        """Returns TLS cert or None"""
+        return None
+
+
+class Gateway(LifecycleObject, Referencable, Exposable):
+    """
+    Abstraction layer for a Gateway sitting between end-user and Kuadrant
+    Simplified: Equals to Gateway Kubernetes object
+    """
 
     @abstractmethod
     def external_ip(self) -> str:
@@ -276,7 +293,7 @@ class Exposer(LifecycleObject):
         self.verify = None
 
     @abstractmethod
-    def expose_hostname(self, name, gateway: Gateway) -> Hostname:
+    def expose_hostname(self, name, exposable: Exposable) -> Hostname:
         """
         Exposes hostname, so it is accessible from outside
         Actual hostname is generated from "name" and is returned in a form of a Hostname object

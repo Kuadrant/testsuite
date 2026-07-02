@@ -31,6 +31,9 @@ def pytest_addoption(parser):
         "--enforce", action="store_true", default=False, help="Fails tests instead of skip, if capabilities are missing"
     )
     parser.addoption("--standalone", action="store_true", default=False, help="Runs testsuite in standalone mode")
+    parser.addoption(
+        "--verify-denials", default="true", help="Verifies that denied requests did not leak to the upstream backend"
+    )
 
 
 def pytest_runtest_setup(item):

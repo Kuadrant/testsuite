@@ -2,6 +2,7 @@
 
 import ssl
 import typing
+import uuid
 
 # I change return type of HTTPX client to Kuadrant Result
 # mypy: disable-error-code="override, return-value"
@@ -114,6 +115,9 @@ class ResultList(list):
 class KuadrantClient(Client):
     """Httpx client which retries unstable requests"""
 
+    TRACKING_HEADER = "X-Testsuite-Tracking"
+    GATEWAY_DENIED_CODES = {401, 403, 429}
+
     def __init__(
         self,
         *,
@@ -123,6 +127,7 @@ class KuadrantClient(Client):
         **kwargs,
     ):
         self.files = []
+        self.denied_request_ids: list[str] = []
         self.retry_codes = {503} if retry_codes is None else set(retry_codes)
         _verify = None
         if isinstance(verify, Certificate):
@@ -172,6 +177,9 @@ class KuadrantClient(Client):
         timeout=None,
         extensions=None,
     ) -> Result:
+        headers = dict(headers) if headers else {}
+        tracking_id = headers.setdefault(self.TRACKING_HEADER, str(uuid.uuid4()))
+
         try:
             response = super().request(
                 method,
@@ -188,7 +196,10 @@ class KuadrantClient(Client):
                 timeout=timeout,
                 extensions=extensions,
             )
-            return Result(self.retry_codes, response=response)
+            result = Result(self.retry_codes, response=response)
+            if result.status_code in self.GATEWAY_DENIED_CODES:
+                self.denied_request_ids.append(tracking_id)
+            return result
         except RequestError as e:
             return Result(self.retry_codes, error=e)
 
