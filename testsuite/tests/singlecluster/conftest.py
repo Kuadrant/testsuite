@@ -221,6 +221,7 @@ def pytest_runtest_makereport(item, call):  # pylint: disable=unused-argument
 
     if leaked:
         report.outcome = "failed"
+        report.wasxfail = "denied request leaked to upstream"
         report.longrepr = (
             f"{len(leaked)} denied request(s) leaked to the upstream backend. "
             f"The gateway returned a denial status (401/403/429) but the request still reached MockServer."
