@@ -43,7 +43,13 @@ class Backend(LifecycleObject, Referencable, Exposable):
 
     @property
     def service_name(self) -> str:
+        """Returns the Kubernetes Service name for this backend"""
         return self.name
+
+    @property
+    def port_name(self) -> str:
+        """Service port name used when creating external routes"""
+        return "http"
 
     @property
     def match_labels(self) -> dict[str, str]:

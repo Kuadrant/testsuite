@@ -77,7 +77,7 @@ class MockserverBackend(Backend):
             container_name="mockserver",
             image=settings["mockserver"]["image"],
             ports={"api": MOCKSERVER_INTERNAL_PORT},
-            selector=Selector(matchLabels=match_labels),
+            selector=Selector(matchLabels=self.match_labels),
             labels={"app": self.label},
             resources=ContainerResources(
                 limits_cpu="500m", requests_cpu="10m", limits_memory="300Mi", requests_memory="200Mi"
@@ -92,7 +92,7 @@ class MockserverBackend(Backend):
         self.service = Service.create_instance(
             self.cluster,
             self.name,
-            selector=match_labels,
+            selector=self.match_labels,
             ports=[ServicePort(name="http", port=HTTP_API_PORT, targetPort="api")],
             labels={"app": self.label},
             service_type=self.service_type,
