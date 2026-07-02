@@ -52,7 +52,7 @@ class JaegerClient(TracingClient):
         if tags:
             params["tags"] = json.dumps(tags)
         if start_time:
-            params["start"] = start_time
+            params["start"] = str(start_time)
 
         traces_data = self.query.api.traces.get(params=params).json()["data"]
         if not traces_data:
