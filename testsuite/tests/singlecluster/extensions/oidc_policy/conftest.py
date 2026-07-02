@@ -1,22 +1,19 @@
-"""Shared pytest fixtures for OIDC policy testing.
-
-This module provides shared fixtures for testing OIDC (OpenID Connect) policy functionality,
-including gateway setup and policy management. Client-specific fixtures are now located
-in their respective test files.
-"""
+"""Shared pytest fixtures for OIDC policy testing. Client-specific fixtures are in each test file."""
 
 from contextlib import contextmanager
+
 import pytest
 
 from testsuite.gateway import Gateway, GatewayListener
 from testsuite.gateway.gateway_api.gateway import KuadrantGateway
-from testsuite.kuadrant.extensions.oidc_policy import OIDCPolicy
+from testsuite.kuadrant.extensions.oidc_policy import OIDCPolicy, Provider
+from testsuite.oidc import Token
 
 
 @pytest.fixture(scope="module")
 def gateway(request, domain_name, base_domain, cluster, blame, label) -> Gateway:
     """Create and configure the test Gateway."""
-    fqdn = f"{domain_name}-kuadrant.{base_domain}"
+    fqdn = f"{domain_name}-{cluster.project}.{base_domain}"
     gw = KuadrantGateway.create_instance(cluster, blame("gw"), {"app": label})
     gw.add_listener(GatewayListener(hostname=fqdn))
     request.addfinalizer(gw.delete)
@@ -25,10 +22,9 @@ def gateway(request, domain_name, base_domain, cluster, blame, label) -> Gateway
     return gw
 
 
-# JWT Cookie Helper fixture
 @contextmanager
 def set_jwt_cookie(client, token_value: str):
-    """Context manager for setting JWT cookies with automatic cleanup"""
+    """Context manager for setting JWT cookies with automatic cleanup."""
     client.cookies.set("jwt", token_value)
     try:
         yield
@@ -36,24 +32,33 @@ def set_jwt_cookie(client, token_value: str):
         client.cookies.clear()
 
 
-# OIDC Policy fixtures - these are shared and will be overridden in individual test files
 @pytest.fixture(scope="module")
-def oidc_policy_provider_config(oidc_provider, test_client):
+def oidc_policy_provider_config(oidc_provider, keycloak_client):
     """Create Provider configuration for the OIDC policy."""
-    return test_client.create_provider_config(oidc_provider)
+    return Provider(
+        issuerURL=oidc_provider.well_known["issuer"],
+        clientID=keycloak_client.client_id,
+        authorizationEndpoint=oidc_provider.well_known["authorization_endpoint"],
+        tokenEndpoint=oidc_provider.well_known["token_endpoint"],
+    )
 
 
 @pytest.fixture(scope="module")
 def oidc_policy(cluster, blame, oidc_policy_provider_config, gateway):
-    """Create OIDC policy instance for testing.
+    """Create OIDC policy instance targeting the gateway."""
+    return OIDCPolicy.create_instance(cluster, blame("oidc-policy"), gateway, provider=oidc_policy_provider_config)
 
-    Note: This fixture depends on 'provider' which should be defined in each test file
-    with the appropriate client-specific configuration.
-    """
-    oidc_policy = OIDCPolicy.create_instance(
-        cluster, blame("oidc-policy"), gateway, provider=oidc_policy_provider_config
-    )
-    return oidc_policy
+
+@pytest.fixture(scope="module")
+def auth(keycloak_client, keycloak):
+    """Get a Token for the test user via password grant."""
+
+    def _refresh(refresh_token):
+        data = keycloak_client.refresh_token(refresh_token)
+        return Token(data["access_token"], _refresh, data.get("refresh_token", ""))
+
+    data = keycloak_client.token(keycloak.test_username, keycloak.test_password)
+    return Token(data["access_token"], _refresh, data.get("refresh_token", ""))
 
 
 @pytest.fixture(scope="module", autouse=True)

@@ -1,9 +1,47 @@
 """Object wrappers for Keycloak resources"""
 
+from dataclasses import dataclass, field
 from functools import cached_property
 from typing import List
 
 from keycloak import KeycloakOpenID, KeycloakAdmin
+
+
+@dataclass
+class ClientConfig:  # pylint: disable=too-many-instance-attributes
+    """Configuration for creating OIDC test clients"""
+
+    client_id: str
+    redirect_uris: list[str]
+    web_origins: list[str]
+    root_url: str
+    public_client: bool = False
+    standard_flow_enabled: bool = True
+    service_accounts_enabled: bool = False
+    direct_access_grants_enabled: bool = True
+    default_client_scopes: list[str] = field(default_factory=lambda: ["openid", "profile", "email"])
+    optional_client_scopes: list[str] = field(default_factory=lambda: ["offline_access", "microprofile-jwt"])
+
+    def to_keycloak_payload(self):
+        """Convert to Keycloak client creation payload"""
+        return {
+            "name": self.client_id,
+            "clientId": self.client_id,
+            "publicClient": self.public_client,
+            "standardFlowEnabled": self.standard_flow_enabled,
+            "serviceAccountsEnabled": self.service_accounts_enabled,
+            "protocol": "openid-connect",
+            "redirectUris": self.redirect_uris,
+            "webOrigins": self.web_origins,
+            "directAccessGrantsEnabled": self.direct_access_grants_enabled,
+            "rootUrl": self.root_url,
+            "defaultClientScopes": self.default_client_scopes,
+            "optionalClientScopes": self.optional_client_scopes,
+            "attributes": {
+                "backchannel.logout.session.required": "true",
+                "use.refresh.tokens": "true",
+            },
+        }
 
 
 class Realm:
