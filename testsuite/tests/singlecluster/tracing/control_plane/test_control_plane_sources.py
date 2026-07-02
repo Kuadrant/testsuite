@@ -5,6 +5,8 @@ Tests verify that reconciliation spans include 'sources' attributes
 linking them to the policies that triggered the reconciliation.
 """
 
+import time
+
 import pytest
 
 from testsuite.kuadrant.policy.authorization.auth_policy import AuthPolicy
@@ -109,12 +111,13 @@ def test_authconfig_span_is_child_of_reconciler(authconfig_trace):
 @pytest.fixture(scope="function")
 def second_auth_policy(request, cluster, blame, route, module_label):
     """Create a second AuthPolicy targeting the same route"""
+    create_time = int(time.time() * 1_000_000)
     second_policy = AuthPolicy.create_instance(cluster, blame("second-auth"), route, labels={"app": module_label})
     second_policy.identity.add_api_key("second_key", Selector(matchLabels={"app": module_label}))
     request.addfinalizer(second_policy.delete)
     second_policy.commit()
     second_policy.wait_for_ready()
-    return second_policy
+    return second_policy, create_time
 
 
 def test_authconfig_sources_contains_multiple_policies(authorization, second_auth_policy, tracing):
@@ -122,35 +125,42 @@ def test_authconfig_sources_contains_multiple_policies(authorization, second_aut
     Validate that when multiple AuthPolicies target the same route,
     both policy references appear in authconfig span sources across traces.
     """
-    second_policy = second_auth_policy
-
-    traces = tracing.get_traces(service="kuadrant-operator")
+    second_policy, create_time = second_auth_policy
 
     first_policy_ref = f"authpolicy.kuadrant.io:{authorization.namespace()}/{authorization.name()}"
     second_policy_ref = f"authpolicy.kuadrant.io:{second_policy.namespace()}/{second_policy.name()}"
 
+    all_traces = tracing.get_traces(service="kuadrant-operator")
     all_sources = set()
-    for trace in traces:
+    for trace in all_traces:
         for span in trace.filter_spans(lambda s: s.operation_name == "authconfig" and s.has_tag("sources")):
             sources = span.get_tag("sources")
             if sources:
                 all_sources.update(sources)
-
     assert first_policy_ref in all_sources, f"First policy {first_policy_ref} not found in any authconfig span sources"
+
+    scoped_traces = tracing.get_traces(service="kuadrant-operator", start_time=create_time)
+    scoped_sources = set()
+    for trace in scoped_traces:
+        for span in trace.filter_spans(lambda s: s.operation_name == "authconfig" and s.has_tag("sources")):
+            sources = span.get_tag("sources")
+            if sources:
+                scoped_sources.update(sources)
     assert (
-        second_policy_ref in all_sources
+        second_policy_ref in scoped_sources
     ), f"Second policy {second_policy_ref} not found in any authconfig span sources"
 
 
 @pytest.fixture(scope="function")
 def second_rate_limit_policy(request, cluster, blame, route, module_label):
     """Create a second RateLimitPolicy targeting the same route"""
+    create_time = int(time.time() * 1_000_000)
     second_policy = RateLimitPolicy.create_instance(cluster, blame("second-rlp"), route, labels={"app": module_label})
     second_policy.add_limit("basic", [Limit(10, "10s")])
     request.addfinalizer(second_policy.delete)
     second_policy.commit()
     second_policy.wait_for_ready()
-    return second_policy
+    return second_policy, create_time
 
 
 def test_limitador_sources_contains_multiple_policies(rate_limit, second_rate_limit_policy, tracing):
@@ -158,23 +168,31 @@ def test_limitador_sources_contains_multiple_policies(rate_limit, second_rate_li
     Validate that when multiple RateLimitPolicies target the same route,
     both policy references appear in limitador span sources across traces.
     """
-    second_policy = second_rate_limit_policy
-
-    traces = tracing.get_traces(service="kuadrant-operator")
+    second_policy, create_time = second_rate_limit_policy
 
     first_policy_ref = f"ratelimitpolicy.kuadrant.io:{rate_limit.namespace()}/{rate_limit.name()}"
     second_policy_ref = f"ratelimitpolicy.kuadrant.io:{second_policy.namespace()}/{second_policy.name()}"
 
+    all_traces = tracing.get_traces(service="kuadrant-operator")
     all_sources = set()
-    for trace in traces:
+    for trace in all_traces:
         for span in trace.filter_spans(
             lambda s: s.operation_name == "reconciler.limitador_limits" and s.has_tag("sources")
         ):
             sources = span.get_tag("sources")
             if sources:
                 all_sources.update(sources)
-
     assert first_policy_ref in all_sources, f"First policy {first_policy_ref} not found in any limitador span sources"
+
+    scoped_traces = tracing.get_traces(service="kuadrant-operator", start_time=create_time)
+    scoped_sources = set()
+    for trace in scoped_traces:
+        for span in trace.filter_spans(
+            lambda s: s.operation_name == "reconciler.limitador_limits" and s.has_tag("sources")
+        ):
+            sources = span.get_tag("sources")
+            if sources:
+                scoped_sources.update(sources)
     assert (
-        second_policy_ref in all_sources
+        second_policy_ref in scoped_sources
     ), f"Second policy {second_policy_ref} not found in any limitador span sources"
