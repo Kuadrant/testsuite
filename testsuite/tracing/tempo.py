@@ -26,7 +26,7 @@ class RemoteTempoClient(JaegerClient):
         if tags:
             params.update(tags)
         if start_time:
-            params["start"] = start_time
+            params["start"] = str(start_time)
         traces_data = self.query.api.get_traces.get(params=params).json()["traces"]
         if not traces_data:
             return []
