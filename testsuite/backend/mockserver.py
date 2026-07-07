@@ -69,7 +69,7 @@ class MockserverBackendConfig:
 class MockserverBackend(Backend):
     """Mockserver deployed as backend in Kubernetes"""
 
-    def __init__(self, cluster, name, label, service_type="LoadBalancer", config=None):
+    def __init__(self, cluster, name, label, service_type="ClusterIP", config=None):
         super().__init__(cluster, name, label)
         self.service_type = service_type
         self.config = config

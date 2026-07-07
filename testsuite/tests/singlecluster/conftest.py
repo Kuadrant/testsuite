@@ -115,7 +115,9 @@ def backend_exposer(request, testconfig, cluster):
 @pytest.fixture(scope="session")
 def backend(request, cluster, blame, label, mockserver_config, backend_exposer):
     """Deploys MockServer backend"""
-    mockserver = MockserverBackend(cluster, blame("mockserver"), label, config=mockserver_config)
+    mockserver = MockserverBackend(
+        cluster, blame("mockserver"), label, service_type=backend_exposer.backend_service_type, config=mockserver_config
+    )
     request.addfinalizer(mockserver.delete)
     mockserver.commit()
     mockserver.wait_for_ready()
@@ -196,6 +198,9 @@ def pytest_runtest_makereport(item, call):  # pylint: disable=unused-argument
     client.denied_request_ids.clear()
 
     if item.config.getoption("--verify-denials").strip().lower() != "true":
+        return
+
+    if item.get_closest_marker("no_verify_denials"):
         return
 
     backend = item.funcargs.get("backend")

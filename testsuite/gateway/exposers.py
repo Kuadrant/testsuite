@@ -75,6 +75,10 @@ class LoadBalancerServiceExposer(Exposer):
         )
 
     @property
+    def backend_service_type(self) -> str:
+        return "LoadBalancer"
+
+    @property
     def base_domain(self) -> str:
         return "test.com"
 

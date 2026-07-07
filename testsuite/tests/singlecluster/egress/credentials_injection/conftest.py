@@ -20,7 +20,7 @@ def cluster_ca_trust(kuadrant, skip_or_fail):
 @pytest.fixture(scope="module")
 def backend(request, cluster, blame, label, backend_exposer):
     """Deploy MockServer as the backend to validate injected credentials"""
-    mockserver = MockserverBackend(cluster, blame("mocksrv"), label)
+    mockserver = MockserverBackend(cluster, blame("mocksrv"), label, service_type=backend_exposer.backend_service_type)
     request.addfinalizer(mockserver.delete)
     mockserver.commit()
     mockserver.wait_for_ready()

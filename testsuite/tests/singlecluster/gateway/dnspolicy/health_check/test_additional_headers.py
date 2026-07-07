@@ -41,7 +41,7 @@ def gateway(request, cluster, blame, base_domain, module_label, subdomain):
 @pytest.fixture(scope="module")
 def backend(request, cluster, blame, label, backend_exposer):
     """Use mockserver as backend for health check requests to verify additional headers"""
-    mockserver = MockserverBackend(cluster, blame("mocksrv"), label)
+    mockserver = MockserverBackend(cluster, blame("mocksrv"), label, service_type=backend_exposer.backend_service_type)
     request.addfinalizer(mockserver.delete)
     mockserver.commit()
     mockserver.wait_for_ready()

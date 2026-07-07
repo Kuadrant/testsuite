@@ -186,6 +186,7 @@ def commit(request, authorization, authorization2):
         auth.wait_for_ready()
 
 
+@pytest.mark.no_verify_denials
 def test_credential_injection_by_destination(client):
     """Test that /service1 and /service2 routes inject the correct credential for their respective destinations"""
     response = client.get("/service1")

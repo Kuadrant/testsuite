@@ -300,6 +300,11 @@ class Exposer(LifecycleObject):
         """
 
     @property
+    def backend_service_type(self) -> str:
+        """Service type backends should use when exposed via this exposer"""
+        return "ClusterIP"
+
+    @property
     @abstractmethod
     def base_domain(self) -> str:
         """Returns base domains for all hostnames created by this exposer"""
