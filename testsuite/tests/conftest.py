@@ -14,6 +14,7 @@ from testsuite.capabilities import has_kuadrant, kuadrant_version
 from testsuite.certificates import CFSSLClient
 from testsuite.config import settings
 from testsuite.gateway import Exposer, CustomReference
+from testsuite.gateway.gateway_api.gateway import KuadrantGateway
 from testsuite.httpx import KuadrantClient
 from testsuite.mockserver import Mockserver
 from testsuite.oidc import OIDCProvider
@@ -446,3 +447,12 @@ def check_min_ocp_version(request, openshift_version):
             pytest.skip("Could not detect OpenShift version")
         if openshift_version < required_version:
             pytest.skip(f"Requires OCP {'.'.join(map(str, required_version))}+")
+
+
+@pytest.fixture(autouse=True)
+def check_user_managed_istio(request, cluster, skip_or_fail):
+    """Skip tests that require a user-managed Istio (e.g. mTLS, sidecar injection).
+    OCP-managed Istio does not allow modifications to the Istio CR."""
+    marker = request.node.get_closest_marker("user_managed_istio")
+    if marker and KuadrantGateway.get_gateway_class_name(cluster) == "openshift-default":
+        skip_or_fail("Test requires user-managed Istio installation")
