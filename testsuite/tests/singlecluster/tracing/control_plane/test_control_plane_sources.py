@@ -53,9 +53,6 @@ def test_authconfig_span_attributes(authconfig_trace, authorization):
     assert authconfig_spans, f"AuthPolicy {policy_ref} not found in any authconfig span sources"
     authconfig_span = authconfig_spans[0]
 
-    sources = authconfig_span.get_tag("sources")
-    assert len(sources) > 0, "sources list is empty"
-
     assert authconfig_span.has_tag("name"), "authconfig span missing 'name' attribute"
     assert authconfig_span.has_tag("namespace"), "authconfig span missing 'namespace' attribute"
 
@@ -77,9 +74,6 @@ def test_limitador_span_attributes(limitador_trace, rate_limit):
     )
     assert limitador_spans, f"RateLimitPolicy {policy_ref} not found in any limitador span sources"
     limitador_span = limitador_spans[0]
-
-    sources = limitador_span.get_tag("sources")
-    assert len(sources) > 0, "sources list is empty"
 
     assert limitador_span.has_tag("name"), "limitador span missing 'name' attribute"
     assert limitador_span.has_tag("namespace"), "limitador span missing 'namespace' attribute"
