@@ -6,7 +6,6 @@ Provides MockServer backend and common infrastructure for all credential injecti
 import pytest
 
 from testsuite.backend.mockserver import MockserverBackend
-from testsuite.httpx import KuadrantClient
 from testsuite.mockserver import Mockserver
 
 
@@ -19,19 +18,20 @@ def cluster_ca_trust(kuadrant, skip_or_fail):
 
 
 @pytest.fixture(scope="module")
-def backend(request, cluster, blame, label):
+def backend(request, cluster, blame, label, backend_exposer):
     """Deploy MockServer as the backend to validate injected credentials"""
     mockserver = MockserverBackend(cluster, blame("mocksrv"), label)
     request.addfinalizer(mockserver.delete)
     mockserver.commit()
     mockserver.wait_for_ready()
+    mockserver.expose(backend_exposer, blame("mocksrv"))
     return mockserver
 
 
 @pytest.fixture(scope="module")
 def mockserver_client(backend):
     """Mockserver client for creating expectations and direct requests"""
-    return Mockserver(KuadrantClient(base_url=f"http://{backend.service.refresh().external_ip}:8080"))
+    return Mockserver(backend.admin_hostname.client())
 
 
 @pytest.fixture(scope="module")
