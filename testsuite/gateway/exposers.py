@@ -69,7 +69,7 @@ class LoadBalancerServiceExposer(Exposer):
     """Exposer using Load Balancer service for Gateway"""
 
     def expose_hostname(self, name, gateway: Gateway) -> Hostname:
-        hostname = f"{name}.{self.base_domain}"
+        hostname = f"{name}-{self.cluster.project}.{self.base_domain}"
         return StaticLocalHostname(
             hostname, gateway.external_ip, lambda: gateway.get_tls_cert(hostname), force_https=self.passthrough
         )
