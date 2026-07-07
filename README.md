@@ -43,6 +43,7 @@ For local development and testing, you can set up a complete Kuadrant environmen
 * [jq](https://jqlang.github.io/jq/download/) (JSON processor)
 
 > **Podman users:** Set `CONTAINER_ENGINE=podman` when running `make local-setup`. Docker is used by default.
+> On Linux, enable the podman socket first: `systemctl --user enable --now podman.socket`
 
 > **macOS container runtime:** Use [Podman Desktop](https://podman-desktop.io/) or [Docker Desktop](https://www.docker.com/products/docker-desktop/) as the container runtime. Other Docker-compatible runtimes (e.g. OrbStack) may not work due to LoadBalancer networking incompatibilities with `cloud-provider-kind`.
 

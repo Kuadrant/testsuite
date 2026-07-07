@@ -7,7 +7,7 @@ from testsuite.kuadrant.policy.authorization import Credentials
 pytestmark = [pytest.mark.authorino]
 
 
-@pytest.fixture(scope="module", params=["authorizationHeader", "customHeader", "queryString", "cookie"])
+@pytest.fixture(scope="module")
 def credentials(request):
     """Location where are auth credentials passed"""
     return request.param
@@ -24,7 +24,12 @@ def authorization(authorization, api_key, credentials):
 
 @pytest.mark.parametrize(
     "credentials",
-    [pytest.param("authorizationHeader", marks=pytest.mark.smoke), "customHeader", "queryString", "cookie"],
+    [
+        pytest.param("authorizationHeader", marks=[pytest.mark.smoke, pytest.mark.disconnected]),
+        "customHeader",
+        "queryString",
+        "cookie",
+    ],
     indirect=True,
 )
 def test_custom_selector(client, auth, credentials):
@@ -36,6 +41,11 @@ def test_custom_selector(client, auth, credentials):
         assert response.status_code == 401
 
 
+@pytest.mark.parametrize(
+    "credentials",
+    ["authorizationHeader", "customHeader", "queryString", "cookie"],
+    indirect=True,
+)
 def test_custom_header(client, auth, credentials):
     """Test if auth credentials are stored in right place"""
     response = client.get("/get", headers={"APIKEY": auth.api_key})
@@ -45,6 +55,11 @@ def test_custom_header(client, auth, credentials):
         assert response.status_code == 401
 
 
+@pytest.mark.parametrize(
+    "credentials",
+    ["authorizationHeader", "customHeader", "queryString", "cookie"],
+    indirect=True,
+)
 def test_query(client, auth, credentials):
     """Test if auth credentials are stored in right place"""
     response = client.get("/get", params={"APIKEY": auth.api_key})
@@ -54,6 +69,11 @@ def test_query(client, auth, credentials):
         assert response.status_code == 401
 
 
+@pytest.mark.parametrize(
+    "credentials",
+    ["authorizationHeader", "customHeader", "queryString", "cookie"],
+    indirect=True,
+)
 def test_cookie(hostname, auth, credentials):
     """Test if auth credentials are stored in right place"""
     with hostname.client(cookies={"APIKEY": auth.api_key}) as client:

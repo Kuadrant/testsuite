@@ -27,6 +27,7 @@ def route(request, gateway, blame, hostname, backend, module_label):
     route.add_rule(backend, GRPCRouteMatch(method=GRPCMethodMatch(type="Exact", method="DummyUnary")))  # rule-2
     request.addfinalizer(route.delete)
     route.commit()
+    route.wait_for_ready()
     return route
 
 

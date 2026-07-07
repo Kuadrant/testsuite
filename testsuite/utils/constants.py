@@ -164,6 +164,10 @@ ENVOY_READINESS_PERIOD = 4
 
 # DNS propagation wait.
 DNS_PROPAGATION_WAIT = 300  # 5 minutes
+# --- Mockserver readiness (seconds) ---
+
+MOCKSERVER_READINESS_INITIAL_DELAY = 2
+MOCKSERVER_READINESS_PERIOD = 2
 
 # --- Miscellaneous Workarounds (seconds) ---
 

@@ -1,8 +1,8 @@
 """Tests for Kuadrant operator health metrics (existence, readiness, component and dependency status)."""
 
 import pytest
-from openshift_client import selector
 
+from testsuite.gateway.gateway_api.gateway import KuadrantGateway
 from testsuite.prometheus import has_label
 
 pytestmark = [pytest.mark.observability]
@@ -11,7 +11,9 @@ pytestmark = [pytest.mark.observability]
 @pytest.fixture(scope="module")
 def is_istio(cluster, skip_or_fail):
     """Skip if Istio is not installed on the cluster"""
-    if not selector("Istio", all_namespaces=True, static_context=cluster.context).objects():
+    try:
+        KuadrantGateway.get_gateway_class_name(cluster)
+    except KeyError:
         skip_or_fail("Istio is not installed on the cluster")
 
 

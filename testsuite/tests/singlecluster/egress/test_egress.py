@@ -17,7 +17,7 @@ from testsuite.kuadrant.policy.rate_limit import Limit
 from testsuite.utils.constants import RLP_WINDOW_RESET_WAIT_BUFFERED
 from .conftest import EGRESS_HOSTNAME
 
-pytestmark = [pytest.mark.kuadrant_only, pytest.mark.egress_gateway]
+pytestmark = [pytest.mark.kuadrant_only, pytest.mark.egress_gateway, pytest.mark.flaky(reruns=0)]
 
 LIMIT = Limit(3, "5s")
 
@@ -66,7 +66,6 @@ def test_egress_authorization(client, auth):
     assert response.status_code == 200
 
 
-@pytest.mark.flaky(reruns=3, reruns_delay=10)
 def test_egress_ratelimit(client, auth):
     """Test that RateLimitPolicy is enforced on egress gateway traffic"""
     sleep(RLP_WINDOW_RESET_WAIT_BUFFERED)  # make sure request limit quota is reset before starting the test

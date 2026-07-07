@@ -22,11 +22,14 @@ def rate_limit(rate_limit):
 
 
 @pytest.fixture(scope="module")
-def grpc_route(request, gateway, cluster, blame, module_label):
-    """Creates a GRPCRoute for topology tests"""
+def grpc_route(request, gateway, cluster, blame, module_label, openshift_version):
+    """Creates a GRPCRoute for topology tests (OCP 4.20+), returns None on older versions"""
+    if openshift_version < (4, 20):
+        return None
     grpc_route = GRPCRoute.create_instance(cluster, blame("grpc"), gateway, {"app": module_label})
     request.addfinalizer(grpc_route.delete)
     grpc_route.commit()
+    grpc_route.wait_for_ready()
     return grpc_route
 
 

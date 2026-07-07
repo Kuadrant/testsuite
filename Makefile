@@ -1,4 +1,4 @@
-.PHONY: commit-acceptance pylint mypy black reformat test authorino poetry poetry-no-dev mgc container-image polish-junit reportportal authorino-standalone limitador kuadrant kuadrant-only disruptive kuadrantctl multicluster ui playwright-install collect grpc
+.PHONY: commit-acceptance pylint mypy black reformat test authorino poetry poetry-no-dev mgc container-image polish-junit reportportal authorino-standalone limitador kuadrant kuadrant-only disruptive disconnected kuadrantctl multicluster ui playwright-install collect grpc
 
 TB ?= short
 LOGLEVEL ?= INFO
@@ -9,7 +9,8 @@ else
 resultsdir ?= .
 endif
 
-PYTEST = poetry run python -m pytest --tb=$(TB) --reruns 3 --reruns-delay 2 -o cache_dir=$(resultsdir)/.pytest_cache.$(@F)
+ROOTLESS_NETNS := $(shell if [ "$$(uname)" = "Linux" ] && $(CONTAINER_ENGINE) --version 2>/dev/null | grep -qi podman && $(CONTAINER_ENGINE) info --format '{{.Host.Security.Rootless}}' 2>/dev/null | grep -q true; then echo "podman unshare --rootless-netns"; fi)
+PYTEST = $(ROOTLESS_NETNS) poetry run python -m pytest --tb=$(TB) --reruns 3 --reruns-delay 2 -o cache_dir=$(resultsdir)/.pytest_cache.$(@F)
 RUNSCRIPT = poetry run ./scripts/
 
 ifdef junit
@@ -67,6 +68,9 @@ ui: playwright-install ## Run UI (console plugin) tests
 
 disruptive: poetry-no-dev  ## Run disruptive tests
 	$(PYTEST) -m 'disruptive' $(flags) testsuite/tests/
+
+disconnected: poetry-no-dev  ## Run tests compatible with disconnected clusters
+	$(PYTEST) -n4 -m 'disconnected' --dist loadfile --enforce $(flags) testsuite/tests/
 
 egress-gateway: poetry-no-dev  ## Run egress gateway tests
 	$(PYTEST) -n4 -m 'egress_gateway' --dist loadfile --enforce $(flags) testsuite/tests/singlecluster/egress/

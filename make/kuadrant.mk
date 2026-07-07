@@ -30,6 +30,7 @@ endif
 	$(MAKE) patch-kuadrant-operator-env
 	@echo "Kuadrant Operator $(KUADRANT_OPERATOR_VERSION) installed from Helm"
 endif
+	$(MAKE) patch-kuadrant-operator-image
 ifeq ($(INSTALL_TRACING),true)
 	@echo "Configuring OTEL tracing on limitador-operator..."
 	@kubectl set env deployment/limitador-operator-controller-manager \
@@ -38,6 +39,19 @@ ifeq ($(INSTALL_TRACING),true)
 		OTEL_EXPORTER_OTLP_INSECURE=true
 	@kubectl rollout status deployment/limitador-operator-controller-manager \
 		-n $(KUADRANT_NAMESPACE) --timeout=$(KUBECTL_TIMEOUT)
+endif
+
+.PHONY: patch-kuadrant-operator-image
+patch-kuadrant-operator-image: ## Patch Kuadrant Operator deployment with custom image
+ifneq ($(KUADRANT_OPERATOR_IMAGE),)
+	@echo "Patching Kuadrant Operator image to $(KUADRANT_OPERATOR_IMAGE)..."
+	kubectl set image deployment/kuadrant-operator-controller-manager \
+		-n $(KUADRANT_NAMESPACE) \
+		manager=$(KUADRANT_OPERATOR_IMAGE)
+	kubectl -n $(KUADRANT_NAMESPACE) rollout status deployment/kuadrant-operator-controller-manager --timeout=$(KUBECTL_TIMEOUT)
+	@echo "Kuadrant Operator image patched"
+else
+	@echo "No custom operator image specified (KUADRANT_OPERATOR_IMAGE not set), skipping"
 endif
 
 .PHONY: patch-kuadrant-operator-env

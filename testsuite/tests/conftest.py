@@ -14,6 +14,7 @@ from testsuite.capabilities import has_kuadrant, kuadrant_version
 from testsuite.certificates import CFSSLClient
 from testsuite.config import settings
 from testsuite.gateway import Exposer, CustomReference
+from testsuite.gateway.gateway_api.gateway import KuadrantGateway
 from testsuite.httpx import KuadrantClient
 from testsuite.mockserver import Mockserver
 from testsuite.oidc import OIDCProvider
@@ -45,6 +46,10 @@ def pytest_runtest_setup(item):
     # error is raised during has_kuadrant()
     if item.config.getoption("--setup-plan"):
         return
+
+    if item.fspath.basename == "info_collector.py":
+        return
+
     marks = [i.name for i in item.iter_markers()]
     skip_or_fail = pytest.fail if item.config.getoption("--enforce") else pytest.skip
     standalone = item.config.getoption("--standalone")
@@ -422,16 +427,14 @@ def dns_provider_secret(testconfig):
 
 
 @pytest.fixture(scope="session")
-def openshift_version(cluster):
+def openshift_version(testconfig):
     """Get OpenShift cluster version"""
-    result = cluster.do_action(
-        "get", "clusterversion", "version", "-o", "jsonpath={.status.desired.version}", auto_raise=False
-    )
-    if result.status() != 0:
+    cluster = testconfig["control_plane"]["cluster"]
+    version = cluster.ocp_version
+    if version is None:
         return None
-    version_str = result.out().strip()
-    parts = version_str.split(".")
-    return tuple(int(p.split("-")[0]) for p in parts[:2])  # Convert "4.20.0" -> (4, 20)
+    parts = version.split(".")
+    return tuple(int(p.split("-")[0]) for p in parts[:2])  # Convert "4.20" -> (4, 20)
 
 
 @pytest.fixture(autouse=True)
@@ -444,3 +447,12 @@ def check_min_ocp_version(request, openshift_version):
             pytest.skip("Could not detect OpenShift version")
         if openshift_version < required_version:
             pytest.skip(f"Requires OCP {'.'.join(map(str, required_version))}+")
+
+
+@pytest.fixture(autouse=True)
+def check_user_managed_istio(request, cluster, skip_or_fail):
+    """Skip tests that require a user-managed Istio (e.g. mTLS, sidecar injection).
+    OCP-managed Istio does not allow modifications to the Istio CR."""
+    marker = request.node.get_closest_marker("user_managed_istio")
+    if marker and KuadrantGateway.get_gateway_class_name(cluster) == "openshift-default":
+        skip_or_fail("Test requires user-managed Istio installation")
