@@ -10,6 +10,7 @@ import pytest
 
 from testsuite.kuadrant.policy import has_condition
 from testsuite.kuadrant.policy.rate_limit import RateLimitPolicy, Limit
+from testsuite.utils.constants import RLP_COUNTER_RESET_WAIT
 
 pytestmark = [pytest.mark.limitador]
 
@@ -78,7 +79,7 @@ def test_identical_hostnames_rlp_on_gw_and_route(client, rate_limit, rate_limit2
     rate_limit2.wait_for_ready()
 
     # Wait for 15 seconds to make sure counter is reset
-    sleep(15)
+    sleep(RLP_COUNTER_RESET_WAIT)
 
     responses = client.get_many("/anything/route1/get", LIMIT.limit)
     responses.assert_all(status_code=200)

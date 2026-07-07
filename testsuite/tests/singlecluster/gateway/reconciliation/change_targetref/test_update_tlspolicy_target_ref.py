@@ -10,6 +10,7 @@ from testsuite.gateway import TLSGatewayListener
 from testsuite.gateway.gateway_api.gateway import KuadrantGateway
 from testsuite.gateway.gateway_api.hostname import StaticHostname
 from testsuite.httpx import KuadrantClient
+from testsuite.utils.constants import TLS_SECRET_PROPAGATION_WAIT
 
 pytestmark = [pytest.mark.dnspolicy, pytest.mark.tlspolicy]
 
@@ -85,7 +86,7 @@ def test_update_tls_policy_target_ref(
     # Delete TLS secret to verify gateway1 no longer serves valid TLS traffic
     tls_secret = gateway.get_tls_secret(hostname.hostname)
     tls_secret.delete()
-    time.sleep(10)  # Allow extra time for secret deletion to propagate
+    time.sleep(TLS_SECRET_PROPAGATION_WAIT)  # Allow extra time for secret deletion to propagate
 
     response = KuadrantClient(base_url=f"https://{hostname.hostname}", verify=False).get("/get")
     assert response.has_tls_error()

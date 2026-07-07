@@ -9,6 +9,7 @@ import pytest
 
 from testsuite.kuadrant.policy.authorization import Pattern, ValueFrom, DenyResponse
 from testsuite.gateway.envoy.jwt_plain_identity import JwtEnvoy
+from testsuite.utils.constants import JWT_STARTUP_MAX_RETRIES
 
 logger = logging.getLogger(__name__)
 
@@ -115,7 +116,7 @@ def test_jwt_user_story(client, auth, auth2):
     # Temporary retry loop: keep sending requests until we get a 200 response
     # or reach the maximum attempts. Remove this once the underlying issue is fixed
     # and the test passes without retries.
-    max_attempts = 20
+    max_attempts = JWT_STARTUP_MAX_RETRIES
     response = client.get("/get", auth=auth, headers={"x-country": "GB"})
     if response.status_code == 500:
         start = time.perf_counter()

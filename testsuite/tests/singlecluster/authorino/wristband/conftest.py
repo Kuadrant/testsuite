@@ -8,6 +8,7 @@ from testsuite.kuadrant.policy.authorization.auth_config import AuthConfig
 from testsuite.gateway.envoy.route import EnvoyVirtualRoute
 from testsuite.kubernetes.secret import TLSSecret
 from testsuite.utils import cert_builder
+from testsuite.utils.constants import AUTHORINO_OIDC_PORT
 
 
 @pytest.fixture(scope="session")
@@ -46,7 +47,7 @@ def wristband_name(blame):
 @pytest.fixture(scope="module")
 def wristband_endpoint(cluster, authorino, wristband_name):
     """Authorino oidc wristband endpoint"""
-    return f"http://{authorino.oidc_url}:8083/{cluster.project}/{wristband_name}/wristband"
+    return f"http://{authorino.oidc_url}:{AUTHORINO_OIDC_PORT}/{cluster.project}/{wristband_name}/wristband"
 
 
 @pytest.fixture(scope="module")
