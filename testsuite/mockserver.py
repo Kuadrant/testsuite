@@ -75,3 +75,10 @@ class Mockserver:
             params={"type": "REQUESTS", "format": "JSON"},
             json={"path": "/" + expectation_id},
         ).json()
+
+    def retrieve_requests_by_header(self, header_name, header_value):
+        """Retrieve requests matching a specific header value"""
+        return self.client.mockserver.retrieve.put(
+            params={"type": "REQUESTS", "format": "JSON"},
+            json={"headers": {header_name: [header_value]}},
+        ).json()

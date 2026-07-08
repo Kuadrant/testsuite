@@ -1,6 +1,6 @@
 """General exposers, not tied to Envoy or Gateway API"""
 
-from testsuite.gateway import Exposer, Gateway, Hostname
+from testsuite.gateway import Exposer, Hostname
 from testsuite.httpx import KuadrantClient, ForceSNIClient
 from testsuite.kubernetes.openshift.route import OpenshiftRoute
 
@@ -16,14 +16,14 @@ class OpenShiftExposer(Exposer):
     def base_domain(self) -> str:
         return self.cluster.apps_url
 
-    def expose_hostname(self, name, gateway: Gateway) -> Hostname:
+    def expose_hostname(self, name, exposable) -> Hostname:
         tls = False
         termination = "edge"
         if self.passthrough:
             tls = True
             termination = "passthrough"
         route = OpenshiftRoute.create_instance(
-            gateway.cluster, name, gateway.service_name, "api", tls=tls, termination=termination
+            exposable.cluster, name, exposable.service_name, exposable.port_name, tls=tls, termination=termination
         )
         route.verify = self.verify
         self.routes.append(route)
@@ -68,11 +68,15 @@ class StaticLocalHostname(Hostname):
 class LoadBalancerServiceExposer(Exposer):
     """Exposer using Load Balancer service for Gateway"""
 
-    def expose_hostname(self, name, gateway: Gateway) -> Hostname:
+    def expose_hostname(self, name, exposable) -> Hostname:
         hostname = f"{name}.{self.base_domain}"
         return StaticLocalHostname(
-            hostname, gateway.external_ip, lambda: gateway.get_tls_cert(hostname), force_https=self.passthrough
+            hostname, exposable.external_ip, lambda: exposable.get_tls_cert(hostname), force_https=self.passthrough
         )
+
+    @property
+    def backend_service_type(self) -> str:
+        return "LoadBalancer"
 
     @property
     def base_domain(self) -> str:

@@ -2,6 +2,7 @@
 
 TB ?= short
 LOGLEVEL ?= INFO
+VERIFY_DENIALS ?= true # Set to false to skip the --verify-denials check that ensures denied requests (401/403/429) did not leak to the upstream backend.
 
 ifdef WORKSPACE  # Yes, this is for jenkins
 resultsdir = $(WORKSPACE)
@@ -15,6 +16,10 @@ RUNSCRIPT = poetry run ./scripts/
 
 ifdef junit
 PYTEST += --junitxml=$(resultsdir)/junit-$(@F).xml -o junit_suite_name=$(@F)
+endif
+
+ifdef VERIFY_DENIALS # Only add the flag if VERIFY_DENIALS is set to a non-empty value (default is "true")
+PYTEST += --verify-denials=$(VERIFY_DENIALS)
 endif
 
 # Collector PYTEST Override
