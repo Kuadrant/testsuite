@@ -6,13 +6,7 @@ from testsuite.kubernetes import Selector
 from testsuite.kubernetes.config_map import ConfigMap
 from testsuite.kubernetes.deployment import Deployment, ContainerResources, ConfigMapVolume, VolumeMount
 from testsuite.kubernetes.service import Service, ServicePort
-from testsuite.utils.constants import (
-    MOCKSERVER_INTERNAL_PORT,
-    HTTP_API_PORT,
-    SERVICE_READY_TIMEOUT,
-    MOCKSERVER_READINESS_INITIAL_DELAY,
-    MOCKSERVER_READINESS_PERIOD,
-)
+from testsuite.utils.constants import MOCKSERVER_INTERNAL_PORT, HTTP_API_PORT, SERVICE_READY_TIMEOUT
 
 INIT_JSON_MOUNT = "/config/mockserver"
 
@@ -92,14 +86,8 @@ class MockserverBackend(Backend):
             volumes=self.config.volumes if self.config else None,
             volume_mounts=self.config.volume_mounts if self.config else None,
             env=env_limit | self.config.env if self.config else env_limit,
-            readiness_probe={
-                "httpGet": {"path": "/mockserver/ready", "port": MOCKSERVER_INTERNAL_PORT},
-                "initialDelaySeconds": MOCKSERVER_READINESS_INITIAL_DELAY,
-                "periodSeconds": MOCKSERVER_READINESS_PERIOD,
-            },
         )
         self.deployment.commit()
-        self.deployment.wait_for_ready()
 
         self.service = Service.create_instance(
             self.cluster,
