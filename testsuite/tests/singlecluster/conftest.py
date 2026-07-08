@@ -204,9 +204,12 @@ def pytest_runtest_makereport(item, call):  # pylint: disable=unused-argument
         return
 
     backend = item.funcargs.get("backend")
-    if not report.passed or backend is None or not isinstance(backend, MockserverBackend):
-        return
-    if backend.admin_hostname is None or not denied_ids:
+    if (
+        not report.passed
+        or not isinstance(backend, MockserverBackend)
+        or backend.admin_hostname is None
+        or not denied_ids
+    ):
         return
 
     backend_client = backend.admin_hostname.client()

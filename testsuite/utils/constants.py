@@ -37,10 +37,42 @@ DNS_POLICY_ENFORCEMENT_TIMEOUT = 300  # 5 minutes
 # TLSPolicy enforcement timeout (includes ACME challenge time).
 TLS_POLICY_ENFORCEMENT_TIMEOUT = 450  # 7.5 minutes
 
+# Policy condition check timeout.
+POLICY_CONDITION_TIMEOUT = 20
+
+# Object deletion check timeout.
+OBJECT_DELETION_TIMEOUT = 30
+
+# DNS health check timeout.
+DNS_HEALTH_CHECK_TIMEOUT = 120  # 2 minutes
+
 # --- Rate Limiting (seconds) ---
 
 # Wait after RateLimitPolicy enforcement (enforcer sync delay).
 RLP_POST_ENFORCEMENT_WAIT = 5
+
+# Wait for RLP window reset.
+RLP_WINDOW_RESET_WAIT = 5
+
+# Wait for RLP window reset with safety buffer.
+RLP_WINDOW_RESET_WAIT_BUFFERED = 6
+
+# Wait for RLP counter reset.
+RLP_COUNTER_RESET_WAIT = 15
+
+# Wait for RLP iteration window to reset.
+RLP_ITERATION_WINDOW_RESET_WAIT = 10
+
+# --- Token Rate Limiting (seconds) ---
+
+# Wait for TRLP free user quota reset.
+TRLP_FREE_USER_RESET_WAIT = 30
+
+# Wait for TRLP paid user quota reset.
+TRLP_PAID_USER_RESET_WAIT = 60
+
+# Wait for TRLP iteration reset.
+TRLP_ITERATION_RESET_WAIT = 20
 
 # --- Prometheus & Observability ---
 
@@ -64,6 +96,10 @@ TRACING_MAX_RETRIES = 7
 # HTTPX request retry (fibonacci backoff, 8 attempts).
 HTTP_BACKOFF_MAX_RETRIES = 8
 
+# Observability ServiceMonitor/PodMonitor readiness polling (~60s total).
+OBSERVABILITY_MONITOR_POLL_INTERVAL = 5
+OBSERVABILITY_MONITOR_MAX_RETRIES = 12
+
 # --- SpiceDB ---
 
 # HTTP client timeout for SpiceDB API calls (seconds).
@@ -74,6 +110,12 @@ SPICEDB_RETRY_INTERVAL = 5
 SPICEDB_MAX_RETRIES = 3
 
 # --- Service Ports ---
+
+# Standard HTTP port.
+HTTP_PORT = 80
+
+# Standard HTTPS port.
+HTTPS_PORT = 443
 
 # Standard HTTP API port (shared across multiple services).
 HTTP_API_PORT = 8080
@@ -99,6 +141,9 @@ SPICEDB_GRPC_PORT = 50051
 # SpiceDB HTTP/TLS.
 SPICEDB_HTTP_PORT = 8443
 
+# Authorino OIDC wristband endpoint.
+AUTHORINO_OIDC_PORT = 8083
+
 # --- gRPC ---
 
 # Default timeout for individual gRPC unary calls (seconds).
@@ -106,7 +151,7 @@ GRPC_CALL_TIMEOUT = 10
 
 # --- Envoy Workarounds (seconds) ---
 
-# Extra wait after envoy rollout (wait_for_ready alone is insufficient).
+# Wait after Envoy rollout (wait_for_ready alone is insufficient).
 ENVOY_STARTUP_SETTLE = 3
 
 # Envoy readiness probe initial delay.
@@ -115,12 +160,24 @@ ENVOY_READINESS_INITIAL_DELAY = 3
 # Envoy readiness probe period.
 ENVOY_READINESS_PERIOD = 4
 
-# --- Mockserver readiness (seconds) ---
+# --- DNS Propagation (seconds) ---
 
-MOCKSERVER_READINESS_INITIAL_DELAY = 2
-MOCKSERVER_READINESS_PERIOD = 2
+# DNS propagation wait.
+DNS_PROPAGATION_WAIT = 300  # 5 minutes
 
 # --- Miscellaneous Workarounds (seconds) ---
 
 # Workaround for https://github.com/Kuadrant/testsuite/issues/884 — remove when fixed
 OIDC_POST_ENFORCEMENT_WAIT = 10
+
+# Wait for OPA external registry cache TTL to expire (TTL + buffer).
+OPA_CACHE_TTL_WAIT = 2
+
+# Wait for TLS secret deletion to propagate.
+TLS_SECRET_PROPAGATION_WAIT = 10
+
+# Kind workaround: wait for WasmPlugin sync before https://github.com/envoyproxy/envoy/pull/43928 is released.
+WASM_PLUGIN_SYNC_WAIT = 15
+
+# Max retry attempts for JWT test startup.
+JWT_STARTUP_MAX_RETRIES = 20

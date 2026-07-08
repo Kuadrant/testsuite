@@ -14,6 +14,7 @@ from testsuite.kuadrant.policy.authorization import Pattern
 from testsuite.kuadrant.policy.authorization.auth_policy import AuthPolicy
 from testsuite.kuadrant.policy.rate_limit import Limit, RateLimitPolicy
 from testsuite.kubernetes import Selector
+from testsuite.utils.constants import OBJECT_DELETION_TIMEOUT
 
 pytestmark = [pytest.mark.observability, pytest.mark.limitador, pytest.mark.authorino, pytest.mark.kuadrant_only]
 
@@ -113,7 +114,7 @@ def test_policy_deletion_triggers_reconciliation_traces(temp_deletion_policy, tr
     span_ids_before = {span.span_id for trace in all_traces_before for span in trace.spans}
 
     temp_deletion_policy.delete()
-    temp_deletion_policy.wait_until(lambda obj: not obj.exists(), timelimit=30)
+    temp_deletion_policy.wait_until(lambda obj: not obj.exists(), timelimit=OBJECT_DELETION_TIMEOUT)
 
     all_traces = tracing.get_traces(service="kuadrant-operator")
 

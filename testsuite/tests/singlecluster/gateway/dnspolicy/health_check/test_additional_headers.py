@@ -8,6 +8,7 @@ from testsuite.gateway.gateway_api.gateway import KuadrantGateway
 from testsuite.kubernetes.secret import Secret
 from testsuite.kuadrant.policy.dns import HealthCheck, AdditionalHeadersRef
 from testsuite.backend.mockserver import MockserverBackend
+from testsuite.utils.constants import HTTP_PORT
 
 pytestmark = [pytest.mark.dnspolicy]
 
@@ -23,7 +24,7 @@ def health_check(headers_secret, module_label):
         path=f"/{module_label}",
         interval="5s",
         protocol="HTTP",
-        port=80,
+        port=HTTP_PORT,
     )
 
 
