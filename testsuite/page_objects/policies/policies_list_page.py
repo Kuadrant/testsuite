@@ -35,8 +35,9 @@ class BasePolicyListPage(Navigable):
 
     def is_policy_listed(self, name: str) -> bool:
         """Searches all paginated list pages and returns True if the policy appears"""
-        prev_button = self.page.locator("button[data-action='previous'][aria-label='Go to previous page']")
-        next_button = self.page.locator("button[data-action='next'][aria-label='Go to next page']")
+        top_pagination = self.page.locator("#options-menu-top-pagination")
+        prev_button = top_pagination.locator("button[data-action='previous'][aria-label='Go to previous page']")
+        next_button = top_pagination.locator("button[data-action='next'][aria-label='Go to next page']")
 
         # Ensure we start on the first page
         while prev_button.is_visible() and prev_button.is_enabled():
