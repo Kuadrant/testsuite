@@ -12,14 +12,17 @@ pytestmark = [pytest.mark.ui]
 
 
 def test_overview_page_sections_and_links(navigator, openshift_version):
-    """Verify all section panels are visible and Getting started resources has clickable links"""
+    """Verify all section panels are visible and getting started banner has documentation link"""
     # Navigate to overview page
     overview_page = navigator.navigate(OverviewPage)
     assert overview_page.page_displayed(), "Overview page did not load"
 
+    # Verify getting started banner has a clickable documentation link
+    assert overview_page.page.get_by_text("Getting started with").is_visible()
+    view_doc_link = overview_page.page.get_by_role("link", name="View Documentation")
+    assert view_doc_link.is_visible() and view_doc_link.is_enabled()
+
     # Verify all expected section panels exist
-    getting_started = overview_page.page.get_by_text("Getting started resources")
-    assert getting_started.is_visible()
     assert overview_page.page.get_by_role("heading", name="Gateways", exact=True).is_visible()
     assert overview_page.page.get_by_role("heading", name="Gateways - Traffic Analysis", exact=True).is_visible()
     assert overview_page.page.get_by_role("heading", name="Policies", exact=True).is_visible()
@@ -27,12 +30,6 @@ def test_overview_page_sections_and_links(navigator, openshift_version):
     # GRPCRoutes section only on OCP 4.20+
     if openshift_version >= (4, 20):
         assert overview_page.page.get_by_role("heading", name="GRPCRoutes", exact=True).is_visible()
-
-    # Verify Getting started resources panel has clickable links
-    getting_started_section = getting_started.locator("xpath=ancestor::section").first
-    links = getting_started_section.get_by_role("link").all()
-    clickable_links = [link for link in links if link.is_visible() and link.is_enabled()]
-    assert len(clickable_links) > 0, "No clickable links found in Getting started resources panel"
 
 
 def test_creation_buttons(navigator, openshift_version):
