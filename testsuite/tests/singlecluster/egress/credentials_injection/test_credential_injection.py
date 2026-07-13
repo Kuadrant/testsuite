@@ -17,11 +17,7 @@ from testsuite.kubernetes.vault import Vault
 
 from ..conftest import EGRESS_HOSTNAME
 
-pytestmark = [
-    pytest.mark.kuadrant_only,
-    pytest.mark.egress_gateway,
-    pytest.mark.flaky(reruns=0),
-]
+pytestmark = [pytest.mark.kuadrant_only, pytest.mark.egress_gateway]
 
 VAULT_API_KEY = "pretty-random-api-key-to-use-for-egress-credential-injection-test-41894726"
 K8S_TOKEN_AUDIENCE = "https://kubernetes.default.svc.cluster.local"
