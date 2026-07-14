@@ -35,15 +35,12 @@ def test_grpc_upstream_unavailable(request, cluster, blame, route):
     ), f"Policy did not reach expected error status, instead: {policy.refresh().model.status.conditions}"
 
 
-def test_grpc_wrong_service_name(request, cluster, blame, route, threat_assessment_service):
+def test_grpc_wrong_service_name(request, cluster, blame, route, threat_service_url):
     """PipelinePolicy reports error when action method references a non-existent gRPC service name."""
-    svc_url = (
-        f"grpc://{threat_assessment_service.name()}.{threat_assessment_service.namespace()}.svc.cluster.local:8080"
-    )
     policy = PipelinePolicy.create_instance(cluster, blame("bad-svc"), route)
     policy.add_action_method(
         name="bad-service",
-        url=svc_url,
+        url=threat_service_url,
         service="nonexistent.v1.FakeService",
         method="DoSomething",
         message_template="nonexistent.v1.FakeRequest{uri: request.path}",
@@ -60,15 +57,12 @@ def test_grpc_wrong_service_name(request, cluster, blame, route, threat_assessme
     ), f"Policy did not reach expected error status, instead: {policy.refresh().model.status.conditions}"
 
 
-def test_grpc_wrong_method_name(request, cluster, blame, route, threat_assessment_service):
+def test_grpc_wrong_method_name(request, cluster, blame, route, threat_service_url):
     """PipelinePolicy reports error when action method references a non-existent gRPC method."""
-    svc_url = (
-        f"grpc://{threat_assessment_service.name()}.{threat_assessment_service.namespace()}.svc.cluster.local:8080"
-    )
     policy = PipelinePolicy.create_instance(cluster, blame("bad-meth"), route)
     policy.add_action_method(
         name="wrong-method",
-        url=svc_url,
+        url=threat_service_url,
         service="threat.v1.ThreatAssessmentService",
         method="NonExistentMethod",
         message_template="threat.v1.ThreatRequest{uri: request.path}",

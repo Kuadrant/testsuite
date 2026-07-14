@@ -8,21 +8,10 @@ pytestmark = [pytest.mark.kuadrant_only, pytest.mark.extensions]
 
 
 @pytest.fixture(scope="module")
-def pipeline_policy(pipeline_policy, threat_assessment_service):  # pylint: disable=unused-argument
-    """PipelinePolicy with threat assessment gRPC action and conditional headers."""
-    svc_url = (
-        f"grpc://{threat_assessment_service.name()}.{threat_assessment_service.namespace()}.svc.cluster.local:8080"
-    )
-    pipeline_policy.add_action_method(
-        name="assess-threat",
-        url=svc_url,
-        service="threat.v1.ThreatAssessmentService",
-        method="AssessRequest",
-        message_template="threat.v1.ThreatRequest{uri: request.path, source_ip: source.address}",
-    )
-
+def pipeline_policy(pipeline_policy):
+    """PipelinePolicy with conditional gRPC execution and threat-level deny."""
     pipeline_policy.on_http_request.add_grpc_method(
-        method="assess-threat",
+        method="assess",
         var="threatResponse",
         predicate='"x-assess-threat" in request.headers',
     )

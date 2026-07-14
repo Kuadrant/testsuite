@@ -6,18 +6,8 @@ pytestmark = [pytest.mark.kuadrant_only, pytest.mark.extensions]
 
 
 @pytest.fixture(scope="module")
-def pipeline_policy(pipeline_policy, threat_assessment_service):
+def pipeline_policy(pipeline_policy):
     """PipelinePolicy with gRPC call and fail action based on threat level."""
-    svc_url = (
-        f"grpc://{threat_assessment_service.name()}.{threat_assessment_service.namespace()}.svc.cluster.local:8080"
-    )
-    pipeline_policy.add_action_method(
-        name="assess",
-        url=svc_url,
-        service="threat.v1.ThreatAssessmentService",
-        method="AssessRequest",
-        message_template="threat.v1.ThreatRequest{uri: request.path}",
-    )
     pipeline_policy.on_http_request.add_grpc_method(method="assess", var="threat")
     pipeline_policy.on_http_request.add_fail(
         "threat level too high",
