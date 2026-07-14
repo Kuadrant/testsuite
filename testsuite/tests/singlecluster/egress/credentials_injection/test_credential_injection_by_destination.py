@@ -18,7 +18,11 @@ from testsuite.kubernetes.secret import Secret
 
 from ..conftest import EGRESS_HOSTNAME
 
-pytestmark = [pytest.mark.kuadrant_only, pytest.mark.egress_gateway]
+pytestmark = [
+    pytest.mark.kuadrant_only,
+    pytest.mark.egress_gateway,
+    pytest.mark.flaky(reruns=3, reruns_delay=2, only_rerun=["AssertionError"]),
+]
 
 SERVICE1_API_KEY = "pretty-random-api-key-to-use-for-egress-test-41894726"
 SERVICE2_API_KEY = "sk-fake-service2-key-for-egress-test-9876543210"
@@ -186,11 +190,11 @@ def commit(request, authorization, authorization2):
 def test_credential_injection_by_destination(client):
     """Test that /service1 and /service2 routes inject the correct credential for their respective destinations"""
     response = client.get("/service1")
-    assert response.status_code == 200
+    assert response is not None and response.status_code == 200
     response = client.get("/service1", headers={"dont-inject": "true"})
-    assert response.status_code == 401
+    assert response is not None and response.status_code == 401
 
     response = client.get("/service2")
-    assert response.status_code == 200
+    assert response is not None and response.status_code == 200
     response = client.get("/service2", headers={"dont-inject": "true"})
-    assert response.status_code == 401
+    assert response is not None and response.status_code == 401

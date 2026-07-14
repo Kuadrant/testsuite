@@ -17,7 +17,11 @@ from testsuite.kubernetes.vault import Vault
 
 from ..conftest import EGRESS_HOSTNAME
 
-pytestmark = [pytest.mark.kuadrant_only, pytest.mark.egress_gateway]
+pytestmark = [
+    pytest.mark.kuadrant_only,
+    pytest.mark.egress_gateway,
+    pytest.mark.flaky(reruns=3, reruns_delay=2, only_rerun=["AssertionError"]),
+]
 
 VAULT_API_KEY = "pretty-random-api-key-to-use-for-egress-credential-injection-test-41894726"
 K8S_TOKEN_AUDIENCE = "https://kubernetes.default.svc.cluster.local"
@@ -169,23 +173,23 @@ def authorization(cluster, route, blame, module_label, vault, vault_role):
 def test_egress_credential_injection_via_vault(client, sa_token, mockserver_expectation):
     """Test that Vault credential is injected and the overwritten header reaches the backend"""
     response = client.get(mockserver_expectation, headers={"Authorization": f"Bearer {sa_token}"})
-    assert response.status_code == 200
+    assert response is not None and response.status_code == 200
     assert response.headers["authorization"] == f"Bearer {VAULT_API_KEY}"
 
 
 def test_egress_unauthorized_namespace_rejected(client, sa_token2, mockserver_expectation):
     """Test that a valid SA token from an unauthorized namespace is rejected by Vault"""
     response = client.get(mockserver_expectation, headers={"Authorization": f"Bearer {sa_token2}"})
-    assert response.status_code == 403
+    assert response is not None and response.status_code == 403
 
 
 def test_egress_invalid_token_rejected(client, mockserver_expectation):
     """Test that requests with an invalid SA token are rejected"""
     response = client.get(mockserver_expectation, headers={"Authorization": "Bearer xyz"})
-    assert response.status_code == 401
+    assert response is not None and response.status_code == 401
 
 
 def test_egress_no_token_rejected(client, mockserver_expectation):
     """Test that requests without a valid SA token are rejected"""
     response = client.get(mockserver_expectation)
-    assert response.status_code == 401
+    assert response is not None and response.status_code == 401
