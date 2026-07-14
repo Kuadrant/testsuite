@@ -26,6 +26,10 @@ KUADRANT_DEPLOY_MODE=helm make local-setup
 # Disable Prometheus if not needed (enabled by default)
 INSTALL_PROMETHEUS=false make local-setup
 
+# Enable extensions (disabled by default, requires extensions-manifests.yaml in repo root)
+# Override defaults with EXTENSIONS_IMAGE and EXTENSIONS_MANIFESTS if needed
+INSTALL_EXTENSIONS=true make local-setup
+
 # Apply additional manifests during setup (e.g., DNS credentials, secrets)
 ADDITIONAL_MANIFESTS=./my-secrets.yaml make local-setup
 
