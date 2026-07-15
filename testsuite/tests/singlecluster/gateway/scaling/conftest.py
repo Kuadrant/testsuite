@@ -1,18 +1,10 @@
 """Conftest for the auto scale gateway test"""
 
 import pytest
-from testsuite.custom_metrics_apiserver.client import CustomMetricsApiServerClient
 from testsuite.kuadrant.policy import CelPredicate
 from testsuite.kuadrant.policy.rate_limit import RateLimitPolicy, Limit
 
 LIMIT = Limit(3, "5s")
-
-
-@pytest.fixture(scope="session")
-def custom_metrics_apiserver(testconfig):
-    """Deploys Httpbin backend"""
-    testconfig.validators.validate(only="custom_metrics_apiserver")
-    return CustomMetricsApiServerClient(testconfig["custom_metrics_apiserver"]["url"])
 
 
 @pytest.fixture(scope="module")

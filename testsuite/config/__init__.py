@@ -92,10 +92,6 @@ settings = Dynaconf(
         ),
         DefaultValueValidator("valkey.url", default=fetch_service_ip("valkey", protocol="redis", port=REDIS_PORT)),
         DefaultValueValidator(
-            "custom_metrics_apiserver.url",
-            default=fetch_service_ip("custom-metrics-apiserver", protocol="http", port=HTTP_API_PORT),
-        ),
-        DefaultValueValidator(
             "prometheus.url",
             default=fetch_prometheus_url(),
         ),

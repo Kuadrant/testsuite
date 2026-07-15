@@ -5,8 +5,6 @@ This module contains tests for scaling the gateway deployment by manually increa
 import time
 import pytest
 
-from testsuite.utils.constants import RLP_WINDOW_RESET_WAIT
-
 from testsuite.tests.singlecluster.gateway.scaling.conftest import LIMIT
 
 pytestmark = [pytest.mark.limitador, pytest.mark.authorino, pytest.mark.kuadrant_only]
@@ -19,19 +17,27 @@ def test_scale_gateway(gateway, client, auth):
     assert anon_auth_resp is not None
     assert anon_auth_resp.status_code == 401
 
+    auth_resp = client.get("/anything/auth", auth=auth)
+    assert auth_resp is not None
+    assert auth_resp.status_code == 200
+
     responses = client.get_many("/anything/limit", LIMIT.limit, auth=auth)
     responses.assert_all(status_code=200)
 
-    assert client.get("anything/limit", auth=auth).status_code == 429
+    assert client.get("/anything/limit", auth=auth).status_code == 429
 
     gateway.deployment.set_replicas(2)
     gateway.deployment.wait_for_ready()
 
-    time.sleep(RLP_WINDOW_RESET_WAIT)  # sleep in order to reset the rate limit policy time limit.
+    time.sleep(int(LIMIT.window.strip("s")))  # sleep in order to reset the rate limit policy time limit.
 
     anon_auth_resp = client.get("/anything/auth")
     assert anon_auth_resp is not None
     assert anon_auth_resp.status_code == 401
+
+    auth_resp = client.get("/anything/auth", auth=auth)
+    assert auth_resp is not None
+    assert auth_resp.status_code == 200
 
     responses = client.get_many("/anything/limit", LIMIT.limit, auth=auth)
     responses.assert_all(status_code=200)
