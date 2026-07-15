@@ -4,6 +4,8 @@ Replicates the deployment from the user guide:
 https://github.com/Kuadrant/kuadrant-operator/blob/main/doc/user-guides/egress/credential-injection.md
 """
 
+from time import sleep
+
 import pytest
 from dynaconf import ValidationError
 
@@ -17,11 +19,7 @@ from testsuite.kubernetes.vault import Vault
 
 from ..conftest import EGRESS_HOSTNAME
 
-pytestmark = [
-    pytest.mark.kuadrant_only,
-    pytest.mark.egress_gateway,
-    pytest.mark.flaky(reruns=3, reruns_delay=2, only_rerun=["AssertionError"]),
-]
+pytestmark = [pytest.mark.kuadrant_only, pytest.mark.egress_gateway]
 
 VAULT_API_KEY = "pretty-random-api-key-to-use-for-egress-credential-injection-test-41894726"
 K8S_TOKEN_AUDIENCE = "https://kubernetes.default.svc.cluster.local"
@@ -168,6 +166,12 @@ def authorization(cluster, route, blame, module_label, vault, vault_role):
         PlainResponse(plain=CelExpression('"Bearer " + auth.metadata.vault_secret.data.data.api_key')),
     )
     return auth
+
+
+@pytest.fixture(scope="module", autouse=True)
+def commit(commit):  # pylint: disable=unused-argument
+    """Wait a bit more for the policies to be 'actually' enforced"""
+    sleep(10)
 
 
 def test_egress_credential_injection_via_vault(client, sa_token, mockserver_expectation):

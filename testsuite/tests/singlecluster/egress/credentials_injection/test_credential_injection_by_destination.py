@@ -8,6 +8,8 @@ Uses MockServer to validate each route receives the correct credential.
 Credentials are fetched from Kubernetes Secrets via metadata.http.
 """
 
+from time import sleep
+
 import pytest
 
 from testsuite.gateway import CustomReference, URLRewriteFilter, RouteMatch, PathMatch, MatchType
@@ -18,11 +20,7 @@ from testsuite.kubernetes.secret import Secret
 
 from ..conftest import EGRESS_HOSTNAME
 
-pytestmark = [
-    pytest.mark.kuadrant_only,
-    pytest.mark.egress_gateway,
-    pytest.mark.flaky(reruns=3, reruns_delay=2, only_rerun=["AssertionError"]),
-]
+pytestmark = [pytest.mark.kuadrant_only, pytest.mark.egress_gateway]
 
 SERVICE1_API_KEY = "pretty-random-api-key-to-use-for-egress-test-41894726"
 SERVICE2_API_KEY = "sk-fake-service2-key-for-egress-test-9876543210"
@@ -184,6 +182,7 @@ def commit(request, authorization, authorization2):
         request.addfinalizer(auth.delete)
         auth.commit()
         auth.wait_for_ready()
+    sleep(10)  # policies are not actually being enforced when they report ready, so wait a bit more
 
 
 @pytest.mark.no_verify_denials
