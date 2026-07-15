@@ -15,7 +15,7 @@ def commit():
 
 
 @pytest.mark.parametrize("kind", ["HTTPRoute", "Gateway"])
-def test_invalid_target_ref(request, cluster, blame, kind):
+def test_invalid_target_ref(request, cluster, blame, kind, module_label):
     """PipelinePolicy targeting a non-existent resource does not reach Accepted state."""
     target_name = "does-not-exist"
     target = CustomReference(
@@ -23,7 +23,7 @@ def test_invalid_target_ref(request, cluster, blame, kind):
         kind=kind,
         name=target_name,
     )
-    policy = PipelinePolicy.create_instance(cluster, blame("bad-target"), target)
+    policy = PipelinePolicy.create_instance(cluster, blame("bad-target"), target, labels={"testRun": module_label})
     policy.on_http_request.add_deny(predicate='request.url_path == "/blocked"', with_status=403)
 
     request.addfinalizer(policy.delete)
@@ -35,9 +35,9 @@ def test_invalid_target_ref(request, cluster, blame, kind):
     ), f"Policy did not report target not found, status: {policy.refresh().model.status.conditions}"
 
 
-def test_top_level_fail_action(request, cluster, blame, route):
+def test_top_level_fail_action(request, cluster, blame, route, module_label):
     """PipelinePolicy with a top-level fail action (not inside gRPC onReply) should not be accepted."""
-    policy = PipelinePolicy.create_instance(cluster, blame("top-fail"), route)
+    policy = PipelinePolicy.create_instance(cluster, blame("top-fail"), route, labels={"testRun": module_label})
     policy.on_http_request.add_fail("top-level fail", predicate='request.url_path == "/fail"')
 
     request.addfinalizer(policy.delete)
@@ -49,9 +49,9 @@ def test_top_level_fail_action(request, cluster, blame, route):
     ), f"Policy with top-level fail was accepted, status: {policy.refresh().model.status.conditions}"
 
 
-def test_invalid_cel_expression(request, cluster, blame, route):
+def test_invalid_cel_expression(request, cluster, blame, route, module_label):
     """PipelinePolicy with malformed CEL predicate fails to enforce."""
-    policy = PipelinePolicy.create_instance(cluster, blame("bad-cel"), route)
+    policy = PipelinePolicy.create_instance(cluster, blame("bad-cel"), route, labels={"testRun": module_label})
     policy.on_http_request.add_deny(predicate="INVALID CEL !!!", with_status=403)
 
     request.addfinalizer(policy.delete)
@@ -63,10 +63,10 @@ def test_invalid_cel_expression(request, cluster, blame, route):
     ), f"Policy did not report error for invalid CEL, status: {policy.refresh().model.status.conditions}"
 
 
-def test_variable_forward_reference(request, cluster, blame, route):
+def test_variable_forward_reference(request, cluster, blame, route, module_label):
     """PipelinePolicy referencing a variable before it is defined should fail validation."""
     var_name = "threatResponse"
-    policy = PipelinePolicy.create_instance(cluster, blame("fwd-ref"), route)
+    policy = PipelinePolicy.create_instance(cluster, blame("fwd-ref"), route, labels={"testRun": module_label})
     policy.on_http_request.add_deny(predicate=f"{var_name}.threat_level >= 50", with_status=403)
     policy.on_http_request.add_grpc_method(method="nonexistent-method", var=var_name)
 
@@ -79,10 +79,10 @@ def test_variable_forward_reference(request, cluster, blame, route):
     ), f"Policy did not reject forward reference, status: {policy.refresh().model.status.conditions}"
 
 
-def test_duplicate_variable_name(request, cluster, blame, route):
+def test_duplicate_variable_name(request, cluster, blame, route, module_label):
     """PipelinePolicy with two gRPC methods using the same variable name should fail validation."""
     var_name = "dupVar"
-    policy = PipelinePolicy.create_instance(cluster, blame("dup-var"), route)
+    policy = PipelinePolicy.create_instance(cluster, blame("dup-var"), route, labels={"testRun": module_label})
     policy.on_http_request.add_grpc_method(method="method-a", var=var_name)
     policy.on_http_request.add_grpc_method(method="method-b", var=var_name)
 

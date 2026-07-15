@@ -17,9 +17,9 @@ def check_pipeline_policy_crd(cluster, skip_or_fail):
 
 
 @pytest.fixture(scope="module")
-def pipeline_policy(cluster, blame, route):
+def pipeline_policy(cluster, blame, route, module_label):
     """PipelinePolicy targeting the test HTTPRoute"""
-    return PipelinePolicy.create_instance(cluster, blame("pipeline"), route)
+    return PipelinePolicy.create_instance(cluster, blame("pipeline"), route, labels={"testRun": module_label})
 
 
 @pytest.fixture(scope="module", autouse=True)

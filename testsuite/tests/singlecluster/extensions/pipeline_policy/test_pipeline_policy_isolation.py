@@ -82,6 +82,9 @@ def pipeline_policy(pipeline_policy):
 
 def test_policy_does_not_affect_other_route(client, client2):
     """Route without PipelinePolicy on the same gateway does not get the response header."""
+    # Wait for EnvoyFilter propagation after route2/client2 fixtures are created.
+    # Without this delay, a leak might not have propagated yet, causing the test to pass even when
+    # the policy is incorrectly leaking to the second route.
     time.sleep(EXTENSION_POLICY_PROPAGATION_WAIT)
 
     response = client.get("/get")
@@ -95,6 +98,9 @@ def test_policy_does_not_affect_other_route(client, client2):
 
 def test_policy_does_not_affect_other_gateway(client, client3):
     """Route on a different gateway does not get the response header."""
+    # Wait for EnvoyFilter propagation after gateway2/route3/client3 fixtures are created.
+    # Without this delay, a leak might not have propagated yet, causing the test to pass even when
+    # the policy is incorrectly leaking to the second gateway.
     time.sleep(EXTENSION_POLICY_PROPAGATION_WAIT)
 
     response = client.get("/get")

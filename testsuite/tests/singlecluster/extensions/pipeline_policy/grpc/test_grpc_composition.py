@@ -13,11 +13,11 @@ def commit():
 
 
 @pytest.fixture(scope="module")
-def create_grpc_policy(cluster, blame, route, threat_service_url):
+def create_grpc_policy(cluster, blame, route, threat_service_url, module_label):
     """Factory for creating a PipelinePolicy with the assess gRPC action pre-registered."""
 
     def _create(name):
-        policy = PipelinePolicy.create_instance(cluster, blame(name), route)
+        policy = PipelinePolicy.create_instance(cluster, blame(name), route, labels={"testRun": module_label})
         policy.add_action_method(
             name="assess",
             url=threat_service_url,

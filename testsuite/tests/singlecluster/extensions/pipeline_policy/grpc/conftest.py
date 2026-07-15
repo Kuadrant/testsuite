@@ -5,6 +5,7 @@ import pytest
 from testsuite.kubernetes import Selector
 from testsuite.kubernetes.deployment import Deployment
 from testsuite.kubernetes.service import Service, ServicePort
+from testsuite.utils.constants import HTTP_API_PORT
 
 
 @pytest.fixture(scope="module")
@@ -19,7 +20,7 @@ def threat_assessment_service(request, cluster, blame, module_label, testconfig)
         name,
         container_name="threat-assessment",
         image=testconfig["pipeline_policy_extension_service"]["image"],
-        ports={"grpc": 8080},
+        ports={"grpc": HTTP_API_PORT},
         selector=Selector(matchLabels=match_labels),
         labels={"app": module_label},
     )
@@ -31,7 +32,7 @@ def threat_assessment_service(request, cluster, blame, module_label, testconfig)
         cluster,
         name,
         selector=match_labels,
-        ports=[ServicePort(name="grpc", port=8080, targetPort="grpc")],
+        ports=[ServicePort(name="grpc", port=HTTP_API_PORT, targetPort="grpc")],
         labels={"app": module_label},
     )
     request.addfinalizer(service.delete)
@@ -43,7 +44,7 @@ def threat_assessment_service(request, cluster, blame, module_label, testconfig)
 def threat_service_url(threat_assessment_service):
     """gRPC URL for the threat assessment service."""
     svc = threat_assessment_service
-    return f"grpc://{svc.name()}.{svc.namespace()}.svc.cluster.local:8080"
+    return f"grpc://{svc.name()}.{svc.namespace()}.svc.cluster.local:{HTTP_API_PORT}"
 
 
 @pytest.fixture(scope="module")

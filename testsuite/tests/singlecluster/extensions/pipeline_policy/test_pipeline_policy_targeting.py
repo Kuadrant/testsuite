@@ -37,9 +37,9 @@ def client2(route2, hostname2):  # pylint: disable=unused-argument
 
 
 @pytest.fixture(scope="module")
-def gateway_policy(cluster, blame, gateway):
+def gateway_policy(cluster, blame, gateway, module_label):
     """PipelinePolicy targeting the Gateway with deny and response headers."""
-    policy = PipelinePolicy.create_instance(cluster, blame("gw-pp"), gateway)
+    policy = PipelinePolicy.create_instance(cluster, blame("gw-pp"), gateway, labels={"testRun": module_label})
     policy.on_http_request.add_deny(predicate='request.url_path == "/blocked"', with_status=403)
     policy.on_http_response.add_headers([["x-gateway-policy", "active"]])
     return policy

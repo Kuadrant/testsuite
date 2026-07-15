@@ -16,9 +16,9 @@ def commit():
 
 
 @pytest.mark.flaky(reruns=0)
-def test_update_policy(request, cluster, blame, route, client):
+def test_update_policy(request, cluster, blame, route, client, module_label):
     """Adding a new response header via policy update propagates to traffic."""
-    policy = PipelinePolicy.create_instance(cluster, blame("upd-pp"), route)
+    policy = PipelinePolicy.create_instance(cluster, blame("upd-pp"), route, labels={"testRun": module_label})
     policy.on_http_response.add_headers([["x-update-test", "active"]])
     request.addfinalizer(policy.delete)
     policy.commit()
@@ -39,9 +39,9 @@ def test_update_policy(request, cluster, blame, route, client):
 
 
 @pytest.mark.flaky(reruns=0)
-def test_delete_policy(request, cluster, blame, route, client):
+def test_delete_policy(request, cluster, blame, route, client, module_label):
     """After deleting the PipelinePolicy, the CR is removed and the actions stop being enforced."""
-    policy = PipelinePolicy.create_instance(cluster, blame("del-pp"), route)
+    policy = PipelinePolicy.create_instance(cluster, blame("del-pp"), route, labels={"testRun": module_label})
     policy.on_http_response.add_headers([["x-delete-test", "active"]])
     request.addfinalizer(policy.delete)
     policy.commit()

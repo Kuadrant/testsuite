@@ -4,6 +4,7 @@ import pytest
 
 from testsuite.kuadrant.extensions.pipeline_policy import PipelinePolicy
 from testsuite.kuadrant.policy import has_condition
+from testsuite.utils.constants import HTTP_API_PORT
 
 pytestmark = [pytest.mark.kuadrant_only, pytest.mark.extensions]
 
@@ -13,12 +14,12 @@ def commit():
     """No module-level policy; each test creates its own PipelinePolicy."""
 
 
-def test_grpc_upstream_unavailable(request, cluster, blame, route):
+def test_grpc_upstream_unavailable(request, cluster, blame, route, module_label):
     """PipelinePolicy reports error when action method URL points to a non-existent service."""
-    policy = PipelinePolicy.create_instance(cluster, blame("bad-url"), route)
+    policy = PipelinePolicy.create_instance(cluster, blame("bad-url"), route, labels={"testRun": module_label})
     policy.add_action_method(
         name="bad-method",
-        url="grpc://does-not-exist.default.svc.cluster.local:8080",
+        url=f"grpc://does-not-exist.default.svc.cluster.local:{HTTP_API_PORT}",
         service="threat.v1.ThreatAssessmentService",
         method="AssessRequest",
         message_template="threat.v1.ThreatRequest{uri: request.path}",
@@ -35,9 +36,9 @@ def test_grpc_upstream_unavailable(request, cluster, blame, route):
     ), f"Policy did not reach expected error status, instead: {policy.refresh().model.status.conditions}"
 
 
-def test_grpc_wrong_service_name(request, cluster, blame, route, threat_service_url):
+def test_grpc_wrong_service_name(request, cluster, blame, route, threat_service_url, module_label):
     """PipelinePolicy reports error when action method references a non-existent gRPC service name."""
-    policy = PipelinePolicy.create_instance(cluster, blame("bad-svc"), route)
+    policy = PipelinePolicy.create_instance(cluster, blame("bad-svc"), route, labels={"testRun": module_label})
     policy.add_action_method(
         name="bad-service",
         url=threat_service_url,
@@ -57,9 +58,9 @@ def test_grpc_wrong_service_name(request, cluster, blame, route, threat_service_
     ), f"Policy did not reach expected error status, instead: {policy.refresh().model.status.conditions}"
 
 
-def test_grpc_wrong_method_name(request, cluster, blame, route, threat_service_url):
+def test_grpc_wrong_method_name(request, cluster, blame, route, threat_service_url, module_label):
     """PipelinePolicy reports error when action method references a non-existent gRPC method."""
-    policy = PipelinePolicy.create_instance(cluster, blame("bad-meth"), route)
+    policy = PipelinePolicy.create_instance(cluster, blame("bad-meth"), route, labels={"testRun": module_label})
     policy.add_action_method(
         name="wrong-method",
         url=threat_service_url,
