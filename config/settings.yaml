@@ -1,7 +1,7 @@
 default:
   dynaconf_merge: true
   kuadrantctl: "kuadrantctl"
-  kubectl-dns: "kubectl-dns"
+  kubectl-dns: "kubectl-kuadrant_dns"
   tools:
     project: "tools"
   cfssl: "cfssl"

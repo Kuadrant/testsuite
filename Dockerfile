@@ -18,6 +18,10 @@ RUN curl -L https://github.com/cloudflare/cfssl/releases/download/v1.6.4/cfssl_1
 RUN curl -sL https://github.com/kube-burner/kube-burner/releases/download/v1.16.4/kube-burner-V1.16.4-linux-x86_64.tar.gz |\
     tar -xz -C /usr/bin --wildcards 'kube-burner' && chmod 0755 /usr/bin/kube-burner
 
+RUN TAG=$(curl -sI https://github.com/Kuadrant/dns-operator/releases/latest | grep -i ^location: | sed 's|.*/||' | tr -d '\r') && \
+    curl -sL "https://github.com/Kuadrant/dns-operator/releases/download/${TAG}/kubectl-kuadrant_dns-${TAG}-linux-amd64.tar.gz" | \
+    tar -xz -C /usr/local/bin kubectl-kuadrant_dns && chmod +x /usr/local/bin/kubectl-kuadrant_dns
+
 RUN python3.11 -m pip --no-cache-dir install poetry
 
 WORKDIR /opt/workdir/kuadrant-testsuite

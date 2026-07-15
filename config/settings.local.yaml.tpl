@@ -1,7 +1,7 @@
 #default:
 #  tester: "someuser"                          # Optional: name of the user, who is running the tests, defaults to whoami/uid
 #  kuadrantctl: kuadrantctl
-#  kubectl-dns: "kubectl-dns"
+#  kubectl-dns: "kubectl-kuadrant_dns"
 #  console:
 #    username: "CONSOLE_USERNAME"              # OpenShift console username for UI test login
 #    password: "CONSOLE_PASSWORD"              # OpenShift console password for UI tests login
