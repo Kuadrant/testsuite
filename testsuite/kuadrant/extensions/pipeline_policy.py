@@ -40,9 +40,9 @@ class ActionSection:
     def add_grpc_method(self, method: str, var: Optional[str] = None, predicate: Optional[str] = None):
         """Add a grpc_method action that calls an upstream"""
         action: Dict = {"type": "grpc_method", "method": method}
-        if var:
+        if var is not None:
             action["var"] = var
-        if predicate:
+        if predicate is not None:
             action["predicate"] = predicate
         self.section.append(action)
 
@@ -56,13 +56,13 @@ class ActionSection:
     ):
         """Add a deny action"""
         action: Dict = {"type": "deny"}
-        if predicate:
+        if predicate is not None:
             action["predicate"] = predicate
-        if with_status:
+        if with_status is not None:
             action["withStatus"] = with_status
-        if with_headers:
+        if with_headers is not None:
             action["withHeaders"] = with_headers
-        if with_body:
+        if with_body is not None:
             action["withBody"] = with_body
         self.section.append(action)
 
@@ -70,7 +70,7 @@ class ActionSection:
     def add_fail(self, log_message: str, predicate: Optional[str] = None):
         """Add a fail action"""
         action: Dict = {"type": "fail", "logMessage": log_message}
-        if predicate:
+        if predicate is not None:
             action["predicate"] = predicate
         self.section.append(action)
 
@@ -78,7 +78,7 @@ class ActionSection:
     def add_headers(self, headers: List[List[str]], predicate: Optional[str] = None):
         """Add an add_headers action"""
         action: Dict = {"type": "add_headers", "headersToAdd": str(headers)}
-        if predicate:
+        if predicate is not None:
             action["predicate"] = predicate
         self.section.append(action)
 
