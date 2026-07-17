@@ -23,6 +23,7 @@ def threat_assessment_service(request, cluster, blame, module_label, testconfig)
         ports={"grpc": HTTP_API_PORT},
         selector=Selector(matchLabels=match_labels),
         labels={"app": module_label},
+        readiness_probe={"grpc": {"port": HTTP_API_PORT}, "initialDelaySeconds": 3, "periodSeconds": 5},
     )
     request.addfinalizer(deployment.delete)
     deployment.commit()
