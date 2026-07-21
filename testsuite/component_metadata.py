@@ -102,14 +102,6 @@ class ReportPortalMetadataCollector:
     @staticmethod
     def get_component_images(project) -> list[tuple]:
         """Get container images from pods in a namespace using openshift_client."""
-        return [(name, tag, image) for name, tag, image, _ in ReportPortalMetadataCollector.get_pod_images(project)]
-
-    @staticmethod
-    def get_pod_images(project) -> list[tuple[str, str, str, str]]:
-        """Get container images from pods with resolved image digests from status.
-
-        Returns list of (name, tag, full_image, digest) tuples.
-        """
         images = []
         try:
             with project.context:
@@ -117,11 +109,6 @@ class ReportPortalMetadataCollector:
 
             seen = set()
             for pod in pods:
-                status_map = {}
-                for cs in pod.model.status.containerStatuses or []:
-                    if cs.name and cs.imageID:
-                        status_map[cs.name] = cs.imageID
-
                 for container in pod.model.spec.containers:
                     image = container.image
                     if not image:
@@ -131,19 +118,39 @@ class ReportPortalMetadataCollector:
                         continue
                     seen.add(normalised_image)
 
-                    image_id = str(status_map.get(container.name, ""))
-                    digest = image_id.split("@", 1)[1] if "@" in image_id else ""
-
                     name = normalised_image.split("/")[-1]
                     if ":" in name:
                         name, tag = name.rsplit(":", 1)
                     else:
                         tag = ""
-                    images.append((name, tag, image, digest))
+                    images.append((name, tag, image))
         except (oc.OpenShiftPythonException, AttributeError, KeyError, IndexError, ValueError) as exc:
             logger.warning("Failed to get pod images from %s: %s", project, exc)
 
         return images
+
+    @staticmethod
+    def get_subscription_versions(project) -> dict[str, str]:
+        """Get installed operator versions from OLM Subscriptions in a namespace."""
+        versions: dict[str, str] = {}
+        try:
+            with project.context:
+                subs = oc.selector("subscription.operators.coreos.com").objects()
+            for sub in subs:
+                try:
+                    csv_name = sub.model.status.installedCSV
+                    if not csv_name:
+                        continue
+                except AttributeError:
+                    continue
+                match = re.match(r"^(.+)\.v(.+)$", csv_name)
+                if match:
+                    versions[match.group(1)] = f"v{match.group(2)}"
+                else:
+                    versions[csv_name] = csv_name
+        except (oc.OpenShiftPythonException, AttributeError, KeyError, IndexError, ValueError) as exc:
+            logger.warning("Failed to get subscriptions from %s: %s", project, exc)
+        return versions
 
     @staticmethod
     def get_istio_type(cluster) -> tuple[str, Optional[str]]:
@@ -172,9 +179,12 @@ class ReportPortalMetadataCollector:
             with project.context:
                 istio = oc.selector("istio").objects()
                 if istio:
-                    version = istio[0].model.spec.version
-                    if version:
-                        metadata["istio_version"] = version
+                    try:
+                        version = istio[0].model.spec.version
+                        if version:
+                            metadata["istio_version"] = version
+                    except AttributeError:
+                        pass
 
                 pods = oc.selector("pods", labels={"app": "istiod"}).objects()
                 if pods:
