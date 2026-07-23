@@ -43,7 +43,8 @@ class DNSPolicyExposer(Exposer):
     """Exposing is done as part of DNSPolicy, so no work needs to be done here"""
 
     @cached_property
-    def base_domain(self) -> str:
+    def zone_domain(self) -> str:
+        """Returns the bare zone domain from the DNS provider secret annotation"""
         provider_secret_name = settings["control_plane"]["provider_secret"]
         try:
             secret = selector(f"secret/{provider_secret_name}", static_context=self.cluster.context).object()
@@ -51,7 +52,11 @@ class DNSPolicyExposer(Exposer):
             raise OpenShiftPythonException(
                 f"Unable to find secret/{provider_secret_name} in namespace {self.cluster.project}"
             ) from exc
-        return f'{generate_tail(5)}.{secret.model["metadata"]["annotations"]["base_domain"]}'
+        return secret.model["metadata"]["annotations"]["base_domain"]
+
+    @cached_property
+    def base_domain(self) -> str:
+        return f"{generate_tail(5)}.{self.zone_domain}"
 
     def expose_hostname(self, name, exposable: Exposable) -> Hostname:
         return StaticHostname(

@@ -1,23 +1,11 @@
 """Test kubectl-dns add-cluster-secret command with basic coredns setup with 1 primary and 1 secondary clusters"""
 
-import shutil
-
 import dns.resolver
 import pytest
 
-from testsuite.cli.kubectl_dns import KubectlDNS
 from testsuite.tests.multicluster.coredns.conftest import IP1, IP2
 
 pytestmark = [pytest.mark.cli]
-
-
-@pytest.fixture(scope="session")
-def kubectl_dns(testconfig, skip_or_fail):
-    """Return Kuadrantctl wrapper with merged kubeconfig"""
-    binary_path = testconfig["kubectl-dns"]
-    if not shutil.which(binary_path):
-        skip_or_fail("kubectl-dns binary not found")
-    return KubectlDNS(binary_path)
 
 
 @pytest.fixture(scope="module")
@@ -29,17 +17,12 @@ def kubeconfig_secrets(request, system_project, cluster, cluster2, kubectl_dns, 
     )
 
     merged_kubeconfig = cluster.create_merged_kubeconfig(cluster2)
-    result = kubectl_dns.run(
-        "add-cluster-secret",
-        "--name",
-        secret_name,
-        "--context",
-        cluster2.current_context_name,
-        "--namespace",
-        system_project.project,
-        "--service-account",
-        "coredns",
-        env={"KUBECONFIG": merged_kubeconfig},
+    result = kubectl_dns.add_cluster_secret(
+        name=secret_name,
+        context=cluster2.current_context_name,
+        namespace=system_project.project,
+        service_account="coredns",
+        kubeconfig=merged_kubeconfig,
     )
     assert result.returncode == 0, f"kubectl-dns couldn't generate kubeconfig secret: {result.stderr}"
     return []

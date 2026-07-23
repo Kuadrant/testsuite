@@ -1,5 +1,6 @@
 """Conftest for Multicluster tests"""
 
+import shutil
 from importlib import resources
 
 import pytest
@@ -7,6 +8,7 @@ from dynaconf import ValidationError
 
 from testsuite.backend.mockserver import MockserverBackend, MockserverBackendConfig
 from testsuite.certificates import Certificate
+from testsuite.cli.kubectl_dns import KubectlDNS
 from testsuite.gateway import Exposer, Hostname
 from testsuite.gateway import TLSGatewayListener
 from testsuite.gateway.gateway_api.gateway import KuadrantGateway
@@ -24,6 +26,15 @@ def dns_server(testconfig, skip_or_fail):
         return testconfig["dns"]["dns_server"]
     except ValidationError as exc:
         return skip_or_fail(f"DNS servers configuration is missing: {exc}")
+
+
+@pytest.fixture(scope="session")
+def kubectl_dns(testconfig, skip_or_fail):
+    """Return kubectl-kuadrant_dns CLI wrapper"""
+    binary_path = testconfig["kubectl-dns"]
+    if not shutil.which(binary_path):
+        skip_or_fail("kubectl-dns binary not found")
+    return KubectlDNS(binary_path)
 
 
 @pytest.fixture(scope="session")
