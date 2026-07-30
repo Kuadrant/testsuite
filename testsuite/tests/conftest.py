@@ -1,15 +1,13 @@
 """Root conftest"""
 
 import operator
-import os
-import re
 import signal
 import time
 
 from urllib.parse import urlparse
 
 import pytest
-from openshift_client import selector
+from openshift_client import OpenShiftPythonException, selector
 from pytest_metadata.plugin import metadata_key  # type: ignore
 from dynaconf import ValidationError
 from keycloak import KeycloakAuthenticationError
@@ -464,11 +462,13 @@ def check_user_managed_istio(request, cluster, skip_or_fail):
     if marker and KuadrantGateway.get_gateway_class_name(cluster) == "openshift-default":
         skip_or_fail("Test requires user-managed Istio installation")
 
+
 def pytest_configure(config):
     """Record session start time for DATA_RACE detection."""
     if not settings["data_race"]["enabled"]:
         return
-    config._data_race_start_time = time.time()
+    config.data_race_start_time = time.time()
+
 
 def _fetch_pod_errors(system_project, since_seconds=None):
     """Fetch pod logs from kuadrant-system and return lines matching error patterns."""
@@ -495,14 +495,14 @@ def pytest_terminal_summary(terminalreporter, config):
     try:
         cluster = settings["control_plane"]["cluster"]
         system_project = cluster.change_project(settings["service_protection"]["system_project"])
-    except (KeyError, ValidationError) as e:
+    except (KeyError, ValidationError):
         return
 
-    elapsed = int(time.time() - config._data_race_start_time) + 1
+    elapsed = int(time.time() - config.data_race_start_time) + 1
     # _fetch_pod_errors can raise OpenShiftPythonException if oc command fails (e.g. no pods match label)
     try:
         findings = _fetch_pod_errors(system_project, since_seconds=elapsed)
-    except Exception as e:
+    except OpenShiftPythonException:
         terminalreporter.write_line("ERROR: Failed to fetch pod logs for data race detection.")
         return
 
