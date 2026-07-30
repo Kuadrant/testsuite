@@ -470,7 +470,7 @@ def pytest_configure(config):
     config.data_race_start_time = time.time()
 
 
-def _fetch_pod_errors(system_project, since_seconds=None):
+def _fetch_pod_errors(terminalreporter, system_project, since_seconds=None):
     """Fetch pod logs from kuadrant-system and return lines matching error patterns."""
     matches = []
     labels = settings["data_race"]["labels"]
@@ -479,12 +479,17 @@ def _fetch_pod_errors(system_project, since_seconds=None):
         cmd = ["logs", "-l", label, "--all-containers", "--prefix", "--tail=-1"]
         if since_seconds is not None:
             cmd.append(f"--since={since_seconds}s")
-        result = system_project.do_action(*cmd)
-        lines = result.out().splitlines()
+        try:
+            result = system_project.do_action(*cmd)
+            lines = result.out().splitlines()
 
-        for line in lines:
-            if "DATA RACE" in line:
-                matches.append(line)
+            for line in lines:
+                if "DATA RACE" in line:
+                    matches.append(line)
+
+        except OpenShiftPythonException:
+            terminalreporter.write_line("ERROR: Failed to fetch pod logs for data race detection.")
+
     return matches
 
 
@@ -500,11 +505,7 @@ def pytest_terminal_summary(terminalreporter, config):
 
     elapsed = int(time.time() - config.data_race_start_time) + 1
     # _fetch_pod_errors can raise OpenShiftPythonException if oc command fails (e.g. no pods match label)
-    try:
-        findings = _fetch_pod_errors(system_project, since_seconds=elapsed)
-    except OpenShiftPythonException:
-        terminalreporter.write_line("ERROR: Failed to fetch pod logs for data race detection.")
-        return
+    findings = _fetch_pod_errors(terminalreporter, system_project, since_seconds=elapsed)
 
     terminalreporter.write_line("######################################")
     terminalreporter.write_line("Pod Log Error Summary")
