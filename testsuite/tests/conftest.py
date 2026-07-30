@@ -466,54 +466,43 @@ def check_user_managed_istio(request, cluster, skip_or_fail):
 
 def pytest_configure(config):
     """Record session start time for DATA_RACE detection."""
+    if not settings["data_race"]["enabled"]:
+        return
     config._data_race_start_time = time.time()
-    print(f"[DEBUG] pytest_configure: start time set to {config._data_race_start_time}")
 
 def _fetch_pod_errors(system_project, since_seconds=None):
     """Fetch pod logs from kuadrant-system and return lines matching error patterns."""
     matches = []
     labels = settings["data_race"]["labels"]
-    print(f"[DEBUG] _fetch_pod_errors: checking {len(labels)} labels, since_seconds={since_seconds}")
+
     for label in labels:
-        cmd = ["logs", "-l", label, "--all-containers", "--prefix"]
+        cmd = ["logs", "-l", label, "--all-containers", "--prefix", "--tail=-1"]
         if since_seconds is not None:
             cmd.append(f"--since={since_seconds}s")
-        print(f"[DEBUG] running: oc {' '.join(cmd)}")
         result = system_project.do_action(*cmd)
         lines = result.out().splitlines()
-        print(f"[DEBUG] label '{label}': got {len(lines)} log lines")
+
         for line in lines:
-            print(f"[DEBUG]   {line}")
-            if "DATA_RACE" in line:
-                print(f"[DEBUG] DATA_RACE match: {line}")
+            if "DATA RACE" in line:
                 matches.append(line)
-    print(f"[DEBUG] _fetch_pod_errors: total matches={len(matches)}")
     return matches
 
 
 def pytest_terminal_summary(terminalreporter, config):
     """Fetch pod logs once and print data race summary."""
-    print("[DEBUG] pytest_terminal_summary started")
-    print(f"[DEBUG] data_race settings: enabled={settings['data_race']['enabled']}, labels={settings['data_race']['labels']}")
     if not settings["data_race"]["enabled"]:
-        print("[DEBUG] data_race is not enabled, returning early")
         return
     try:
         cluster = settings["control_plane"]["cluster"]
         system_project = cluster.change_project(settings["service_protection"]["system_project"])
-        print(f"[DEBUG] system_project: {system_project.project}")
     except (KeyError, ValidationError) as e:
-        print(f"[DEBUG] failed to get cluster/project: {e}")
         return
 
     elapsed = int(time.time() - config._data_race_start_time) + 1
-    print(f"[DEBUG] fetching pod errors since {elapsed}s ago")
     # _fetch_pod_errors can raise OpenShiftPythonException if oc command fails (e.g. no pods match label)
     try:
         findings = _fetch_pod_errors(system_project, since_seconds=elapsed)
-        print(f"[DEBUG] found {len(findings)} matches")
     except Exception as e:
-        print(f"[DEBUG] _fetch_pod_errors raised: {e}")
         terminalreporter.write_line("ERROR: Failed to fetch pod logs for data race detection.")
         return
 
