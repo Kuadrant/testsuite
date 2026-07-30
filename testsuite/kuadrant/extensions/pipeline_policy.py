@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from functools import cached_property
 from typing import Dict, List, Optional
 
@@ -77,7 +78,7 @@ class ActionSection:
     @modify
     def add_headers(self, headers: List[List[str]], predicate: Optional[str] = None):
         """Add an add_headers action"""
-        action: Dict = {"type": "add_headers", "headersToAdd": str(headers)}
+        action: Dict = {"type": "add_headers", "headersToAdd": json.dumps(headers)}
         if predicate is not None:
             action["predicate"] = predicate
         self.section.append(action)
