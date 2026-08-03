@@ -8,7 +8,8 @@ in their respective test files.
 from contextlib import contextmanager
 import pytest
 
-from testsuite.gateway import Gateway, GatewayListener
+from testsuite.gateway import Gateway, GatewayListener, Hostname
+from testsuite.gateway.exposers import OpenShiftExposer
 from testsuite.gateway.gateway_api.gateway import KuadrantGateway
 from testsuite.kuadrant.extensions.oidc_policy import OIDCPolicy
 
@@ -16,13 +17,26 @@ from testsuite.kuadrant.extensions.oidc_policy import OIDCPolicy
 @pytest.fixture(scope="module")
 def gateway(request, domain_name, base_domain, cluster, blame, label) -> Gateway:
     """Create and configure the test Gateway."""
-    fqdn = f"{domain_name}-kuadrant.{base_domain}"
+    fqdn = f"{domain_name}-{cluster.project}.{base_domain}"
     gw = KuadrantGateway.create_instance(cluster, blame("gw"), {"app": label})
     gw.add_listener(GatewayListener(hostname=fqdn))
     request.addfinalizer(gw.delete)
     gw.commit()
     gw.wait_for_ready()
     return gw
+
+
+@pytest.fixture(scope="module")
+def hostname(gateway, exposer, domain_name, cluster) -> Hostname:
+    """Expose hostname matching the gateway listener.
+
+    On OpenShift, Routes auto-get hostname '{name}-{namespace}.{apps_url}',
+    so passing just domain_name produces the correct match.
+    On EKS/Kind, the exposer doesn't add namespace, so we pass the full prefix.
+    """
+    if isinstance(exposer, OpenShiftExposer):
+        return exposer.expose_hostname(domain_name, gateway)
+    return exposer.expose_hostname(f"{domain_name}-{cluster.project}", gateway)
 
 
 # JWT Cookie Helper fixture
