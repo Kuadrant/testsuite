@@ -2,7 +2,7 @@
 Tests for distributed tracing integration across Kuadrant components.
 
 This module validates that tracing correctly captures request flows through the entire
-Kuadrant stack, including wasm-shim, Authorino, Limitador, and gateway services.
+Kuadrant stack, including kuadrant-filter, Authorino, Limitador, and gateway services.
 
 With OCP-managed Istio, gateway traces are not available because the Istio CR cannot be
 modified to enable tracing (meshConfig.enableTracing, extensionProviders) and the Telemetry
@@ -44,33 +44,33 @@ def trace_request_ids(client, auth):
 
 @pytest.fixture(scope="module")
 def trace_200(trace_request_ids, tracing, has_ocp_managed_istio):
-    """Fetches and caches the full wasm-shim trace for the 200 response."""
+    """Fetches and caches the full kuadrant-filter trace for the 200 response."""
     request_id = trace_request_ids[0]
     min_procs = 3 if has_ocp_managed_istio else 4
-    traces = tracing.get_traces(service="wasm-shim", min_processes=min_procs, tags={"request_id": request_id})
+    traces = tracing.get_traces(service="kuadrant-filter", min_processes=min_procs, tags={"request_id": request_id})
     assert len(traces) == 1, f"No trace was found in tracing backend with request_id: {request_id}"
     return traces[0]
 
 
 @pytest.fixture(scope="module")
 def trace_429(trace_request_ids, tracing, has_ocp_managed_istio):
-    """Fetches and caches the full wasm-shim trace for the 429 response."""
+    """Fetches and caches the full kuadrant-filter trace for the 429 response."""
     request_id = trace_request_ids[1]
     min_procs = 3 if has_ocp_managed_istio else 4
-    traces = tracing.get_traces(service="wasm-shim", min_processes=min_procs, tags={"request_id": request_id})
+    traces = tracing.get_traces(service="kuadrant-filter", min_processes=min_procs, tags={"request_id": request_id})
     assert len(traces) == 1, f"No trace was found in tracing backend with request_id: {request_id}"
     return traces[0]
 
 
 @pytest.fixture(scope="module")
 def trace_401(client, tracing, has_ocp_managed_istio):
-    """Sends request producing 401 response and fetches the full wasm-shim trace"""
+    """Sends request producing 401 response and fetches the full kuadrant-filter trace"""
     response_401 = client.get("/get", headers={"Traceparent": f"00-{os.urandom(16).hex()}-{os.urandom(8).hex()}-01"})
     assert response_401.status_code == 401
 
     request_id = response_401.headers.get("x-request-id")
     min_procs = 2 if has_ocp_managed_istio else 3
-    traces = tracing.get_traces(service="wasm-shim", min_processes=min_procs, tags={"request_id": request_id})
+    traces = tracing.get_traces(service="kuadrant-filter", min_processes=min_procs, tags={"request_id": request_id})
     assert len(traces) == 1, f"No trace was found in tracing backend with request_id: {request_id}"
     return traces[0]
 
@@ -81,7 +81,7 @@ def test_trace_includes_all_kuadrant_services(trace_200, label, has_ocp_managed_
 
     Verifies that a request flowing through the system generates a complete distributed
     trace with all expected service processes:
-    - wasm-shim: WASM plugin processing requests
+    - kuadrant-filter: WASM plugin processing requests
     - authorino: Authorization service
     - limitador: Rate limiting service
     - gateway: Istio/Envoy gateway service (not with OCP-managed Istio)
@@ -89,7 +89,7 @@ def test_trace_includes_all_kuadrant_services(trace_200, label, has_ocp_managed_
 
     process_services = trace_200.get_process_services()
 
-    services = ["wasm-shim", "authorino", "limitador"]
+    services = ["kuadrant-filter", "authorino", "limitador"]
     if not has_ocp_managed_istio:
         services.append(f"{label}.kuadrant")
     for service in services:
@@ -100,14 +100,14 @@ def test_relevant_services_on_auth_denied(trace_401, label, has_ocp_managed_isti
     """
     Test that auth-denied traces only include services up to the authorization step.
 
-    When a request is rejected with 401, the trace should contain wasm-shim and authorino
+    When a request is rejected with 401, the trace should contain kuadrant-filter and authorino
     but not limitador, since the request is short-circuited before reaching the rate limiter.
     Gateway service is not present with OCP-managed Istio.
     """
 
     process_services = trace_401.get_process_services()
 
-    services = ["wasm-shim", "authorino"]
+    services = ["kuadrant-filter", "authorino"]
     if not has_ocp_managed_istio:
         services.append(f"{label}.kuadrant")
     for service in services:
@@ -171,7 +171,7 @@ def test_send_reply_span_not_on_successful_response(trace_200):
     """
     Test that send_reply span is not present for successful (200) responses.
 
-    The send_reply span is only generated when the wasm-shim rejects a request
+    The send_reply span is only generated when the kuadrant-filter rejects a request
     (e.g., 401 or 429). For successful responses that pass through all policies,
     no send_reply span should be emitted.
     """
@@ -230,7 +230,7 @@ def assert_child(trace, parent_span, child_op, **tags):
 def test_span_hierarchy(trace_200):
     """
     Test that spans in a successful (200) trace form the expected parent-child hierarchy.
-    Validates parent-child relationships between spans across wasm-shim, authorino, and limitador.
+    Validates parent-child relationships between spans across kuadrant-filter, authorino, and limitador.
     """
 
     assert len(trace_200.spans) > 0, "No spans found in trace"

@@ -35,7 +35,7 @@ def commit(request, rate_limit):
 def trace_429(client, tracing, has_ocp_managed_istio):
     """
     Sends requests to exhaust the rate limit, produces a 429 response,
-    and fetches the full wasm-shim trace.
+    and fetches the full kuadrant-filter trace.
     """
     responses = client.get_many("/get", 3)
     responses.assert_all(200)
@@ -45,7 +45,7 @@ def trace_429(client, tracing, has_ocp_managed_istio):
 
     request_id = response_429.headers.get("x-request-id")
     min_procs = 2 if has_ocp_managed_istio else 3
-    traces = tracing.get_traces(service="wasm-shim", min_processes=min_procs, tags={"request_id": request_id})
+    traces = tracing.get_traces(service="kuadrant-filter", min_processes=min_procs, tags={"request_id": request_id})
     assert len(traces) == 1, f"No trace was found in tracing backend with request_id: {request_id}"
     return traces[0]
 
@@ -58,7 +58,7 @@ def test_relevant_services_rate_limit_only(trace_429, label, has_ocp_managed_ist
     """
 
     process_services = trace_429.get_process_services()
-    services = ["wasm-shim", "limitador"]
+    services = ["kuadrant-filter", "limitador"]
     if not has_ocp_managed_istio:
         services.append(f"{label}.kuadrant")
     for service in services:
