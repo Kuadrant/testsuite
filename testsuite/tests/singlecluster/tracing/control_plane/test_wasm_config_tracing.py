@@ -30,15 +30,15 @@ def wasm_config_span(tracing, authorization, rate_limit, skip_or_fail):
 
 @pytest.fixture(scope="module")
 def wasm_merge_span(wasm_config_span, skip_or_fail):
-    """MergeAndVerifyActions child span of BuildConfigForPath"""
+    """MergeAndVerifySpecs child span of BuildConfigForPath"""
     trace = wasm_config_span["trace"]
     parent_span = wasm_config_span["span"]
 
     children = trace.get_children(parent_span.span_id)
-    merge_span = next((s for s in children if s.operation_name == "wasm.MergeAndVerifyActions"), None)
+    merge_span = next((s for s in children if s.operation_name == "wasm.MergeAndVerifySpecs"), None)
 
     if merge_span is None:
-        skip_or_fail("No wasm.MergeAndVerifyActions child span found")
+        skip_or_fail("No wasm.MergeAndVerifySpecs child span found")
 
     return merge_span
 
@@ -90,36 +90,36 @@ def test_wasm_config_action_validation_metrics(wasm_config_span):
     """Validate BuildConfigForPath has action validation metrics"""
     span = wasm_config_span["span"]
 
-    assert span.has_tag("actions.before_merge")
-    assert span.has_tag("actions.validated")
-    assert span.has_tag("actions.invalid")
-    assert span.has_tag("actions.after_merge")
+    assert span.has_tag("specs.before_merge")
+    assert span.has_tag("specs.validated")
+    assert span.has_tag("specs.invalid")
+    assert span.has_tag("specs.after_merge")
 
-    validated = span.get_tag("actions.validated")
+    validated = span.get_tag("specs.validated")
     assert validated > 0, "Should have validated at least one action"
 
-    invalid = span.get_tag("actions.invalid")
+    invalid = span.get_tag("specs.invalid")
     assert invalid == 0, f"Should have no invalid actions, got {invalid}"
 
 
 def test_wasm_merge_action_consistency(wasm_config_span, wasm_merge_span):
-    """Validate MergeAndVerifyActions is correlated and has consistent action counts"""
+    """Validate MergeAndVerifySpecs is correlated and has consistent spec counts"""
     config_span = wasm_config_span["span"]
 
     # Verify merge span has expected metrics
-    assert wasm_merge_span.has_tag("actions.input")
-    assert wasm_merge_span.has_tag("actions.merged")
-    assert wasm_merge_span.has_tag("actions.output")
+    assert wasm_merge_span.has_tag("specs.input")
+    assert wasm_merge_span.has_tag("specs.merged")
+    assert wasm_merge_span.has_tag("specs.output")
 
     # Data consistency: merge input should match config validated actions
-    merge_input = wasm_merge_span.get_tag("actions.input")
-    config_validated = config_span.get_tag("actions.validated")
+    merge_input = wasm_merge_span.get_tag("specs.input")
+    config_validated = config_span.get_tag("specs.validated")
     assert (
         merge_input == config_validated
     ), f"Merge input ({merge_input}) should match config validated ({config_validated})"
 
     # Output should not exceed input
-    merge_output = wasm_merge_span.get_tag("actions.output")
+    merge_output = wasm_merge_span.get_tag("specs.output")
     assert merge_output <= merge_input, f"Merge output ({merge_output}) should not exceed input ({merge_input})"
 
 
@@ -142,7 +142,6 @@ def test_wasm_actionset_correlation(wasm_config_span, wasm_actionset_span):
 
 
 def test_wasm_action_builder_correlation(wasm_action_builder_span):
-    """Validate BuildActionSetsForPath shows both auth and rate limit action types"""
+    """Validate BuildActionSetsForPath shows grpc action types"""
     action_types = str(wasm_action_builder_span.get_tag("action_types"))
-    assert "auth-service" in action_types
-    assert "ratelimit-service" in action_types
+    assert "grpc" in action_types
