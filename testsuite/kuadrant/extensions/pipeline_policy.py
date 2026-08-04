@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import time
 from functools import cached_property
 from typing import Dict, List, Optional
 
@@ -10,6 +11,7 @@ from testsuite.gateway import Referencable
 from testsuite.kubernetes import modify
 from testsuite.kubernetes.client import KubernetesClient
 from testsuite.kuadrant.policy import Policy
+from testsuite.utils.constants import EXTENSION_POLICY_ENFORCEMENT_WAIT
 
 
 class ActionSection:
@@ -109,6 +111,11 @@ class PipelinePolicy(Policy):
             model["spec"]["targetRef"]["sectionName"] = section_name
 
         return cls(model, context=cluster.context)
+
+    def wait_for_ready(self):
+        """Wait for PipelinePolicy to be enforced, then wait for propagation to the data plane."""
+        super().wait_for_ready()
+        time.sleep(EXTENSION_POLICY_ENFORCEMENT_WAIT)
 
     @cached_property
     def on_http_request(self) -> ActionSection:

@@ -175,6 +175,9 @@ THREAT_ASSESSMENT_THRESHOLD = 50
 
 # --- Extension Policy ---
 
+# Wait for extension policy to propagate to the data plane after enforcement.
+EXTENSION_POLICY_ENFORCEMENT_WAIT = 5
+
 # Wait for EnvoyFilter to propagate before checking isolation (testing absence of leaking).
 EXTENSION_POLICY_PROPAGATION_WAIT = 10
 
