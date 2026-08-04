@@ -10,6 +10,7 @@ import yaml
 import openshift_client as oc
 from openshift_client import Context, OpenShiftPythonException
 
+from testsuite.kubernetes.openshift.api_server import APIServerCR
 from testsuite.kubernetes.openshift.route import OpenshiftRoute
 from testsuite.kubernetes.service import Service
 from .service_account import ServiceAccount
@@ -157,6 +158,12 @@ class KubernetesClient:
         """Returns dict-like structure for accessing deployment data"""
         with self.context:
             return oc.selector(f"deployment/{name}").object(cls=Deployment)
+
+    @property
+    def api_server_cr(self):
+        """Returns the cluster-scoped APIServer CR singleton"""
+        with self.context:
+            return oc.selector("apiserver.config.openshift.io/cluster").object(cls=APIServerCR)
 
     def do_action(self, verb: str, *args, stdin_str=None, auto_raise: bool = True, parse_output: bool = False):
         """Run an oc command."""
