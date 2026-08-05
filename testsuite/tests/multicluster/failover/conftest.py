@@ -5,8 +5,6 @@ import pytest
 from testsuite.kuadrant.policy.dns import has_record_condition
 from testsuite.utils import generate_tail
 
-MAX_REQUEUE_TIME = 10
-
 
 @pytest.fixture(scope="module")
 def dns_operator_deployment(request, cluster, system_project):
@@ -48,7 +46,8 @@ def configure_dns_failover_groups(request, cluster, cluster2, system_project, gr
         )
 
         # Patch the configmap to add/update GROUP and MAX_REQUEUE_TIME variables
-        add_patch = f'{{"data":{{"GROUP":"{group_id}","MAX_REQUEUE_TIME":"{MAX_REQUEUE_TIME}s"}}}}'
+        # Reduce time DNS operator re-queues the dns records to 10s to speed up the test execution
+        add_patch = f'{{"data":{{"GROUP":"{group_id}","MAX_REQUEUE_TIME":"10s"}}}}'
         sys_ns.do_action("patch", "configmap", "dns-operator-controller-env", "--type=merge", "-p", add_patch)
 
         dns_deployment.restart()
