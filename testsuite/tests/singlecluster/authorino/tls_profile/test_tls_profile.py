@@ -55,9 +55,11 @@ def test_tls_profile(
 ):  # pylint: disable=unused-argument
     """OIDC and authorization endpoints accept the profile's TLS version and reject lower versions"""
     for hostname in [oidc_route.hostname, authorization_route.hostname]:
-        ver, cipher = probe_tls(hostname, max_version=accept_version)
-        assert ver == accept_version.name.replace("_", ".")
+        version, cipher = probe_tls(hostname, max_version=accept_version)
+        expected_ver = accept_version.name.replace("_", ".")
+        assert version == expected_ver, f"Expected TLS version {expected_ver}, got {version}"
         if expected_cipher is not None:
-            assert cipher == expected_cipher
+            assert cipher == expected_cipher, f"Expected cipher {expected_cipher}, got {cipher}"
         if reject_version is not None:
-            assert probe_tls(hostname, max_version=reject_version)[0] is None
+            rejected_ver = reject_version.name.replace("_", ".")
+            assert probe_tls(hostname, max_version=reject_version)[0] is None, f"TLS {rejected_ver} should be rejected"
