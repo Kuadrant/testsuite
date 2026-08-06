@@ -78,7 +78,11 @@ def _format_failure_message(call, report):
     tb_lines = []
     for entry in call.excinfo.traceback:
         if "site-packages" not in str(entry.path):
-            tb_lines.append(f"{entry.path}:{entry.lineno}: in {entry.name}\n    {entry.statement}")
+            try:
+                statement = entry.statement
+            except (AssertionError, OSError):
+                statement = "<source unavailable>"
+            tb_lines.append(f"{entry.path}:{entry.lineno}: in {entry.name}\n    {statement}")
 
     exc = call.excinfo.value
     exc_message = str(exc)
