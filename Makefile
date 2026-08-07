@@ -42,7 +42,7 @@ smoke: poetry-no-dev  ## Run a small amount of selected tests to verify basic fu
 	$(PYTEST) -n4 -m 'smoke' --dist loadfile --enforce $(flags) testsuite/tests/
 
 kuadrant: poetry-no-dev  ## Run all tests available on Kuadrant
-	$(PYTEST) -n4 -m 'not standalone_only and not disruptive and not ui' --dist loadfile --enforce $(flags) testsuite/tests/singlecluster
+	$(PYTEST) -n4 -m 'not standalone_only and not disruptive and not ui and not extensions' --dist loadfile --enforce $(flags) testsuite/tests/singlecluster
 
 authorino: poetry-no-dev  ## Run only Authorino related tests
 	$(PYTEST) -n4 -m 'authorino and not disruptive' --dist loadfile --enforce $(flags) testsuite/tests/singlecluster/
