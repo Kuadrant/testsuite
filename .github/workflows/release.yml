@@ -26,9 +26,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out code
-        uses: actions/checkout@v3
+        uses: actions/checkout@a37ce9120846195fa4ece8f58b268e6043cb2f26 # ratchet:actions/checkout@v3
         with:
-          fetch-depth: 0  # fetch tags to generate release notes
+          fetch-depth: 0 # fetch tags to generate release notes
 
       - name: Create tag if triggered from github
         if: ${{ github.event_name == 'workflow_dispatch' }}
@@ -37,11 +37,11 @@ jobs:
           git push origin ${{ github.event.inputs.version_tag }}
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # ratchet:docker/setup-qemu-action@v3
 
       - name: Build testsuite image
         id: build-image
-        uses: redhat-actions/buildah-build@v2
+        uses: redhat-actions/buildah-build@9dc2ade9b5db229966b5025ae266311e12f349c4 # ratchet:redhat-actions/buildah-build@v2
         with:
           image: ${{ env.IMG_NAME }}
           tags: ${{ env.IMG_TAGS }}
@@ -51,7 +51,7 @@ jobs:
             ./Dockerfile
 
       - name: Push testsuite image to quay
-        uses: redhat-actions/push-to-registry@v2
+        uses: redhat-actions/push-to-registry@5860fc963bf8f2b3221773a023141612f010c469 # ratchet:redhat-actions/push-to-registry@v2
         with:
           image: ${{ steps.build-image.outputs.image }}
           tags: ${{ steps.build-image.outputs.tags }}
@@ -61,7 +61,7 @@ jobs:
 
       - name: Build UI testsuite image
         id: build-ui-image
-        uses: redhat-actions/buildah-build@v2
+        uses: redhat-actions/buildah-build@9dc2ade9b5db229966b5025ae266311e12f349c4 # ratchet:redhat-actions/buildah-build@v2
         with:
           image: ${{ env.UI_IMG_NAME }}
           tags: ${{ env.IMG_TAGS }}
@@ -71,7 +71,7 @@ jobs:
             ./ui.Dockerfile
 
       - name: Push UI testsuite image to quay
-        uses: redhat-actions/push-to-registry@v2
+        uses: redhat-actions/push-to-registry@5860fc963bf8f2b3221773a023141612f010c469 # ratchet:redhat-actions/push-to-registry@v2
         with:
           image: ${{ steps.build-ui-image.outputs.image }}
           tags: ${{ steps.build-ui-image.outputs.tags }}
@@ -80,7 +80,7 @@ jobs:
           password: ${{ secrets.IMG_REGISTRY_TOKEN }}
 
       - name: Create GitHub release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844 # ratchet:softprops/action-gh-release@v1
         with:
           # ternary operation to choose tag input based on how this workflow was triggered
           tag_name: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version_tag || github.ref_name }}

@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Move PR to ${{ env.review }}
-        uses: leonsteinhaeuser/project-beta-automations@v2.1.0
+        uses: leonsteinhaeuser/project-beta-automations@d1c1261558118c0876fdb2b57a649303925e5a70 # ratchet:leonsteinhaeuser/project-beta-automations@v2.1.0
         with:
           gh_token: ${{ secrets.UPDATE_ACTION_VARS_TOKEN }}
           organization: kuadrant

@@ -23,14 +23,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out code
-        uses: actions/checkout@v3
+        uses: actions/checkout@a37ce9120846195fa4ece8f58b268e6043cb2f26 # ratchet:actions/checkout@v3
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # ratchet:docker/setup-qemu-action@v3
 
       - name: Build unstable UI and sha images
         id: build-ui-image
-        uses: redhat-actions/buildah-build@v2
+        uses: redhat-actions/buildah-build@9dc2ade9b5db229966b5025ae266311e12f349c4 # ratchet:redhat-actions/buildah-build@v2
         with:
           image: ${{ env.UI_IMG_NAME }}
           tags: ${{ env.IMG_TAGS }}
@@ -40,7 +40,7 @@ jobs:
             ./ui.Dockerfile
 
       - name: Push UI images to quay
-        uses: redhat-actions/push-to-registry@v2
+        uses: redhat-actions/push-to-registry@5860fc963bf8f2b3221773a023141612f010c469 # ratchet:redhat-actions/push-to-registry@v2
         with:
           image: ${{ steps.build-ui-image.outputs.image }}
           tags: ${{ steps.build-ui-image.outputs.tags }}
