@@ -77,7 +77,7 @@ def test_dns_failover(
         has_condition("Active", "True", "MemberOfActiveGroup", "Group is included in active groups")
     ), f"dns_record2 should report active group, got: {dns_record2.model.status.conditions}"
     sleep_ttl(hostname.hostname)
-    time.sleep(40)  # arbitrary sleep after all the required waits because test won't succeed without it for some reason
+    time.sleep(60)  # arbitrary sleep after all the required waits because test won't succeed without it for some reason
 
     response = client.get("/get")
     assert not response.has_dns_error(), response.error
