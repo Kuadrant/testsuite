@@ -69,7 +69,7 @@ defaults_overrides: poetry-no-dev  ## Run Defaults and Overrides tests
 	$(PYTEST) -n4 -m 'defaults_overrides and not disruptive' --dist loadfile --enforce $(flags) testsuite/tests/singlecluster/
 
 ui: playwright-install ## Run UI (console plugin) tests
-	$(PYTEST) -n2 -m 'ui' --dist loadfile --enforce $(flags) testsuite/tests/singlecluster/ui/
+	$(PYTEST) --reruns 0 -n2 -m 'ui' --dist loadfile --enforce $(flags) testsuite/tests/singlecluster/ui/
 
 disruptive: poetry-no-dev  ## Run disruptive tests
 	$(PYTEST) -m 'disruptive' $(flags) testsuite/tests/

@@ -15,6 +15,8 @@ from testsuite.tests.singlecluster.ui.console_plugin.constants import (
     UI_SESSION_INIT_TIMEOUT,
 )
 
+pytestmark = [pytest.mark.flaky(reruns=0)]
+
 
 @pytest.fixture(scope="session")
 def auth_state_file(browser, cluster, testconfig, request):
