@@ -2,10 +2,12 @@
 
 import operator
 import signal
+import time
+
 from urllib.parse import urlparse
 
 import pytest
-from openshift_client import selector
+from openshift_client import OpenShiftPythonException, selector
 from pytest_metadata.plugin import metadata_key  # type: ignore
 from dynaconf import ValidationError
 from keycloak import KeycloakAuthenticationError
@@ -463,3 +465,61 @@ def check_user_managed_istio(request, cluster, skip_or_fail):
     marker = request.node.get_closest_marker("user_managed_istio")
     if marker and KuadrantGateway.get_gateway_class_name(cluster) == "openshift-default":
         skip_or_fail("Test requires user-managed Istio installation")
+
+
+def pytest_configure(config):
+    """Record session start time for DATA_RACE detection."""
+    if not settings["data_race"]["enabled"]:
+        return
+    config.data_race_start_time = time.time()
+
+
+def _fetch_pod_errors(terminalreporter, system_project, since_seconds=None):
+    """Fetch pod logs from kuadrant-system and return lines matching error patterns."""
+    matches = []
+    labels = settings["data_race"]["labels"]
+
+    for label in labels:
+        cmd = ["logs", "-l", label, "--all-containers", "--prefix", "--tail=-1"]
+        if since_seconds is not None:
+            cmd.append(f"--since={since_seconds}s")
+        try:
+            result = system_project.do_action(*cmd)
+            lines = result.out().splitlines()
+
+            for line in lines:
+                if "DATA RACE" in line:
+                    matches.append(line)
+
+        except OpenShiftPythonException:
+            terminalreporter.write_line("ERROR: Failed to fetch pod logs for data race detection.")
+
+    return matches
+
+
+def pytest_terminal_summary(terminalreporter, config):
+    """Fetch pod logs once and print data race summary."""
+    if not settings["data_race"]["enabled"]:
+        return
+    try:
+        cluster = settings["control_plane"]["cluster"]
+        system_project = cluster.change_project(settings["service_protection"]["system_project"])
+    except (KeyError, ValidationError):
+        return
+
+    elapsed = int(time.time() - config.data_race_start_time) + 1
+    # _fetch_pod_errors can raise OpenShiftPythonException if oc command fails (e.g. no pods match label)
+    findings = _fetch_pod_errors(terminalreporter, system_project, since_seconds=elapsed)
+
+    terminalreporter.write_line("######################################")
+    terminalreporter.write_line("Pod Log Error Summary")
+    terminalreporter.write_line("######################################")
+
+    if not findings:
+        terminalreporter.write_line("No DATA_RACE errors detected during test session.")
+        return
+
+    terminalreporter.write_line(f"DATA_RACE occurrences: {len(findings)}")
+    terminalreporter.write_line("")
+    for line in findings:
+        terminalreporter.write_line(f"  {line}")
