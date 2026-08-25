@@ -42,7 +42,7 @@ smoke: poetry-no-dev  ## Run a small amount of selected tests to verify basic fu
 	$(PYTEST) -n4 -m 'smoke' --dist loadfile --enforce $(flags) testsuite/tests/
 
 kuadrant: poetry-no-dev  ## Run all tests available on Kuadrant
-	$(PYTEST) -n4 -m 'not standalone_only and not disruptive and not ui and not extensions' --dist loadfile --enforce $(flags) testsuite/tests/singlecluster
+	$(PYTEST) -n4 -m 'not standalone_only and not disruptive and not ui' --dist loadfile --enforce $(flags) testsuite/tests/singlecluster
 
 authorino: poetry-no-dev  ## Run only Authorino related tests
 	$(PYTEST) -n4 -m 'authorino and not disruptive' --dist loadfile --enforce $(flags) testsuite/tests/singlecluster/
@@ -164,15 +164,17 @@ apiservices.apiregistration.k8s.io,$\
 horizontalpodautoscalers.autoscaling,$\
 oidcpolicies.extensions.kuadrant.io,$\
 planpolicies.extensions.kuadrant.io,$\
-pipelinepolicies.extensions.kuadrant.io
+telemetrypolicies.extensions.kuadrant.io
 
 clean: ## Clean all objects on cluster created by running this testsuite. Set the env variable USER to delete after someone else
 	@echo "Deleting objects for user: $(USER)"
 	@test -n "$(USER)"  # exit if $$USER is empty
-	@if kubectl api-resources -o name | grep "routes.route.openshift.io" > /dev/null; then \
-	CR="$(CR_NAMES),routes.route.openshift.io"; \
-	else \
-	CR="$(CR_NAMES)"; \
+	@CR="$(CR_NAMES)"; \
+	if kubectl api-resources -o name | grep "routes.route.openshift.io" > /dev/null; then \
+	CR="$$CR,routes.route.openshift.io"; \
+	fi; \
+	if kubectl api-resources -o name | grep "pipelinepolicies.extensions.kuadrant.io" > /dev/null; then \
+	CR="$$CR,pipelinepolicies.extensions.kuadrant.io"; \
 	fi; \
 	kubectl get --chunk-size=0 -n kuadrant -o name "$$CR" \
 	| grep "$(USER)" \

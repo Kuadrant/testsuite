@@ -8,12 +8,12 @@ from testsuite.kuadrant.extensions.pipeline_policy import PipelinePolicy
 
 
 @pytest.fixture(scope="session", autouse=True)
-def check_pipeline_policy_crd(cluster, skip_or_fail):
+def check_pipeline_policy_crd(cluster):
     """Skip all PipelinePolicy tests if the CRD is not installed on the cluster."""
     try:
         cluster.do_action("get", "crd/pipelinepolicies.extensions.kuadrant.io")
     except OpenShiftPythonException:
-        skip_or_fail("PipelinePolicy CRD is not installed on the cluster")
+        pytest.skip("PipelinePolicy CRD is not installed on the cluster")
 
 
 @pytest.fixture(scope="module")
