@@ -119,11 +119,58 @@ def test_kuadrant_properties(record_testsuite_property):
         cluster_data[cluster_name] = []
         kuadrant_images = ReportPortalMetadataCollector.get_component_images(project)
         for name, tag, full_image in kuadrant_images:
+            if "testsuite-pipelines-tools" in full_image:
+                continue
             if tag:
                 cluster_data[cluster_name].append(f"{name}:{tag} ({full_image})")
                 properties.append((name, tag))
             else:
                 cluster_data[cluster_name].append(full_image)
+
+    _print_cluster_data(cluster_data)
+    _record_unique(record_testsuite_property, properties)
+
+
+def test_tools_properties(record_testsuite_property):
+    """Record tools version properties from all clusters."""
+    tools_ns = "tools"
+    properties = []
+    cluster_data = {}
+    for cluster_name, _, project in _all_cluster_projects(tools_ns):
+        if project is None:
+            cluster_data[cluster_name] = [f"namespace '{tools_ns}' not found"]
+            continue
+        cluster_data[cluster_name] = []
+        tools_images = ReportPortalMetadataCollector.get_component_images(project)
+        for name, tag, full_image in tools_images:
+            if name not in {"jaeger", "redis", "dragonfly", "valkey"}:
+                continue
+            if tag:
+                cluster_data[cluster_name].append(f"{name}:{tag} ({full_image})")
+                properties.append((name, tag))
+            else:
+                cluster_data[cluster_name].append(full_image)
+
+    _print_cluster_data(cluster_data)
+    _record_unique(record_testsuite_property, properties)
+
+
+def test_tools_operator_properties(record_testsuite_property):
+    """Record OLM operator version properties from all clusters."""
+    namespaces = ["tools", "cert-manager-operator"]
+    properties = []
+    cluster_data = {}
+    for cluster_name, cluster in ReportPortalMetadataCollector.get_cluster_configurations():
+        cluster_data[cluster_name] = []
+        for ns in namespaces:
+            project = cluster.change_project(ns)
+            if not project.connected:
+                cluster_data[cluster_name].append(f"namespace '{ns}' not found")
+                continue
+            versions = ReportPortalMetadataCollector.get_subscription_versions(project)
+            for name, version in versions.items():
+                cluster_data[cluster_name].append(f"{name}:{version}")
+                properties.append((name, version))
 
     _print_cluster_data(cluster_data)
     _record_unique(record_testsuite_property, properties)
