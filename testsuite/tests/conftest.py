@@ -9,7 +9,7 @@ from urllib.parse import urlparse
 import pytest
 from openshift_client import selector
 from pytest_metadata.plugin import metadata_key  # type: ignore
-from dynaconf import ValidationError
+from dynaconf import Dynaconf, ValidationError
 from keycloak import KeycloakAuthenticationError
 
 from testsuite.capabilities import has_kuadrant, kuadrant_version
@@ -389,9 +389,11 @@ def label(blame):
 
 
 @pytest.fixture(scope="module")
-def module_label(label):
+def module_label(label, request):
     """Module scope label for all resources"""
-    return randomize(label)
+    value = randomize(label)
+    request.node.resource_collection_module_label = value
+    return value
 
 
 @pytest.fixture(scope="session")
@@ -497,17 +499,26 @@ def _get_clusters(item: pytest.Item, testconfig) -> list[tuple[str, object]]:
     return clusters
 
 
-def _safe_collection_name(item: pytest.Item, module_label: str) -> str:
-    """Build a filesystem-safe base filename from the test nodeid.
+def _nodeid_filename_fragment(nodeid: str) -> str:
+    """Unique YAML filename fragment from a pytest nodeid / RP item name.
 
-    nodeid: testsuite/tests/.../test_auth_credentials.py::test_custom_selector[authorizationHeader]
-    -> <module_label>-test_auth_credentials_test_custom_selector(authorizationHeader)
+    Includes the last three path components so two files with the same basename
+    in different directories do not collide. Must stay in sync with
+    reportportal.rp_attach.filename_needle_from_rp_name.
     """
-    nodeid_parts = item.nodeid.split("::")
-    module_file = nodeid_parts[0].split("/")[-1].replace(".py", "")
-    test_part = nodeid_parts[1] if len(nodeid_parts) > 1 else item.name
-    name = f"{module_label}-{module_file}_{test_part}"
+    path_part, sep, test_part = nodeid.partition("::")
+    if not sep:
+        test_part = path_part.rsplit("/", 1)[-1]
+    if path_part.endswith(".py"):
+        path_part = path_part[:-3]
+    unique_module = "_".join(path_part.split("/")[-3:])
+    name = f"{unique_module}_{test_part}"
     return name.replace("[", "(").replace("]", ")").replace("/", "_").replace("\\", "_")
+
+
+def _safe_collection_name(item: pytest.Item, module_label: str) -> str:
+    """Build a filesystem-safe base filename from the test nodeid."""
+    return f"{module_label}-{_nodeid_filename_fragment(item.nodeid)}"
 
 
 def _write_resource_files(matched: list, base_pattern: str, prefix: str) -> None:
@@ -556,29 +567,46 @@ def _should_collect_resources(item: pytest.Item, report) -> bool:
     return False
 
 
+def _get_resource_collection_ctx(item: pytest.Item) -> tuple[str, Dynaconf] | None:
+    """Return (module_label, testconfig) for a resource dump.
+
+    Never call getfixturevalue here: after failed setup the fixture stack is torn
+    down and xdist raises INTERNALERROR.
+    """
+    if ctx := getattr(item, "resource_collection_ctx", None):
+        return ctx
+
+    module_node = item.getparent(pytest.Module)
+    if module_node is None:
+        return None
+
+    module_label = getattr(module_node, "resource_collection_module_label", None)
+    if module_label:
+        return module_label, settings
+    return None
+
+
 def _try_collect_resources(item: pytest.Item, report) -> None:
     """Dump cluster resources for this test when collection is enabled."""
     if not _should_collect_resources(item, report):
         return
-
-    nodeid = item.nodeid
-    if nodeid in resource_collector.collected_nodes:
+    if item.nodeid in resource_collector.collected_nodes:
         return
 
-    ctx = getattr(item, "resource_collection_ctx", None)
-    if ctx is None:
-        logger.warning("Skipping resource collection for %s: fixtures not available", nodeid)
-        return
-
-    module_label, testconfig = ctx
     try:
+        ctx = _get_resource_collection_ctx(item)
+        if ctx is None:
+            logger.warning("Skipping resource collection for %s: fixtures not available", item.nodeid)
+            return
+
+        module_label, testconfig = ctx
         project = testconfig["service_protection"]["project"]
         clusters = _get_clusters(item, testconfig)
         base_pattern = _extract_base_pattern(module_label)
         _do_collection(item, module_label, base_pattern, project, clusters)
-        resource_collector.collected_nodes.add(nodeid)
-    except resource_collector.COLLECTION_ERRORS:
-        logger.warning("Resource collection failed for %s", nodeid, exc_info=True)
+        resource_collector.collected_nodes.add(item.nodeid)
+    except Exception:  # pylint: disable=broad-exception-caught
+        logger.warning("Resource collection failed for %s", item.nodeid, exc_info=True)
 
 
 @pytest.fixture(scope="function", autouse=True)
