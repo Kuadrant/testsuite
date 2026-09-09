@@ -114,4 +114,4 @@ class MockserverBackend(Backend):
     def wait_for_ready(self, timeout=SERVICE_READY_TIMEOUT):
         """Waits until Deployment and Service is marked as ready"""
         self.deployment.wait_for_ready(timeout)
-        self.service.wait_for_ready(timeout, settings["control_plane"]["slow_loadbalancers"])
+        self.service.wait_for_ready(timeout)

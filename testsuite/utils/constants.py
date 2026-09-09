@@ -2,8 +2,8 @@
 
 # --- Kubernetes Resource Timeouts (seconds) ---
 
-# Additional wait after LoadBalancer IP is assigned on slow cloud providers.
-SLOW_LOADBALANCER_WAIT = 60
+# Timeout for polling DNS resolution of LoadBalancer hostnames (e.g. AWS ELB).
+DNS_RESOLUTION_TIMEOUT = 60
 
 # Default timeout for K8s wait_until condition checks.
 K8S_WAIT_UNTIL_TIMEOUT = 60
