@@ -27,7 +27,7 @@ apyproxy = "*"
 weakget = "*"
 pytest-playwright = "*"
 playwright = "1.57.0"
-pytest-rerunfailures = "*"
+pytest-rerunfailures = "<16.6.1"
 hvac = "^2.4.0"
 
 [tool.poetry.group.dev.dependencies]
