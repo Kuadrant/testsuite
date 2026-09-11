@@ -1,13 +1,15 @@
 """Root conftest"""
 
+import logging
 import operator
 import signal
+from datetime import datetime
 from urllib.parse import urlparse
 
 import pytest
 from openshift_client import selector
 from pytest_metadata.plugin import metadata_key  # type: ignore
-from dynaconf import ValidationError
+from dynaconf import Dynaconf, ValidationError
 from keycloak import KeycloakAuthenticationError
 
 from testsuite.capabilities import has_kuadrant, kuadrant_version
@@ -24,6 +26,9 @@ from testsuite.oidc.keycloak import Keycloak
 from testsuite.tracing.jaeger import JaegerClient
 from testsuite.tracing.tempo import RemoteTempoClient
 from testsuite.utils import randomize, _whoami
+from testsuite.utils import resource_collector
+
+logger = logging.getLogger(__name__)
 
 
 def pytest_addoption(parser):
@@ -34,6 +39,18 @@ def pytest_addoption(parser):
     parser.addoption("--standalone", action="store_true", default=False, help="Runs testsuite in standalone mode")
     parser.addoption(
         "--verify-denials", default="true", help="Verifies that denied requests did not leak to the upstream backend"
+    )
+    parser.addoption(
+        "--collect-resources",
+        action="store_true",
+        default=False,
+        help="Collect and save all test resources to debug-resources/ (or $WORKSPACE/debug-resources/)",
+    )
+    parser.addoption(
+        "--collect-resources-on-failure",
+        action="store_true",
+        default=False,
+        help="Collect and save test resources only for failed tests",
     )
 
 
@@ -128,7 +145,7 @@ def _write_rerun_properties(item, report):
 
 @pytest.hookimpl(hookwrapper=True)
 def pytest_runtest_makereport(item, call):
-    """Add jira link to html report and record rerun count for JUnit XML."""
+    """Add jira link to html report, record rerun count, and collect cluster resources."""
     pytest_html = item.config.pluginmanager.getplugin("html")
     outcome = yield
     report = outcome.get_result()
@@ -147,6 +164,7 @@ def pytest_runtest_makereport(item, call):
         _collect_rerun_attempt(item, call, report)
     if report.when == "teardown":
         _write_rerun_properties(item, report)
+    _try_collect_resources(item, report)
 
 
 def pytest_report_header(config):
@@ -375,9 +393,11 @@ def label(blame):
 
 
 @pytest.fixture(scope="module")
-def module_label(label):
+def module_label(label, request):
     """Module scope label for all resources"""
-    return randomize(label)
+    value = randomize(label)
+    request.node.resource_collection_module_label = value
+    return value
 
 
 @pytest.fixture(scope="session")
@@ -454,6 +474,149 @@ def check_min_ocp_version(request, openshift_version):
             pytest.skip("Could not detect OpenShift version")
         if openshift_version < required_version:
             pytest.skip(f"Requires OCP {'.'.join(map(str, required_version))}+")
+
+
+def _is_multicluster_test(item: pytest.Item) -> bool:
+    """Check if test is a multicluster test by looking at its path."""
+    if "multicluster" in str(getattr(item, "fspath", "")):
+        return True
+    return "multicluster" in getattr(item, "nodeid", "")
+
+
+def _extract_base_pattern(module_label: str) -> str:
+    """Extract session part of module_label (testrun-<user>--<sess>) for matching."""
+    base_pattern = module_label
+    if "--" in module_label:
+        prefix, suffix = module_label.split("--", 1)
+        base_pattern = f"{prefix}--{suffix.split('-')[0]}"
+    return base_pattern
+
+
+def _get_clusters(item: pytest.Item, testconfig) -> list[tuple[str, object]]:
+    """Get cluster clients for this test (single-cluster or multicluster)."""
+    clusters = [("cluster1", testconfig["control_plane"]["cluster"])]
+    if _is_multicluster_test(item):
+        for name in ("cluster2", "cluster3"):
+            client = testconfig["control_plane"].get(name)
+            if client:
+                clusters.append((name, client))
+    return clusters
+
+
+def _nodeid_filename_fragment(nodeid: str) -> str:
+    """Unique YAML filename fragment from a pytest nodeid / RP item name.
+
+    Includes the last three path components so two files with the same basename
+    in different directories do not collide. Must stay in sync with
+    reportportal.rp_attach.filename_needle_from_rp_name.
+    """
+    path_part, sep, test_part = nodeid.partition("::")
+    if not sep:
+        test_part = path_part.rsplit("/", 1)[-1]
+    if path_part.endswith(".py"):
+        path_part = path_part[:-3]
+    unique_module = "_".join(path_part.split("/")[-3:])
+    name = f"{unique_module}_{test_part}"
+    return name.replace("[", "(").replace("]", ")").replace("/", "_").replace("\\", "_")
+
+
+def _safe_collection_name(item: pytest.Item, module_label: str) -> str:
+    """Build a filesystem-safe base filename from the test nodeid."""
+    return f"{module_label}-{_nodeid_filename_fragment(item.nodeid)}"
+
+
+def _write_resource_files(matched: list, base_pattern: str, prefix: str) -> None:
+    """Write the apply (reproducible) and full (with status) YAML views for the matched resources."""
+    out = resource_collector.output_dir()
+    full_resources = [resource_collector.strip_full(r) for r in matched]
+    resource_collector.write_yaml(out / f"{prefix}-full.yaml", base_pattern, full_resources)
+
+    apply_resources = [resource_collector.strip_apply(r) for r in matched if resource_collector.is_applyable(r)]
+    resource_collector.write_yaml(out / f"{prefix}-apply.yaml", base_pattern, apply_resources)
+
+
+def _do_collection(item: pytest.Item, module_label: str, base_pattern: str, project: str, clusters: list) -> None:
+    """Orchestrate resource collection from clusters."""
+    out = resource_collector.output_dir()
+    out.mkdir(parents=True, exist_ok=True)
+    safe_name = _safe_collection_name(item, module_label)
+    multicluster = len(clusters) > 1
+    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+
+    for cluster_name, cluster_client in clusters:
+        try:
+            with cluster_client.context:
+                resource_types = resource_collector.discover_resource_types()
+                if not resource_types:
+                    logger.warning("No resource types discovered for %s", cluster_name)
+                    continue
+
+                matched = resource_collector.collect_matching(project, base_pattern, resource_types)
+                prefix = f"{safe_name}-{cluster_name}" if multicluster else safe_name
+                _write_resource_files(matched, base_pattern, f"{prefix}-{timestamp}")
+        except resource_collector.COLLECTION_ERRORS:
+            logger.warning("Failed to collect resources from %s", cluster_name, exc_info=True)
+
+
+def _should_collect_resources(item: pytest.Item, report) -> bool:
+    """Whether this report phase should dump cluster resources."""
+    if report.when not in ("call", "setup") or report.skipped:
+        return False
+    if item.config.getoption("--collect-resources"):
+        # After a completed call, or when setup failed (call never runs).
+        return report.when == "call" or report.failed
+    if item.config.getoption("--collect-resources-on-failure"):
+        # Final failures only; rerun attempts have outcome "rerun", not failed.
+        return report.failed
+    return False
+
+
+def _get_resource_collection_ctx(item: pytest.Item) -> tuple[str, Dynaconf] | None:
+    """Return (module_label, testconfig) for a resource dump.
+
+    Never call getfixturevalue here: after failed setup the fixture stack is torn
+    down and xdist raises INTERNALERROR.
+    """
+    if ctx := getattr(item, "resource_collection_ctx", None):
+        return ctx
+
+    module_node = item.getparent(pytest.Module)
+    if module_node is None:
+        return None
+
+    module_label = getattr(module_node, "resource_collection_module_label", None)
+    if module_label:
+        return module_label, settings
+    return None
+
+
+def _try_collect_resources(item: pytest.Item, report) -> None:
+    """Dump cluster resources for this test when collection is enabled."""
+    if not _should_collect_resources(item, report):
+        return
+    if item.nodeid in resource_collector.collected_nodes:
+        return
+
+    try:
+        ctx = _get_resource_collection_ctx(item)
+        if ctx is None:
+            logger.warning("Skipping resource collection for %s: fixtures not available", item.nodeid)
+            return
+
+        module_label, testconfig = ctx
+        project = testconfig["service_protection"]["project"]
+        clusters = _get_clusters(item, testconfig)
+        base_pattern = _extract_base_pattern(module_label)
+        _do_collection(item, module_label, base_pattern, project, clusters)
+        resource_collector.collected_nodes.add(item.nodeid)
+    except Exception:  # pylint: disable=broad-exception-caught
+        logger.warning("Resource collection failed for %s", item.nodeid, exc_info=True)
+
+
+@pytest.fixture(scope="function", autouse=True)
+def collect_test_resources(request, module_label, testconfig):
+    """Stash fixtures used to dump cluster resources after the test call."""
+    request.node.resource_collection_ctx = (module_label, testconfig)
 
 
 @pytest.fixture(autouse=True)
