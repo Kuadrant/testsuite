@@ -1,6 +1,6 @@
 # Control Plane Scale Test
 
-Control Plane scale testing via kube-burner utility. It creates `NUM_GWS` Gateways each having `NUM_LISTENERS` listeners configured. For each Gateway one policy of each Kind (AuthPolicy, DNSPolicy, RateLimitPolicy, TLSPolicy) is created. For each listener one AuthPolicy and one RateLimitPolicy is created.
+Control Plane scale testing via kube-burner v2.8+ utility. It creates `NUM_GWS` Gateways each having `NUM_LISTENERS` listeners configured. For each Gateway one policy of each Kind (AuthPolicy, DNSPolicy, RateLimitPolicy, TLSPolicy) is created. For each listener one AuthPolicy and one RateLimitPolicy is created.
 
 ## Prerequisites
 
@@ -49,23 +49,23 @@ Automatic cleanup can be skipped:
 export SKIP_CLEANUP=true
 ```
 
-If so then note the UUID of your scale test run so that you can perform manual cleanup. The DNSPolicy CR needs to be removed manually first. That triggers corresponding DNSRecord CR removal. It is not handled gracefully by Kube Burner cleanup so better to remove it manually beforehand:
+If so then you need to perform manual cleanup. The DNSPolicy CRs removal is not handled gracefully by Kube Burner's destroy command so they need to be removed first:
 
 ```
-kubectl delete dnspolicy --all -n scale-test-0
-kube-burner destroy --uuid [:uuid]
+kubectl delete dnspolicy --all -n scale-test-0 --wait=true
+kube-burner destroy --config ./control-plane-config.yaml
 ```
 
 ## Quick Sanity Check
 
-If cleanup is skipped then quick sanity check that everything works can be done:
+If cleanup was skipped then quick sanity check that everything works can be done:
 
 ```
-curl -k -s -o /dev/null -w "%{http_code}\n" -H "Authorization: APIKEY iamalice" https://api.scale-test-gw1-l1-i0.aws.kua.app-services-dev.net/get # expected result: 200
+curl -k -s -o /dev/null -w "%{http_code}\n" -H 'Authorization: APIKEY iamalice' https://api.scale-test-gw1-l1-i0.aws.kuadrant-qe.hcpapps.net/get # expected result: 200
 
-curl -k -s -o /dev/null -w "%{http_code}\n" -H "Authorization: APIKEY iambob" https://api.scale-test-gw1-l1-i0.aws.kua.app-services-dev.net/get # expected result: 200
+curl -k -s -o /dev/null -w "%{http_code}\n" -H 'Authorization: APIKEY iambob' https://api.scale-test-gw1-l1-i0.aws.kuadrant-qe.hcpapps.net/get # expected result: 200
 
-curl -k -s -o /dev/null -w "%{http_code}\n" -H "Authorization: APIKEY iamX" https://api.scale-test-gw1-l1-i0.aws.kua.app-services-dev.net/get # expected result: 401
+curl -k -s -o /dev/null -w "%{http_code}\n" -H 'Authorization: APIKEY iamX' https://api.scale-test-gw1-l1-i0.aws.kuadrant-qe.hcpapps.net/get # expected result: 401
 ```
 
 Based on limits configured in RateLimitPolicy CRs these commands can be repeated until `HTTP 429 Too Many Requests` is returned. Omit `-k` if valid certificates are used.
