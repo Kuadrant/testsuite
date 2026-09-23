@@ -134,5 +134,8 @@ dmypy.json
 logs/*
 !logs/.gitkeep
 
+# Extension manifests (user-specific content)
+extensions-manifests.yaml
+
 # macOS system files
 .DS_Store

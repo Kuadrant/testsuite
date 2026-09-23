@@ -102,3 +102,29 @@ deploy-kuadrant-cr: ## Deploy Kuadrant CR (composed from INSTALL_PROMETHEUS and 
 	} | kubectl apply -f -
 	kubectl wait kuadrant/kuadrant-sample --for=condition=Ready=True -n $(KUADRANT_NAMESPACE) --timeout=$(KUADRANT_CR_TIMEOUT)
 	@echo "Kuadrant CR ready"
+
+.PHONY: deploy-extensions
+deploy-extensions: ## Deploy Kuadrant extensions (init container + manifests)
+	@if [ ! -f "$(EXTENSIONS_MANIFESTS)" ]; then \
+		echo "ERROR: Extensions manifest file not found: $(EXTENSIONS_MANIFESTS)"; \
+		echo "Create the file or set EXTENSIONS_MANIFESTS to a valid path."; \
+		exit 1; \
+	fi
+	@echo "Applying extension manifests from $(EXTENSIONS_MANIFESTS)..."
+	kubectl apply -f $(EXTENSIONS_MANIFESTS)
+	@echo "Patching kuadrant-operator-controller-manager with extensions init container..."
+	kubectl patch deployment kuadrant-operator-controller-manager \
+		-n $(KUADRANT_NAMESPACE) --type=strategic -p='{ \
+		"spec": {"template": {"spec": { \
+		  "volumes": [{"name": "extensions-binary-volume", "emptyDir": {}}], \
+		  "containers": [{"name": "manager", \
+		    "volumeMounts": [{"mountPath": "/extensions", "name": "extensions-binary-volume"}]}], \
+		  "initContainers": [{"name": "copy-extensions", \
+		    "command": ["cp", "-r", "/extensions/.", "/export"], \
+		    "image": "$(EXTENSIONS_IMAGE)", \
+		    "imagePullPolicy": "Always", \
+		    "volumeMounts": [{"mountPath": "/export", "name": "extensions-binary-volume"}]}] \
+		}}}}'
+	@echo "Waiting for operator rollout..."
+	kubectl -n $(KUADRANT_NAMESPACE) rollout status deployment/kuadrant-operator-controller-manager --timeout=$(KUBECTL_TIMEOUT)
+	@echo "Extensions deployed successfully"

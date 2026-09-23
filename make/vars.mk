@@ -52,6 +52,11 @@ ifeq ($(INSTALL_TRACING),true)
 KUADRANT_OPERATOR_ENV_VARS := $(KUADRANT_OPERATOR_ENV_VARS),OTEL_EXPORTER_OTLP_ENDPOINT=$(JAEGER_COLLECTOR_ENDPOINT),OTEL_EXPORTER_OTLP_INSECURE=true,LOG_LEVEL=debug
 endif
 
+# Extensions configuration
+INSTALL_EXTENSIONS ?= false
+EXTENSIONS_IMAGE ?= quay.io/kuadrant/internal-extensions:latest
+EXTENSIONS_MANIFESTS ?= ./extensions-manifests.yaml
+
 # Timeout configurations (in seconds)
 KUBECTL_TIMEOUT ?= 300s
 CERT_MANAGER_TIMEOUT ?= 120s
