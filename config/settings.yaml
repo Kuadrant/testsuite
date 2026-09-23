@@ -35,6 +35,13 @@ default:
     authorino:
       deploy: true
       log_level: "debug"
+  data_race:
+    enabled: false
+    labels: # verify these match the actual pod labels in your cluster
+      - "authorino-resource=authorino"
+      - "app=limitador-operator"
+      - "control-plane=dns-operator-controller-manager"
+      - "app=kuadrant"
   control_plane:
     cluster: {}
     slow_loadbalancers: false
