@@ -10,13 +10,14 @@ from time import sleep
 import pytest
 
 from testsuite.utils.constants import TRLP_FREE_USER_RESET_WAIT, TRLP_PAID_USER_RESET_WAIT
+from .... import CHAT_MESSAGES, MODEL
 from .conftest import FREE_USER_LIMIT, PAID_USER_LIMIT
 
 pytestmark = [pytest.mark.limitador, pytest.mark.authorino, pytest.mark.kuadrant_only]
 
 basic_request = {
-    "model": "meta-llama/Llama-3.1-8B-Instruct",
-    "messages": [{"role": "user", "content": "What is Kubernetes?"}],
+    "model": MODEL,
+    "messages": CHAT_MESSAGES,
     "stream": False,  # disable streaming (default)
     "usage": True,  # ensures `usage.total_tokens` is returned in the response
     "max_tokens": 15,

@@ -70,7 +70,7 @@ def authorization(authorization, free_user_api_key):
 
 
 @pytest.fixture(scope="module", params=["route", "gateway"])
-def token_rate_limit(request, cluster, blame, module_label):
+def token_rate_limit(request, cluster, blame, module_label, route, gateway):  # pylint: disable=unused-argument
     """Creates TokenRateLimitPolicy for free and paid users"""
     target_ref = request.getfixturevalue(request.param)
 

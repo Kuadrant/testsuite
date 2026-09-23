@@ -4,12 +4,14 @@ import pytest
 
 from testsuite.backend.llm_sim import LlmSim
 
+from . import MODEL
+
 
 @pytest.fixture(scope="module")
 def backend(request, cluster, blame, label, testconfig):
     """Deploys LlmSim backend"""
     image = testconfig["llm_sim"]["image"]
-    llmsim = LlmSim(cluster, blame("llm-sim"), "meta-llama/Llama-3.1-8B-Instruct", label, image)
+    llmsim = LlmSim(cluster, blame("llm-sim"), MODEL, label, image)
     request.addfinalizer(llmsim.delete)
     llmsim.commit()
     return llmsim

@@ -1,8 +1,20 @@
 """TokenRateLimitPolicy implementation for policy"""
 
+from dataclasses import dataclass
+
 from testsuite.gateway import Referencable
+from testsuite.kubernetes import modify
 from testsuite.kuadrant.policy.rate_limit import RateLimitPolicy
 from testsuite.kubernetes.client import KubernetesClient
+from testsuite.utils import asdict
+
+
+@dataclass
+class Reservation:
+    """Reservation dataclass for TokenRateLimitPolicy's token reservation config (RFC 0021)"""
+
+    amount: int | str
+    ttl: str | None = None
 
 
 class TokenRateLimitPolicy(RateLimitPolicy):
@@ -33,3 +45,8 @@ class TokenRateLimitPolicy(RateLimitPolicy):
         if section_name:
             model["spec"]["targetRef"]["sectionName"] = section_name
         return cls(model, context=cluster.context)
+
+    @modify
+    def set_reservation(self, name: str, reservation: Reservation):
+        """Sets token reservation config on an existing limit"""
+        self.model.spec["limits"][name]["reservation"] = asdict(reservation)

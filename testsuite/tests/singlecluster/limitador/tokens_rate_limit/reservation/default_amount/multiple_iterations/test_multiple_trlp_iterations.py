@@ -1,19 +1,18 @@
-"""
-Tests that a TokenRateLimitPolicy limit is enforced and resets as expected over multiple iterations
-"""
+"""Tests that a TokenRateLimitPolicy limit is enforced and resets as expected over multiple iterations"""
 
 from time import sleep
 import pytest
 
 from testsuite.utils.constants import TRLP_ITERATION_RESET_WAIT
+from .... import CHAT_MESSAGES, MODEL
 from .conftest import LIMIT
 
 pytestmark = [pytest.mark.limitador]
 
 
 basic_request = {
-    "model": "meta-llama/Llama-3.1-8B-Instruct",
-    "messages": [{"role": "user", "content": "What is Kubernetes?"}],
+    "model": MODEL,
+    "messages": CHAT_MESSAGES,
     "stream": False,  # TRLP only supports non-streaming currently
     "usage": True,  # ensures `usage.total_tokens` is returned in the response
 }

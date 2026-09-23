@@ -63,6 +63,16 @@ class KuadrantCR(CustomResource):
         """Enable observability"""
         self.model.spec["observability"] = {"enable": enabled} if enabled else None
 
+    @modify
+    def set_token_rate_limiting_mode(self, mode: str):
+        """Sets cluster-wide TokenRateLimitPolicy enforcement mode (Reservation or Optimistic)"""
+        self.model.spec["tokenRateLimiting"] = {"mode": mode}
+
+    @modify
+    def reset_token_rate_limiting_mode(self):
+        """Resets tokenRateLimiting mode back to the cluster default (Reservation)"""
+        self.model.spec["tokenRateLimiting"] = None
+
     @property
     def limitador(self) -> LimitadorCR:
         """Returns associated default LimitadorCR object"""
