@@ -50,3 +50,9 @@ class TokenRateLimitPolicy(RateLimitPolicy):
     def set_reservation(self, name: str, reservation: Reservation):
         """Sets token reservation config on an existing limit"""
         self.model.spec["limits"][name]["reservation"] = asdict(reservation)
+
+    @modify
+    def set_data_extraction(self, total_tokens_pointers: list[str]):
+        """Sets an explicit, ordered list of JSON Pointer (RFC 6901) candidates for
+        spec.dataExtraction.response.totalTokens, replacing the operator's built-in default list (RFC 0024)"""
+        self.model.spec["dataExtraction"] = {"response": {"totalTokens": total_tokens_pointers}}
