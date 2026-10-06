@@ -7,15 +7,11 @@ https://github.com/Kuadrant/kuadrant-operator/blob/main/doc/user-guides/egress/c
 import pytest
 from dynaconf import ValidationError
 
-from testsuite.gateway import CustomReference, URLRewriteFilter
-from testsuite.gateway.gateway_api.route import HTTPRoute
 from testsuite.kuadrant.policy import CelExpression, CelPredicate
 from testsuite.kuadrant.policy.authorization import NamedValueOrSelector, PlainResponse, ValueOrSelector
 from testsuite.kuadrant.policy.authorization.auth_policy import AuthPolicy
 from testsuite.kubernetes.service_account import ServiceAccount
 from testsuite.kubernetes.vault import Vault
-
-from ..conftest import EGRESS_HOSTNAME
 
 pytestmark = [
     pytest.mark.kuadrant_only,
@@ -106,22 +102,6 @@ def mockserver_expectation(mockserver_client, module_label):
     """ % VAULT_API_KEY
     mockserver_client.create_template_expectation(module_label, template, "VELOCITY")
     return f"/{module_label}"
-
-
-@pytest.fixture(scope="module")
-def route(request, gateway, cluster, blame, hostname, module_label, service_entry, destination_rule):
-    """HTTPRoute routing egress traffic through the gateway to the backend"""
-    # pylint: disable=unused-argument
-    route = HTTPRoute.create_instance(cluster, blame("route"), gateway, {"app": module_label})
-    route.add_hostname(EGRESS_HOSTNAME)
-    route.add_rule(
-        CustomReference(group="networking.istio.io", kind="Hostname", name=hostname.hostname, port=443),
-        filters=[URLRewriteFilter(hostname=hostname.hostname)],
-    )
-    request.addfinalizer(route.delete)
-    route.commit()
-    route.wait_for_ready()
-    return route
 
 
 @pytest.fixture(scope="module")
