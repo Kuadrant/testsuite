@@ -182,7 +182,8 @@ class SpiceDBClient:
         return result.get("permissionship") == "PERMISSIONSHIP_HAS_PERMISSION"
 
 
-class SpiceDB(Backend):
+# external_ip is an optional Exposable capability that this backend does not provide
+class SpiceDB(Backend):  # pylint: disable=abstract-method
     """
     SpiceDB authorization service deployed in Kubernetes.
 

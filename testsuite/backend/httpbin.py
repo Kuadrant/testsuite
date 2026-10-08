@@ -8,7 +8,8 @@ from testsuite.kubernetes.service import Service, ServicePort
 from testsuite.utils.constants import HTTP_API_PORT
 
 
-class Httpbin(Backend):
+# external_ip is an optional Exposable capability that this backend does not provide
+class Httpbin(Backend):  # pylint: disable=abstract-method
     """Httpbin deployed in Kubernetes as Backend"""
 
     def __init__(self, cluster: KubernetesClient, name, label, image, replicas=1) -> None:

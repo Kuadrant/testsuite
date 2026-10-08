@@ -8,7 +8,8 @@ from testsuite.kubernetes.deployment import Deployment, SecretVolume, VolumeMoun
 from testsuite.kubernetes.service import Service, ServicePort
 
 
-class Grpcbin(Backend):
+# external_ip is an optional Exposable capability that this backend does not provide
+class Grpcbin(Backend):  # pylint: disable=abstract-method
     """Grpcbin deployed in Kubernetes as Backend"""
 
     GRPC_PORT = 9000
