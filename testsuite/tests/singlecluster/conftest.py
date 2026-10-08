@@ -24,6 +24,12 @@ from testsuite.mockserver import Mockserver
 
 
 @pytest.fixture(scope="session")
+def has_ocp_managed_istio(cluster):
+    """True if the cluster uses 'openshift-default' GatewayClass (OCP-managed Istio)"""
+    return KuadrantGateway.get_gateway_class_name(cluster) == "openshift-default"
+
+
+@pytest.fixture(scope="session")
 def second_namespace(testconfig, skip_or_fail) -> KubernetesClient:
     """Kubernetes client for the secondary namespace located on the same cluster as primary cluster"""
     project = testconfig["service_protection"]["project2"]
