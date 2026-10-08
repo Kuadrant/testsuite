@@ -4,6 +4,7 @@ testsuite-tools/
 
 .make-*
 junit*.xml
+debug-resources/
 
 .vscode/
 .idea/
