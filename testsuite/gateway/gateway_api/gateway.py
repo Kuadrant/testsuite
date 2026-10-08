@@ -1,19 +1,17 @@
 """Module containing all gateway classes"""
 
-from time import sleep
 from typing import Any
 
 import openshift_client as oc
 
-from testsuite.config import settings
 from testsuite.certificates import Certificate
 from testsuite.gateway import Gateway, GatewayListener
 from testsuite.kubernetes.client import KubernetesClient
 from testsuite.kubernetes import KubernetesObject, modify
 from testsuite.kuadrant.policy import Policy
 from testsuite.kubernetes.deployment import Deployment
-from testsuite.utils import check_condition, asdict, domain_match
-from testsuite.utils.constants import GATEWAY_READY_TIMEOUT, SLOW_LOADBALANCER_WAIT
+from testsuite.utils import check_condition, asdict, domain_match, wait_for_dns_resolution
+from testsuite.utils.constants import GATEWAY_READY_TIMEOUT
 
 
 class KuadrantGateway(KubernetesObject, Gateway):
@@ -104,11 +102,13 @@ class KuadrantGateway(KubernetesObject, Gateway):
         return False
 
     def wait_for_ready(self, timeout: int = GATEWAY_READY_TIMEOUT):
-        """Waits for the gateway to be ready in the sense of is_ready(self)"""
+        """Waits for the gateway to be ready and its address to be DNS-resolvable"""
         success = self.wait_until(lambda obj: self.__class__(obj.model).is_ready(), timelimit=timeout)
         assert success, f"Gateway didn't reach required state, instead it was: {self.model.status.conditions}"
-        if settings["control_plane"]["slow_loadbalancers"]:
-            sleep(SLOW_LOADBALANCER_WAIT)
+        with self.context:
+            address = self.refresh().model.status.addresses[0].value
+        if address is not oc.Missing and any(c.isalpha() for c in str(address)):
+            wait_for_dns_resolution(str(address))
 
     def is_affected_by(self, policy: Policy) -> bool:
         """Returns True, if affected by status is found within the object for the specific policy"""

@@ -1,13 +1,13 @@
 """Service related objects"""
 
-from time import sleep
 from dataclasses import dataclass, asdict
 from typing import Literal
 
 from openshift_client import timeout, Missing
 
 from testsuite.kubernetes import KubernetesObject
-from testsuite.utils.constants import SERVICE_DELETE_TIMEOUT, SERVICE_READY_TIMEOUT, SLOW_LOADBALANCER_WAIT
+from testsuite.utils import wait_for_dns_resolution
+from testsuite.utils.constants import SERVICE_DELETE_TIMEOUT, SERVICE_READY_TIMEOUT
 
 
 @dataclass
@@ -78,8 +78,8 @@ class Service(KubernetesObject):
             deleted = super(KubernetesObject, self).delete(ignore_not_found, cmd_args)
             return deleted
 
-    def wait_for_ready(self, timeout=SERVICE_READY_TIMEOUT, slow_loadbalancers=False):
-        """Waits until LoadBalancer service gets ready."""
+    def wait_for_ready(self, timeout=SERVICE_READY_TIMEOUT):
+        """Waits until LoadBalancer service gets ready and its address is reachable."""
         if self.model.spec.type != "LoadBalancer":
             return
         success = self.wait_until(
@@ -88,5 +88,9 @@ class Service(KubernetesObject):
             timelimit=timeout,
         )
         assert success, f"Service {self.name()} did not get ready in time"
-        if slow_loadbalancers:
-            sleep(SLOW_LOADBALANCER_WAIT)
+
+        # AWS load-balancers return hostnames instead of IP addresses
+        address = self.external_ip
+        if any(c.isalpha() for c in address):
+            # If the address is a hostname, wait for it to be resolvable via DNS
+            wait_for_dns_resolution(address)
