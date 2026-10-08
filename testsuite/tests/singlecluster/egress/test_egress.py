@@ -10,12 +10,9 @@ from time import sleep
 
 import pytest
 
-from testsuite.gateway import CustomReference, URLRewriteFilter
-from testsuite.gateway.gateway_api.route import HTTPRoute
 from testsuite.httpx.auth import HttpxOidcClientAuth
 from testsuite.kuadrant.policy.rate_limit import Limit
 from testsuite.utils.constants import RLP_WINDOW_RESET_WAIT_BUFFERED
-from .conftest import EGRESS_HOSTNAME
 
 pytestmark = [
     pytest.mark.kuadrant_only,
@@ -24,22 +21,6 @@ pytestmark = [
 ]
 
 LIMIT = Limit(3, "5s")
-
-
-@pytest.fixture(scope="module")
-def route(request, gateway, cluster, blame, hostname, module_label, service_entry, destination_rule):
-    """HTTPRoute routing egress traffic through the gateway to the backend via Hostname backendRef"""
-    # pylint: disable=unused-argument
-    route = HTTPRoute.create_instance(cluster, blame("route"), gateway, {"app": module_label})
-    route.add_hostname(EGRESS_HOSTNAME)
-    route.add_rule(
-        CustomReference(group="networking.istio.io", kind="Hostname", name=hostname.hostname, port=443),
-        filters=[URLRewriteFilter(hostname=hostname.hostname)],
-    )
-    request.addfinalizer(route.delete)
-    route.commit()
-    route.wait_for_ready()
-    return route
 
 
 @pytest.fixture(scope="module")

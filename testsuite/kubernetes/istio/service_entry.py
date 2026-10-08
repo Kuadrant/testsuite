@@ -16,10 +16,15 @@ class ServiceEntry(KubernetesObject):
         ports: list[dict],
         location: str = "MESH_EXTERNAL",
         resolution: str = "DNS",
+        endpoints: list[dict] = None,
         labels: dict[str, str] = None,
     ):
-        """Creates new instance of ServiceEntry"""
-        model = {
+        """Creates new instance of ServiceEntry.
+
+        Pass `endpoints` together with `resolution="STATIC"` to register a host that has no
+        DNS record, e.g. a LoadBalancer IP on Kind.
+        """
+        model: dict = {
             "apiVersion": "networking.istio.io/v1",
             "kind": "ServiceEntry",
             "metadata": {
@@ -34,4 +39,6 @@ class ServiceEntry(KubernetesObject):
                 "resolution": resolution,
             },
         }
+        if endpoints:
+            model["spec"]["endpoints"] = endpoints
         return cls(model, context=cluster.context)
