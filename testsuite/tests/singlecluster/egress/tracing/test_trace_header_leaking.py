@@ -12,6 +12,7 @@ Validates https://github.com/Kuadrant/kuadrant-operator/pull/2165
 
 import logging
 
+import backoff
 import pytest
 
 from testsuite.gateway import RequestHeaderModifierFilter, URLRewriteFilter
@@ -48,8 +49,12 @@ def rate_limit():
 
 
 @pytest.fixture(scope="module")
-def route2(request, gateway, cluster, blame, external_service, external_reference, module_label, route):
-    """Egress HTTPRoute that strips the baggage header before forwarding"""
+def route2(request, gateway, cluster, blame, external_service, external_reference, module_label, route, client):
+    """Egress HTTPRoute that strips the baggage header before forwarding.
+
+    The route reports Accepted before Envoy has the new config, so requests to its path 503 for
+    a moment after commit. The fixture polls the path itself rather than sleeping a fixed time.
+    """
     # pylint: disable=unused-argument
     route2 = HTTPRoute.create_instance(cluster, blame("strip-rt"), gateway, {"app": module_label})
     route2.add_hostname(EGRESS_HOSTNAME)
@@ -64,6 +69,12 @@ def route2(request, gateway, cluster, blame, external_service, external_referenc
     request.addfinalizer(route2.delete)
     route2.commit()
     route2.wait_for_ready()
+
+    @backoff.on_predicate(backoff.constant, lambda code: code != 200, interval=2, max_tries=15, jitter=None)
+    def wait_for_path():
+        return client.get(STRIP_PATH).status_code
+
+    assert wait_for_path() == 200, f"Gateway did not start serving {STRIP_PATH}"
     return route2
 
 
