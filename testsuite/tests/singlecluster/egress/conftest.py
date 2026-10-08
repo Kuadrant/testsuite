@@ -173,21 +173,27 @@ def route(
     return route
 
 
+def wait_until_serving(client, path: str = "/"):
+    """Blocks until the egress gateway serves `path`.
+
+    Envoy lags the control plane: a Gateway reports Programmed before it has its routes, a new
+    HTTPRoute is Accepted before its path is routable, and applying an Istio resource triggers a
+    config push that briefly 503s. KuadrantClient retries 503 on its own, but only for about
+    half a minute, which these windows can outlast.
+    """
+
+    @backoff.on_predicate(backoff.constant, lambda serving: not serving, interval=3, max_tries=20, jitter=None)
+    def _serving():
+        result = client.get(path)
+        return result.error is None and result.status_code != 503
+
+    assert _serving(), f"Egress gateway did not start serving {path}"
+
+
 @pytest.fixture(scope="module")
 def client(gateway, route):  # pylint: disable=unused-argument
     """HTTPX client sending requests to the egress gateway"""
     client = StaticLocalHostname(EGRESS_HOSTNAME, gateway.external_ip).client()
-
-    # A Gateway reports Programmed before Envoy is actually serving its routes, so the first
-    # requests through a freshly created egress gateway fail with a 503 or a connection error.
-    # KuadrantClient retries 503 on its own, but only for about half a minute, which a cold
-    # gateway can outlast. Absorb the cold start once here instead of in every test.
-    @backoff.on_predicate(backoff.constant, lambda serving: not serving, interval=3, max_tries=20, jitter=None)
-    def gateway_serving():
-        result = client.get("/")
-        return result.error is None and result.status_code != 503
-
-    assert gateway_serving(), "Egress gateway did not start serving traffic"
-
+    wait_until_serving(client)
     yield client
     client.close()
