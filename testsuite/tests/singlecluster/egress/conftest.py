@@ -12,6 +12,7 @@ Prerequisites:
 from dataclasses import dataclass
 from typing import Optional
 
+import backoff
 import pytest
 
 from testsuite.gateway import CustomReference, GatewayListener, URLRewriteFilter
@@ -176,5 +177,17 @@ def route(
 def client(gateway, route):  # pylint: disable=unused-argument
     """HTTPX client sending requests to the egress gateway"""
     client = StaticLocalHostname(EGRESS_HOSTNAME, gateway.external_ip).client()
+
+    # A Gateway reports Programmed before Envoy is actually serving its routes, so the first
+    # requests through a freshly created egress gateway fail with a 503 or a connection error.
+    # KuadrantClient retries 503 on its own, but only for about half a minute, which a cold
+    # gateway can outlast. Absorb the cold start once here instead of in every test.
+    @backoff.on_predicate(backoff.constant, lambda serving: not serving, interval=3, max_tries=20, jitter=None)
+    def gateway_serving():
+        result = client.get("/")
+        return result.error is None and result.status_code != 503
+
+    assert gateway_serving(), "Egress gateway did not start serving traffic"
+
     yield client
     client.close()
