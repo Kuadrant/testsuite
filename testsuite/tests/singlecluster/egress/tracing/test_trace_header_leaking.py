@@ -12,14 +12,13 @@ Validates https://github.com/Kuadrant/kuadrant-operator/pull/2165
 
 import logging
 
-import backoff
 import pytest
 
 from testsuite.gateway import RequestHeaderModifierFilter, URLRewriteFilter
 from testsuite.gateway import MatchType, PathMatch, RouteMatch
 from testsuite.gateway.gateway_api.route import HTTPRoute
 
-from ..conftest import EGRESS_HOSTNAME
+from ..conftest import EGRESS_HOSTNAME, wait_until_serving
 
 pytestmark = [
     pytest.mark.kuadrant_only,
@@ -70,11 +69,7 @@ def route2(request, gateway, cluster, blame, external_service, external_referenc
     route2.commit()
     route2.wait_for_ready()
 
-    @backoff.on_predicate(backoff.constant, lambda code: code != 200, interval=2, max_tries=15, jitter=None)
-    def wait_for_path():
-        return client.get(STRIP_PATH).status_code
-
-    assert wait_for_path() == 200, f"Gateway did not start serving {STRIP_PATH}"
+    wait_until_serving(client, STRIP_PATH)
     return route2
 
 

@@ -16,6 +16,7 @@ import pytest
 
 from testsuite.kubernetes.istio.telemetry import Telemetry
 
+from ..conftest import wait_until_serving
 from .test_trace_header_leaking import TRACE_CONTEXT_HEADERS, received_headers
 
 pytestmark = [
@@ -45,7 +46,7 @@ def rate_limit():
 
 
 @pytest.fixture(scope="module", autouse=True)
-def telemetry(request, cluster, blame, gateway, module_label, route):
+def telemetry(request, cluster, blame, gateway, module_label, route, client):
     """Telemetry disabling trace context propagation on the egress gateway only.
 
     providers and randomSamplingPercentage are repeated from the root default-telemetry on
@@ -69,6 +70,10 @@ def telemetry(request, cluster, blame, gateway, module_label, route):
     )
     request.addfinalizer(telemetry.delete)
     telemetry.commit()
+
+    # Applying a Telemetry rewrites the gateway's tracing config, and Envoy 503s while
+    # that push lands. Settle before any test sends its request.
+    wait_until_serving(client)
     return telemetry
 
 
