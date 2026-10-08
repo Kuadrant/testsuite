@@ -8,7 +8,8 @@ from testsuite.kubernetes.service import Service, ServicePort
 from testsuite.utils.constants import HTTP_API_PORT
 
 
-class LlmSim(Backend):
+# external_ip is an optional Exposable capability that this backend does not provide
+class LlmSim(Backend):  # pylint: disable=abstract-method
     """LlmSim deployed in Kubernetes as Backend"""
 
     def __init__(self, cluster: KubernetesClient, name, model, label, image, replicas=1) -> None:
