@@ -26,7 +26,7 @@ from testsuite.kubernetes.secret import Secret
 pytestmark = [pytest.mark.kuadrant_only]
 
 EGRESS_HOSTNAME = "httpbin.egress.local"
-EXTERNAL_HOSTNAME = "httpbin.external.local"
+EXTERNAL_DOMAIN = "external.local"
 
 
 @dataclass
@@ -58,7 +58,10 @@ def external_service(request, exposer, backend, blame, cluster) -> ExternalServi
     """
     if isinstance(exposer, LoadBalancerServiceExposer):
         address, _, port = backend.external_ip().rpartition(":")
-        return ExternalService(EXTERNAL_HOSTNAME, int(port), "HTTP", address=address)
+        # Unique per module: a ServiceEntry host is namespace-wide, and Istio leaves the
+        # behaviour undefined when several of them claim the same host. The OpenShift branch
+        # below gets uniqueness for free from the blamed Route hostname.
+        return ExternalService(f"{blame('ext')}.{EXTERNAL_DOMAIN}", int(port), "HTTP", address=address)
 
     route = OpenshiftRoute.create_instance(cluster, blame("backend"), backend.name, "http", tls=True)
     request.addfinalizer(route.delete)
