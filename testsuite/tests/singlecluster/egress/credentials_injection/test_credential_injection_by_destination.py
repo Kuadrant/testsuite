@@ -10,7 +10,7 @@ Credentials are fetched from Kubernetes Secrets via metadata.http.
 
 import pytest
 
-from testsuite.gateway import CustomReference, URLRewriteFilter, RouteMatch, PathMatch, MatchType
+from testsuite.gateway import URLRewriteFilter, RouteMatch, PathMatch, MatchType
 from testsuite.gateway.gateway_api.route import HTTPRoute
 from testsuite.kuadrant.policy.authorization import Credentials, Pattern, PlainResponse, ValueFrom
 from testsuite.kuadrant.policy.authorization.auth_policy import AuthPolicy
@@ -103,15 +103,24 @@ def sa_token_secret(request, system_project, blame, module_label):
 
 @pytest.fixture(scope="module")
 def route(
-    request, gateway, cluster, blame, hostname, module_label, service_entry, destination_rule, mockserver_expectation
+    request,
+    gateway,
+    cluster,
+    blame,
+    external_service,
+    external_reference,
+    module_label,
+    service_entry,
+    destination_rule,
+    mockserver_expectation,
 ):  # pylint: disable=unused-argument
     """HTTPRoute for /service1 path, rewrites to MockServer service1 expectation"""
     route = HTTPRoute.create_instance(cluster, blame("svc1-rt"), gateway, {"app": module_label})
     route.add_hostname(EGRESS_HOSTNAME)
     route.add_rule(
-        CustomReference(group="networking.istio.io", kind="Hostname", name=hostname.hostname, port=443),
+        external_reference,
         RouteMatch(path=PathMatch(type=MatchType.PATH_PREFIX, value="/service1")),
-        filters=[URLRewriteFilter(hostname=hostname.hostname, replace_prefix_match=mockserver_expectation)],
+        filters=[URLRewriteFilter(hostname=external_service.hostname, replace_prefix_match=mockserver_expectation)],
     )
     request.addfinalizer(route.delete)
     route.commit()
@@ -121,15 +130,24 @@ def route(
 
 @pytest.fixture(scope="module")
 def route2(
-    request, gateway, cluster, blame, hostname, module_label, service_entry, destination_rule, service2_expectation
+    request,
+    gateway,
+    cluster,
+    blame,
+    external_service,
+    external_reference,
+    module_label,
+    service_entry,
+    destination_rule,
+    service2_expectation,
 ):  # pylint: disable=unused-argument
     """HTTPRoute for /service2 path, rewrites to MockServer service2 expectation"""
     route = HTTPRoute.create_instance(cluster, blame("svc2-rt"), gateway, {"app": module_label})
     route.add_hostname(EGRESS_HOSTNAME)
     route.add_rule(
-        CustomReference(group="networking.istio.io", kind="Hostname", name=hostname.hostname, port=443),
+        external_reference,
         RouteMatch(path=PathMatch(type=MatchType.PATH_PREFIX, value="/service2")),
-        filters=[URLRewriteFilter(hostname=hostname.hostname, replace_prefix_match=service2_expectation)],
+        filters=[URLRewriteFilter(hostname=external_service.hostname, replace_prefix_match=service2_expectation)],
     )
     request.addfinalizer(route.delete)
     route.commit()
