@@ -29,6 +29,7 @@ pytest-playwright = "*"
 playwright = "1.57.0"
 pytest-rerunfailures = "<16.6.1"
 hvac = "^2.4.0"
+mockserver-client = "7.4.0"
 
 [tool.poetry.group.dev.dependencies]
 mypy = "*"
@@ -109,7 +110,7 @@ good-names=["i","j","k",
 implicit_optional = true
 
 [[tool.mypy.overrides]]
-module = ["dynaconf.*", "keycloak.*", "weakget.*", "openshift_client.*", "apyproxy.*", "click.*", "py.*", "grpc.*", "google.protobuf.*"]
+module = ["dynaconf.*", "keycloak.*", "weakget.*", "openshift_client.*", "apyproxy.*", "click.*", "py.*", "grpc.*", "google.protobuf.*", "mockserver.*"]
 ignore_missing_imports = true
 
 [build-system]
