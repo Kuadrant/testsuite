@@ -6,7 +6,7 @@ import json
 import os
 import getpass
 import secrets
-from time import sleep
+from time import sleep, time
 from collections.abc import Collection
 from copy import deepcopy
 from dataclasses import is_dataclass, fields
@@ -19,6 +19,7 @@ import dns.resolver
 from weakget import weakget
 
 from testsuite.certificates import Certificate, CFSSLClient, CertInfo
+from testsuite.utils.constants import DNS_RESOLUTION_TIMEOUT
 
 MESSAGE_1KB = resources.files("testsuite.resources.performance.files").joinpath("message_1kb.txt")
 
@@ -188,6 +189,24 @@ def hostname_to_ip(address: str) -> str:
         except dns.resolver.NXDOMAIN as e:
             raise ValueError(f"Hostname {address} can't be resolved to an IP address") from e
     return address
+
+
+def wait_for_dns_resolution(hostname: str, timeout: int = DNS_RESOLUTION_TIMEOUT):
+    """Polls DNS until a hostname becomes resolvable.
+    Cloud providers like AWS assign LoadBalancer hostnames before DNS propagation completes."""
+    deadline = time() + timeout
+    interval = 10
+    while time() < deadline:
+        try:
+            dns.resolver.resolve(hostname)
+            return
+        except (
+            dns.resolver.NXDOMAIN,
+            dns.resolver.NoAnswer,
+            dns.resolver.NoNameservers,
+        ):
+            sleep(interval)
+    raise TimeoutError(f"Hostname {hostname} did not become DNS-resolvable within {timeout}s")
 
 
 def is_nxdomain(hostname: str):
