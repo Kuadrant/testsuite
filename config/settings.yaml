@@ -15,7 +15,7 @@ default:
   grpcbin:
     image: "quay.io/kuadrant/grpcbin:latest"
   mockserver:
-    image: "quay.io/rhn_support_azgabur/mockserver:latest"
+    image: "quay.io/rhn_support_azgabur/mockserver:9.0.0"
   spicedb:
     image: "quay.io/authzed/spicedb:latest"
   pipeline_policy_extension_service:

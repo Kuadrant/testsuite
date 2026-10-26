@@ -79,7 +79,7 @@ class MockserverBackend(Backend):
             selector=Selector(matchLabels=self.match_labels),
             labels={"app": self.label},
             resources=ContainerResources(
-                limits_cpu="500m", requests_cpu="10m", limits_memory="300Mi", requests_memory="200Mi"
+                limits_cpu="1", requests_cpu="500m", limits_memory="300Mi", requests_memory="200Mi"
             ),
             lifecycle={"postStart": {"exec": {"command": ["/bin/sh", "init-mockserver"]}}},
             volumes=self.config.volumes if self.config else None,
