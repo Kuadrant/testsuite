@@ -4,6 +4,8 @@ from typing import Union, Literal
 
 from apyproxy import ApyProxy
 from httpx import Client
+from mockserver.llm import Completion, HttpLlmResponse
+from mockserver.models import Expectation, HttpRequest
 
 from testsuite.utils import ContentType
 
@@ -65,9 +67,45 @@ class Mockserver:
         json_data = {"httpResponseTemplate": {"templateType": template_type, "template": template}}
         return self._expectation(expectation_id, json_data)
 
+    def create_llm_response_expectation(
+        self,
+        expectation_id,
+        path: str,
+        provider: str,
+        completion: Completion,
+        model: str | None = None,
+        method: str = "POST",
+        query: dict[str, str] | None = None,
+    ):
+        """
+        Creates an Expectation returning a provider-shaped LLM response body (OpenAI, Anthropic,
+        Gemini, ...) via MockServer's LLM response mocking. Unlike the other
+        `create_*_expectation` helpers, `path` is used as given rather than derived from
+        `expectation_id`, since the generated shape depends on `provider`/`path` matching that
+        provider's real API route. `query` matches request query string parameters, e.g. Gemini's
+        `?alt=sse` toggle for Server-Sent Events. See `mockserver.llm` for `completion` construction.
+        https://www.mock-server.com/mock_server/llm_response_mocking.html
+        """
+        expectation = Expectation(
+            id=expectation_id,
+            http_request=HttpRequest(method=method, path=path, query_string_parameters=query),
+            http_llm_response=HttpLlmResponse(provider=provider, model=model, completion=completion),
+        )
+        self.client.mockserver.expectation.put(json=expectation.to_dict())
+        return path
+
     def clear_expectation(self, expectation_id):
         """Clears Expectation with specific ID"""
         return self.client.mockserver.clear.put(json={"id": expectation_id})
+
+    def clear_expectations_at_path(self, path: str, method: str = "POST"):
+        """
+        Clears all expectation(s) matching the given method/path, regardless of id. Needed before
+        registering a new expectation on a path that a previous, id-distinct expectation already
+        occupies (e.g. a streaming and a non-streaming variant of the same real provider API path) -
+        otherwise both would remain registered and which one MockServer matches is unpredictable.
+        """
+        return self.client.mockserver.clear.put(json={"path": path, "method": method})
 
     def retrieve_requests(self, expectation_id):
         """Verify a request has been received a specific number of times"""
