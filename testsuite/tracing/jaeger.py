@@ -5,7 +5,7 @@ from typing import Optional
 
 import backoff
 from apyproxy import ApyProxy
-from httpx import Client
+from httpx import Client, HTTPStatusError
 
 from testsuite.tracing import TracingClient
 from testsuite.tracing.models import Trace
@@ -60,7 +60,16 @@ class JaegerClient(TracingClient):
             "query.start_time_max": now.strftime("%Y-%m-%dT%H:%M:%SZ"),
         }
 
-        response = self.query.api.v3.traces.get(params=params).json()
+        try:
+            response = self.query.api.v3.traces.get(params=params).json()
+        except HTTPStatusError as exc:
+            # Jaeger 404s on a service it has never seen. Span export is asynchronous, so a
+            # service that has only just started reporting looks the same as an unknown one.
+            # Treat it as "no traces yet" and let the retry above decide when to give up.
+            if exc.response.status_code == 404:
+                return []
+            raise
+
         resource_spans = response.get("result", {}).get("resourceSpans", [])
         if not resource_spans:
             return []

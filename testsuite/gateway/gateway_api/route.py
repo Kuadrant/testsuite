@@ -5,7 +5,7 @@ import typing
 from httpx import Client
 
 from testsuite.httpx import KuadrantClient
-from testsuite.gateway import Gateway, GatewayRoute, PathMatch, MatchType, RouteMatch, URLRewriteFilter
+from testsuite.gateway import Gateway, GatewayRoute, PathMatch, MatchType, RouteMatch, RouteFilter
 from testsuite.kubernetes.client import KubernetesClient
 from testsuite.kubernetes import KubernetesObject, modify
 from testsuite.utils.constants import ROUTE_READY_TIMEOUT
@@ -91,7 +91,7 @@ class HTTPRoute(KubernetesObject, GatewayRoute):
         self.model.spec.hostnames = []
 
     @modify
-    def add_rule(self, backend: "Backend", *route_matches: RouteMatch, filters: list[URLRewriteFilter] = None):
+    def add_rule(self, backend: "Backend", *route_matches: RouteMatch, filters: list[RouteFilter] = None):
         """Adds rule to the Route"""
         rules: dict[str, typing.Any] = {"backendRefs": [backend.reference]}
         matches = list(route_matches)
