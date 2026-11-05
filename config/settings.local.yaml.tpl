@@ -26,8 +26,6 @@
 #    image: "quay.io/kuadrant/grpcbin:latest"      # Grpcbin image for gRPC backend tests
 #  httpbin:
 #    image: "HTTPBIN_IMAGE"
-#  llm_sim:
-#    image: "ghcr.io/llm-d/llm-d-inference-sim:v0.1.1"   # LLM simulator image that mimics an LLM service for testing token rate limiting
 #  mockserver:
 #    url: "MOCKSERVER_URL"
 #    image: "MOCKSERVER_IMAGE"                  # Image to be used for self-deployed Mockserver

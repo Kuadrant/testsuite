@@ -5,12 +5,13 @@ TRLP User Guide:
 https://docs.kuadrant.io/dev/kuadrant-operator/doc/user-guides/tokenratelimitpolicy/authenticated-token-ratelimiting-tutorial/
 """
 
+import math
 from time import sleep
 
 import pytest
 
 from testsuite.utils.constants import TRLP_FREE_USER_RESET_WAIT, TRLP_PAID_USER_RESET_WAIT
-from .... import CHAT_MESSAGES, MODEL
+from .... import CHAT_MESSAGES, MOCK_TOTAL_TOKENS, MODEL, register_chat_completion_mock
 from .conftest import FREE_USER_LIMIT, PAID_USER_LIMIT
 
 pytestmark = [pytest.mark.limitador, pytest.mark.authorino, pytest.mark.kuadrant_only]
@@ -22,6 +23,12 @@ basic_request = {
     "usage": True,  # ensures `usage.total_tokens` is returned in the response
     "max_tokens": 15,
 }
+
+
+@pytest.fixture(scope="module", autouse=True)
+def chat_completion_mock(mockserver_client):
+    """Registers the fixed-usage chat completion mock backing this module's requests"""
+    register_chat_completion_mock(mockserver_client)
 
 
 def test_invalid_api_key(client):
@@ -39,34 +46,19 @@ def test_missing_api_key(client):
 @pytest.mark.flaky(reruns=3, reruns_delay=35)
 def test_trlp_limit_and_reset_free_user(client, free_user_auth):
     """Ensures free users are rate limited and limits reset correctly"""
-    total_tokens = 0
+    requests_until_limit = math.ceil(FREE_USER_LIMIT.limit / MOCK_TOTAL_TOKENS)
 
-    # Check first request succeeds
-    first_response = client.post("/v1/chat/completions", auth=free_user_auth, json={**basic_request})
-    assert first_response.status_code == 200, f"Expected status code 200, but got {first_response.status_code}"
-    first_json = first_response.json()
-    usage = first_json.get("usage")
-    assert usage and all(key in usage for key in ("total_tokens", "prompt_tokens", "completion_tokens"))
-    tokens_used = usage["total_tokens"]
-    assert tokens_used > 0 and tokens_used == usage["prompt_tokens"] + usage["completion_tokens"]
-    total_tokens += tokens_used
-
-    # Keep sending requests while within token quota
-    while total_tokens < FREE_USER_LIMIT.limit:
+    for i in range(requests_until_limit):
         response = client.post("/v1/chat/completions", auth=free_user_auth, json={**basic_request})
-        assert response.status_code == 200
-        json_data = response.json()
-        usage = json_data.get("usage")
-        assert usage and all(key in usage for key in ("total_tokens", "prompt_tokens", "completion_tokens"))
-        tokens_used = usage["total_tokens"]
-        assert tokens_used > 0 and tokens_used == usage["prompt_tokens"] + usage["completion_tokens"]
-        total_tokens += tokens_used
+        assert (
+            response.status_code == 200
+        ), f"Expected 200 on request {i + 1}/{requests_until_limit}, got {response.status_code}"
 
     # Next request should be 429
     response = client.post("/v1/chat/completions", auth=free_user_auth, json={**basic_request})
     assert (
         response.status_code == 429
-    ), f"Expected 429 after {total_tokens}/{FREE_USER_LIMIT.limit} tokens, but got {response.status_code}"
+    ), f"Expected 429 after {requests_until_limit} requests, but got {response.status_code}"
 
     # Assert quota resets after wait period
     sleep(TRLP_FREE_USER_RESET_WAIT)
@@ -77,31 +69,18 @@ def test_trlp_limit_and_reset_free_user(client, free_user_auth):
 @pytest.mark.flaky(reruns=3, reruns_delay=65)
 def test_trlp_limit_and_reset_paid_user(client, paid_user_auth):
     """Ensures paid users are rate limited and limits reset correctly"""
-    total_tokens = 0
+    requests_until_limit = math.ceil(PAID_USER_LIMIT.limit / MOCK_TOTAL_TOKENS)
 
-    first_response = client.post("/v1/chat/completions", auth=paid_user_auth, json={**basic_request})
-    assert first_response.status_code == 200, f"Expected status code 200, but got {first_response.status_code}"
-    first_json = first_response.json()
-    usage = first_json.get("usage")
-    assert usage and all(key in usage for key in ("total_tokens", "prompt_tokens", "completion_tokens"))
-    tokens_used = usage["total_tokens"]
-    assert tokens_used > 0 and tokens_used == usage["prompt_tokens"] + usage["completion_tokens"]
-    total_tokens += tokens_used
-
-    while total_tokens < PAID_USER_LIMIT.limit:
+    for i in range(requests_until_limit):
         response = client.post("/v1/chat/completions", auth=paid_user_auth, json={**basic_request})
-        assert response.status_code == 200
-        json_data = response.json()
-        usage = json_data.get("usage")
-        assert usage and all(key in usage for key in ("total_tokens", "prompt_tokens", "completion_tokens"))
-        tokens_used = usage["total_tokens"]
-        assert tokens_used > 0 and tokens_used == usage["prompt_tokens"] + usage["completion_tokens"]
-        total_tokens += tokens_used
+        assert (
+            response.status_code == 200
+        ), f"Expected 200 on request {i + 1}/{requests_until_limit}, got {response.status_code}"
 
     response = client.post("/v1/chat/completions", auth=paid_user_auth, json={**basic_request})
     assert (
         response.status_code == 429
-    ), f"Expected 429 after {total_tokens}/{PAID_USER_LIMIT.limit} tokens, but got {response.status_code}"
+    ), f"Expected 429 after {requests_until_limit} requests, but got {response.status_code}"
 
     sleep(TRLP_PAID_USER_RESET_WAIT)
     response = client.post("/v1/chat/completions", auth=paid_user_auth, json={**basic_request})

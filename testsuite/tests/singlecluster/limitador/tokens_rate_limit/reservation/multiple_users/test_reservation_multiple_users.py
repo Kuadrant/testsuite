@@ -5,7 +5,7 @@ does not affect another user's independent counter
 
 import pytest
 
-from ... import CHAT_MESSAGES, MODEL
+from ... import CHAT_MESSAGES, MOCK_TOTAL_TOKENS, MODEL
 from .conftest import LIMIT
 
 pytestmark = [pytest.mark.limitador, pytest.mark.authorino, pytest.mark.kuadrant_only]
@@ -30,9 +30,7 @@ def test_reservation_isolated_per_user(client, user1_auth, user2_auth):
         assert (
             response.status_code == 200
         ), f"Expected 200 on {total_tokens}/{LIMIT.limit} tokens, got {response.status_code}"
-        tokens_used = response.json()["usage"]["total_tokens"]
-        assert tokens_used > 0, "Got 0 tokens in the response"
-        total_tokens += tokens_used
+        total_tokens += MOCK_TOTAL_TOKENS
 
     response = client.post("/v1/chat/completions", auth=user1_auth, json={**basic_request})
     assert (

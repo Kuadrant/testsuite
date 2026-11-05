@@ -6,8 +6,9 @@ https://github.com/Kuadrant/kuadrant-operator/blob/a1ad64a2fb9230985230b57695ffa
 """
 
 import pytest
+from mockserver.llm import Completion, Provider, Usage
 
-from .conftest import MODEL_NAME, USERS
+from .conftest import MOCK_INPUT_TOKENS, MOCK_OUTPUT_TOKENS, MOCK_TOTAL_TOKENS, MODEL_NAME, USERS
 
 pytestmark = [pytest.mark.observability, pytest.mark.limitador, pytest.mark.extensions]
 
@@ -21,21 +22,35 @@ basic_request = {
 }
 
 
+@pytest.fixture(scope="module", autouse=True)
+def chat_completion_mock(mockserver_client):
+    """Registers the fixed-usage chat completion mock backing this module's requests"""
+    mockserver_client.create_llm_response_expectation(
+        "trlp-chat-completion",
+        "/v1/chat/completions",
+        Provider.OPENAI,
+        completion=Completion(
+            text="mocked response", usage=Usage(input_tokens=MOCK_INPUT_TOKENS, output_tokens=MOCK_OUTPUT_TOKENS)
+        ),
+        model=MODEL_NAME,
+    )
+
+
 @pytest.fixture(scope="module")
 def token_usage(prometheus, pod_monitor, client, user_data):
     """Send requests to generate metrics, trigger rate limiting and return token usage"""
     usage_data = {}
 
     for user_type, user_info in user_data.items():
-        tokens = 0
+        successful_calls = 0
         for _ in range(10):
             response = client.post("/v1/chat/completions", auth=user_info["auth"], json={**basic_request})
             if response.status_code == 200:
-                tokens += response.json().get("usage", {}).get("total_tokens", 0)
+                successful_calls += 1
             elif response.status_code == 429:
                 break  # stop once user is rate-limited
 
-        usage_data[f"{user_type}_total_tokens"] = tokens
+        usage_data[f"{user_type}_total_tokens"] = successful_calls * MOCK_TOTAL_TOKENS
 
     # Wait for metrics to propagate
     prometheus.wait_for_scrape(pod_monitor, "/metrics")

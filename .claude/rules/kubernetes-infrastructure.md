@@ -177,20 +177,41 @@ def mockserver_backend(request, cluster, blame, module_label, testconfig):
     return backend
 ```
 
-### LlmSim
+### MockserverBackend for LLM/token-rate-limit tests
 
-LLM inference simulator for testing token-based rate limiting. Mimics LLM API behavior.
+Token-based rate limiting tests (`TokenRateLimitPolicy`) also use `MockserverBackend`, paired with MockServer's LLM response mocking to fabricate provider-shaped (OpenAI, Gemini, Bedrock, ...) completions with controllable `usage` token counts:
 
 ```python
-from testsuite.backend.llm_sim import LlmSim
+from testsuite.backend.mockserver import MockserverBackend
+from testsuite.mockserver import Mockserver
+from mockserver.llm import Completion, Provider, Usage
 
-@pytest.fixture(scope="session")
-def backend(request, cluster, blame, label, testconfig):
-    """Deploys LLM simulator backend"""
-    llm = LlmSim(cluster, blame("llm"), "test-model", label, testconfig["llm_sim"]["image"])
-    request.addfinalizer(llm.delete)
-    llm.commit()
-    return llm
+@pytest.fixture(scope="module")
+def backend(request, cluster, blame, label, backend_exposer):
+    """Deploys a dedicated MockServer instance used to fabricate LLM-shaped responses"""
+    mockserver = MockserverBackend(cluster, blame("mocksrv"), label, service_type=backend_exposer.backend_service_type)
+    request.addfinalizer(mockserver.delete)
+    mockserver.commit()
+    mockserver.wait_for_ready()
+    mockserver.expose(backend_exposer, blame("mocksrv"))
+    return mockserver
+
+
+@pytest.fixture(scope="module")
+def mockserver_client(backend):
+    """Mockserver client for creating LLM response expectations"""
+    return Mockserver(backend.admin_hostname.client())
+
+
+def test_token_rate_limit(client, mockserver_client):
+    """Registers a fixed-usage completion mock, so tests get deterministic token counts"""
+    mockserver_client.create_llm_response_expectation(
+        "trlp-chat-completion",
+        "/v1/chat/completions",
+        Provider.OPENAI,
+        completion=Completion(text="mocked response", usage=Usage(input_tokens=5, output_tokens=10)),
+        model="gpt-4o",
+    )
 ```
 
 ## RouteMatch Composition

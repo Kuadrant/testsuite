@@ -5,6 +5,8 @@ import pytest
 from testsuite.kuadrant.policy.rate_limit import Limit
 from testsuite.kuadrant.policy.token_rate_limit import Reservation, TokenRateLimitPolicy
 
+from ... import register_chat_completion_mock
+
 LIMIT = Limit(limit=100, window="20s")
 BIG_AMOUNT = 100
 SMALL_AMOUNT = 10
@@ -18,6 +20,12 @@ RESERVATION_AMOUNT_CEL = (
     f'request.headers.exists(h, h.lowerAscii() == "{BIG_REQUEST_HEADER}" && request.headers[h] == "true")'
     f" ? {BIG_AMOUNT} : {SMALL_AMOUNT}"
 )
+
+
+@pytest.fixture(scope="module", autouse=True)
+def chat_completion_mock(mockserver_client):
+    """Registers the fixed-usage chat completion mock backing this module's requests"""
+    register_chat_completion_mock(mockserver_client)
 
 
 @pytest.fixture(scope="module")

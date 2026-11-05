@@ -7,10 +7,16 @@ from time import sleep
 import pytest
 
 from testsuite.utils.constants import TRLP_ITERATION_RESET_WAIT
-from ... import STREAMING_REQUEST, parse_streaming_usage
+from ... import MOCK_TOTAL_TOKENS, STREAMING_REQUEST, register_streaming_chat_completion_mock
 from .conftest import LIMIT
 
 pytestmark = [pytest.mark.limitador]
+
+
+@pytest.fixture(scope="module", autouse=True)
+def chat_completion_mock(mockserver_client):
+    """Registers the fixed-usage, streaming chat completion mock backing this module's requests"""
+    register_streaming_chat_completion_mock(mockserver_client)
 
 
 @pytest.mark.flaky(reruns=3, reruns_delay=25)
@@ -25,10 +31,7 @@ def test_reservation_streaming_limit_and_reset(client):
         assert (
             response.status_code == 200
         ), f"Expected 200 on {total_tokens}/{LIMIT.limit} tokens, got {response.status_code}"
-        usage = parse_streaming_usage(response)
-        tokens_used = usage["total_tokens"]
-        assert tokens_used > 0, "Got 0 tokens in the response"
-        total_tokens += tokens_used
+        total_tokens += MOCK_TOTAL_TOKENS
 
     response = client.post("/v1/chat/completions", json={**STREAMING_REQUEST})
     assert (
