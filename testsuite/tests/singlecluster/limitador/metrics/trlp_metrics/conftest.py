@@ -2,13 +2,14 @@
 
 import pytest
 
-from testsuite.backend.llm_sim import LlmSim
+from testsuite.backend.mockserver import MockserverBackend
 from testsuite.httpx.auth import HeaderApiKeyAuth
 from testsuite.kuadrant.extensions.telemetry_policy import TelemetryPolicy
 from testsuite.kuadrant.policy import CelExpression, CelPredicate
 from testsuite.kuadrant.policy.authorization import JsonResponse, ValueFrom
 from testsuite.kuadrant.policy.rate_limit import Limit
 from testsuite.kuadrant.policy.token_rate_limit import TokenRateLimitPolicy
+from testsuite.mockserver import Mockserver
 
 FREE_USER_LIMIT = Limit(limit=15, window="30s")
 PAID_USER_LIMIT = Limit(limit=30, window="60s")
@@ -16,15 +17,26 @@ PAID_USER_LIMIT = Limit(limit=30, window="60s")
 USERS = ("free", "paid")
 MODEL_NAME = "meta-llama/Llama-3.1-8B-Instruct"
 
+MOCK_INPUT_TOKENS = 2
+MOCK_OUTPUT_TOKENS = 3
+MOCK_TOTAL_TOKENS = MOCK_INPUT_TOKENS + MOCK_OUTPUT_TOKENS
+
 
 @pytest.fixture(scope="module")
-def backend(request, cluster, blame, label, testconfig):
-    """Deploys LlmSim backend"""
-    image = testconfig["llm_sim"]["image"]
-    llmsim = LlmSim(cluster, blame("llm-sim"), "meta-llama/Llama-3.1-8B-Instruct", label, image)
-    request.addfinalizer(llmsim.delete)
-    llmsim.commit()
-    return llmsim
+def backend(request, cluster, blame, label, backend_exposer):
+    """Deploys a dedicated MockServer instance used to fabricate LLM-shaped responses"""
+    mockserver = MockserverBackend(cluster, blame("mocksrv"), label, service_type=backend_exposer.backend_service_type)
+    request.addfinalizer(mockserver.delete)
+    mockserver.commit()
+    mockserver.wait_for_ready()
+    mockserver.expose(backend_exposer, blame("mocksrv"))
+    return mockserver
+
+
+@pytest.fixture(scope="module")
+def mockserver_client(backend):
+    """Mockserver client for creating LLM response expectations"""
+    return Mockserver(backend.admin_hostname.client())
 
 
 @pytest.fixture(scope="module")

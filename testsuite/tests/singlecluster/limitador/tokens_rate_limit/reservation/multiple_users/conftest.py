@@ -8,7 +8,15 @@ from testsuite.kuadrant.policy.authorization import JsonResponse, ValueFrom
 from testsuite.kuadrant.policy.rate_limit import Limit
 from testsuite.kuadrant.policy.token_rate_limit import Reservation, TokenRateLimitPolicy
 
+from ... import register_chat_completion_mock
+
 LIMIT = Limit(limit=200, window="20s")
+
+
+@pytest.fixture(scope="module", autouse=True)
+def chat_completion_mock(mockserver_client):
+    """Registers the fixed-usage chat completion mock backing this module's requests"""
+    register_chat_completion_mock(mockserver_client)
 
 
 @pytest.fixture(scope="module")

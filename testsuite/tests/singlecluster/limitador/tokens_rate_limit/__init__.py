@@ -1,6 +1,6 @@
 """Tests for TokenRateLimitPolicy"""
 
-import json
+from mockserver.llm import Completion, Provider, Usage
 
 MODEL = "meta-llama/Llama-3.1-8B-Instruct"
 
@@ -15,15 +15,34 @@ STREAMING_REQUEST = {
     "max_tokens": 15,
 }
 
+MOCK_INPUT_TOKENS = 5
+MOCK_OUTPUT_TOKENS = 10
+MOCK_TOTAL_TOKENS = MOCK_INPUT_TOKENS + MOCK_OUTPUT_TOKENS
 
-def parse_streaming_usage(response):
-    """Parse the streaming response and return the `usage` object from the last JSON chunk"""
-    raw = response.text.strip().splitlines()
-    json_lines = [line.removeprefix("data: ").strip() for line in raw if line.startswith("data: {")]
-    assert json_lines, f"No JSON chunks found in streaming response:\n{response.text}"
-    last_json = json.loads(json_lines[-1])
-    usage = last_json.get("usage")
-    assert usage and all(
-        k in usage for k in ("total_tokens", "prompt_tokens", "completion_tokens")
-    ), f"Missing or invalid usage in streaming response: {last_json}"
-    return usage
+
+def register_chat_completion_mock(mockserver_client):
+    """Registers a fixed-usage, non-streaming OpenAI-shaped chat completion mock"""
+    mockserver_client.create_llm_response_expectation(
+        "trlp-chat-completion",
+        "/v1/chat/completions",
+        Provider.OPENAI,
+        completion=Completion(
+            text="mocked response", usage=Usage(input_tokens=MOCK_INPUT_TOKENS, output_tokens=MOCK_OUTPUT_TOKENS)
+        ),
+        model=MODEL,
+    )
+
+
+def register_streaming_chat_completion_mock(mockserver_client):
+    """Registers a fixed-usage, streaming OpenAI-shaped chat completion mock"""
+    mockserver_client.create_llm_response_expectation(
+        "trlp-chat-completion-stream",
+        "/v1/chat/completions",
+        Provider.OPENAI,
+        completion=Completion(
+            text="mocked response",
+            usage=Usage(input_tokens=MOCK_INPUT_TOKENS, output_tokens=MOCK_OUTPUT_TOKENS),
+            streaming=True,
+        ),
+        model=MODEL,
+    )
