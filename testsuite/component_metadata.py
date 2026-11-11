@@ -117,16 +117,40 @@ class ReportPortalMetadataCollector:
                     if normalised_image in seen:
                         continue
                     seen.add(normalised_image)
-                    image_name = normalised_image.split("/")[-1]
-                    if ":" in image_name:
-                        name, tag = image_name.rsplit(":", 1)
-                        images.append((name, tag, image))
+
+                    name = normalised_image.split("/")[-1]
+                    if ":" in name:
+                        name, tag = name.rsplit(":", 1)
                     else:
-                        images.append((image_name, None, image))
-        except (oc.OpenShiftPythonException, AttributeError, KeyError, IndexError, ValueError) as e:
-            logger.warning("Failed to get images from %s: %s", project, e)
+                        tag = ""
+                    images.append((name, tag, image))
+        except (oc.OpenShiftPythonException, AttributeError, KeyError, IndexError, ValueError) as exc:
+            logger.warning("Failed to get pod images from %s: %s", project, exc)
 
         return images
+
+    @staticmethod
+    def get_subscription_versions(project) -> dict[str, str]:
+        """Get installed operator versions from OLM Subscriptions in a namespace."""
+        versions: dict[str, str] = {}
+        try:
+            with project.context:
+                subs = oc.selector("subscription.operators.coreos.com").objects()
+            for sub in subs:
+                try:
+                    csv_name = sub.model.status.installedCSV
+                    if not csv_name:
+                        continue
+                except AttributeError:
+                    continue
+                match = re.match(r"^(.+)\.v(.+)$", csv_name)
+                if match:
+                    versions[match.group(1)] = f"v{match.group(2)}"
+                else:
+                    versions[csv_name] = csv_name
+        except (oc.OpenShiftPythonException, AttributeError, KeyError, IndexError, ValueError) as exc:
+            logger.warning("Failed to get subscriptions from %s: %s", project, exc)
+        return versions
 
     @staticmethod
     def get_istio_type(cluster) -> tuple[str, Optional[str]]:
@@ -155,9 +179,12 @@ class ReportPortalMetadataCollector:
             with project.context:
                 istio = oc.selector("istio").objects()
                 if istio:
-                    version = istio[0].model.spec.version
-                    if version:
-                        metadata["istio_version"] = version
+                    try:
+                        version = istio[0].model.spec.version
+                        if version:
+                            metadata["istio_version"] = version
+                    except AttributeError:
+                        pass
 
                 pods = oc.selector("pods", labels={"app": "istiod"}).objects()
                 if pods:
