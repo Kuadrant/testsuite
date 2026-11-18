@@ -23,10 +23,10 @@ metricsEndpoints:
       metricsDirectory: ./metrics
 {{ end }}
 global:
-{{ if .SKIP_CLEANUP }}
-  gc: false
-{{ else }}
+{{- if ne .SKIP_CLEANUP "true" }}
   gc: true
+{{ else }}
+  gc: false
 {{ end }}
 jobs: 
   - name: scale-test-preparations
@@ -162,5 +162,5 @@ jobs:
     objects:
       - kind: DNSPolicy
         apiVersion: kuadrant.io/v1alpha1
-        labelSelector: {kube-burner-job: scale-test-main}
+        labelSelector: {kube-burner.io/job: scale-test-main}
 {{- end }}
