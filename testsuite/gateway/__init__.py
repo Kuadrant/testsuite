@@ -3,7 +3,7 @@
 import enum
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Any, Optional, TYPE_CHECKING, Literal, List
+from typing import Any, Optional, TYPE_CHECKING, Literal, List, Union
 
 from httpx import Client
 
@@ -109,6 +109,27 @@ class URLRewriteFilter:
         if self.replace_prefix_match is not None:
             url_rewrite["path"] = {"type": "ReplacePrefixMatch", "replacePrefixMatch": self.replace_prefix_match}
         return {"type": "URLRewrite", "urlRewrite": url_rewrite}
+
+
+@dataclass
+class RequestHeaderModifierFilter:
+    """RequestHeaderModifierFilter for HTTPRoute modifies request headers before forwarding"""
+
+    set: Optional[list[dict[str, str]]] = None
+    add: Optional[list[dict[str, str]]] = None
+    remove: Optional[list[str]] = None
+
+    def asdict(self):
+        """Custom asdict to wrap as a Gateway API HTTPRoute filter"""
+        modifier: dict = {}
+        for key in ("set", "add", "remove"):
+            value = getattr(self, key)
+            if value is not None:
+                modifier[key] = value
+        return {"type": "RequestHeaderModifier", "requestHeaderModifier": modifier}
+
+
+RouteFilter = Union[URLRewriteFilter, RequestHeaderModifierFilter]
 
 
 @dataclass
